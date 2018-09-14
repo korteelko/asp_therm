@@ -1,0 +1,7 @@
+doc/
+libs/
+source/flow_modeling/
+CMakeLists.txt.user
+*.swp
+test/subroutins/CMakeLists.txt.user
+test/models/CMakeLists.txt.user
