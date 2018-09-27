@@ -50,8 +50,8 @@ static std::array<double, 5> get_average_params(
     avr_vals[1] += x.first * x.second.first.P_K;
     avr_vals[2] += x.first * x.second.first.T_K;
 
-    avr_vals[3]+= x.first * x.second.first.molecularmass;
-    avr_vals[4]*= x.first * x.second.first.acentricfactor;
+    avr_vals[3] += x.first * x.second.first.molecularmass;
+    avr_vals[4] *= x.first * x.second.first.acentricfactor;
   }
   avr_vals[4] = std::pow(avr_vals[4], 1.0 / components.size());
   return avr_vals;
@@ -160,7 +160,7 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
   std::vector<std::pair<double, dyn_parameters>> dgp_cpt;
   for (auto const &x : components) {
     dgp_cpt.push_back({x.first, x.second.second});
-    mg->update_dyn_params(dgp_cpt.back().second, prs);
+    mg->update_dyn_params(dgp_cpt.back().second, prs, x.second.first);
   }
   std::array<double, 3> dgp_tmp = {0.0, 0.0, 0.0};
   for (auto const &x : dgp_cpt) {

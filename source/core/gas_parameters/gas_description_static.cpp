@@ -23,7 +23,7 @@ GasParameters::GasParameters(parameters prs,
 
 GasParameters *GasParameters::Init(parameters prs,
     const const_parameters cgp, dyn_parameters dgp) {
-  assert(0);
+  assert(0 && "unrealized Init GasParameters method!!!");
   return NULL;
 }
 
@@ -31,8 +31,13 @@ GasParameters::~GasParameters() {}
 
 std::ostream &operator<< (std::ostream &outstream,
     const GasParameters &gp) {
-  outstream << "v: " << gp.cgetVolume() << " p: " << gp.cgetPressure()
-            << " t: " << gp.cgetTemperature() << "\n";
+  char msg[256] = {0};
+  parameters prs = gp.cgetParameters();
+  sprintf(msg, "v: %8.2f  p: %8.2f t:%6.2f\n", prs.volume, prs.pressure, prs.temperature);
+  outstream << msg;
+ /* 26_09_2018
+   outstream << "v: " << gp.cgetVolume() << " p: " << gp.cgetPressure()
+            << " t: " << gp.cgetTemperature() << "\n";*/
   return outstream;
 }
 

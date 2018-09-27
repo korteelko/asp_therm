@@ -6,18 +6,20 @@ project(${PROJECT_NAME})
 
 # set cmake options:
 # debug
-# set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
+add_definitions(-D_DEBUG)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
 # release
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
+# add_definitions(-DNDEBUG)
+# set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
 
 if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
 
-set (THERMCORE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source/core")
+set(THERMCORE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source/core")
 
-set (THERMCORE_INCLUDES
+set(THERMCORE_INCLUDES
     "${THERMCORE_SOURCE_DIR}/common"
     "${THERMCORE_SOURCE_DIR}/gas_parameters"
     "${THERMCORE_SOURCE_DIR}/models"
@@ -31,12 +33,16 @@ set(LIBS_DIR
 
 INCLUDE_DIRECTORIES(${THERMCORE_INCLUDES})
 INCLUDE_DIRECTORIES(${OTHER_INCLUDES})
-if (WIN32)
+
+if(WIN32)
   INCLUDE_DIRECTORIES("${OTHER_INCLUDES}/target_sys/win")
-#endif(WIN32)
-else ()
+  set(LIBS_DIR
+     ${LIBS_DIR}/win)
+else()
 #if(LINUX)
   INCLUDE_DIRECTORIES("${OTHER_INCLUDES}/target_sys/_nix")
+  set(LIBS_DIR
+     ${LIBS_DIR}/_nix)
 endif()
 # else()
 #  message(FATAL_ERROR "unknowing system")
@@ -46,9 +52,10 @@ endif()
 
 link_directories(${LIBS_DIR})
 
-if (CMAKE_BUILD_TYPE=Release)
+if(CMAKE_BUILD_TYPE=Release)
   link_directories(${LIBS_DIR}/release)
 else()
+  # add_definitions(-D_DEBUG)
   link_directories(${LIBS_DIR}/debug)
 endif()
 
@@ -82,10 +89,12 @@ set(
 )
 
 # output for static libraries
+add_library(lmodels STATIC ${MODELS_SRC})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${LIBS_DIR}/debug)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${LIBS_DIR}/release)
+# set_target_properties(lmodels PROPERTIES
+#     LIBRARY_OUTPUT_DIRECTORY ${LIBS_DIR}/debug)
 
-add_library(lmodels STATIC ${MODELS_SRC})
 add_executable(${PROJECT_NAME} main.cpp)
 target_link_libraries(${PROJECT_NAME}
   lmodels

@@ -6,14 +6,15 @@
 //=========================================================================
 // dyn_parameters
 //=========================================================================
-dyn_parameters::dyn_parameters(double cp, double cv, double 
+dyn_parameters::dyn_parameters(double cv, double cp, double 
     int_eng, parameters pm)
   : heat_cap_vol(cv), heat_cap_pres(cp), internal_energy(int_eng), 
     beta_kr(0.0), parm(pm) {
   Update();
 }
 
-dyn_parameters *dyn_parameters::Init(double cp, double cv, double int_eng, parameters pm) {
+dyn_parameters *dyn_parameters::Init(double cv, double cp,
+    double int_eng, parameters pm) {
   // проверка входных данных
   // check input data:
   //  --  больше нуля     --  > 0.0
@@ -22,7 +23,7 @@ dyn_parameters *dyn_parameters::Init(double cp, double cv, double int_eng, param
   correct_input &= is_above0(pm.pressure, pm.temperature, pm.volume);
   if (!correct_input)
     return nullptr;
-  return new dyn_parameters(cp, cv, int_eng, pm);
+  return new dyn_parameters(cv, cp, int_eng, pm);
 }
 
 // update beta critical

@@ -69,9 +69,12 @@ public:
 //  virtual double internal_energy_integral(
 //      const parameters state) = 0;
   /// Функция обновления динамических параметров
-  /// Update dynn_parameters function
+  /// Update dyn_parameters function
   virtual void update_dyn_params(dyn_parameters &prev_state,
       const parameters new_state) = 0;
+  /// Update dyn_parameters function for 
+  virtual void update_dyn_params(dyn_parameters &prev_state,
+      const parameters new_state, const const_parameters &cp) = 0;
 
   // Модели имеют определенные границы применения
   //   метод isValid проверяет их
@@ -95,6 +98,11 @@ public:
   state_phase GetState()                 const;
   parameters GetParametersCopy()         const;
   const_parameters GetConstParameters()  const;
+
+// maybe another class
+  std::string ParametersString()         const;
+  std::string ConstParametersString()    const;
+  static std::string sParametersStringHead();
 
   virtual ~modelGeneral();
 };

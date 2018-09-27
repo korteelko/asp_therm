@@ -1,14 +1,18 @@
 #include "model_peng_robinson.h"
 
+#include "gas_description_dynamic.h"
 #include "models_errors.h"
 #include "models_math.h"
 
-#include <iostream>
+#ifdef _DEBUG
+#  include <iostream>
+#endif  // _DEBUG
 #include <vector>
 
-/// =========================================================================
-/// Peng_robinson methods
-/// =========================================================================
+#include <assert.h>
+
+static double sq2 = std::sqrt(2.0);
+
 void Peng_Robinson::set_model_coef() {
   model_coef_a_ = 0.45724 * std::pow(parameters_->cgetR(), 2.0) *
       std::pow(parameters_->cgetT_K(), 2.0) / parameters_->cgetP_K();
@@ -18,24 +22,36 @@ void Peng_Robinson::set_model_coef() {
       0.26992*std::pow(parameters_->cgetAcentricFactor(), 2.0);
 }
 
+void Peng_Robinson::set_model_coef(
+    const const_parameters &cp) {
+  model_coef_a_ = 0.45724 * std::pow(cp.R, 2.0) *
+      std::pow(cp.T_K, 2.0) / cp.P_K;
+  model_coef_b_ = 0.0778 * cp.R * cp.T_K / cp.P_K;
+  model_coef_k_ = 0.37464 + 1.54226 * cp.acentricfactor -
+      0.26992 * std::pow(cp.acentricfactor, 2.0);
+}
+
 Peng_Robinson::Peng_Robinson(modelName mn, parameters prs,
     const_parameters cgp, dyn_parameters dgp, binodalpoints bp)
   : modelGeneral::modelGeneral(mn, prs, cgp, dgp, bp) {
+  parameters_ = std::unique_ptr<GasParameters>(
+      GasParameters_dyn::Init(prs, cgp, dgp, this));
   set_model_coef();
 }
 
 Peng_Robinson::Peng_Robinson(modelName mn, parameters prs,
     parameters_mix components, binodalpoints bp) 
     : modelGeneral::modelGeneral(mn, prs, components, bp) {
+  parameters_ = std::unique_ptr<GasParameters>(
+      GasParameters_mix_dyn::Init(prs, components, this));
   set_model_coef();
 }
 
 Peng_Robinson *Peng_Robinson::Init(modelName mn, parameters prs,
     const_parameters cgp, dyn_parameters dgp, binodalpoints bp) {
-  // check const_parameters
   reset_error();
   bool is_valid = is_valid_cgp(cgp) && is_valid_dgp(dgp);
-  is_valid &= (!is_above0(prs.pressure, prs.temperature, prs.volume));
+  is_valid &= (is_above0(prs.pressure, prs.temperature, prs.volume));
   if (!is_valid) {
     set_error_code(ERR_INIT_T | ERR_INIT_ZERO_ST);
     return nullptr;
@@ -55,7 +71,8 @@ Peng_Robinson *Peng_Robinson::Init(modelName mn, parameters prs,
   reset_error();
   // для проверки установленных доль
   bool is_valid = !components.empty();
-  is_valid &= (!is_above0(prs.pressure, prs.temperature, prs.volume));
+  if (is_valid)
+    is_valid = is_above0(prs.pressure, prs.temperature, prs.volume);
   if (!is_valid) {
     set_error_code(ERR_INIT_T | ERR_INIT_ZERO_ST | ERR_GAS_MIX);
     return nullptr;
@@ -71,75 +88,135 @@ Peng_Robinson *Peng_Robinson::Init(modelName mn, parameters prs,
 }
 
 //  расчёт смотри в ежедневнике
+//  UPD: Matlab/GNUOctave files in dir somemath
+double log_pr(double v, double cb) {
+  return log(v + cb);
+}
+
+double Peng_Robinson::log_pr(double v, bool is_posit) {
+  return (is_posit) ? (1.0 + sq2) * model_coef_b_ + v : 
+      (1.0 - sq2) * model_coef_b_ + v;
+}
 
   // u(p, v, T) = u0 + integrate(....)dv
 //   return  u-u0
-double Peng_Robinson::internal_energy_integral(const parameters state) {
-  double T  = state.temperature,
-         Tr = state.temperature / parameters_->const_params.T_K,
-         V  = state.volume,
+double Peng_Robinson::internal_energy_integral(const parameters new_state,
+    const parameters old_state, const double Tk) {
+  double t  = new_state.temperature,
+         Tr = new_state.temperature / Tk,
+         vf = new_state.volume,
+         v0 = old_state.volume,
          a  = model_coef_a_,
          b  = model_coef_b_,
-         k  = model_coef_k_,
-         gm = std::pow(1.0 + k * (1.0 - std::sqrt(Tr)), 2.0),
-         sq2 = std::sqrt(2.0);
+         k  = model_coef_k_;
+  /* 26_09_2018
+         gm = std::pow(1.0 + k * (1.0 - std::sqrt(Tr)), 2.0);
   double ans = T*T * a * std::sqrt(gm) * k * 
       std::log((V + (1.0 - sq2)*b)/(V + (1.0 + sq2)*b)) +
       a * gm *std::log((V + (1.0 - sq2)*b)/(V + (1.0 + sq2)*b) ) / 
       (2.0 * sq2 * b);
+  */
+  double ans = sq2 * 0.25 * a * k * t * t * 
+      (-k*sqrt(Tr) + k - sqrt(Tr) + 2.0 + 1.0/k) * 
+      log(log_pr(vf, false) * log_pr(v0, true) / 
+          log_pr(vf, true) / log_pr(v0, false)) /
+      (b * t * t);
   return ans;
 }
 
 // cv(p, v, T) = cv0 + integrate(...)dv
 //   return cv - cv0
-double Peng_Robinson::heat_capac_vol_integral(const parameters state) {
-  double T  = state.temperature,
-         Tr = state.temperature / parameters_->const_params.T_K,
-         V  = state.volume,
+double Peng_Robinson::heat_capac_vol_integral(const parameters new_state,
+    const parameters prev_state, const double Tk) {
+  double t  = new_state.temperature,
+         Tr = new_state.temperature / Tk,
+         vf = new_state.volume,
+         v0 = prev_state.volume,
          a  = model_coef_a_,
          b  = model_coef_b_,
-         k  = model_coef_k_,
+         k  = model_coef_k_;
+  /* 26_09_2018
          gm = std::pow(1.0 + k * (1.0 - std::sqrt(Tr)), 2.0);
   double ans = - a * k * std::sqrt(Tr) * (std::sqrt(gm) + k * std::sqrt(gm)) / 
       (2.0 * T*T * (V*V + 2.0*V*b - b*b));
+  */
+  double ans = sq2*Tk*a*k*t*t*sqrt(Tr)*(-1.0 - k) *
+      log(log_pr(vf, false) * log_pr(v0, true) / 
+          log_pr(vf, true) / log_pr(v0, false)) /
+      (8.0 * Tk * b * t*t*t);
   return ans;
 }
 
 // return cp - cv
-double Peng_Robinson::heat_capac_dif_prs_vol(const parameters state) {
-  double R = parameters_->const_params.R,
-         T = state.temperature,
-         Tr = state.temperature / parameters_->const_params.T_K,
-         V = state.volume,
-         a = model_coef_a_,
-         b = model_coef_b_,
-         k  = model_coef_k_,
-         gm = std::pow(1.0 + k * (1.0 - std::sqrt(Tr)), 2.0);
+double Peng_Robinson::heat_capac_dif_prs_vol(const parameters new_state,
+    const double Tk, double R) {
+  double t  = new_state.temperature,
+         Tr = new_state.temperature / Tk,
+         v  = new_state.volume,
+         a  = model_coef_a_,
+         b  = model_coef_b_,
+         k  = model_coef_k_;
+  /* 26_09_2018 */
+  double gm = std::pow(1.0 + k * (1.0 - std::sqrt(Tr)), 2.0);
   // сначала числитель
-  double num = a * k * std::sqrt(gm * Tr) / (T * (V*V + 2.0 *V*b -b*b)) + R / (V-b); 
-  num = std::pow(num, 2.0);
+  double num = a * k * std::sqrt(gm * Tr) / (t * (v*v + 2.0 *v*b -b*b)) + R / (v-b); 
+  num = -t * std::pow(num, 2.0);
     
   // знаменатель
-  double dec = 2.0 * a*(V + b) * gm / std::pow(V*V + 2.0 * b * V - b*b, 2.0) -
-      R * T / std::pow(V - b, 2.0); 
+  double dec = 2.0 * a*(v + b) * gm / std::pow(v*v + 2.0 * b * v - b*b, 2.0) -
+      R * t / std::pow(v - b, 2.0); 
   // проверка занменателя на => 0.0
-  assert(is_above0(dec) && "Peng_Robinson::heat_capac_dif_prs_vol");
+  // assert(is_above0(dec) && "Peng_Robinson::heat_capac_dif_prs_vol");
   return num / dec;
+  
+ /* double ans = -pow(R/(v-b) + a*k*sqrt(Tr)*(k*(-sqrt(Tr)+1.0)+1.0) / 
+      (t*(-b*b + 2.0*b*v+v*v)), 2.0) / 
+      (-R*t / pow(v-b, 2.0) - a * (-2.0*b-2.0*v) *
+      pow(k * (-sqrt(Tr)+1.0) + 1.0, 2.0) /
+      pow(-b*b + 2.0*b*v + v*v, 2.0));
+  return ans;*/
 }
 
-// функция вызывается из класса GasParameters_dyn
 void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state) {
   // parameters prev_parm = prev_state.parm;
   // internal_energy addition 
-  double du  = internal_energy_integral(new_state);
+  double du  = internal_energy_integral(new_state, prev_state.parm, 
+      parameters_->cgetT_K());
   // heat_capacity_volume addition
-  double dcv = heat_capac_vol_integral(new_state);
+  double dcv = heat_capac_vol_integral(new_state, prev_state.parm, 
+      parameters_->cgetT_K());
   // cp - cv
-  double dif_c = -new_state.temperature * heat_capac_dif_prs_vol(new_state);
+  double dif_c = heat_capac_dif_prs_vol(new_state,
+      parameters_->cgetT_K(), parameters_->cgetR());
   prev_state.internal_energy += du;
   prev_state.heat_cap_vol    += dcv;
-  prev_state.heat_cap_pres   += prev_state.heat_cap_vol + dif_c;
+  prev_state.heat_cap_pres   = prev_state.heat_cap_vol + dif_c;
+#ifdef _DEBUG
+  std::cerr << "\nUPDATE DYN_PARAMETERS2: dcv " << dcv << " dif_c "
+      << dif_c << std::endl; 
+#endif  // _DEBUG
+  prev_state.parm = new_state;
+  prev_state.Update();
+}
+
+// функция вызывается из класса GasParameters_dyn
+void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
+    const parameters new_state, const const_parameters &cp) {
+  set_model_coef(cp);
+  double du  = internal_energy_integral(new_state, prev_state.parm, cp.T_K);
+  // heat_capacity_volume addition
+  double dcv = heat_capac_vol_integral(new_state, prev_state.parm, cp.T_K);
+  // cp - cv
+  double dif_c = heat_capac_dif_prs_vol(new_state,
+      cp.T_K, cp.R);
+  prev_state.internal_energy += du;
+  prev_state.heat_cap_vol    += dcv;
+  prev_state.heat_cap_pres   = prev_state.heat_cap_vol + dif_c;
+#ifdef _DEBUG
+  std::cerr << "\nUPDATE DYN_PARAMETERS2: dcv " << dcv << " dif_c "
+      << dif_c << std::endl; 
+#endif  // _DEBUG
   prev_state.parm = new_state;
   prev_state.Update();
 }

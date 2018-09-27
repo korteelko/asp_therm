@@ -1,5 +1,5 @@
-#ifndef _CORE__MODELS__MODEL_PENG_ROBINSON_H_
-#define _CORE__MODELS__MODEL_PENG_ROBINSON_H_
+#ifndef _CORE_MODELS__MODEL_PENG_ROBINSON_H_
+#define _CORE_MODELS__MODEL_PENG_ROBINSON_H_
 
 #include "gas_mix_init.h"
 #include "model_general.h"
@@ -12,21 +12,30 @@ class Peng_Robinson: public modelGeneral {
          model_coef_k_;
 
 private:
-  Peng_Robinson(modelName mn, parameters prs, const_parameters cgp,
-      dyn_parameters dgp, binodalpoints bp);
-  // Init gas_mix
-  Peng_Robinson(modelName mn, parameters prs, parameters_mix components,
+  Peng_Robinson(modelName mn, parameters prs,
+      const_parameters cgp, dyn_parameters dgp,
       binodalpoints bp);
+  // Init gas_mix
+  Peng_Robinson(modelName mn, parameters prs,
+      parameters_mix components, binodalpoints bp);
 
   void set_model_coef();
+  void set_model_coef(const const_parameters &cp);
 
 protected:
   void update_dyn_params(dyn_parameters &prev_state,
       const parameters new_state) override;
+  void update_dyn_params(dyn_parameters &prev_state,
+      const parameters new_state, const const_parameters &cp) override;
 
-  double internal_energy_integral(const parameters state);
-  double heat_capac_vol_integral(const parameters state);
-  double heat_capac_dif_prs_vol(const parameters state);
+// integrals for calculating u, cv and cv
+  double log_pr(double v, bool is_posit);
+  double internal_energy_integral(const parameters new_state,
+      const parameters prev_state, const double Tk);
+  double heat_capac_vol_integral(const parameters new_state,
+      const parameters prev_state, const double Tk);
+  double heat_capac_dif_prs_vol(const parameters new_state,
+      const double Tk, double R);
 
 public:
   static Peng_Robinson *Init(modelName mn, parameters prs,
@@ -49,4 +58,4 @@ public:
   double GetCoefficient_k() const;
 };
 
-#endif  // ! _CORE__MODELS__MODEL_PENG_ROBINSON_H_
+#endif  // ! _CORE_MODELS__MODEL_PENG_ROBINSON_H_

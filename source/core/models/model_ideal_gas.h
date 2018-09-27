@@ -26,6 +26,9 @@ public:
   void update_dyn_params(dyn_parameters &prev_state,
       const parameters new_state) override;
   
+  void update_dyn_params(dyn_parameters &prev_state,
+      const parameters new_state, const const_parameters &cp) override;
+
   bool IsValid() const override;
   void DynamicflowAccept(DerivateFunctor &df) override;
 

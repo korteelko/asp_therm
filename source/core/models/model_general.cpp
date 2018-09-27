@@ -11,19 +11,13 @@
 /// Одноэлементный газ
 modelGeneral::modelGeneral(modelName mn, parameters prs,
     const_parameters cgp, dyn_parameters dgp, binodalpoints bp)
-  : parameters_(std::unique_ptr<GasParameters>(
-        GasParameters_dyn::Init(prs, cgp, dgp, this))),
-    phasediag_model_(mn), bp_(bp)
-   /* bp_(PhaseDiagram::GetCalculated().GetBinodalPoints(cgp.V_K,
-          cgp.P_K, cgp.T_K, phasediag_model_, cgp.acentricfactor))*/ {
-}
+  : parameters_(nullptr),
+    phasediag_model_(mn), bp_(bp) {}
 
 /// Газовая смесь
 modelGeneral::modelGeneral(modelName mn, parameters prs, parameters_mix components,
     binodalpoints bp)
-  : parameters_(std::unique_ptr<GasParameters>(
-        GasParameters_mix_dyn::Init(prs, components, this))),
-    phasediag_model_(mn), bp_(bp) {}
+  : parameters_(nullptr), phasediag_model_(mn), bp_(bp) {}
 
 modelGeneral::~modelGeneral() {}
 
@@ -102,4 +96,26 @@ parameters modelGeneral::GetParametersCopy() const {
 
 const_parameters modelGeneral::GetConstParameters() const {
   return parameters_->cgetConstparameters();
+}
+
+std::string modelGeneral::ParametersString() const {
+  char str[256] = {0};
+  auto prs  = parameters_->cgetParameters();
+  auto dprs = parameters_->cgetDynParameters();
+  sprintf(str, "%08.2f %08.4f %08.2f %08.2f %08.2f %08.2f\n", prs.pressure, prs.volume,
+      prs.temperature, dprs.heat_cap_vol, dprs.heat_cap_pres, dprs.internal_energy);
+  return std::string(str);
+}
+
+std::string modelGeneral::ConstParametersString() const {
+  char str[256] = {0};
+  const_parameters &cprs = parameters_->const_params;
+  sprintf(str, "  Critical pnt: p=%8.2f; v=%8.4f; t=%8.2f\n"
+      "  Others: mol_m=%6.3f R=%8.3f ac_f=%6.4f\n", cprs.P_K, cprs.V_K, cprs.T_K,
+      cprs.molecularmass, cprs.R, cprs.acentricfactor);
+  return std::string(str);
+}
+
+std::string modelGeneral::sParametersStringHead() {
+  return "pressure volume   temperat cv       cp       u\n";
 }

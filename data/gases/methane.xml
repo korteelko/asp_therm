@@ -5,7 +5,7 @@
     <group name="constants">
       <subgroup name="critical_point">
         <parameter name="volume"> 0.0061728395 </parameter>
-        <parameter name="pressure"> 4.226 </parameter>
+        <parameter name="pressure"> 4226000 </parameter>
         <parameter name="temperature"> 190.66 </parameter>
       </subgroup>
       <subgroup name="const_parameters">
@@ -16,7 +16,7 @@
     <group name="dynamics">
       <subgroup name="point">
         <parameter name="volume"> 1.42 </parameter>        
-        <parameter name="pressure"> 0.1 </parameter>
+        <parameter name="pressure"> 100000 </parameter>
         <parameter name="temperature"> 275 </parameter>
       </subgroup>
       <subgroup name="capacities">
