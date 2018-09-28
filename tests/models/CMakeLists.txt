@@ -5,7 +5,9 @@ set (PROJECT_NAME test_models)
 project(${PROJECT_NAME})
 
 add_definitions(-D_DEBUG)
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+# i have problem with vscode
+add_definitions(-D_IDE_VSCODE)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 
 if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -56,4 +58,4 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
 add_executable(${PROJECT_NAME} ${SRC_MODELS_TEST})
 # 29.09.2018
 # target_link_libraries(${PROJECT_NAME} lmodels pugixml)
-target_link_libraries(${PROJECT_NAME} lmodels)
+target_link_libraries(${PROJECT_NAME} lmodels pugixml)

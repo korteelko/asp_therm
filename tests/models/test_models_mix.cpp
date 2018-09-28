@@ -5,6 +5,7 @@
 #include "filereader.h"
 #include "xmlreader.h"
 #include "model_redlich_kwong.h"
+#include "model_peng_robinson.h"
 
 #include <vector>
 
@@ -17,21 +18,17 @@
 #  define getcwd _getcwd
 #endif  // _OS
 
+// #define RK2_TEST
+#define PR_TEST
+
+#ifdef _IDE_VSCODE
+const std::string xml_path = "/../asp_therm/data/gases/";
+#else
 const std::string xml_path = "/../../asp_therm/data/gases/";
+#endif  // IDE_VSCODE
 const std::string xml_methane = "methane.xml";
 const std::string xml_ethane = "ethane.xml";
 const std::string xml_propane = "propane.xml";
-
-/*
-static int getcwd_cross(char *src, int src_len) {
-  assert(0);
-#ifdef _OS_NIX
-  return getcwd(src, src_len);
-#elif _OS_WIN
-  
-#endif 
-}
-*/
 
 int test_models() {
   char cwd[512] = {0};
@@ -56,18 +53,24 @@ int test_models() {
     return 2;
   }
   PhaseDiagram &pd = PhaseDiagram::GetCalculated();
+  // ссылочку а не объект
   binodalpoints bp = pd.GetBinodalPoints(cp->V_K, cp->P_K, cp-> T_K,
       modelName::REDLICH_KWONG2, cp->acentricfactor);
-  Redlich_Kwong2 *rk2 = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
+#if defined(RK2_TEST)
+  Redlich_Kwong2 *calc_mod = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
       {1.42, 100000, 275}, *cp, *dp, bp);
-  std::cerr << rk2->ParametersString() << std::flush;
+#elif defined(PR_TEST)
+  Peng_Robinson *calc_mod = Peng_Robinson::Init(modelName::PENG_ROBINSON,
+      {1.42, 100000, 275}, *cp, *dp, bp);
+#endif  // _TEST
+  std::cerr << calc_mod->ParametersString() << std::flush;
   std::cerr << "Set volume(10e5, 314)\n" << std::flush;
-  rk2->SetVolume(100000, 314);
-  std::cerr << rk2->ConstParametersString() << std::flush;
+  calc_mod->SetVolume(100000, 314);
+  std::cerr << calc_mod->ConstParametersString() << std::flush;
   std::cerr << modelGeneral::sParametersStringHead() << std::flush;
-  std::cerr << rk2->ParametersString() << std::flush;
-//  std::cerr << "\n vol  " << rk2->GetVolume(25000000, 365.85) <<
-//               "\n pres " << rk2->GetPressure(0.007267, 365.85) << std::flush;
+  std::cerr << calc_mod->ParametersString() << std::flush;
+//  std::cerr << "\n vol  " << calc_mod->GetVolume(25000000, 365.85) <<
+//               "\n pres " << calc_mod->GetPressure(0.007267, 365.85) << std::flush;
   return 0;
 }
 
@@ -102,14 +105,19 @@ int test_models_mix() {
     return 1;
   }
   PhaseDiagram &pd = PhaseDiagram::GetCalculated();
-  binodalpoints bp = pd.GetBinodalPoints(*prs_mix, modelName::REDLICH_KWONG2);
-  Redlich_Kwong2 *rk2 = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
+  binodalpoints bp = pd.GetBinodalPoints(*prs_mix, modelName::PENG_ROBINSON);
+#if defined(RK2_TEST)
+  Redlich_Kwong2 *calc_mod = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
       {1.42, 100000, 275}, *prs_mix, bp);
-  std::cerr << rk2->ConstParametersString() << std::flush;
+#elif defined(PR_TEST)
+  Peng_Robinson *calc_mod = Peng_Robinson::Init(modelName::PENG_ROBINSON,
+      {1.42, 100000, 275}, *prs_mix, bp);
+#endif  // _TEST
+  std::cerr << calc_mod->ConstParametersString() << std::flush;
   std::cerr << modelGeneral::sParametersStringHead() << std::flush;
-  std::cerr << rk2->ParametersString() << std::flush;
-  rk2->SetVolume(100000, 314);
+  std::cerr << calc_mod->ParametersString() << std::flush;
+  calc_mod->SetVolume(100000, 314);
   std::cerr << "Set volume(10e5, 314)\n" << std::flush;
-  std::cerr << rk2->ParametersString() << std::flush;
+  std::cerr << calc_mod->ParametersString() << std::flush;
   return 0;
 }

@@ -3,6 +3,7 @@
 #include "gas_description_dynamic.h"
 #include "models_math.h"
 #include "models_errors.h"
+#include "models_math.h"
 
 #include <cmath>
 #ifdef _DEBUG
@@ -135,8 +136,8 @@ void Redlich_Kwong2::update_dyn_params(dyn_parameters &prev_state,
   // heat_capacity_volume addition
   double dcv = heat_capac_vol_integral(new_state, prev_state.parm);
   // cp - cv
-  double dif_c = -new_state.temperature * heat_capac_dif_prs_vol(
-      new_state, parameters_->const_params.R);
+  double dif_c = heat_capac_dif_prs_vol(new_state, 
+      parameters_->const_params.R);
   prev_state.internal_energy += du;
   prev_state.heat_cap_vol    += dcv;
   prev_state.heat_cap_pres   = prev_state.heat_cap_vol + dif_c;

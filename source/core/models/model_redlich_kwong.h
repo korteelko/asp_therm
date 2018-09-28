@@ -22,6 +22,7 @@ private:
 
   void set_model_coef();
   // set temp coefficient for gas_mix initialization
+  // TODO: do this method virtual
   void set_model_coef(const const_parameters &cp);
 
 protected:
