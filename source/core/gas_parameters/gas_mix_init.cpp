@@ -50,8 +50,8 @@ static std::array<double, 5> get_average_params(
     avr_vals[1] += x.first * x.second.first.P_K;
     avr_vals[2] += x.first * x.second.first.T_K;
 
-    avr_vals[3]+= x.first * x.second.first.molecularmass;
-    avr_vals[4]*= x.first * x.second.first.acentricfactor;
+    avr_vals[3] += x.first * x.second.first.molecularmass;
+    avr_vals[4] *= x.first * x.second.first.acentricfactor;
   }
   avr_vals[4] = std::pow(avr_vals[4], 1.0 / components.size());
   return avr_vals;
@@ -65,49 +65,6 @@ GasParameters_mix::GasParameters_mix(parameters prs, const_parameters cgp,
   : GasParameters(prs, cgp, dgp), components_(components) {}
 
  GasParameters_mix::~GasParameters_mix() {}
-/*
-GasParameters_mix *GasParameters_mix::Init(parameters prs,
-      parameters_mix components) {
-  if (components.empty()) {
-    set_error_code(ERR_INIT | ERR_INIT_NULLP | ERR_GAS_MIX);
-    return nullptr;
-  }
-    // РАСЧИТАЕМ СРЕДНИЕ КОНСТАНТНЫЕ ПАРАМЕТРЫ
-  reset_error();
-  // количество параметров и их значения для критической точки
-  // АДИТИВНЫЕ ПАРАМЕТРЫ СМЕСИ (молекулярная масса и газовая постоянная)
-  std::array<double, 5> avr_vals = get_average_params(components);
-  // инициализируем постоянные параметры
-  // init gasmix const_parameters
-  std::unique_ptr<const_parameters> tmp_cgp(const_parameters::Init(
-      avr_vals[0], avr_vals[1], avr_vals[2],
-      avr_vals[3], avr_vals[4]));
-  if (tmp_cgp == nullptr) {
-    set_error_code(ERR_INIT | ERR_GAS_MIX | ERR_CALC_GAS_P);
-    return nullptr;
-  }
-  // В отличии от динамики, здесь мы не можем пересчитать
-  //   динамические параметры газа к текущему состоянию
-  //   и, о Боги, класы газовой статики полезны только для
-  //   ининициализированной области и как плохой пример
-  // Просто проверим не сильно ли разнятся значения давления,
-  //   объёма и температуры, по которым были расчитаны Cp & Cv
-
-  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  // UPD 07_05_2018
-  //   Статика не нужна, выкидываем Init методы,
-  //     непреодолимая сложность в физической интерпретации
-  const dyn_parameters &avr_dyn = components.begin()->second.second;
-  std::array<double, 2> dgp_tmp = {
-      components.begin()->first * avr_dyn.heat_cap_vol,
-      components.begin()->first * avr_dyn.heat_cap_pres,
-  };
- // for (auto i = ++components.begin(); i !=components.end(); ++i) {
-   // dgp_tmp[0] += x.first * x.second.heat_cap_vol;
-   // dgp_tmp[1] += x.first * x.second.heat_cap_pres;
- // }
-}*/
-
 
 // =========================================================
 // GasParameters_mix_dyn methods
@@ -160,7 +117,7 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
   std::vector<std::pair<double, dyn_parameters>> dgp_cpt;
   for (auto const &x : components) {
     dgp_cpt.push_back({x.first, x.second.second});
-    mg->update_dyn_params(dgp_cpt.back().second, prs);
+    mg->update_dyn_params(dgp_cpt.back().second, prs, x.second.first);
   }
   std::array<double, 3> dgp_tmp = {0.0, 0.0, 0.0};
   for (auto const &x : dgp_cpt) {

@@ -1,5 +1,6 @@
 #include "model_peng_robinson.h"
 
+#include "gas_description_dynamic.h"
 #include "models_errors.h"
 #include "models_math.h"
 
@@ -21,12 +22,16 @@ void Peng_Robinson::set_model_coef() {
 Peng_Robinson::Peng_Robinson(modelName mn, parameters prs,
     const_parameters cgp, dyn_parameters dgp, binodalpoints bp)
   : modelGeneral::modelGeneral(mn, prs, cgp, dgp, bp) {
+  parameters_ = std::unique_ptr<GasParameters>(
+      GasParameters_dyn::Init(prs, cgp, dgp, this));
   set_model_coef();
 }
 
 Peng_Robinson::Peng_Robinson(modelName mn, parameters prs,
     parameters_mix components, binodalpoints bp) 
     : modelGeneral::modelGeneral(mn, prs, components, bp) {
+  parameters_ = std::unique_ptr<GasParameters>(
+      GasParameters_mix_dyn::Init(prs, components, this));
   set_model_coef();
 }
 
@@ -35,7 +40,7 @@ Peng_Robinson *Peng_Robinson::Init(modelName mn, parameters prs,
   // check const_parameters
   reset_error();
   bool is_valid = is_valid_cgp(cgp) && is_valid_dgp(dgp);
-  is_valid &= (!is_above0(prs.pressure, prs.temperature, prs.volume));
+  is_valid &= (is_above0(prs.pressure, prs.temperature, prs.volume));
   if (!is_valid) {
     set_error_code(ERR_INIT_T | ERR_INIT_ZERO_ST);
     return nullptr;
@@ -142,6 +147,11 @@ void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
   prev_state.heat_cap_pres   += prev_state.heat_cap_vol + dif_c;
   prev_state.parm = new_state;
   prev_state.Update();
+}
+
+void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
+    const parameters new_state, const const_parameters &cp) {
+  assert(0 && "Peng_Robinson update gas_parameters for init GasParameter");
 }
 
 void Peng_Robinson::DynamicflowAccept(DerivateFunctor &df) {

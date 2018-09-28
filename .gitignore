@@ -1,7 +1,11 @@
 doc/
 libs/
+build/
+.vscode/
+.vs/
 source/flow_modeling/
 CMakeLists.txt.user
+CMakeSettings.json
 *.swp
 test/subroutins/CMakeLists.txt.user
 test/models/CMakeLists.txt.user

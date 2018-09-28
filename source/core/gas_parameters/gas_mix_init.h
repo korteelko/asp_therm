@@ -28,6 +28,12 @@
 typedef std::pair<const_parameters, dyn_parameters>
     const_dyn_parameters;
 //                молярная доля, % ; параметры доли
+/*
+struct parameters_mix {
+  const double part;
+  const_dyn_parameters cdp;
+};
+*/
 typedef std::multimap<const double, const_dyn_parameters> parameters_mix;
 
 /* занесено в класс GasParameters_mix_dyn 
@@ -62,7 +68,7 @@ class GasParameters_mix_dyn final : public GasParameters_mix {
   // previous pressure, volume and temperature
   parameters         prev_vpte_;
   // function for update dyn_parameters
-  modelGeneral      *model_;
+  modelGeneral       *model_;
   // function for update dyn_parameters
   // dyn_params_update  update_f_;
   // potentials      potentials_;

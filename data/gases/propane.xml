@@ -1,37 +1,37 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<gas name="ethane" version="1.0">
+<gas name="propane" version="1.0">
   <section name="parameters">
     <!-- [v]=m3/kg [p]=MPa [t]=K -->
     <group name="constants">
       <subgroup name="critical_point">
-        <parameter name="volume"> 0.0049 </parameter>
-        <parameter name="pressure"> 4871000 </parameter>
-        <parameter name="temperature"> 305.33 </parameter>
+        <parameter name="volume"> 0.0045 </parameter>
+        <parameter name="pressure"> 4255000 </parameter>
+        <parameter name="temperature"> 369.9 </parameter>
       </subgroup>
       <subgroup name="const_parameters">
-        <parameter name="molec_mass"> 30.07 </parameter>
-        <parameter name="acentric"> 0.105 </parameter>
+        <parameter name="molec_mass"> 44.097 </parameter>
+        <parameter name="acentric"> 0.152 </parameter>
       </subgroup>
     </group>
     <group name="dynamics">
       <subgroup name="point">
-        <parameter name="volume"> 0.7528 </parameter>        
+        <parameter name="volume"> 0.5333 </parameter>        
         <parameter name="pressure"> 100000 </parameter>
-        <parameter name="temperature"> 275 </parameter>
+        <parameter name="temperature"> 288 </parameter>
       </subgroup>
       <subgroup name="capacities">
         <!-- cp by Wiki, cv by Mayer law -->
         <!-- http://www.peacesoftware.de/einigewerte/ethan_e.html -->
-        <parameter name="heat_cap_vol"> 1383 </parameter>
-        <parameter name="heat_cap_pres"> 1670 </parameter>
+        <parameter name="heat_cap_vol"> 1381.5  </parameter>
+        <parameter name="heat_cap_pres"> 1570 </parameter>
       </subgroup>
     </group>
   </section>
   <section name="data">
     <group name="chemestry">
       <subgroup name="data">
-        <parameter name="formula"> C2H6 </parameter>
-        <parameter name="image_url"> Ethane-A-3D-balls.png </parameter>
+        <parameter name="formula"> C3H8 </parameter>
+        <parameter name="image_url"> !!! </parameter>
       </subgroup>
     </group>
   </section>

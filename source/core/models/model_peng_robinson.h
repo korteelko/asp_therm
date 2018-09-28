@@ -23,6 +23,8 @@ private:
 protected:
   void update_dyn_params(dyn_parameters &prev_state,
       const parameters new_state) override;
+  void update_dyn_params(dyn_parameters &prev_state,
+      const parameters new_state, const const_parameters &cp) override;
 
   double internal_energy_integral(const parameters state);
   double heat_capac_vol_integral(const parameters state);

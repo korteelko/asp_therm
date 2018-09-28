@@ -1,10 +1,13 @@
 #include "model_redlich_kwong.h"
 
+#include "gas_description_dynamic.h"
 #include "models_math.h"
 #include "models_errors.h"
 
 #include <cmath>
-// #include <iostream>
+#ifdef _DEBUG
+#  include <iostream>
+#endif  // _DEBUG
 
 #include <assert.h>
 
@@ -15,29 +18,34 @@ void Redlich_Kwong2::set_model_coef() {
       parameters_->cgetP_K();
 }
 
+void Redlich_Kwong2::set_model_coef(
+    const const_parameters &cp) {
+  model_coef_a_ = 0.42748 * std::pow(cp.R, 2.0) *
+      std::pow(cp.T_K, 2.5) / cp.P_K,
+  model_coef_b_ = 0.08664 * cp.R * cp.T_K / cp.P_K;
+}
+
 Redlich_Kwong2::Redlich_Kwong2(modelName mn, parameters prs,
     const_parameters cgp, dyn_parameters dgp, binodalpoints bp)
   : modelGeneral::modelGeneral(mn, prs, cgp, dgp, bp) {
+  parameters_ = std::unique_ptr<GasParameters>(
+      GasParameters_dyn::Init(prs, cgp, dgp, this));
   set_model_coef();
 }
 
 Redlich_Kwong2::Redlich_Kwong2(modelName mn, parameters prs,
     parameters_mix components, binodalpoints bp)
   : modelGeneral(mn, prs, components, bp) {
+  parameters_ = std::unique_ptr<GasParameters>(
+      GasParameters_mix_dyn::Init(prs, components, this));
   set_model_coef();
 }
 
 Redlich_Kwong2 *Redlich_Kwong2::Init(modelName mn, parameters prs,
     const_parameters cgp, dyn_parameters dgp, binodalpoints bp) {
   reset_error();
-  // check const_parameters
- /* if (!is_above0(cgp.acentricfactor, cgp.molecularmass,
-      cgp.P_K, cgp.R, cgp.T_K,cgp.V_K)) {
-    set_error_code(ERR_INIT | ERR_INIT_ZERO);
-    return nullptr;
-  } */
   bool is_valid = is_valid_cgp(cgp) && is_valid_dgp(dgp);
-  is_valid &= (!is_above0(prs.pressure, prs.temperature, prs.volume));
+  is_valid &= is_above0(prs.pressure, prs.temperature, prs.volume);
   if (!is_valid) {
     set_error_code(ERR_INIT_T | ERR_INIT_ZERO_ST);
     return nullptr;
@@ -58,7 +66,8 @@ Redlich_Kwong2 *Redlich_Kwong2::Init(modelName mn, parameters prs,
   // check const_parameters
   reset_error();
   bool is_valid = !components.empty();
-  is_valid &= (!is_above0(prs.pressure, prs.temperature, prs.volume));
+  if (is_valid)
+    is_valid = is_above0(prs.pressure, prs.temperature, prs.volume);
   if (!is_valid) {
     set_error_code(ERR_INIT_T | ERR_INIT_ZERO_ST | ERR_GAS_MIX);
     return nullptr;
@@ -74,59 +83,92 @@ Redlich_Kwong2 *Redlich_Kwong2::Init(modelName mn, parameters prs,
  }
 
 //  расчёт смотри в ежедневнике
+//  UPD: Matlab/GNUOctave files in dir somemath
 
   // u(p, v, T) = u0 + integrate(....)dv
 //   return  u-u0
-double Redlich_Kwong2::internal_energy_integral(const parameters state) {
+double Redlich_Kwong2::internal_energy_integral(const parameters new_state,
+    const parameters old_state) {
   double ans = 3.0 * model_coef_a_ *
-      log(state.volume / (state.volume + model_coef_b_)) /
-      (2.0 * sqrt(state.temperature) * model_coef_b_);
+      log((new_state.volume * (old_state.volume + model_coef_b_) /
+          (old_state.volume * (new_state.volume + model_coef_b_)))) /
+      (2.0 * sqrt(new_state.temperature) * model_coef_b_);
   return ans;
 }
 
 // cv(p, v, T) = cv0 + integrate(...)dv
 //   return cv - cv0
-double Redlich_Kwong2::heat_capac_vol_integral(const parameters state) {
-  double ans = - 3 * model_coef_a_ *
-      log(state.volume / (state.volume + model_coef_b_)) /
-      (4.0 * pow(state.temperature, 2.5) * model_coef_b_);
+double Redlich_Kwong2::heat_capac_vol_integral(const parameters new_state,
+    const parameters old_state) {
+  double ans = - 3.0 * model_coef_a_ *
+      log((new_state.volume * (old_state.volume + model_coef_b_)) /
+          (old_state.volume * (new_state.volume + model_coef_b_))) /
+      (4.0 * pow(new_state.temperature, 1.5) * model_coef_b_);
   return ans;
 }
 
 // return cp - cv
-double Redlich_Kwong2::heat_capac_dif_prs_vol(const parameters state) {
-  double R = parameters_->const_params.R,
-         T = state.temperature,
-         V = state.volume,
+//   исправлено 22_09_2018
+double Redlich_Kwong2::heat_capac_dif_prs_vol(const parameters new_state,
+    double R) {
+  double T = new_state.temperature,
+         V = new_state.volume,
          a = model_coef_a_,
          b = model_coef_b_;
   // сначала числитель
-  double num = 4.0 * R*R * T*T*T * V*V* (V + b)*(V + b) +
-      4.0*(V*V -b*b)*V*R*a*pow(T, 1.5)  +  a*a * (V-b)*(V-b);
+  // double num = 4.0 * R*R * T*T*T * V*V* (V + b)*(V + b) +
+  //    4.0*(V*V -b*b)*V*R*a*pow(T, 1.5)  +  a*a * (V-b)*(V-b);
+  double num = -T * pow(R/(V-b) + a/(2.0*pow(T, 1.5)*(b+V)*V), 2.0);
   // знаменатель
-  double dec = 4.0 * a * (2.0*V*V*V - 3*b*V*V + b*b*b)*pow(T, 1.5) - 
-      4.0 * V*V * R * T*T*T*T * (V+b)*(V+b);
-  // проверка занменателя на => 0.0
-  assert(is_above0(dec) && "Redlich_Kwong2::heat_capac_dif_prs_vol");
+  // double dec = 4.0 * a * (2.0*V*V*V - 3*b*V*V + b*b*b)*pow(T, 1.5) - 
+  //    4.0 * V*V * R * T*T*T*T * (V+b)*(V+b);
+  double dec = - R*T/pow(V-b, 2.0) + a/(sqrt(T)*V*pow(b+V, 2.0)) + 
+      a/(sqrt(T)*V*V*(V+b));
   return num / dec;
 }
 
-// функция вызывается из класса GasParameters_dyn
 void Redlich_Kwong2::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state) {
   // parameters prev_parm = prev_state.parm;
   // internal_energy addition 
-  double du  = internal_energy_integral(new_state);
+  double du  = internal_energy_integral(new_state, prev_state.parm);
   // heat_capacity_volume addition
-  double dcv = heat_capac_vol_integral(new_state);
+  double dcv = heat_capac_vol_integral(new_state, prev_state.parm);
   // cp - cv
-  double dif_c = -new_state.temperature * heat_capac_dif_prs_vol(new_state);
+  double dif_c = -new_state.temperature * heat_capac_dif_prs_vol(
+      new_state, parameters_->const_params.R);
   prev_state.internal_energy += du;
   prev_state.heat_cap_vol    += dcv;
-  prev_state.heat_cap_pres   += prev_state.heat_cap_vol + dif_c;
+  prev_state.heat_cap_pres   = prev_state.heat_cap_vol + dif_c;
+#ifdef _DEBUG
+  std::cerr << "\nUPDATE DYN_PARAMETERS2: dcv " << dcv << " dif_c "
+      << dif_c << std::endl; 
+#endif  // _DEBUG
   prev_state.parm = new_state;
   prev_state.Update();
 }
+
+// функция вызывается из класса GasParameters_dyn
+void Redlich_Kwong2::update_dyn_params(dyn_parameters &prev_state,
+    const parameters new_state, const const_parameters &cp) {
+  set_model_coef(cp);
+  double du  = internal_energy_integral(new_state, prev_state.parm);
+  // heat_capacity_volume addition
+  double dcv = heat_capac_vol_integral(new_state, prev_state.parm);
+  // cp - cv
+  double dif_c = heat_capac_dif_prs_vol(new_state, cp.R);
+  prev_state.internal_energy += du;
+  prev_state.heat_cap_vol    += dcv;
+  prev_state.heat_cap_pres   = prev_state.heat_cap_vol + dif_c;
+#ifdef _DEBUG
+  std::cerr << "\nUPDATE DYN_PARAMETERS: dcv " << dcv << " dif_c " 
+      << dif_c << std::endl; 
+#endif  // _DEBUG
+  prev_state.parm = new_state;
+  prev_state.Update();
+}
+  // 20_09_2018
+  // return num / dec;
 
 // visitor
 void Redlich_Kwong2::DynamicflowAccept(DerivateFunctor &df) {

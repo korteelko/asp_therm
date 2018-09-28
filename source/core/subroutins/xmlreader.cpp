@@ -63,7 +63,7 @@ XMLReader::XMLReader(std::string gas_xml_file)
       new pugi::xml_node());
   *xml_root_node_ = xml_doc_.child("gas");
   gas_root_node_  = std::unique_ptr<gas_node>(new gas_node(
-      GAS_NODE_T_ROOT,"gas"));
+      GAS_NODE_T_ROOT, "gas"));
   tree_traversal(xml_root_node_.get(), gas_root_node_.get());
 }
 

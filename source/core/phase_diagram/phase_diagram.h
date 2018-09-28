@@ -92,7 +92,7 @@ private:
 
 public:
   // Просто метод возвращающий Синглетон-объект
-  static PhaseDiagram& GetCalculated();
+  static PhaseDiagram &GetCalculated();
   // Рассчитать или получить копию, если уже было рассчитано,
   //   для этих параметров, точек на бинодали.
   binodalpoints GetBinodalPoints(double VK, double PK, double TK,

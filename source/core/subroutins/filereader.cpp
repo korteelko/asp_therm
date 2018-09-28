@@ -18,22 +18,17 @@
 
 // statndart paths
 namespace {
-  std::vector<std::string> critical_point_path {
-    "parameters", "constants", "critical_point"
-  };
-  std::vector<std::string> const_parameters_path {
-    "parameters", "constants", "const_parameters"
-  };
-  std::vector<std::string> dynamic_point_path {
-    "parameters", "dynamics", "point"
-  };
-  std::vector<std::string> dynamic_capacities_path {
-    "parameters", "dynamics", "capacities"
-  };
+std::vector<std::string> critical_point_path {
+  "parameters", "constants", "critical_point"};
+std::vector<std::string> const_parameters_path {
+  "parameters", "constants", "const_parameters"};
+std::vector<std::string> dynamic_point_path {
+  "parameters", "dynamics", "point"};
+std::vector<std::string> dynamic_capacities_path {
+  "parameters", "dynamics", "capacities"};
 
 const std::string cp_names[CP_PARAMETERS_COUNT] = {
-    "volume", "pressure", "temperature"
-};
+    "volume", "pressure", "temperature"};
 
 // ===========================================================================
 // implicit declarations
@@ -54,12 +49,12 @@ double get_intern_energy(double cv, double temper) {
 }  // unnamed namespace
 
 bool operator< (const gas_mix_file &lg, const gas_mix_file &rg) {
-  return strcmp(lg.filename, rg.filename) <= 0;
+  return strcmp(lg.filename.c_str(), rg.filename.c_str()) <= 0;
 }
+
 // ===========================================================================
 // XmlGas class
 // ===========================================================================
-
 XmlFile::XmlFile(XMLReader *xml_doc)
   : xml_doc_(xml_doc) {}
 
@@ -70,7 +65,7 @@ XmlFile *XmlFile::Init(const std::string filename) {
   return new XmlFile(xml_doc);
 }
 
-std::unique_ptr<const_parameters> XmlFile::GetConstParameters() {
+std::shared_ptr<const_parameters> XmlFile::GetConstParameters() {
   reset_error();
   if (xml_doc_ == nullptr)
     return nullptr;
@@ -83,16 +78,17 @@ std::unique_ptr<const_parameters> XmlFile::GetConstParameters() {
   tmp_vec.push_back("");
   for (int i = 0; i < CP_PARAMETERS_COUNT; ++i)
     cp[i] = get_val(tmp_vec, cp_names[i], xml_doc_);
+  // cp[CP_PRESSURE] *= 1000000;
   // fuuuuuuuuuuuuuu
   tmp_vec[XML_PATHLEN_SUBGROUP - 1] =
       const_parameters_path[XML_PATHLEN_SUBGROUP - 1];
   mol = get_val(tmp_vec, "molec_mass", xml_doc_);
   af  = get_val(tmp_vec, "acentric", xml_doc_);
-  return std::unique_ptr<const_parameters>(const_parameters::Init(
+  return std::shared_ptr<const_parameters>(const_parameters::Init(
       cp[0], cp[1], cp[2], mol, af));
 }
 
-std::unique_ptr<dyn_parameters> XmlFile::GetDynParameters() {
+std::shared_ptr<dyn_parameters> XmlFile::GetDynParameters() {
   reset_error();
   if (xml_doc_ == nullptr)
     return nullptr;
@@ -106,12 +102,13 @@ std::unique_ptr<dyn_parameters> XmlFile::GetDynParameters() {
   tmp_vec.push_back("");
   for (int i = 0; i < CP_PARAMETERS_COUNT; ++i)
     cp[i] = get_val(tmp_vec, cp_names[i], xml_doc_);
+  // cp[CP_PRESSURE] *= 1000000;
   // fuuuuuuuuuuuuuu
   tmp_vec[XML_PATHLEN_SUBGROUP - 1] =
       dynamic_capacities_path[XML_PATHLEN_SUBGROUP - 1];
   hcv = get_val(tmp_vec, "heat_cap_vol", xml_doc_);
   hcp = get_val(tmp_vec, "heat_cap_pres", xml_doc_);
-  return std::unique_ptr<dyn_parameters>(dyn_parameters::Init(
+  return std::shared_ptr<dyn_parameters>(dyn_parameters::Init(
       hcv, hcp, get_intern_energy(hcv, cp[CP_TEMPERATURE]),
       parameters{cp[0], cp[1], cp[2]}));
 }
@@ -124,19 +121,24 @@ XmlFile::~XmlFile() {
 // ===========================================================================
 // GasMix class
 // ===========================================================================
-
-GasMix *GasMix::Init(std::vector<gas_mix_file> parts) {
+GasMix *GasMix::Init(const std::vector<gas_mix_file> &parts) {
   if (check_input(parts))
     return nullptr;
-  const_dyn_parameters *cdp = nullptr;
-  for (const auto &x : pars) {
-    cdp = init_pars(x.first);
-    if (cdp == nullptr) {
+  return new GasMix(parts);
+}
+
+GasMix::GasMix(const std::vector<gas_mix_file> &parts)
+  : is_valid_(true), prs_mix_(nullptr) {
+  prs_mix_ = std::unique_ptr<parameters_mix>(new parameters_mix());
+  for (const auto &x : parts) {
+    auto cdp = init_pars(x.filename);
+    if (cdp.first == nullptr) {
       set_error_message(ERR_INIT_T, "One component of gas mix: ");
-      add_to_error_msg(x.first.c_str());
-      continue;
+      add_to_error_msg(x.filename.c_str());
+      is_valid_ = false;
+      break;
     }
-    assert(0);
+    prs_mix_->insert({x.part, {*cdp.first, *cdp.second}});
   }
 }
 
@@ -164,17 +166,32 @@ int GasMix::check_input(const std::vector<gas_mix_file> &parts) {
   return ERR_SUCCESS_T;
 }
 
-const_dyn_parameters *GasMix::init_pars(const char *filename) {
-  assert(0);
-  std::unique_ptr<XmlFile> xf(XmlFile::Init(filename));
+std::pair<std::shared_ptr<const_parameters>, std::shared_ptr<dyn_parameters>>
+    GasMix::init_pars(const std::string filename) {
+  std::shared_ptr<XmlFile> xf(XmlFile::Init(filename));
   if (xf == nullptr) {
     set_error_message(ERR_FILEIO_T | ERR_FILE_IN_ST, "gas xml init");
-    return nullptr;
+    return {nullptr, nullptr};
   }
+  // unique_ptrs
   auto cp = xf->GetConstParameters();
   auto dp = xf->GetDynParameters();
   if ((cp == nullptr) || (dp == nullptr)) {
     set_error_message(ERR_INIT_T, "xml format and const/dyn -parameters");
-    return nullptr;
+    /*
+    if (cp != nullptr) {
+      delete dp;
+    } else {
+      delete cp;
+      if (dp != nullptr)
+        delete dp;
+    }
+    */
+    return {nullptr, nullptr};
   }
+  return {cp, dp};
+}
+
+std::shared_ptr<parameters_mix> GasMix::GetParameters() {
+  return (is_valid_) ? prs_mix_ : nullptr;
 }

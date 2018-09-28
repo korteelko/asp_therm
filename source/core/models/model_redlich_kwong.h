@@ -1,9 +1,11 @@
 #ifndef _CORE_MODELS__MODEL_REDLICH_KWONG_H_
 #define _CORE_MODELS__MODEL_REDLICH_KWONG_H_
 
+#include "common.h"
 #include "gas_mix_init.h"
 #include "model_general.h"
 
+#include <array>
 #include <memory>
 
 class Redlich_Kwong2 final: public modelGeneral {
@@ -19,15 +21,21 @@ private:
       parameters_mix components, binodalpoints bp);
 
   void set_model_coef();
+  // set temp coefficient for gas_mix initialization
+  void set_model_coef(const const_parameters &cp);
 
 protected:
   void update_dyn_params(dyn_parameters &prev_state,
       const parameters new_state) override;
+  void update_dyn_params(dyn_parameters &prev_state,
+      const parameters new_state, const const_parameters &cp) override;
 
 // integrals for calculating u, cv and cv
-  double internal_energy_integral(const parameters state);
-  double heat_capac_vol_integral(const parameters state);
-  double heat_capac_dif_prs_vol(const parameters state);
+  double internal_energy_integral(const parameters new_state,
+      const parameters prev_state);
+  double heat_capac_vol_integral(const parameters new_state,
+      const parameters prev_state);
+  double heat_capac_dif_prs_vol(const parameters new_state, double R);
 
 public:
   static Redlich_Kwong2 *Init(modelName mn, parameters prs,

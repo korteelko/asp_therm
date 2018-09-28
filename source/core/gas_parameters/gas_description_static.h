@@ -14,9 +14,12 @@
  * По сути это совокупность других структур
  *   с элементами ООП
 */
+// 26.09.2018 в зависимости от результатов тестов
+//   возможно стоит её упаковать
+//  
 class GasParameters {
 protected:
-  state_phase sph_;
+  state_phase sph_;  // C4820  ??
   parameters  vpte_;
   // dyn_parameters содержат несколько важных полей
   dyn_parameters  dyn_params_;

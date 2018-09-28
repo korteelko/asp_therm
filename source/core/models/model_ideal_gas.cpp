@@ -1,5 +1,6 @@
 #include "model_ideal_gas.h"
 
+#include "gas_description_dynamic.h"
 #include "models_errors.h"
 #include "models_math.h"
 
@@ -7,11 +8,17 @@
 
 IdealGas::IdealGas(modelName mn, parameters prs, const_parameters cgp,
     dyn_parameters dgp, binodalpoints bp)
-  : modelGeneral::modelGeneral(mn, prs, cgp, dgp, bp) {}
+  : modelGeneral::modelGeneral(mn, prs, cgp, dgp, bp) {
+  parameters_ = std::unique_ptr<GasParameters>(
+      GasParameters_dyn::Init(prs, cgp, dgp, this));
+}
 
 IdealGas::IdealGas(modelName mn, parameters prs, parameters_mix components,
     binodalpoints bp)
-  : modelGeneral::modelGeneral(mn, prs, components, bp) {}
+  : modelGeneral::modelGeneral(mn, prs, components, bp) {
+  parameters_ = std::unique_ptr<GasParameters>(
+      GasParameters_mix_dyn::Init(prs, components, this));
+}
 
 IdealGas *IdealGas::Init(modelName mn, parameters prs,
     const_parameters cgp,
@@ -53,6 +60,10 @@ IdealGas *IdealGas::Init(modelName mn, parameters prs,
 void IdealGas::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state) {
   prev_state.parm = new_state;
+}
+void IdealGas::update_dyn_params(dyn_parameters &prev_state,
+    const parameters new_state, const const_parameters &cp) {
+  assert(0 && "IdealGas update_dyn_params");
 }
 
 bool IdealGas::IsValid() const {
