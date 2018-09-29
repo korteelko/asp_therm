@@ -1,5 +1,5 @@
-#ifndef _CORE_MODELS__MODEL_REDLICH_KWONG_H_
-#define _CORE_MODELS__MODEL_REDLICH_KWONG_H_
+#ifndef _CORE__MODELS__MODEL_REDLICH_KWONG_H_
+#define _CORE__MODELS__MODEL_REDLICH_KWONG_H_
 
 #include "common.h"
 #include "gas_mix_init.h"
@@ -58,4 +58,4 @@ public:
   double GetCoefficient_b() const;
 };
 
-#endif  // ! _CORE_MODELS__MODEL_REDLICH_KWONG_H_
+#endif  // ! _CORE__MODELS__MODEL_REDLICH_KWONG_H_
