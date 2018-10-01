@@ -72,7 +72,6 @@ std::shared_ptr<const_parameters> XmlFile::GetConstParameters() {
   // critical point parameters
   double cp[CP_PARAMETERS_COUNT];
   double mol, af;
-  std::string tmp_str;
   std::vector<std::string> tmp_vec(
     critical_point_path);
   tmp_vec.push_back("");
@@ -96,7 +95,6 @@ std::shared_ptr<dyn_parameters> XmlFile::GetDynParameters() {
   double cp[CP_PARAMETERS_COUNT];
   // heat capacities
   double hcv, hcp;
-  std::string tmp_str;
   std::vector<std::string> tmp_vec(
     dynamic_point_path);
   tmp_vec.push_back("");

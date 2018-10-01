@@ -1,8 +1,10 @@
 #ifndef _CORE__PHASE_DIAGRAM__PHASE_DIAGRAM_H_
 #define _CORE__PHASE_DIAGRAM__PHASE_DIAGRAM_H_
 
-#include "phase_diagram_models.h"
+
 #include "gas_mix_init.h"
+#include "phase_diagram_models.h"
+#include "target_sys.h"
 
 #ifdef BOOST_LIB_ISED
 #include <boost/noncopyable.hpp>
@@ -41,11 +43,13 @@ class binodalpoints {
 public:
   // вектор значений безразмерной температуры по которым будут вычисляться
   //   параметры объёма и давления
-  std::deque<double> t = {0.97, 0.95, 0.92, 0.9, 0.87, 0.85,
-                          0.8, 0.75, 0.7, 0.6, 0.5},
-                     vLeft,
-                     vRigth,
-                     p;
+  std::deque<double> 
+      t = std::deque<double> {
+              0.97, 0.95, 0.92, 0.9, 0.87, 0.85,
+              0.8, 0.75, 0.7, 0.6, 0.5},
+      vLeft,
+      vRigth,
+      p;
 };
 
 // Класс вычисляющий параметры(координаты) точек бинодали
@@ -59,6 +63,8 @@ class PhaseDiagram {
   PhaseDiagram(const PhaseDiagram &) = delete;
   PhaseDiagram &operator=(const PhaseDiagram &) = delete;
 #endif  // BOOST_LIB_ISED
+  typedef std::function<double(double, double, double, double)> integ_func_t;
+  typedef std::function<void(std::vector<double>&, double, double, double)> init_func_t;
   struct uniqueMark {
     uint32_t mn;
     double   acentricfactor;
@@ -71,10 +77,11 @@ class PhaseDiagram {
   //   для многопоточности придётся вводить как минимум ООП исключения
   // std::mutex mtx;
   std::map<uniqueMark, std::shared_ptr<binodalpoints>> calculated_;
-  std::vector<std::function<double(double, double, double, double)>>
-      line_integrate_f_{lineIntegrateRK2(), lineIntegratePR()};
-  std::vector<std::function<void(std::vector<double>&, double, double, double)>>
-      initialize_f_{initializeRK2(), initializePR()};
+  std::vector<integ_func_t> line_integrate_f_ = 
+      std::vector<integ_func_t> {
+          lineIntegrateRK2(), lineIntegratePR()};
+  std::vector<init_func_t> initialize_f_ = 
+      std::vector<init_func_t> {initializeRK2(), initializePR()};
   // DEVELOP
   //   ASSERT
   // static_assert(line_integrate_f_.size() == initialize_f_,

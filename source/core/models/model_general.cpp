@@ -9,15 +9,11 @@
 //==================================================================
 // modelGeneral methods
 //==================================================================
-/// Одноэлементный газ
-modelGeneral::modelGeneral(modelName mn, parameters prs,
-    const_parameters cgp, dyn_parameters dgp, binodalpoints bp)
-  : parameters_(nullptr),
-    phasediag_model_(mn), bp_(bp) {}
+/* modelGeneral::modelGeneral() 
+  : parameters_(nullptr), phasediag_model_(modelName::REDLICH_KWONG2),
+    bp_(binodalpoints()) {} */
 
-/// Газовая смесь
-modelGeneral::modelGeneral(modelName mn, parameters prs, parameters_mix components,
-    binodalpoints bp)
+modelGeneral::modelGeneral(modelName mn, binodalpoints bp)
   : parameters_(nullptr), phasediag_model_(mn), bp_(bp) {}
 
 modelGeneral::~modelGeneral() {}

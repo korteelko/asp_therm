@@ -61,7 +61,7 @@ const_parameters::const_parameters(const const_parameters &cgp)
     molecularmass(cgp.molecularmass), R(cgp.R),
     acentricfactor(cgp.acentricfactor) {}
 
-const_parameters const_parameters::operator= (const const_parameters &cgp) {
+const_parameters &const_parameters::operator= (const const_parameters &cgp) {
   return const_parameters(cgp);
 }
 /*

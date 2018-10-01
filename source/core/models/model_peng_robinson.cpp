@@ -34,7 +34,7 @@ void Peng_Robinson::set_model_coef(
 
 Peng_Robinson::Peng_Robinson(modelName mn, parameters prs,
     const_parameters cgp, dyn_parameters dgp, binodalpoints bp)
-  : modelGeneral::modelGeneral(mn, prs, cgp, dgp, bp) {
+  : modelGeneral(mn, bp) {
   parameters_ = std::unique_ptr<GasParameters>(
       GasParameters_dyn::Init(prs, cgp, dgp, this));
   set_model_coef();
@@ -42,7 +42,7 @@ Peng_Robinson::Peng_Robinson(modelName mn, parameters prs,
 
 Peng_Robinson::Peng_Robinson(modelName mn, parameters prs,
     parameters_mix components, binodalpoints bp) 
-    : modelGeneral::modelGeneral(mn, prs, components, bp) {
+    : modelGeneral(mn, bp) {
   parameters_ = std::unique_ptr<GasParameters>(
       GasParameters_mix_dyn::Init(prs, components, this));
   set_model_coef();
@@ -175,7 +175,8 @@ double Peng_Robinson::heat_capac_dif_prs_vol(const parameters new_state,
 }
 
 
-double Peng_Robinson::get_volume(double p, double t, const_parameters &cp) {
+double Peng_Robinson::get_volume(double p, double t, const const_parameters &cp) {
+  set_model_coef(cp);
   double alf = std::pow(1.0 + model_coef_k_*(1.0 -
       t / cp.T_K), 2.0);
   std::vector<double> coef {
@@ -194,6 +195,17 @@ double Peng_Robinson::get_volume(double p, double t, const_parameters &cp) {
   }
 #endif
   return coef[4];
+}
+
+double Peng_Robinson::get_pressure(double v, double t,
+    const const_parameters &cp) {
+  set_model_coef(cp);
+  const double a = std::pow(1.0 + model_coef_k_ * std::pow(1.0 -
+      std::sqrt(t / cp.T_K), 2.0), 2.0);
+  const double temp = cp.R*t / (v-model_coef_b_) -
+      a * model_coef_a_ /
+      (v*v+2.0*model_coef_b_*v -model_coef_b_*model_coef_b_);
+  return temp;
 }
 
 void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
@@ -238,11 +250,6 @@ void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
 #endif  // _DEBUG
   prev_state.parm = new_state;
   prev_state.Update();
-}
-
-void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
-    const parameters new_state, const const_parameters &cp) {
-  assert(0 && "Peng_Robinson update gas_parameters for init GasParameter");
 }
 
 void Peng_Robinson::DynamicflowAccept(DerivateFunctor &df) {
@@ -308,9 +315,12 @@ double Peng_Robinson::GetVolume(double p, double t) {
   GasParameters_mix_dyn *gpar = dynamic_cast<GasParameters_mix_dyn *>(parameters_.get());
   if (gpar != nullptr) {
     const parameters_mix &cpm = gpar->GetComponents();
-
-    set_model_coef(cp);
-    assert(0);
+    double volume = 0.0;
+    for (auto &x : cpm) {
+      // TODO: кажется метод арифметического среднего не оч
+      volume += x.first * get_volume(p, t, x.second.first);
+    }
+    return volume;
   } else {
     return get_volume(p, t, parameters_->const_params);
   }
@@ -318,17 +328,23 @@ double Peng_Robinson::GetVolume(double p, double t) {
 }
 
 double Peng_Robinson::GetPressure(double v, double t) {
-  assert(0);
   if (!is_above0(v, t)) {
     set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
     return 0.0;
   }
-  const double a = std::pow(1.0 + model_coef_k_ * std::pow(1.0 -
-      std::sqrt(t / parameters_->cgetT_K()), 2.0), 2.0),
-          temp = parameters_->cgetR()*t/(v-model_coef_b_) -
-          a * model_coef_a_ /
-          (v*v+2.0*model_coef_b_*v -model_coef_b_*model_coef_b_);
-  return temp;
+  GasParameters_mix_dyn *gpar = dynamic_cast<GasParameters_mix_dyn *>(parameters_.get());
+  if (gpar != nullptr) {
+    const parameters_mix &cpm = gpar->GetComponents();
+    double pressure = 0.0;
+    for (auto &x : cpm) {
+      // TODO: кажется метод арифметического среднего не оч
+      pressure += x.first * get_pressure(v, t, x.second.first);
+    }
+    return pressure;
+  } else {
+    return get_pressure(v, t, parameters_->const_params);
+  }
+  return 0.0;
 }
 #endif  // !GAS_MIX_VARIANT
 

@@ -1,5 +1,6 @@
 #include "gas_mix_init.h"
 
+#include "common.h"
 #include "models_errors.h"
 #include "model_general.h"
 
@@ -161,6 +162,7 @@ const parameters_mix &GasParameters_mix_dyn::GetComponents() const {
   return components_;
 }
 
+#ifndef GAS_MIX_VARIANT
 void GasParameters_mix_dyn::csetParameters(double v, double p, double t,
     state_phase sp) {
   std::swap(prev_vpte_, vpte_);
@@ -183,3 +185,28 @@ void GasParameters_mix_dyn::csetParameters(double v, double p, double t,
     dyn_params_.beta_kr += x.first * x.second.second.beta_kr;
   }
 }
+#else
+void GasParameters_mix_dyn::csetParameters(double v, double p, double t,
+    state_phase sp) {
+  std::swap(prev_vpte_, vpte_);
+  vpte_.volume       = v;
+  vpte_.pressure     = p;
+  vpte_.temperature  = t;
+  sph_ = sp;
+  for (auto &x : components_)
+    model_->update_dyn_params(x.second.second, vpte_, x.second.first);
+  dyn_params_.heat_cap_vol  = 0.0;
+  dyn_params_.heat_cap_pres = 0.0;
+  dyn_params_.internal_energy = 0.0;
+  dyn_params_.beta_kr = 0.0;
+  dyn_params_.parm = vpte_;
+  for (auto const &x : components_) {
+    dyn_params_.heat_cap_vol  += x.first * x.second.second.heat_cap_vol;
+    dyn_params_.heat_cap_pres += x.first * x.second.second.heat_cap_pres;
+    dyn_params_.internal_energy +=
+        x.first * x.second.second.internal_energy;
+    dyn_params_.beta_kr += x.first * x.second.second.beta_kr;
+  }
+
+}
+#endif  // !GAS_MIX_VARIANT

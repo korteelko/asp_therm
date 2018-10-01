@@ -52,11 +52,7 @@ protected:
  // dyn_params_update params_update_f_;
 
 protected:
-  modelGeneral(modelName mn, parameters prs, const_parameters cgp,
-      dyn_parameters dgp, binodalpoints bp);
-
-  modelGeneral(modelName mn, parameters prs, parameters_mix components,
-      binodalpoints bp);
+  modelGeneral(modelName mn, binodalpoints bp);
 
   state_phase setState_phase(double v, double p, double t);
   int32_t  setState_phasesub(double p);

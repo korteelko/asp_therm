@@ -161,7 +161,7 @@ public:
       double tk, double mol, double af);
 //  static constgasparameters *Init(std::array<double, 5> vec);
   const_parameters(const const_parameters &cgp);
-  const_parameters operator= (const const_parameters &cgp);
+  const_parameters &operator= (const const_parameters &cgp);
 };
 
 // ================================================================

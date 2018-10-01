@@ -8,6 +8,14 @@
 #include <tuple>
 #include <utility>
 
+/*
+binodalpoints::binodalpoints (const binodalpoints &bp) 
+  : t(bp.t), vLeft(bp.vLeft), vRigth(bp.vRigth), p(bp.p) {}
+
+binodalpoints &binodalpoints::operator=(const binodalpoints &bp) {
+  return *this;
+}V*/
+
 void PhaseDiagram::calculateBinodal(
     std::shared_ptr<binodalpoints>& bdp, modelName mn, double acentric) {
   const uint32_t nPoints = bdp->t.size();

@@ -28,7 +28,7 @@ void Redlich_Kwong2::set_model_coef(
 
 Redlich_Kwong2::Redlich_Kwong2(modelName mn, parameters prs,
     const_parameters cgp, dyn_parameters dgp, binodalpoints bp)
-  : modelGeneral::modelGeneral(mn, prs, cgp, dgp, bp) {
+  : modelGeneral(mn, bp) {
   parameters_ = std::unique_ptr<GasParameters>(
       GasParameters_dyn::Init(prs, cgp, dgp, this));
   set_model_coef();
@@ -36,7 +36,7 @@ Redlich_Kwong2::Redlich_Kwong2(modelName mn, parameters prs,
 
 Redlich_Kwong2::Redlich_Kwong2(modelName mn, parameters prs,
     parameters_mix components, binodalpoints bp)
-  : modelGeneral(mn, prs, components, bp) {
+  : modelGeneral(mn, bp) {
   parameters_ = std::unique_ptr<GasParameters>(
       GasParameters_mix_dyn::Init(prs, components, this));
   set_model_coef();

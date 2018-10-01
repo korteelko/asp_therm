@@ -22,11 +22,8 @@
 /// ethane  0.004926    4.871       305.33     30.07        ~1.22     ~1750           0.089
 /// propane 0.004545    4.255       369.9      44.097       ~1.13     ~1750           0.153
 
-#ifndef RK2_TEST
-#  define RK2_TEST
-#else
-#  define PR_TEST
-#endif  // !RK2_TEST
+// #define RK2_TEST
+#define PR_TEST
 
 #ifdef _IDE_VSCODE
 const std::string xml_path = "/../asp_therm/data/gases/";
@@ -34,7 +31,7 @@ const std::string xml_path = "/../asp_therm/data/gases/";
 const std::string xml_path = "/../../asp_therm/data/gases/";
 #endif  // IDE_VSCODE
 const std::string xml_methane = "methane.xml";
-const std::string xml_ethane = "ethane.xml";
+const std::string xml_ethane  = "ethane.xml";
 const std::string xml_propane = "propane.xml";
 
 int main() {
@@ -71,12 +68,14 @@ int main() {
       {1.42, 100000, 275}, *cp, *dp, bp);
 #endif  // _TEST
   std::cerr << calc_mod->ParametersString() << std::flush;
-  std::cerr << "Set volume(10e5, 314)\n" << std::flush;
-  calc_mod->SetVolume(100000, 314);
+  std::cerr << "Set volume(10e6, 314)\n" << std::flush;
+  calc_mod->SetVolume(1000000, 314);
   std::cerr << calc_mod->ConstParametersString() << std::flush;
   std::cerr << modelGeneral::sParametersStringHead() << std::flush;
   std::cerr << calc_mod->ParametersString() << std::flush;
 //  std::cerr << "\n vol  " << calc_mod->GetVolume(25000000, 365.85) <<
 //               "\n pres " << calc_mod->GetPressure(0.007267, 365.85) << std::flush;
+  std::cerr << "Push any key to finish";
+  std::getchar();
   return 0;
 }
