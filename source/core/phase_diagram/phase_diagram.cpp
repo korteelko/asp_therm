@@ -220,7 +220,8 @@ PhaseDiagram::GetBinodalPoints(double VK, double PK,
 binodalpoints
 PhaseDiagram::GetBinodalPoints(parameters_mix &components,
     modelName mn) {
-  std::unique_ptr<const_parameters> cgp = GasParameters_mix_dyn::GetAverageParams(components);
+  std::unique_ptr<const_parameters> cgp = 
+      GasParameters_mix_dyn::GetAverageParams(components);
   return PhaseDiagram::GetBinodalPoints(cgp->V_K, cgp->P_K, cgp->T_K, 
       mn, cgp->acentricfactor);
 }

@@ -189,6 +189,7 @@ void Redlich_Kwong2::SetPressure(double v, double t) {
   setParameters(v, GetPressure(v, t), t);
 }
 
+#ifndef GAS_MIX_VARIANT
 double Redlich_Kwong2::GetVolume(double p, double t) const {
   if (!is_above0(p, t)) {
     set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
@@ -211,7 +212,7 @@ double Redlich_Kwong2::GetVolume(double p, double t) const {
     set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
     return 0.0;
   }
-#endif
+#endif  // _DEBUG
   return coef[4];
 }
 
@@ -224,6 +225,48 @@ double Redlich_Kwong2::GetPressure(double v, double t) const {
       model_coef_a_ / (std::sqrt(t)* v *(v + model_coef_b_));
   return temp;
 }
+#else  // calculate as mix
+double Redlich_Kwong2::GetVolume(double p, double t) {
+  assert(0);
+  if (!is_above0(p, t)) {
+    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    return 0.0;
+  }
+  // tmp_copy of coefficient
+  double cp_a = model_coef_a_, cp_b = model_coef_b_;
+  // for (auto const &x : )
+  std::vector<double> coef {
+      1.0,
+      -parameters_->cgetR()*t/p,
+      model_coef_a_/(p*std::sqrt(t)) - parameters_->cgetR()*
+          t*model_coef_b_/p - model_coef_b_*model_coef_b_,
+      -model_coef_a_*model_coef_b_/(p*std::sqrt(t)),
+      0.0, 0.0, 0.0
+  };
+  // Следующая функция заведомо получает валидные
+  //   данные,  соответственно должна что-то вернуть
+  //   Не будем перегружать код лишними проверками
+  CardanoMethod_HASUNIQROOT(&coef[0], &coef[4]);
+#ifdef _DEBUG
+  if (!is_above0(coef[4])) {
+    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    return 0.0;
+  }
+#endif  // _DEBUG
+  return coef[4];
+}
+
+double Redlich_Kwong2::GetPressure(double v, double t) {
+  assert(0);
+  if (!is_above0(v, t)) {
+    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    return 0.0;
+  }
+  const double temp = parameters_->cgetR() * t / (v - model_coef_b_) -
+      model_coef_a_ / (std::sqrt(t)* v *(v + model_coef_b_));
+  return temp;
+}
+#endif  // !GAS_MIX_VARIANT
 
 double Redlich_Kwong2::GetCoefficient_a() const {
   return model_coef_a_;

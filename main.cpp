@@ -1,13 +1,20 @@
-#include <iostream>
-#include "gas_description.h"
+#include "target_sys.h"
+
+#include "filereader.h"
+#include "xmlreader.h"
 #include "model_redlich_kwong.h"
-#include "phase_diagram.h"
-#include "models_creator.h"
-// #include "core/common/models_output.h"
-// #include "dynamic_modeling.h"
-// #include "inputdata_by_file.h"
-#include "models_errors.h"
-// #include "load_config.h"
+#include "model_peng_robinson.h"
+
+#include <vector>
+
+#include <assert.h>
+
+#if defined (_OS_NIX)
+#  include <unistd.h>
+#elif defined(_OS_WIN)
+#  include <direct.h>
+#  define getcwd _getcwd
+#endif  // _OS
 
 /// gas example input
 ///  gas   |vol,m^3/kg| p,Pa*10^7 |  T,K  |molmass,kg/mol| adiabat,1| cv, J/(kg*K)| acentric factor,1
@@ -15,52 +22,61 @@
 /// ethane  0.004926    4.871       305.33     30.07        ~1.22     ~1750           0.089
 /// propane 0.004545    4.255       369.9      44.097       ~1.13     ~1750           0.153
 
+#ifndef RK2_TEST
+#  define RK2_TEST
+#else
+#  define PR_TEST
+#endif  // !RK2_TEST
+
+#ifdef _IDE_VSCODE
+const std::string xml_path = "/../asp_therm/data/gases/";
+#else
+const std::string xml_path = "/../../asp_therm/data/gases/";
+#endif  // IDE_VSCODE
+const std::string xml_methane = "methane.xml";
+const std::string xml_ethane = "ethane.xml";
+const std::string xml_propane = "propane.xml";
+
 int main() {
-  /*using namespace real_gas_models;
-  try {
-    SetConfigure::setConf();
-  }
-  catch (std::exception &e) {
-    std::cout << e.what() <<std::endl;
+  char cwd[512] = {0};
+  if (!getcwd(cwd, (sizeof(cwd)))) {
+    std::cerr << "cann't get current dir";
     return 1;
-  }*/
- // std::shared_ptr<constgasparameters> cgp (constgasparameters::getInstance(0.00617,4641000.0,190.66,16.04,1.3,1700,0.01));
-
-//  std::shared_ptr<Equation_of_state> PengRobinModel(new Peng_Robinson_equation());
-//  std::shared_ptr<Equation_of_state> RedKwModel(new Redlich_Kwong_equation());
-//  std::shared_ptr<Equation_of_state> IdealGas(new Ideal_gas_equation());
-//  auto PR = std::shared_ptr<modelGeneral>(PengRobinModel->getCalculatingModel(modelName::REDLICH_KWONG2,cgp));
-//  auto RK = std::shared_ptr<modelGeneral>(RedKwModel->getCalculatingModel(modelName::REDLICH_KWONG2,cgp));
-//  auto Ig = std::shared_ptr<modelGeneral>(IdealGas->getCalculatingModel(modelName::PENG_ROBINSON,cgp));
-
-//  PR->setVolume(200000,253);
-//  RK->setVolume(200000,253);
-//  Ig->setVolume(200000,253);
-
-//  std::cout << PR->getVolume()<<std::endl;
-//  std::cout << RK->getVolume()<<std::endl;
-//  std::cout << Ig->getVolume()<<std::endl;
-
-//  gasparameters inflow(0.0,25000000,293,cgp);
-
-// GasDynamic gd;
-
-//  balloonFlowDynamic* flowdynP=gd.getFlowCalculator(PR,inflow,28.872,0.000785);
-//  balloonFlowDynamic* flowdynR=gd.getFlowCalculator(RK,inflow,28.872,0.000785);
-//  balloonFlowDynamic* flowdynI=gd.getFlowCalculator(Ig,inflow,28.872,0.000785);
-
-//  formatted_output SOout(std::cout);
-//  flowdynP->calculateInflow(0.1,100,SOout);
-//  flowdynR->calculateInflow(0.1,100,SOout);
-//  flowdynI->calculateInflow(0.1,100,SOout);
-
-/*  std::shared_ptr<InputData> idpptr;
-
-  try {
-    idpptr = std::make_shared<InputData>("inputdata.txt");
-    gd.calculation(idpptr);
-  } catch (modelExceptions &e) {
-    std::cout << " Input data error: " << e.what()<<std::endl;
-  }*/
+  }
+  std::string filename = std::string(cwd) + xml_path + xml_methane;
+  std::unique_ptr<XmlFile> met_xml(XmlFile::Init(filename));
+  if (met_xml == nullptr) {
+    std::cerr << "Object of XmlFile wasn't created\n";
+    return 1;
+  }
+  auto cp = met_xml->GetConstParameters();
+  auto dp = met_xml->GetDynParameters();
+  if (cp == nullptr) {
+    std::cerr << "const_parameters by xml wasn't created\n";
+    return 2;
+  }
+  if (dp == nullptr) {
+    std::cerr << "dyn_parameters by xml wasn't created\n";
+    return 2;
+  }
+  PhaseDiagram &pd = PhaseDiagram::GetCalculated();
+  // ссылочку а не объект
+  binodalpoints bp = pd.GetBinodalPoints(cp->V_K, cp->P_K, cp-> T_K,
+      modelName::REDLICH_KWONG2, cp->acentricfactor);
+#if defined(RK2_TEST)
+  Redlich_Kwong2 *calc_mod = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
+      {1.42, 100000, 275}, *cp, *dp, bp);
+#elif defined(PR_TEST)
+  Peng_Robinson *calc_mod = Peng_Robinson::Init(modelName::PENG_ROBINSON,
+      {1.42, 100000, 275}, *cp, *dp, bp);
+#endif  // _TEST
+  std::cerr << calc_mod->ParametersString() << std::flush;
+  std::cerr << "Set volume(10e5, 314)\n" << std::flush;
+  calc_mod->SetVolume(100000, 314);
+  std::cerr << calc_mod->ConstParametersString() << std::flush;
+  std::cerr << modelGeneral::sParametersStringHead() << std::flush;
+  std::cerr << calc_mod->ParametersString() << std::flush;
+//  std::cerr << "\n vol  " << calc_mod->GetVolume(25000000, 365.85) <<
+//               "\n pres " << calc_mod->GetPressure(0.007267, 365.85) << std::flush;
   return 0;
 }

@@ -1,5 +1,5 @@
-#ifndef _CORE_MODELS__MODEL_REDLICH_KWONG_H_
-#define _CORE_MODELS__MODEL_REDLICH_KWONG_H_
+#ifndef _CORE__MODELS__MODEL_REDLICH_KWONG_H_
+#define _CORE__MODELS__MODEL_REDLICH_KWONG_H_
 
 #include "common.h"
 #include "gas_mix_init.h"
@@ -51,11 +51,16 @@ public:
 
   void SetVolume(double p, double t)      override;
   void SetPressure(double v, double t)    override;
+#ifndef GAS_MIX_VARIANT
   double GetVolume(double p, double t)    const override;
   double GetPressure(double v, double t)  const override;
+#else
+  double GetVolume(double p, double t)    override;
+  double GetPressure(double v, double t)  override;
+#endif  // !GAS_MIX_VARIANT
 
   double GetCoefficient_a() const;
   double GetCoefficient_b() const;
 };
 
-#endif  // ! _CORE_MODELS__MODEL_REDLICH_KWONG_H_
+#endif  // ! _CORE__MODELS__MODEL_REDLICH_KWONG_H_

@@ -94,6 +94,7 @@ void idealGas::setTemperature(double v, double p) {
 }
 */
 
+#ifndef GAS_MIX_VARIANT
 double IdealGas::GetVolume(double p, double t) const {
   if (!is_above0(p, t)) {
     set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
@@ -109,3 +110,22 @@ double IdealGas::GetPressure(double v, double t) const {
   }
   return t * parameters_->cgetR() / v;
 }
+#else
+double IdealGas::GetVolume(double p, double t) {
+  assert(0 && "Ideal Gas");
+  if (!is_above0(p, t)) {
+    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    return 0.0;
+  }
+  return  t * parameters_->cgetR() / p;
+}
+
+double IdealGas::GetPressure(double v, double t) {
+  assert(0 && "Ideal Gas");
+  if (!is_above0(v, t)) {
+    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    return 0.0;
+  }
+  return t * parameters_->cgetR() / v;
+}
+#endif  // !GAS_MIX_VARIANT
