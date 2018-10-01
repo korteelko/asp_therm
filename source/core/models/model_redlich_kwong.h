@@ -37,6 +37,9 @@ protected:
   double heat_capac_vol_integral(const parameters new_state,
       const parameters prev_state);
   double heat_capac_dif_prs_vol(const parameters new_state, double R);
+// sub functions to update parameters
+  double get_volume(double p, double t, const const_parameters &cp);
+  double get_pressure(double v, double t, const const_parameters &cp);
 
 public:
   static Redlich_Kwong2 *Init(modelName mn, parameters prs,

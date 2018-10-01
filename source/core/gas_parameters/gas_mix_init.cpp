@@ -207,6 +207,5 @@ void GasParameters_mix_dyn::csetParameters(double v, double p, double t,
         x.first * x.second.second.internal_energy;
     dyn_params_.beta_kr += x.first * x.second.second.beta_kr;
   }
-
 }
 #endif  // !GAS_MIX_VARIANT

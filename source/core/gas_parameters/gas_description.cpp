@@ -62,7 +62,7 @@ const_parameters::const_parameters(const const_parameters &cgp)
     acentricfactor(cgp.acentricfactor) {}
 
 const_parameters &const_parameters::operator= (const const_parameters &cgp) {
-  return const_parameters(cgp);
+  return *this;
 }
 /*
 const_parameters

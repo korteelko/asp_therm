@@ -128,6 +128,38 @@ double Redlich_Kwong2::heat_capac_dif_prs_vol(const parameters new_state,
   return num / dec;
 }
 
+double Redlich_Kwong2::get_volume(double p, double t,
+    const const_parameters &cp) {
+  set_model_coef(cp);
+  std::vector<double> coef {
+      1.0,
+      -cp.R*t/p,
+      model_coef_a_/(p*std::sqrt(t)) - cp.R *
+          t*model_coef_b_/p - model_coef_b_*model_coef_b_,
+      -model_coef_a_*model_coef_b_/(p*std::sqrt(t)),
+      0.0, 0.0, 0.0
+  };
+  // Следующая функция заведомо получает валидные
+  //   данные,  соответственно должна что-то вернуть
+  //   Не будем перегружать код лишними проверками
+  CardanoMethod_HASUNIQROOT(&coef[0], &coef[4]);
+#ifdef _DEBUG
+  if (!is_above0(coef[4])) {
+    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    return 0.0;
+  }
+#endif  // _DEBUG
+  return coef[4];
+}
+
+double Redlich_Kwong2::get_pressure(double v, double t,
+    const const_parameters &cp) {
+  set_model_coef(cp);
+  const double temp = cp.R * t / (v - model_coef_b_) -
+      model_coef_a_ / (std::sqrt(t)* v *(v + model_coef_b_));
+  return temp;
+}
+
 void Redlich_Kwong2::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state) {
   // parameters prev_parm = prev_state.parm;
@@ -227,44 +259,45 @@ double Redlich_Kwong2::GetPressure(double v, double t) const {
 }
 #else  // calculate as mix
 double Redlich_Kwong2::GetVolume(double p, double t) {
-  assert(0);
   if (!is_above0(p, t)) {
     set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
     return 0.0;
   }
-  // tmp_copy of coefficient
-  double cp_a = model_coef_a_, cp_b = model_coef_b_;
-  // for (auto const &x : )
-  std::vector<double> coef {
-      1.0,
-      -parameters_->cgetR()*t/p,
-      model_coef_a_/(p*std::sqrt(t)) - parameters_->cgetR()*
-          t*model_coef_b_/p - model_coef_b_*model_coef_b_,
-      -model_coef_a_*model_coef_b_/(p*std::sqrt(t)),
-      0.0, 0.0, 0.0
-  };
-  // Следующая функция заведомо получает валидные
-  //   данные,  соответственно должна что-то вернуть
-  //   Не будем перегружать код лишними проверками
-  CardanoMethod_HASUNIQROOT(&coef[0], &coef[4]);
-#ifdef _DEBUG
-  if (!is_above0(coef[4])) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
-    return 0.0;
+  GasParameters_mix_dyn *gpar = 
+      dynamic_cast<GasParameters_mix_dyn *>(parameters_.get());
+  if (gpar != nullptr) {
+    const parameters_mix &cpm = gpar->GetComponents();
+    double volume = 0.0;
+    for (auto &x : cpm) {
+      // TODO: кажется метод арифметического среднего не оч
+      volume += x.first * get_volume(p, t, x.second.first);
+    }
+    return volume;
+  } else {
+    return get_volume(p, t, parameters_->const_params);
   }
-#endif  // _DEBUG
-  return coef[4];
+  return 0.0;
 }
 
 double Redlich_Kwong2::GetPressure(double v, double t) {
-  assert(0);
   if (!is_above0(v, t)) {
     set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
     return 0.0;
   }
-  const double temp = parameters_->cgetR() * t / (v - model_coef_b_) -
-      model_coef_a_ / (std::sqrt(t)* v *(v + model_coef_b_));
-  return temp;
+  GasParameters_mix_dyn *gpar = 
+      dynamic_cast<GasParameters_mix_dyn *>(parameters_.get());
+  if (gpar != nullptr) {
+    const parameters_mix &cpm = gpar->GetComponents();
+    double pressure = 0.0;
+    for (auto &x : cpm) {
+      // TODO: кажется метод арифметического среднего не оч
+      pressure += x.first * get_pressure(v, t, x.second.first);
+    }
+    return pressure;
+  } else {
+    return get_pressure(v, t, parameters_->const_params);
+  }
+  return 0.0;
 }
 #endif  // !GAS_MIX_VARIANT
 
