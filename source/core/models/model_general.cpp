@@ -1,5 +1,6 @@
 #include "model_general.h"
 
+#include "common.h"
 #include "gas_description_dynamic.h"
 #include "models_errors.h"
 

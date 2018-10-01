@@ -1,5 +1,6 @@
 #include "model_peng_robinson.h"
 
+#include "common.h"
 #include "gas_description_dynamic.h"
 #include "models_errors.h"
 #include "models_math.h"
@@ -89,9 +90,9 @@ Peng_Robinson *Peng_Robinson::Init(modelName mn, parameters prs,
 
 //  расчёт смотри в ежедневнике
 //  UPD: Matlab/GNUOctave files in dir somemath
-double log_pr(double v, double cb) {
+/* double log_pr(double v, double cb) {
   return log(v + cb);
-}
+} */
 
 double Peng_Robinson::log_pr(double v, bool is_posit) {
   return (is_posit) ? (1.0 + sq2) * model_coef_b_ + v : 
@@ -156,25 +157,43 @@ double Peng_Robinson::heat_capac_dif_prs_vol(const parameters new_state,
          a  = model_coef_a_,
          b  = model_coef_b_,
          k  = model_coef_k_;
-  /* 26_09_2018 */
-  double gm = std::pow(1.0 + k * (1.0 - std::sqrt(Tr)), 2.0);
+  /* 30_09_2018 */
+  /*
+  double gm = k*(-sqrt(Tr) + 1.0) + 1.0;
   // сначала числитель
-  double num = a * k * std::sqrt(gm * Tr) / (t * (v*v + 2.0 *v*b -b*b)) + R / (v-b); 
-  num = -t * std::pow(num, 2.0);
-    
+  double num = -t * pow(R/(v-b) + a*k*sqrt(Tr)*gm / 
+      (t * (-b*b + 2.0*b*v *v*v)), 2.0);
   // знаменатель
-  double dec = 2.0 * a*(v + b) * gm / std::pow(v*v + 2.0 * b * v - b*b, 2.0) -
-      R * t / std::pow(v - b, 2.0); 
-  // проверка занменателя на => 0.0
-  // assert(is_above0(dec) && "Peng_Robinson::heat_capac_dif_prs_vol");
+  double dec = -R * t / pow(v-b, 2.0) -
+      2.0*a*(-b-v)*gm*gm / pow(-b*b+2*b*v+v*v, 2.0);
   return num / dec;
-  
- /* double ans = -pow(R/(v-b) + a*k*sqrt(Tr)*(k*(-sqrt(Tr)+1.0)+1.0) / 
-      (t*(-b*b + 2.0*b*v+v*v)), 2.0) / 
-      (-R*t / pow(v-b, 2.0) - a * (-2.0*b-2.0*v) *
-      pow(k * (-sqrt(Tr)+1.0) + 1.0, 2.0) /
-      pow(-b*b + 2.0*b*v + v*v, 2.0));
-  return ans;*/
+  */
+  return  t * pow((R/(-b + v) + a*k*sqrt(Tr)*(k*(-sqrt(Tr) + 1.0) + 1.0) /
+      (t*(-b*b + 2.0*b*v + v*v))), 2.0) / 
+      (R*t / pow((-b + v), 2.0) - a*(-2.0*b - 2.0*v)*
+      pow((k*(-sqrt(Tr) + 1.0) + 1.0), 2.0) / pow((-b*b + 2.0*b*v + v*v), 2.0));
+}
+
+
+double Peng_Robinson::get_volume(double p, double t, const_parameters &cp) {
+  double alf = std::pow(1.0 + model_coef_k_*(1.0 -
+      t / cp.T_K), 2.0);
+  std::vector<double> coef {
+      1.0,
+      model_coef_b_ - cp.R*t/p,
+      (model_coef_a_*alf - 2.0f * model_coef_b_ *
+          cp.R*t)/p - 3.0f*model_coef_b_*model_coef_b_,
+      std::pow(model_coef_b_, 3.0f) + (cp.R*
+          t*model_coef_b_*model_coef_b_ - model_coef_a_ * alf *model_coef_b_)/p,
+      0.0, 0.0, 0.0};
+  CardanoMethod_HASUNIQROOT(&coef[0], &coef[4]);
+#ifdef _DEBUG
+  if (!is_above0(coef[4])) {
+    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    return 0.0;
+  }
+#endif
+  return coef[4];
 }
 
 void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
@@ -237,6 +256,7 @@ void Peng_Robinson::SetPressure(double v, double t) {
   setParameters(v, GetPressure(v, t), t);
 }
 
+#ifndef GAS_MIX_VARIANT
 double Peng_Robinson::GetVolume(double p, double t) const {
   if (!is_above0(p, t)) {
     set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
@@ -274,6 +294,38 @@ double Peng_Robinson::GetPressure(double v, double t) const {
           (v*v+2.0*model_coef_b_*v -model_coef_b_*model_coef_b_);
   return temp;
 }
+#else 
+double Peng_Robinson::GetVolume(double p, double t) {
+  if (!is_above0(p, t)) {
+    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    return 0.0;
+  }
+  GasParameters_mix_dyn *gpar = dynamic_cast<GasParameters_mix_dyn *>(parameters_.get());
+  if (gpar != nullptr) {
+    const parameters_mix &cpm = gpar->GetComponents();
+
+    set_model_coef(cp);
+    assert(0);
+  } else {
+    return get_volume(p, t, parameters_->const_params);
+  }
+  return 0.0;
+}
+
+double Peng_Robinson::GetPressure(double v, double t) {
+  assert(0);
+  if (!is_above0(v, t)) {
+    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    return 0.0;
+  }
+  const double a = std::pow(1.0 + model_coef_k_ * std::pow(1.0 -
+      std::sqrt(t / parameters_->cgetT_K()), 2.0), 2.0),
+          temp = parameters_->cgetR()*t/(v-model_coef_b_) -
+          a * model_coef_a_ /
+          (v*v+2.0*model_coef_b_*v -model_coef_b_*model_coef_b_);
+  return temp;
+}
+#endif  // !GAS_MIX_VARIANT
 
 double Peng_Robinson::GetCoefficient_a() const {
   return model_coef_a_;

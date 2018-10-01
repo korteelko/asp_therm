@@ -200,8 +200,11 @@ std::unique_ptr<const_parameters> GasParameters_mix_dyn::GetAverageParams(
   }
   return tmp_cgp;
 }
+const parameters_mix &GasParameters_mix_dyn::GetComponents() const {
+  return components_;
+}
 
- void GasParameters_mix_dyn::csetParameters(double v, double p, double t,
+void GasParameters_mix_dyn::csetParameters(double v, double p, double t,
     state_phase sp) {
   std::swap(prev_vpte_, vpte_);
   vpte_.volume       = v;

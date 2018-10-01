@@ -19,7 +19,9 @@
 #endif  // _OS
 
 // #define RK2_TEST
-#define PR_TEST
+#ifndef RK2_TEST
+#  define PR_TEST
+#endif  // !RK2_TEST
 
 #ifdef _IDE_VSCODE
 const std::string xml_path = "/../asp_therm/data/gases/";
@@ -65,7 +67,7 @@ int test_models() {
 #endif  // _TEST
   std::cerr << calc_mod->ParametersString() << std::flush;
   std::cerr << "Set volume(10e5, 314)\n" << std::flush;
-  calc_mod->SetVolume(100000, 314);
+  calc_mod->SetVolume(1000000, 314);
   std::cerr << calc_mod->ConstParametersString() << std::flush;
   std::cerr << modelGeneral::sParametersStringHead() << std::flush;
   std::cerr << calc_mod->ParametersString() << std::flush;
@@ -116,7 +118,7 @@ int test_models_mix() {
   std::cerr << calc_mod->ConstParametersString() << std::flush;
   std::cerr << modelGeneral::sParametersStringHead() << std::flush;
   std::cerr << calc_mod->ParametersString() << std::flush;
-  calc_mod->SetVolume(100000, 314);
+  calc_mod->SetVolume(1000000, 314);
   std::cerr << "Set volume(10e5, 314)\n" << std::flush;
   std::cerr << calc_mod->ParametersString() << std::flush;
   return 0;

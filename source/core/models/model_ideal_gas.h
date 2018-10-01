@@ -1,6 +1,7 @@
 #ifndef _CORE__MODELS__MODEL_IDEAL_GAS_H_
 #define _CORE__MODELS__MODEL_IDEAL_GAS_H_
 
+#include "common.h"
 #include "model_general.h"
 
 #include <memory>
@@ -36,8 +37,13 @@ public:
 
   void SetVolume(double p, double t)      override;
   void SetPressure(double v, double t)    override;
-  double GetVolume(double p, double t)    const override;
-  double GetPressure(double v, double t)  const override;
+#ifndef GAS_MIX_VARIANT
+  virtual double GetVolume(double p, double t)   const = 0;
+  virtual double GetPressure(double v, double t) const = 0;
+#else
+  virtual double GetVolume(double p, double t)   = 0;
+  virtual double GetPressure(double v, double t) = 0;
+#endif  // !GAS_MIX_VARIANT
 };
 
 #endif  // ! _CORE__MODELS__MODEL_IDEAL_GAS_H_

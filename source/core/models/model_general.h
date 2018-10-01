@@ -3,6 +3,7 @@
 
 #include "target_sys.h"
 
+#include "common.h"
 #include "gas_description.h"
 #include "gas_description_static.h"
 #include "gas_mix_init.h"
@@ -85,8 +86,13 @@ public:
 
   virtual void SetVolume(double p, double t)           = 0;
   virtual void SetPressure(double v, double t)         = 0;
+#ifndef GAS_MIX_VARIANT
   virtual double GetVolume(double p, double t)   const = 0;
   virtual double GetPressure(double v, double t) const = 0;
+#else
+  virtual double GetVolume(double p, double t)   = 0;
+  virtual double GetPressure(double v, double t) = 0;
+#endif  // !GAS_MIX_VARIANT
 
   double GetVolume()                     const;
   double GetPressure()                   const;

@@ -90,7 +90,9 @@ public:
   static std::unique_ptr<const_parameters> 
       GetAverageParams(parameters_mix &components);
 
+  // 30_09_2018
+  const parameters_mix &GetComponents() const;
+
   void csetParameters(double v, double p, double t, state_phase sp) override;
 };
-
 #endif  // _CORE__GAS_PARAMETERS__GAS_MIX_INIT_H_
