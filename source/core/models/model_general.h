@@ -57,6 +57,8 @@ protected:
   state_phase setState_phase(double v, double p, double t);
   int32_t  setState_phasesub(double p);
   void setParameters(double v, double p, double t);
+  // virtual void set_enthalpy() = 0;
+  void set_enthalpy();
 //  void setDynamicParameters();
 //  void setStaticParameters();
 

@@ -32,12 +32,18 @@ void Peng_Robinson::set_model_coef(
       0.26992 * std::pow(cp.acentricfactor, 2.0);
 }
 
+/*
+void Peng_Robinson::set_enthalpy() {
+  assert(0);
+} */
+
 Peng_Robinson::Peng_Robinson(modelName mn, parameters prs,
     const_parameters cgp, dyn_parameters dgp, binodalpoints bp)
   : modelGeneral(mn, bp) {
   parameters_ = std::unique_ptr<GasParameters>(
       GasParameters_dyn::Init(prs, cgp, dgp, this));
   set_model_coef();
+  set_enthalpy();
 }
 
 Peng_Robinson::Peng_Robinson(modelName mn, parameters prs,
@@ -46,6 +52,7 @@ Peng_Robinson::Peng_Robinson(modelName mn, parameters prs,
   parameters_ = std::unique_ptr<GasParameters>(
       GasParameters_mix_dyn::Init(prs, components, this));
   set_model_coef();
+  set_enthalpy();
 }
 
 Peng_Robinson *Peng_Robinson::Init(modelName mn, parameters prs,
@@ -223,10 +230,10 @@ void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
   prev_state.internal_energy += du;
   prev_state.heat_cap_vol    += dcv;
   prev_state.heat_cap_pres   = prev_state.heat_cap_vol + dif_c;
-#ifdef _DEBUG
+/*#ifdef _DEBUG
   std::cerr << "\nUPDATE DYN_PARAMETERS2: dcv " << dcv << " dif_c "
       << dif_c << std::endl; 
-#endif  // _DEBUG
+#endif  // _DEBUG */
   prev_state.parm = new_state;
   prev_state.Update();
 }
@@ -244,10 +251,10 @@ void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
   prev_state.internal_energy += du;
   prev_state.heat_cap_vol    += dcv;
   prev_state.heat_cap_pres   = prev_state.heat_cap_vol + dif_c;
-#ifdef _DEBUG
+/*#ifdef _DEBUG
   std::cerr << "\nUPDATE DYN_PARAMETERS2: dcv " << dcv << " dif_c "
       << dif_c << std::endl; 
-#endif  // _DEBUG
+#endif  // _DEBUG*/
   prev_state.parm = new_state;
   prev_state.Update();
 }

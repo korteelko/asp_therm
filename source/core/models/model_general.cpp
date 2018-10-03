@@ -5,6 +5,9 @@
 #include "models_errors.h"
 
 #include <algorithm>
+#ifdef _DEBUG
+# include <iostream>
+#endif  // _DEBUG
 
 //==================================================================
 // modelGeneral methods
@@ -50,6 +53,32 @@ state_phase modelGeneral::setState_phase(
       bp_.vRigth[iter])*p_path;
   return ((v > vapprox) ? state_phase::GAS : state_phase::LIQ_STEAM);
 }
+
+void modelGeneral::set_enthalpy() {
+  if (!bp_.hLeft.empty())
+    bp_.hLeft.clear();
+  for (size_t i = 0; i < bp_.vLeft.size(); ++i) {
+    SetPressure(bp_.vLeft[i], bp_.t[i]);
+    bp_.hLeft.push_back(parameters_->cgetIntEnergy() + 
+        bp_.p[i] * bp_.vLeft[i]);
+  #ifdef _DEBUG
+    std::cerr << "\nSET_ENTHALPY: p " << bp_.p[i] << " t " << bp_.t[i]
+        << " v " << bp_.vLeft[i] << " h " << bp_.hLeft[i] << std::endl;
+  #endif  // _DEBUG
+  }
+  if (!bp_.hRigth.empty())
+    bp_.hRigth.clear();
+  for (size_t i = 0; i < bp_.vRigth.size(); ++i) {
+    SetPressure(bp_.vRigth[i], bp_.t[i]);
+    bp_.hRigth.push_back(parameters_->cgetIntEnergy() +
+        bp_.p[i] * bp_.vRigth[i]);
+  #ifdef _DEBUG
+    std::cerr << "\nSET_ENTHALPY: p " << bp_.p[i] << " t " << bp_.t[i]
+        << " v " << bp_.vRigth[i] << " h " << bp_.hRigth[i] << std::endl;
+  #endif  // _DEBUG
+  }
+}
+
 const GasParameters *modelGeneral::getGasParameters() const {
   // return NULL or pointer to GasParameters
   return parameters_.get();

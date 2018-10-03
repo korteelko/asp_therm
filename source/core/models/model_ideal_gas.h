@@ -13,19 +13,17 @@ private:
   IdealGas(modelName mn, parameters prs, parameters_mix components,
       binodalpoints bp);
 
+  // void set_enthalpy();
+
 public:
   static IdealGas *Init(modelName mn, parameters prs, const_parameters cgp,
       dyn_parameters dgp, binodalpoints bp);
 
   static IdealGas *Init(modelName mn, parameters prs, parameters_mix components,
       binodalpoints bp);
-// ========================== <^__.__^>  ===============================
-//  OVERRIDED METHODS
-// ========================== <^__.__^>  ===============================
 
   void update_dyn_params(dyn_parameters &prev_state,
       const parameters new_state) override;
-  
   void update_dyn_params(dyn_parameters &prev_state,
       const parameters new_state, const const_parameters &cp) override;
 

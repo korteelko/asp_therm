@@ -43,6 +43,7 @@ class binodalpoints {
 public:
   // вектор значений безразмерной температуры по которым будут вычисляться
   //   параметры объёма и давления
+  //   BASIC STRUCT
   std::deque<double> 
       t = std::deque<double> {
               0.97, 0.95, 0.92, 0.9, 0.87, 0.85,
@@ -50,6 +51,14 @@ public:
       vLeft,
       vRigth,
       p;
+  std::deque<double> hLeft, hRigth;
+};
+
+class binodalpoints_extend {
+  binodalpoints bp_;
+
+public:
+  binodalpoints_extend(binodalpoints bp);
 };
 
 // Класс вычисляющий параметры(координаты) точек бинодали

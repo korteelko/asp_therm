@@ -26,12 +26,31 @@ void Redlich_Kwong2::set_model_coef(
   model_coef_b_ = 0.08664 * cp.R * cp.T_K / cp.P_K;
 }
 
+/*
+void Redlich_Kwong2::set_enthalpy() {
+  if (!bp_.hLeft.empty())
+    bp_.hLeft.clear();
+  for (int i = 0; i < bp_.vLeft.size(); ++i) {
+    SetPressure(bp_.vLeft[i], bp_.t[i]);
+    bp_.hLeft.push_back(parameters_->cgetIntEnergy() + 
+        bp_.p[i] * bp_.vLeft[i]);
+  }
+  if (!bp_.hRigth.empty())
+    bp_.hRigth.clear();
+  for (int i = 0; i < bp_.vRigth.size(); ++i) {
+    SetPressure(bp_.vRigth[i], bp_.t[i]);
+    bp_.hRigth.push_back(parameters_->cgetIntEnergy() +
+        bp_.p[i] * bp_.vRigth[i]);
+  }
+} */
+
 Redlich_Kwong2::Redlich_Kwong2(modelName mn, parameters prs,
     const_parameters cgp, dyn_parameters dgp, binodalpoints bp)
   : modelGeneral(mn, bp) {
   parameters_ = std::unique_ptr<GasParameters>(
       GasParameters_dyn::Init(prs, cgp, dgp, this));
   set_model_coef();
+  set_enthalpy();
 }
 
 Redlich_Kwong2::Redlich_Kwong2(modelName mn, parameters prs,
@@ -40,6 +59,7 @@ Redlich_Kwong2::Redlich_Kwong2(modelName mn, parameters prs,
   parameters_ = std::unique_ptr<GasParameters>(
       GasParameters_mix_dyn::Init(prs, components, this));
   set_model_coef();
+  set_enthalpy();
 }
 
 Redlich_Kwong2 *Redlich_Kwong2::Init(modelName mn, parameters prs,

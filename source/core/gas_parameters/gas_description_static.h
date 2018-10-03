@@ -48,6 +48,7 @@ public:
   double cgetVolume()         const;
   double cgetPressure()       const;
   double cgetTemperature()    const;
+  double cgetIntEnergy()      const;
   state_phase cgetState()     const;
   parameters cgetParameters() const;
   dyn_parameters cgetDynParameters() const;

@@ -22,6 +22,7 @@ private:
 
   void set_model_coef();
   void set_model_coef(const const_parameters &cp);
+  // void set_enthalpy();
 
 protected:
   void update_dyn_params(dyn_parameters &prev_state,

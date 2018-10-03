@@ -102,6 +102,10 @@ double GasParameters::cgetTemperature() const {
   return vpte_.temperature;
 }
 
+double GasParameters::cgetIntEnergy() const {
+  return dyn_params_.internal_energy;
+}
+
 state_phase GasParameters::cgetState() const {
   return sph_;
 }

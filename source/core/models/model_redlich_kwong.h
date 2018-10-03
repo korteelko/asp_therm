@@ -21,9 +21,8 @@ private:
       parameters_mix components, binodalpoints bp);
 
   void set_model_coef();
-  // set temp coefficient for gas_mix initialization
-  // TODO: do this method virtual
   void set_model_coef(const const_parameters &cp);
+  // void set_enthalpy();
 
 protected:
   void update_dyn_params(dyn_parameters &prev_state,

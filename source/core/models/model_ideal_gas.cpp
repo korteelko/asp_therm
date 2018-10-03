@@ -20,6 +20,11 @@ IdealGas::IdealGas(modelName mn, parameters prs, parameters_mix components,
       GasParameters_mix_dyn::Init(prs, components, this));
 }
 
+/*
+void IdealGas::set_enthalpy() {
+  assert(0);
+} */
+
 IdealGas *IdealGas::Init(modelName mn, parameters prs,
     const_parameters cgp,
     dyn_parameters dgp, binodalpoints bp) {
