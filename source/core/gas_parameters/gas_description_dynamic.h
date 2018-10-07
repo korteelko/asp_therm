@@ -20,18 +20,13 @@
 ///     -- компилятор лучше обрабатывает перегруженные функции
 
 class GasParameters_dyn final: public GasParameters {
-  GasParameters_dyn(parameters prs,
-      const_parameters cgp, dyn_parameters dgp, modelGeneral *mg);
+  GasParameters_dyn(parameters prs, const_parameters cgp,
+      dyn_parameters dgp, modelGeneral *mg);
 
 public:
-  static GasParameters_dyn *Init(double v, double p, double t,
-      const_parameters cgp, dyn_parameters dgp, modelGeneral *mg);
+  static GasParameters_dyn *Init(gas_params_input gpi, modelGeneral *mg);
 
-  static GasParameters_dyn *Init(parameters prs,
-      const_parameters cgp, dyn_parameters dgp, modelGeneral *mg);
-
-  void csetParameters(double v,
-      double p, double t, state_phase sp) override;
+  void csetParameters(double v, double p, double t, state_phase sp) override;
 
 private:
   // previous pressure, volume and temperature

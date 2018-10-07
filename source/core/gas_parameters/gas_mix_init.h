@@ -1,11 +1,8 @@
 #ifndef _CORE__GAS_PARAMETERS__GAS_MIX_INIT_H_
 #define _CORE__GAS_PARAMETERS__GAS_MIX_INIT_H_
 
-#include "gas_description.h"
+// #include "gas_description.h"
 #include "gas_description_static.h"
-
-#include <map>
-#include <utility>
 
 /*
  * Файл для инициализации параметров газовых смесей
@@ -18,29 +15,14 @@
 //   отведём ей 1%
 // Итого проверяем тождество :
 //   |0.99 - ${summ_of_components}| < 0.02
+#define GAS_MIX_PERSENT_AVR  0.99
 #define GAS_MIX_PERCENT_EPS  0.02
 
-// DEVELOP
-//   с typedef'ами здесь перетого переэтого,
-//   надо было в структуры завернуть,
-//   но так std функции испотльзовать удобно
-
-typedef std::pair<const_parameters, dyn_parameters>
-    const_dyn_parameters;
-//                молярная доля, % ; параметры доли
-/*
-struct parameters_mix {
-  const double part;
-  const_dyn_parameters cdp;
-};
-*/
-typedef std::multimap<const double, const_dyn_parameters> parameters_mix;
 
 /* занесено в класс GasParameters_mix_dyn 
 std::pair<const_parameters *, dyn_parameters *>
     get_parameters_of_mix(parameters_mix cgp_mix);
 */
-
 
 class GasParameters_mix : public GasParameters {
 protected:
@@ -79,8 +61,7 @@ private:
       modelGeneral *mg);
 
 public:
-  static GasParameters_mix_dyn *Init(parameters prs,
-      parameters_mix components, modelGeneral *mg);
+  static GasParameters_mix_dyn *Init(gas_params_input gpi, modelGeneral *mg);
 
   // method for calculating binodal points
   //   (see "phase_diagram/")

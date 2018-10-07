@@ -13,18 +13,12 @@ GasParameters_dyn::GasParameters_dyn(parameters prs,
   : GasParameters(prs, cgp, dgp), prev_vpte_(prs), model_(mg) {}
  //   update_f_(&modelGeneral::update_dyn_params) {}
 
-GasParameters_dyn *GasParameters_dyn::Init(double v, double p, double t,
-    const_parameters cgp, dyn_parameters dgp, modelGeneral *mg) {
+GasParameters_dyn *GasParameters_dyn::Init(gas_params_input gpi,
+    modelGeneral *mg) {
   if (mg == nullptr)
     return nullptr;
-  return new GasParameters_dyn({v,p,t}, cgp, dgp, mg);
-}
-
-GasParameters_dyn *GasParameters_dyn::Init(parameters prs,
-    const_parameters cgp, dyn_parameters dgp, modelGeneral *mg) {
-  if (mg == nullptr)
-    return nullptr;
-  return new GasParameters_dyn(prs, cgp, dgp, mg);
+  return new GasParameters_dyn({0.0, gpi.p, gpi.t},
+      *gpi.const_dyn.cdp.cgp, *gpi.const_dyn.cdp.dgp, mg);
 }
 
 void GasParameters_dyn::csetParameters(double v, double p,

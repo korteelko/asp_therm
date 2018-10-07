@@ -5,7 +5,9 @@
 // #include "common.h"
 
 #include <array>
+#include <map>
 #include <string>
+#include <utility>
 
 #include <stdint.h>
 
@@ -171,31 +173,23 @@ public:
 bool is_valid_cgp(const const_parameters &cgp);
 bool is_valid_dgp(const dyn_parameters &dgp);
 
+// DEVELOP
+//   с typedef'ами здесь перетого переэтого,
+//   надо было в структуры завернуть,
+//   но так std функции испотльзовать удобно
 
-//================================
-// IGas_parameters interface
-//================================
-/// Интерфейс доступа к динамическим и статическим парамертам
-/* class IGas_parameters {
-public:
-  virtual double cgetV_K()            const = 0;
-  virtual double cgetP_K()            const = 0;
-  virtual double cgetT_K()            const = 0;
-  virtual double cgetMolecularMass()  const = 0;
-  virtual double cgetAdiabatic()      const = 0;
-  virtual double cgetCV()             const = 0;
-  virtual double cgetBeta()           const = 0;
-  virtual double cgetR()              const = 0;
-  virtual double cgetAcentricFactor() const = 0;
-  virtual double cgetVolume()         const = 0;
-  virtual double cgetPressure()       const = 0;
-  virtual double cgetTemperature()    const = 0;
-  virtual parameters cgetParameters() const = 0;
-  virtual state_phase cgetState()     const = 0;
-  virtual const_parameters cgetConstparameters() const = 0;
+typedef std::pair<const_parameters, dyn_parameters>
+    const_dyn_parameters;
+typedef std::multimap<const double, const_dyn_parameters> parameters_mix;
 
-  virtual void csetParameters(double, double, double, state_phase) = 0;
-  virtual ~Igasparameters() {}
+struct gas_params_input {
+  double p, t;
+  union cd {
+    const parameters_mix *components;
+    struct cd_pair {
+      const const_parameters *cgp;
+      const dyn_parameters *dgp;
+    } cdp;
+  } const_dyn;
 };
-*/
 #endif  // ! _CORE__GAS_PARAMETERS__GAS_DESCRIPTION_H_

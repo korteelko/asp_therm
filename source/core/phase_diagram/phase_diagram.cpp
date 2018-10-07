@@ -4,17 +4,21 @@
 #include "models_math.h"
 
 #include <algorithm>
-#include <iostream>
 #include <tuple>
 #include <utility>
+#ifdef _DEBUG
+#  include <iostream>
+#endif
 
-/*
-binodalpoints::binodalpoints (const binodalpoints &bp) 
-  : t(bp.t), vLeft(bp.vLeft), vRigth(bp.vRigth), p(bp.p) {}
-
-binodalpoints &binodalpoints::operator=(const binodalpoints &bp) {
-  return *this;
-}V*/
+size_t PhaseDiagram::set_functions_index(modelName mn) {
+  size_t functions_index = 0xFF;
+  for (size_t i = 0; i < functions_indexes_.size(); ++i)
+    if (functions_indexes_[i] == mn) {
+      functions_index = i;
+      break;
+    }
+  return functions_index;
+}
 
 void PhaseDiagram::calculateBinodal(
     std::shared_ptr<binodalpoints>& bdp, modelName mn, double acentric) {
@@ -29,10 +33,13 @@ void PhaseDiagram::calculateBinodal(
           spline_area,       // area under function t(p,v) from v0 to v2;
           rectan_area;       // area under pi=const, from v0 to v2;
                         // Maxwell construction requirement splineAR==rectanAR;
-
-  auto integrateFun = line_integrate_f_.at(size_t(mn));
-  auto inializeFun  = initialize_f_.at(size_t(mn));
-
+  size_t functions_index = set_functions_index(mn);
+  if (functions_index == 0xFF) {
+    set_error_message(ERR_INIT_T, "error in programmer DNA");
+    return;
+  }
+  auto integrateFun = line_integrate_f_.at(functions_index);
+  auto inializeFun  = initialize_f_.at(functions_index);
   // get pressure by volume and temperature
   for (size_t t_iter = 0; t_iter < nPoints; ++t_iter) {
     std::vector<double> tempvec = {
@@ -46,8 +53,10 @@ void PhaseDiagram::calculateBinodal(
     reset_error();
     bool has_uniq_root = CardanoMethod_HASUNIQROOT(&tempvec[0], &tempvec[4]);
     if (get_error_code() != ERR_SUCCESS_T) {
+  #ifdef _DEBUG
       std::cerr << " for temperature index: "
-                << std::to_string(t_iter) << " Cardano method error \n";
+          << std::to_string(t_iter) << " Cardano method error \n";
+  #endif  // _DEBUG
       bdp->t[t_iter] = -1.0;
       continue;
     }
@@ -56,17 +65,11 @@ void PhaseDiagram::calculateBinodal(
       continue;
     }
     std::sort(tempvec.begin() + 4, tempvec.end());
-
     assert((tempvec[4] >= 0.0) && (tempvec[5] >= 0.0) && (tempvec[6] >= 0.0));
-
     pi = bdp->t[t_iter]*bdp->t[t_iter]*bdp->t[t_iter];
-       // another variant of start approximation
-       //      pi = (8.0*bdp->t[t_iter]*tempvec[5]*tempvec[5] - 9.0*tempvec[5] +3.0)/
-       //          (3.0*tempvec[5]*tempvec[5]*tempvec[5]-tempvec[5]*tempvec[5]);
     if (pi <= 0.0)
       pi = 0.01;
     dpi = -pi * 0.002;
-
     uint32_t trycount = 0;
     // DEVELOP
     //   HORRIBLE
@@ -89,10 +92,8 @@ void PhaseDiagram::calculateBinodal(
       if (t_iter < 4)
         dpi *= 0.1;
       pi+=dpi;
-
       // calculate volume
       inializeFun(tempvec, pi, bdp->t[t_iter], acentric);
-
       reset_error();
       bool has_uniq_root = CardanoMethod_HASUNIQROOT(&tempvec[0], &tempvec[4]);
       if (get_error_code() != ERR_SUCCESS_T) {
@@ -104,9 +105,7 @@ void PhaseDiagram::calculateBinodal(
         pi  = (tempvec[4] <= 1.0) ? (pi - 2.0*dpi) : (pi + 2.0*dpi);
         continue;
       }
-
       assert((tempvec[4] >= 0.0) && (tempvec[5] >= 0.0) && (tempvec[6] >= 0.0));
-
       std::sort(tempvec.begin() + 4, tempvec.end());
       if (tempvec[4] == tempvec[6]) {
         bdp->t[t_iter] = -1.0;
@@ -165,7 +164,7 @@ void PhaseDiagram::eraseElements(
 void PhaseDiagram::searchNegative(
     std::shared_ptr<binodalpoints> &bdp, std::deque<double> &v) {
   auto hasnegative = [](std::deque<double>& vec) {
-      return vec.end()-std::find_if(vec.begin(), vec.end(),
+      return vec.end() - std::find_if(vec.begin(), vec.end(),
           std::bind2nd(std::less_equal<double>(), 0.0));};
   int hasneg = 1;
   int vecsize = v.size();
@@ -186,8 +185,7 @@ PhaseDiagram &PhaseDiagram::GetCalculated() {
   return phd;
 }
 
-binodalpoints
-PhaseDiagram::GetBinodalPoints(double VK, double PK,
+binodalpoints PhaseDiagram::GetBinodalPoints(double VK, double PK,
     double TK, modelName mn, double acentric) {
   reset_error();
   bool isValid = is_above0(VK, PK, TK, acentric);
@@ -195,7 +193,6 @@ PhaseDiagram::GetBinodalPoints(double VK, double PK,
     set_error_code(ERR_CALCULATE_T);
     set_error_message("PhaseDiagram::getBinodalPoints get incorrect data:\n"
         " V_K, P_K, T_K or acentric_factor <= 0.0 or is NaN");
-    // return zeroes points
     return binodalpoints();
   }
   uniqueMark um {(uint32_t)mn, acentric};
@@ -222,11 +219,11 @@ PhaseDiagram::GetBinodalPoints(double VK, double PK,
   f(bp.vRigth, VK);
   f(bp.p, PK);
   f(bp.t, TK);
+  bp.mn = mn;
   return bp;
 }
 
-binodalpoints
-PhaseDiagram::GetBinodalPoints(parameters_mix &components,
+binodalpoints PhaseDiagram::GetBinodalPoints(parameters_mix &components,
     modelName mn) {
   std::unique_ptr<const_parameters> cgp = 
       GasParameters_mix_dyn::GetAverageParams(components);

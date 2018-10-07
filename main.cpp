@@ -34,7 +34,26 @@ const std::string xml_methane = "methane.xml";
 const std::string xml_ethane  = "ethane.xml";
 const std::string xml_propane = "propane.xml";
 
-int main() {
+model_input set_input(modelName mn, const binodalpoints &bp,
+    double p, double t, const parameters_mix &components) {
+  GAS_MARKS gm = 0x00;
+  gm = (uint32_t)mn | ((uint32_t)bp.mn << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
+  return {gm, bp, {p, t, &components}};
+}
+
+model_input set_input(modelName mn, const binodalpoints &bp,
+    double p, double t, const const_parameters &cgp,
+    const dyn_parameters &dgp) {
+  GAS_MARKS gm = 0x00;
+// gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT);
+  gm = (uint32_t)mn | ((uint32_t)bp.mn << BINODAL_MODEL_SHIFT);
+  model_input mi{gm, bp, {p, t, NULL}};
+  mi.gpi.const_dyn.cdp.cgp = &cgp;
+  mi.gpi.const_dyn.cdp.dgp = &dgp;
+  return mi;
+}
+
+int test_models() {
   char cwd[512] = {0};
   if (!getcwd(cwd, (sizeof(cwd)))) {
     std::cerr << "cann't get current dir";
@@ -64,8 +83,8 @@ int main() {
   Redlich_Kwong2 *calc_mod = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
       {1.42, 100000, 275}, *cp, *dp, bp);
 #elif defined(PR_TEST)
-  Peng_Robinson *calc_mod = Peng_Robinson::Init(modelName::PENG_ROBINSON,
-      {1.42, 100000, 275}, *cp, *dp, bp);
+  Peng_Robinson *calc_mod = Peng_Robinson::Init(set_input(
+      modelName::PENG_ROBINSON, bp, 100000, 275, *cp, *dp));
 #endif  // _TEST
   std::cerr << calc_mod->ParametersString() << std::flush;
   std::cerr << "Set volume(10e6, 314)\n" << std::flush;
@@ -74,8 +93,67 @@ int main() {
   std::cerr << modelGeneral::sParametersStringHead() << std::flush;
   std::cerr << calc_mod->ParametersString() << std::flush;
 //  std::cerr << "\n vol  " << calc_mod->GetVolume(25000000, 365.85) <<
-//               "\n pres " << calc_mod->GetPressure(0.007267, 365.85) << std::flush;
+//      "\n pres " << calc_mod->GetPressure(0.007267, 365.85) << std::flush;
   std::cerr << "Push any key to finish";
   std::getchar();
+  return 0;
+}
+
+int test_models_mix() {
+  char cwd[512] = {0};
+  if (!getcwd(cwd, (sizeof(cwd)))) {
+    std::cerr << "cann't get current dir";
+    return 1;
+  }
+  std::vector<gas_mix_file> xml_files{
+    {(std::string(cwd) + xml_path + xml_methane).c_str(), 0.988},
+    // add more (summ = 1.00)
+    {(std::string(cwd) + xml_path + xml_ethane).c_str(), 0.009},
+    {(std::string(cwd) + xml_path + xml_propane).c_str(), 0.003}
+  };
+  /*
+  std::unique_ptr<XmlFile> met_xml(XmlFile::Init(methane_path));
+  if (met_xml == nullptr) {
+    std::cerr << "Object of XmlFile wasn't created\n";
+    return 1;
+  }
+  */
+  GasMix *gm = GasMix::Init(xml_files);
+  if (!gm) {
+    std::cerr << "GasMix init error" << std::flush;
+    return 1;
+  }
+  std::shared_ptr<parameters_mix> prs_mix = gm->GetParameters();
+  if (!prs_mix) {
+    std::cerr << "GasMix prs_mix error" << std::flush;
+    return 1;
+  }
+  PhaseDiagram &pd = PhaseDiagram::GetCalculated();
+  binodalpoints bp = pd.GetBinodalPoints(*prs_mix, modelName::PENG_ROBINSON);
+#if defined(RK2_TEST)
+  Redlich_Kwong2 *calc_mod = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
+      {1.42, 100000, 275}, *prs_mix, bp);
+#elif defined(PR_TEST)
+  Peng_Robinson *calc_mod = Peng_Robinson::Init(set_input(modelName::PENG_ROBINSON, bp,
+      100000, 275, *prs_mix));
+#endif  // _TEST
+  std::cerr << calc_mod->ConstParametersString() << std::flush;
+  std::cerr << modelGeneral::sParametersStringHead() << std::flush;
+  std::cerr << calc_mod->ParametersString() << std::flush;
+  calc_mod->SetVolume(1000000, 314);
+  std::cerr << "Set volume(10e6, 314)\n" << std::flush;
+  std::cerr << calc_mod->ParametersString() << std::flush;
+  return 0;
+}
+
+int main() {
+  if (test_models()) {
+    std::cerr << "test_models()";
+    return 1;
+  }
+  if (test_models_mix()) {
+    std::cerr << "test_models_mix()";
+    return 2;
+  }
   return 0;
 }

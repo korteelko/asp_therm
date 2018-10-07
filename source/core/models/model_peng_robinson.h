@@ -1,28 +1,22 @@
 #ifndef _CORE__MODELS__MODEL_PENG_ROBINSON_H_
 #define _CORE__MODELS__MODEL_PENG_ROBINSON_H_
 
-// #include "common.h"
+#include "common.h"
 #include "gas_mix_init.h"
 #include "model_general.h"
 
 #include <memory>
 
-class Peng_Robinson: public modelGeneral {
+class Peng_Robinson final: public modelGeneral {
   double model_coef_a_,
          model_coef_b_,
          model_coef_k_;
 
 private:
-  Peng_Robinson(modelName mn, parameters prs,
-      const_parameters cgp, dyn_parameters dgp,
-      binodalpoints bp);
-  // Init gas_mix
-  Peng_Robinson(modelName mn, parameters prs,
-      parameters_mix components, binodalpoints bp);
+  Peng_Robinson(const model_input &mi);
 
   void set_model_coef();
   void set_model_coef(const const_parameters &cp);
-  // void set_enthalpy();
 
 protected:
   void update_dyn_params(dyn_parameters &prev_state,
@@ -43,23 +37,19 @@ protected:
   double get_pressure(double v, double t, const const_parameters &cp);
 
 public:
-  static Peng_Robinson *Init(modelName mn, parameters prs,
-      const_parameters cgp, dyn_parameters dgp, binodalpoints bp);
-  // Init gas_mix
-  static Peng_Robinson *Init(modelName mn, parameters prs,
-      parameters_mix components, binodalpoints bp);
+  static Peng_Robinson *Init(const model_input &mi);
 
   void DynamicflowAccept(class DerivateFunctor &df);
-
   bool IsValid() const override;
-
-  void SetVolume(double p, double t)      override;
-  void SetPressure(double v, double t)    override;
+  double InitVolume(double p, double t,
+      const const_parameters &cp) override;
+  void SetVolume(double p, double t) override;
+  void SetPressure(double v, double t) override;
 #ifndef GAS_MIX_VARIANT
   double GetVolume(double p, double t)   const override;
   double GetPressure(double v, double t) const override;
 #else
-  double GetVolume(double p, double t)   override;
+  double GetVolume(double p, double t) override;
   double GetPressure(double v, double t) override;
 #endif  // !GAS_MIX_VARIANT
 
@@ -67,5 +57,4 @@ public:
   double GetCoefficient_b() const;
   double GetCoefficient_k() const;
 };
-
 #endif  // ! _CORE__MODELS__MODEL_PENG_ROBINSON_H_

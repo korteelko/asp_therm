@@ -5,7 +5,6 @@
 #include "gas_mix_init.h"
 #include "model_general.h"
 
-#include <array>
 #include <memory>
 
 class Redlich_Kwong2 final: public modelGeneral {
@@ -13,16 +12,10 @@ class Redlich_Kwong2 final: public modelGeneral {
          model_coef_b_;
 
 private:
-  Redlich_Kwong2(modelName mn, parameters prs,
-      const_parameters cgp, dyn_parameters dgp,
-      binodalpoints bp);
-  // Init gas_mix
-  Redlich_Kwong2(modelName mn, parameters prs,
-      parameters_mix components, binodalpoints bp);
+  Redlich_Kwong2(const model_input &mi);
 
   void set_model_coef();
   void set_model_coef(const const_parameters &cp);
-  // void set_enthalpy();
 
 protected:
   void update_dyn_params(dyn_parameters &prev_state,
@@ -41,16 +34,12 @@ protected:
   double get_pressure(double v, double t, const const_parameters &cp);
 
 public:
-  static Redlich_Kwong2 *Init(modelName mn, parameters prs,
-      const_parameters cgp, dyn_parameters dgp, binodalpoints bp);
-  // Init gas_mix
-  static Redlich_Kwong2 *Init(modelName mn, parameters prs,
-      parameters_mix components, binodalpoints bp);
+  static Redlich_Kwong2 *Init(const model_input &mi);
 
   void DynamicflowAccept(class DerivateFunctor &df);
-
   bool IsValid() const override;
-
+  double InitVolume(double p, double t,
+      const const_parameters &cp) override;
   void SetVolume(double p, double t)      override;
   void SetPressure(double v, double t)    override;
 #ifndef GAS_MIX_VARIANT
@@ -64,5 +53,4 @@ public:
   double GetCoefficient_a() const;
   double GetCoefficient_b() const;
 };
-
 #endif  // ! _CORE__MODELS__MODEL_REDLICH_KWONG_H_

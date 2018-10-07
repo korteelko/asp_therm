@@ -5,7 +5,7 @@
 // #include "models_output.h"
 // #include "inputdata_by_file.h"
 #ifdef BOOST_LIB_USED
-  #include <boost/optional.hpp>
+#  include <boost/optional.hpp>
 #endif  // BOOST_LIB_USED
 
 #include <functional>

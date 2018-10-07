@@ -4,6 +4,7 @@
 #include "models_errors.h"
 #include "model_general.h"
 
+#include <algorithm>
 #include <cmath>
 #include <vector>
 
@@ -91,8 +92,8 @@ GasParameters_mix_dyn::GasParameters_mix_dyn(parameters prs,
    *          и ладно, его использование ограничено
    */
 GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
-    parameters prs, parameters_mix components, modelGeneral *mg) {
-  if (components.empty() || mg == nullptr) {
+    gas_params_input gpi, modelGeneral *mg) {
+  if (gpi.const_dyn.components->empty() || mg == nullptr) {
     set_error_code(ERR_INIT_T | ERR_INIT_NULLP_ST | ERR_GAS_MIX);
     return nullptr;
   }
@@ -100,7 +101,7 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
   reset_error();
   // количество параметров и их значения для критической точки
   // АДИТИВНЫЕ ПАРАМЕТРЫ СМЕСИ (молекулярная масса и газовая постоянная)
-  std::array<double, 5> avr_vals = get_average_params(components);
+  std::array<double, 5> avr_vals = get_average_params(*gpi.const_dyn.components);
   // инициализируем постоянные параметры
   // init gasmix const_parameters
   std::unique_ptr<const_parameters> tmp_cgp(const_parameters::Init(
@@ -110,15 +111,20 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
     set_error_code(ERR_INIT_T | ERR_GAS_MIX | ERR_CALC_GAS_P_ST);
     return nullptr;
   }
+  // calculate volume
+  double volume = 0.0;
+  for (const auto &x : *gpi.const_dyn.components)
+    volume += x.first * mg->InitVolume(gpi.p, gpi.t, x.second.first);
   // инициализируем динамические параметры
   //   т.е. перерасчитаем их для переданных параметров prs
   // init gasmix dyn_parameters
   // создадим временную копию динамических параметров
   //   которую потом пересчитаем к prs
   std::vector<std::pair<double, dyn_parameters>> dgp_cpt;
-  for (auto const &x : components) {
+  for (auto const &x : *gpi.const_dyn.components) {
     dgp_cpt.push_back({x.first, x.second.second});
-    mg->update_dyn_params(dgp_cpt.back().second, prs, x.second.first);
+    mg->update_dyn_params(dgp_cpt.back().second,
+        { volume, gpi.p, gpi.t}, x.second.first);
   }
   std::array<double, 3> dgp_tmp = {0.0, 0.0, 0.0};
   for (auto const &x : dgp_cpt) {
@@ -127,13 +133,13 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
     dgp_tmp[2] += x.first * x.second.internal_energy;
   }
   std::unique_ptr<dyn_parameters> tmp_dgp(dyn_parameters::Init(
-      dgp_tmp[0], dgp_tmp[1], dgp_tmp[2], prs));
+      dgp_tmp[0], dgp_tmp[1], dgp_tmp[2], {volume, gpi.p, gpi.t}));
   if (tmp_dgp == nullptr) {
     set_error_code(ERR_INIT_T | ERR_CALC_GAS_P_ST | ERR_GAS_MIX);
     return nullptr;
   }
-  return new GasParameters_mix_dyn(prs, *tmp_cgp, *tmp_dgp,
-      components, mg);
+  return new GasParameters_mix_dyn({0.0, gpi.p, gpi.t}, *tmp_cgp, *tmp_dgp,
+      *gpi.const_dyn.components, mg);
 }
 
 std::unique_ptr<const_parameters> GasParameters_mix_dyn::GetAverageParams(

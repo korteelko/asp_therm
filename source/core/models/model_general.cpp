@@ -2,6 +2,8 @@
 
 #include "common.h"
 #include "gas_description_dynamic.h"
+#include "gas_mix_init.h"
+#include "models_math.h"
 #include "models_errors.h"
 
 #include <algorithm>
@@ -16,8 +18,8 @@
   : parameters_(nullptr), phasediag_model_(modelName::REDLICH_KWONG2),
     bp_(binodalpoints()) {} */
 
-modelGeneral::modelGeneral(modelName mn, binodalpoints bp)
-  : parameters_(nullptr), phasediag_model_(mn), bp_(bp) {}
+modelGeneral::modelGeneral(GAS_MARKS gm, binodalpoints bp)
+  : parameters_(nullptr), gm_(gm), bp_(bp) {}
 
 modelGeneral::~modelGeneral() {}
 
@@ -84,6 +86,44 @@ const GasParameters *modelGeneral::getGasParameters() const {
   return parameters_.get();
 }
 
+bool modelGeneral::set_gasparameters(const gas_params_input &gpi,
+    modelGeneral *mg) {
+  if (gm_ & GAS_MIX_MARK) {
+    parameters_ = std::unique_ptr<GasParameters>(
+        GasParameters_mix_dyn::Init(gpi, mg));
+  } else {
+    parameters_ = std::unique_ptr<GasParameters>(
+        GasParameters_dyn::Init(gpi, mg));
+  }
+  return parameters_ != nullptr;
+}
+
+// static 
+bool modelGeneral::check_input(const model_input &mi) {
+  bool is_valid = true;
+  if (mi.gm & GAS_MIX_MARK) {
+    is_valid = !mi.gpi.const_dyn.components->empty();
+    if (is_valid) {
+      // для проверки установленных доль
+      double parts_sum = 0.0;
+      std::for_each(mi.gpi.const_dyn.components->begin(),
+          mi.gpi.const_dyn.components->end(),
+          [&parts_sum] (const std::pair<const double, const_dyn_parameters> &x)
+          {parts_sum += x.first;});
+      if (parts_sum < (GAS_MIX_PERSENT_AVR - GAS_MIX_PERCENT_EPS) ||
+          parts_sum > (GAS_MIX_PERSENT_AVR + GAS_MIX_PERCENT_EPS))
+        is_valid = false;
+    }
+  }
+  if (is_valid)
+    is_valid = is_above0(mi.gpi.p, mi.gpi.t);
+  if (!is_valid) {
+    set_error_code(ERR_INIT_T | ERR_INIT_ZERO_ST);
+    return false;
+  }
+  return is_valid;
+}
+
 double modelGeneral::GetVolume() const {
   return parameters_->cgetVolume();
 }
@@ -128,8 +168,9 @@ std::string modelGeneral::ParametersString() const {
   char str[256] = {0};
   auto prs  = parameters_->cgetParameters();
   auto dprs = parameters_->cgetDynParameters();
-  sprintf(str, "%08.2f %08.4f %08.2f %08.2f %08.2f %08.2f\n", prs.pressure, prs.volume,
-      prs.temperature, dprs.heat_cap_vol, dprs.heat_cap_pres, dprs.internal_energy);
+  sprintf(str, "%08.2f %08.4f %08.2f %08.2f %08.2f %08.2f\n",
+      prs.pressure, prs.volume, prs.temperature, dprs.heat_cap_vol,
+      dprs.heat_cap_pres, dprs.internal_energy);
   return std::string(str);
 }
 
@@ -137,8 +178,8 @@ std::string modelGeneral::ConstParametersString() const {
   char str[256] = {0};
   const_parameters &cprs = parameters_->const_params;
   sprintf(str, "  Critical pnt: p=%8.2f; v=%8.4f; t=%8.2f\n"
-      "  Others: mol_m=%6.3f R=%8.3f ac_f=%6.4f\n", cprs.P_K, cprs.V_K, cprs.T_K,
-      cprs.molecularmass, cprs.R, cprs.acentricfactor);
+      "  Others: mol_m=%6.3f R=%8.3f ac_f=%6.4f\n", cprs.P_K, cprs.V_K,
+      cprs.T_K, cprs.molecularmass, cprs.R, cprs.acentricfactor);
   return std::string(str);
 }
 

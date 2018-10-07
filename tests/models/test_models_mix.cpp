@@ -32,6 +32,28 @@ const std::string xml_methane = "methane.xml";
 const std::string xml_ethane = "ethane.xml";
 const std::string xml_propane = "propane.xml";
 
+model_input set_input(modelName mn, const binodalpoints &bp,
+    double p, double t, const parameters_mix &components) {
+  GAS_MARKS gm = 0x00;
+// gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
+  gm = (uint32_t)mn | ((uint32_t)modelName::REDLICH_KWONG2 
+      << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
+  return {gm, bp, {p, t, &components}};
+}
+
+model_input set_input(modelName mn, const binodalpoints &bp,
+    double p, double t, const const_parameters &cgp,
+    const dyn_parameters &dgp) {
+  GAS_MARKS gm = 0x00;
+// gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT);
+  gm = (uint32_t)mn | ((uint32_t)modelName::REDLICH_KWONG2 
+      << BINODAL_MODEL_SHIFT);
+  model_input mi{gm, bp, {p, t, NULL}};
+  mi.gpi.const_dyn.cdp.cgp = &cgp;
+  mi.gpi.const_dyn.cdp.dgp = &dgp;
+  return mi;
+}
+
 int test_models() {
   char cwd[512] = {0};
   if (!getcwd(cwd, (sizeof(cwd)))) {
@@ -56,14 +78,15 @@ int test_models() {
   }
   PhaseDiagram &pd = PhaseDiagram::GetCalculated();
   // ссылочку а не объект
-  binodalpoints bp = pd.GetBinodalPoints(cp->V_K, cp->P_K, cp-> T_K,
+  // TODO udalit' modelname otsuda ili luchshee pereustanovit' gm.binodal 
+  binodalpoints bp = pd.GetBinodalPoints(cp->V_K, cp->P_K, cp->T_K,
       modelName::REDLICH_KWONG2, cp->acentricfactor);
 #if defined(RK2_TEST)
   Redlich_Kwong2 *calc_mod = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
       {1.42, 100000, 275}, *cp, *dp, bp);
 #elif defined(PR_TEST)
-  Peng_Robinson *calc_mod = Peng_Robinson::Init(modelName::PENG_ROBINSON,
-      {1.42, 100000, 275}, *cp, *dp, bp);
+  Peng_Robinson *calc_mod = Peng_Robinson::Init(set_input(modelName::PENG_ROBINSON, bp,
+      100000, 275, *cp, *dp));
 #endif  // _TEST
   std::cerr << calc_mod->ParametersString() << std::flush;
   std::cerr << "Set volume(10e6, 314)\n" << std::flush;
@@ -112,8 +135,8 @@ int test_models_mix() {
   Redlich_Kwong2 *calc_mod = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
       {1.42, 100000, 275}, *prs_mix, bp);
 #elif defined(PR_TEST)
-  Peng_Robinson *calc_mod = Peng_Robinson::Init(modelName::PENG_ROBINSON,
-      {1.42, 100000, 275}, *prs_mix, bp);
+  Peng_Robinson *calc_mod = Peng_Robinson::Init(set_input(modelName::PENG_ROBINSON, bp,
+      100000, 275, *prs_mix));
 #endif  // _TEST
   std::cerr << calc_mod->ConstParametersString() << std::flush;
   std::cerr << modelGeneral::sParametersStringHead() << std::flush;

@@ -1,11 +1,10 @@
 #include "model_redlich_kwong.h"
 
+#include "common.h"
 #include "gas_description_dynamic.h"
-#include "models_math.h"
 #include "models_errors.h"
 #include "models_math.h"
 
-#include <cmath>
 #ifdef _DEBUG
 #  include <iostream>
 #endif  // _DEBUG
@@ -26,74 +25,20 @@ void Redlich_Kwong2::set_model_coef(
   model_coef_b_ = 0.08664 * cp.R * cp.T_K / cp.P_K;
 }
 
-/*
-void Redlich_Kwong2::set_enthalpy() {
-  if (!bp_.hLeft.empty())
-    bp_.hLeft.clear();
-  for (int i = 0; i < bp_.vLeft.size(); ++i) {
-    SetPressure(bp_.vLeft[i], bp_.t[i]);
-    bp_.hLeft.push_back(parameters_->cgetIntEnergy() + 
-        bp_.p[i] * bp_.vLeft[i]);
-  }
-  if (!bp_.hRigth.empty())
-    bp_.hRigth.clear();
-  for (int i = 0; i < bp_.vRigth.size(); ++i) {
-    SetPressure(bp_.vRigth[i], bp_.t[i]);
-    bp_.hRigth.push_back(parameters_->cgetIntEnergy() +
-        bp_.p[i] * bp_.vRigth[i]);
-  }
-} */
-
-Redlich_Kwong2::Redlich_Kwong2(modelName mn, parameters prs,
-    const_parameters cgp, dyn_parameters dgp, binodalpoints bp)
-  : modelGeneral(mn, bp) {
-  parameters_ = std::unique_ptr<GasParameters>(
-      GasParameters_dyn::Init(prs, cgp, dgp, this));
+Redlich_Kwong2::Redlich_Kwong2(const model_input &mi)
+  : modelGeneral(mi.gm, mi.bp) {
+  if (!set_gasparameters(mi.gpi, this))
+    return;
   set_model_coef();
   set_enthalpy();
 }
 
-Redlich_Kwong2::Redlich_Kwong2(modelName mn, parameters prs,
-    parameters_mix components, binodalpoints bp)
-  : modelGeneral(mn, bp) {
-  parameters_ = std::unique_ptr<GasParameters>(
-      GasParameters_mix_dyn::Init(prs, components, this));
-  set_model_coef();
-  set_enthalpy();
-}
-
-Redlich_Kwong2 *Redlich_Kwong2::Init(modelName mn, parameters prs,
-    const_parameters cgp, dyn_parameters dgp, binodalpoints bp) {
-  reset_error();
-  bool is_valid = is_valid_cgp(cgp) && is_valid_dgp(dgp);
-  is_valid &= is_above0(prs.pressure, prs.temperature, prs.volume);
-  if (!is_valid) {
-    set_error_code(ERR_INIT_T | ERR_INIT_ZERO_ST);
-    return nullptr;
-  }
-  Redlich_Kwong2 *rk = new Redlich_Kwong2(mn, prs, cgp, dgp, bp);
-  // окончательная проверка
-  if (rk)
-    if (rk->parameters_ == nullptr) {
-      set_error_code(ERR_INIT_T);
-      delete rk;
-      rk = nullptr;
-    }
-  return rk;
-}
-
-Redlich_Kwong2 *Redlich_Kwong2::Init(modelName mn, parameters prs,
-    parameters_mix components, binodalpoints bp) {
+Redlich_Kwong2 *Redlich_Kwong2::Init(const model_input &mi) {
   // check const_parameters
   reset_error();
-  bool is_valid = !components.empty();
-  if (is_valid)
-    is_valid = is_above0(prs.pressure, prs.temperature, prs.volume);
-  if (!is_valid) {
-    set_error_code(ERR_INIT_T | ERR_INIT_ZERO_ST | ERR_GAS_MIX);
+  if (!check_input(mi))
     return nullptr;
-  }
-  Redlich_Kwong2 *rk = new Redlich_Kwong2(mn, prs, components, bp);
+  Redlich_Kwong2 *rk = new Redlich_Kwong2(mi);
   if (rk)
     if (rk->parameters_ == nullptr) {
       set_error_code(ERR_INIT_T);
@@ -136,13 +81,7 @@ double Redlich_Kwong2::heat_capac_dif_prs_vol(const parameters new_state,
          V = new_state.volume,
          a = model_coef_a_,
          b = model_coef_b_;
-  // сначала числитель
-  // double num = 4.0 * R*R * T*T*T * V*V* (V + b)*(V + b) +
-  //    4.0*(V*V -b*b)*V*R*a*pow(T, 1.5)  +  a*a * (V-b)*(V-b);
   double num = -T * pow(R/(V-b) + a/(2.0*pow(T, 1.5)*(b+V)*V), 2.0);
-  // знаменатель
-  // double dec = 4.0 * a * (2.0*V*V*V - 3*b*V*V + b*b*b)*pow(T, 1.5) - 
-  //    4.0 * V*V * R * T*T*T*T * (V+b)*(V+b);
   double dec = - R*T/pow(V-b, 2.0) + a/(sqrt(T)*V*pow(b+V, 2.0)) + 
       a/(sqrt(T)*V*V*(V+b));
   return num / dec;
@@ -220,8 +159,6 @@ void Redlich_Kwong2::update_dyn_params(dyn_parameters &prev_state,
   prev_state.parm = new_state;
   prev_state.Update();
 }
-  // 20_09_2018
-  // return num / dec;
 
 // visitor
 void Redlich_Kwong2::DynamicflowAccept(DerivateFunctor &df) {
@@ -231,6 +168,12 @@ void Redlich_Kwong2::DynamicflowAccept(DerivateFunctor &df) {
 bool Redlich_Kwong2::IsValid() const {
   return (parameters_->cgetPressure()/parameters_->cgetP_K() <
       0.5*parameters_->cgetTemperature()/parameters_->cgetT_K());
+}
+
+double Redlich_Kwong2::InitVolume(double p, double t,
+    const const_parameters &cp) {
+  set_model_coef(cp);
+  return get_volume(p, t, cp);
 }
 
 void Redlich_Kwong2::SetVolume(double p, double t) {

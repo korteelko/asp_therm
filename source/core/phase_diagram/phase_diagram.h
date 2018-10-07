@@ -1,14 +1,14 @@
 #ifndef _CORE__PHASE_DIAGRAM__PHASE_DIAGRAM_H_
 #define _CORE__PHASE_DIAGRAM__PHASE_DIAGRAM_H_
 
-
+#include "common.h"
 #include "gas_mix_init.h"
 #include "phase_diagram_models.h"
 #include "target_sys.h"
 
-#ifdef BOOST_LIB_ISED
-#include <boost/noncopyable.hpp>
-#endif  // BOOST_LIB_ISED
+#ifdef BOOST_LIB_USED
+#  include <boost/noncopyable.hpp>
+#endif  // BOOST_LIB_USED
 
 #include <cassert>
 #include <deque>
@@ -30,24 +30,20 @@
  *   (комментарий HORRIBLE)
 */
 
-enum class modelName : uint32_t {
-  REDLICH_KWONG2 = 0,
-  PENG_ROBINSON
-};
-
 class PhaseDiagram;
 class binodalpoints {
   friend class PhaseDiagram;
   binodalpoints();
 
 public:
+  modelName mn;
   // вектор значений безразмерной температуры по которым будут вычисляться
   //   параметры объёма и давления
   //   BASIC STRUCT
   std::deque<double> 
       t = std::deque<double> {
-              0.97, 0.95, 0.92, 0.9, 0.87, 0.85,
-              0.8, 0.75, 0.7, 0.6, 0.5},
+          0.97, 0.95, 0.92, 0.9, 0.87, 0.85,
+          0.8, 0.75, 0.7, 0.6, 0.5},
       vLeft,
       vRigth,
       p;
@@ -65,22 +61,23 @@ public:
 /// class calculate points on diagram liquid-steam-gas
 /// for more information visit:
 ///    https://en.wikipedia.org/wiki/Maxwell_construction
-#ifdef BOOST_LIB_ISED
+#ifdef BOOST_LIB_USED
 class PhaseDiagram: boost::noncopyable {
 #else 
 class PhaseDiagram {
   PhaseDiagram(const PhaseDiagram &) = delete;
   PhaseDiagram &operator=(const PhaseDiagram &) = delete;
-#endif  // BOOST_LIB_ISED
+#endif  // BOOST_LIB_USED
   typedef std::function<double(double, double, double, double)> integ_func_t;
-  typedef std::function<void(std::vector<double>&, double, double, double)> init_func_t;
+  typedef std::function<void(
+      std::vector<double>&, double, double, double)> init_func_t;
   struct uniqueMark {
     uint32_t mn;
     double   acentricfactor;
   };
 
   friend bool operator< (const PhaseDiagram::uniqueMark& lum,
-                         const PhaseDiagram::uniqueMark& rum);
+      const PhaseDiagram::uniqueMark& rum);
 
   // Мьютекс здесь не нужен, ввиду отсутствия каких либо потоков(нитей),
   //   для многопоточности придётся вводить как минимум ООП исключения
@@ -91,6 +88,9 @@ class PhaseDiagram {
           lineIntegrateRK2(), lineIntegratePR()};
   std::vector<init_func_t> initialize_f_ = 
       std::vector<init_func_t> {initializeRK2(), initializePR()};
+  std::vector<modelName> functions_indexes_ =
+     std::vector<modelName> {modelName::REDLICH_KWONG2,
+     modelName::PENG_ROBINSON};
   // DEVELOP
   //   ASSERT
   // static_assert(line_integrate_f_.size() == initialize_f_,
@@ -99,6 +99,7 @@ class PhaseDiagram {
 private:
   PhaseDiagram();
 
+  size_t set_functions_index(modelName mn);
   void calculateBinodal(std::shared_ptr<binodalpoints> &bdp,
       modelName mn, double acentric);
   void checkResult(std::shared_ptr<binodalpoints> &bdp);
@@ -121,6 +122,6 @@ public:
 };
 
 bool operator< (const PhaseDiagram::uniqueMark &lum,
-                const PhaseDiagram::uniqueMark &rum);
+    const PhaseDiagram::uniqueMark &rum);
 
 #endif  // _CORE__PHASE_DIAGRAM__PHASE_DIAGRAM_H_

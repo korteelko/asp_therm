@@ -35,7 +35,8 @@ std::ostream &operator<< (std::ostream &outstream,
     const GasParameters &gp) {
   char msg[256] = {0};
   parameters prs = gp.cgetParameters();
-  sprintf(msg, "v: %8.2f  p: %8.2f t:%6.2f\n", prs.volume, prs.pressure, prs.temperature);
+  sprintf(msg, "v: %8.2f  p: %8.2f t:%6.2f\n", prs.volume, prs.pressure,
+      prs.temperature);
   outstream << msg;
  /* 26_09_2018
    outstream << "v: " << gp.cgetVolume() << " p: " << gp.cgetPressure()

@@ -32,60 +32,20 @@ void Peng_Robinson::set_model_coef(
       0.26992 * std::pow(cp.acentricfactor, 2.0);
 }
 
-/*
-void Peng_Robinson::set_enthalpy() {
-  assert(0);
-} */
-
-Peng_Robinson::Peng_Robinson(modelName mn, parameters prs,
-    const_parameters cgp, dyn_parameters dgp, binodalpoints bp)
-  : modelGeneral(mn, bp) {
-  parameters_ = std::unique_ptr<GasParameters>(
-      GasParameters_dyn::Init(prs, cgp, dgp, this));
+// const model_input &mi
+Peng_Robinson::Peng_Robinson(const model_input &mi)
+  : modelGeneral(mi.gm, mi.bp) {
+  if (!set_gasparameters(mi.gpi, this))
+    return;
   set_model_coef();
   set_enthalpy();
 }
 
-Peng_Robinson::Peng_Robinson(modelName mn, parameters prs,
-    parameters_mix components, binodalpoints bp) 
-    : modelGeneral(mn, bp) {
-  parameters_ = std::unique_ptr<GasParameters>(
-      GasParameters_mix_dyn::Init(prs, components, this));
-  set_model_coef();
-  set_enthalpy();
-}
-
-Peng_Robinson *Peng_Robinson::Init(modelName mn, parameters prs,
-    const_parameters cgp, dyn_parameters dgp, binodalpoints bp) {
+Peng_Robinson *Peng_Robinson::Init(const model_input &mi) {
   reset_error();
-  bool is_valid = is_valid_cgp(cgp) && is_valid_dgp(dgp);
-  is_valid &= (is_above0(prs.pressure, prs.temperature, prs.volume));
-  if (!is_valid) {
-    set_error_code(ERR_INIT_T | ERR_INIT_ZERO_ST);
+  if (!check_input(mi))
     return nullptr;
-  }
-  Peng_Robinson *pr = new Peng_Robinson(mn, prs, cgp, dgp, bp);
-  if (pr)
-    if (pr->parameters_ == nullptr) {
-      set_error_code(ERR_INIT_T);
-      delete pr;
-      pr = nullptr;
-    }
-  return pr; 
-}
-
-Peng_Robinson *Peng_Robinson::Init(modelName mn, parameters prs,
-    parameters_mix components, binodalpoints bp) {
-  reset_error();
-  // для проверки установленных доль
-  bool is_valid = !components.empty();
-  if (is_valid)
-    is_valid = is_above0(prs.pressure, prs.temperature, prs.volume);
-  if (!is_valid) {
-    set_error_code(ERR_INIT_T | ERR_INIT_ZERO_ST | ERR_GAS_MIX);
-    return nullptr;
-  }
-  Peng_Robinson *pr = new Peng_Robinson(mn, prs, components, bp);
+  Peng_Robinson *pr = new Peng_Robinson(mi);
   if (pr)
     if (pr->parameters_ == nullptr) {
       set_error_code(ERR_INIT_T);
@@ -117,13 +77,6 @@ double Peng_Robinson::internal_energy_integral(const parameters new_state,
          a  = model_coef_a_,
          b  = model_coef_b_,
          k  = model_coef_k_;
-  /* 26_09_2018
-         gm = std::pow(1.0 + k * (1.0 - std::sqrt(Tr)), 2.0);
-  double ans = T*T * a * std::sqrt(gm) * k * 
-      std::log((V + (1.0 - sq2)*b)/(V + (1.0 + sq2)*b)) +
-      a * gm *std::log((V + (1.0 - sq2)*b)/(V + (1.0 + sq2)*b) ) / 
-      (2.0 * sq2 * b);
-  */
   double ans = sq2 * 0.25 * a * k * t * t * 
       (-k*sqrt(Tr) + k - sqrt(Tr) + 2.0 + 1.0/k) * 
       log(log_pr(vf, false) * log_pr(v0, true) / 
@@ -143,11 +96,6 @@ double Peng_Robinson::heat_capac_vol_integral(const parameters new_state,
          a  = model_coef_a_,
          b  = model_coef_b_,
          k  = model_coef_k_;
-  /* 26_09_2018
-         gm = std::pow(1.0 + k * (1.0 - std::sqrt(Tr)), 2.0);
-  double ans = - a * k * std::sqrt(Tr) * (std::sqrt(gm) + k * std::sqrt(gm)) / 
-      (2.0 * T*T * (V*V + 2.0*V*b - b*b));
-  */
   double ans = sq2*Tk*a*k*t*t*sqrt(Tr)*(-1.0 - k) *
       log(log_pr(vf, false) * log_pr(v0, true) / 
           log_pr(vf, true) / log_pr(v0, false)) /
@@ -164,17 +112,6 @@ double Peng_Robinson::heat_capac_dif_prs_vol(const parameters new_state,
          a  = model_coef_a_,
          b  = model_coef_b_,
          k  = model_coef_k_;
-  /* 30_09_2018 */
-  /*
-  double gm = k*(-sqrt(Tr) + 1.0) + 1.0;
-  // сначала числитель
-  double num = -t * pow(R/(v-b) + a*k*sqrt(Tr)*gm / 
-      (t * (-b*b + 2.0*b*v *v*v)), 2.0);
-  // знаменатель
-  double dec = -R * t / pow(v-b, 2.0) -
-      2.0*a*(-b-v)*gm*gm / pow(-b*b+2*b*v+v*v, 2.0);
-  return num / dec;
-  */
   return  t * pow((R/(-b + v) + a*k*sqrt(Tr)*(k*(-sqrt(Tr) + 1.0) + 1.0) /
       (t*(-b*b + 2.0*b*v + v*v))), 2.0) / 
       (R*t / pow((-b + v), 2.0) - a*(-2.0*b - 2.0*v)*
@@ -267,6 +204,12 @@ bool Peng_Robinson::IsValid() const {
   return (parameters_->cgetState() != state_phase::LIQUID);
 }
 
+double Peng_Robinson::InitVolume(double p, double t,
+    const const_parameters &cp) {
+  set_model_coef(cp);
+  return get_volume(p, t, cp);
+}
+
 void Peng_Robinson::SetVolume(double p, double t) {
   setParameters(GetVolume(p, t), p, t);
 }
@@ -319,7 +262,8 @@ double Peng_Robinson::GetVolume(double p, double t) {
     set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
     return 0.0;
   }
-  GasParameters_mix_dyn *gpar = dynamic_cast<GasParameters_mix_dyn *>(parameters_.get());
+  GasParameters_mix_dyn *gpar = 
+      dynamic_cast<GasParameters_mix_dyn *>(parameters_.get());
   if (gpar != nullptr) {
     const parameters_mix &cpm = gpar->GetComponents();
     double volume = 0.0;
@@ -339,7 +283,8 @@ double Peng_Robinson::GetPressure(double v, double t) {
     set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
     return 0.0;
   }
-  GasParameters_mix_dyn *gpar = dynamic_cast<GasParameters_mix_dyn *>(parameters_.get());
+  GasParameters_mix_dyn *gpar =
+      dynamic_cast<GasParameters_mix_dyn *>(parameters_.get());
   if (gpar != nullptr) {
     const parameters_mix &cpm = gpar->GetComponents();
     double pressure = 0.0;

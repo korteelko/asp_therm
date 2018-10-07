@@ -8,6 +8,7 @@ project(${PROJECT_NAME})
 # debug
 add_definitions(-D_DEBUG)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+add_definitions(-D_IDE_VSCODE)
 # release
 # add_definitions(-DNDEBUG)
 # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
@@ -86,22 +87,23 @@ set(
   ${THERMCORE_SOURCE_DIR}/models/model_ideal_gas.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_peng_robinson.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_redlich_kwong.cpp
-  ${THERMCORE_SOURCE_DIR}/models/models_creator.cpp
+# ${THERMCORE_SOURCE_DIR}/models/models_creator.cpp
 
 # plot sources
 # maybe OpenGL libs
 )
 
 # output for static libraries
-add_library(lmodels STATIC ${MODELS_SRC})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${LIBS_DIR}/debug)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${LIBS_DIR}/release)
+#add_library(lmodels STATIC ${MODELS_SRC})
+#set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${LIBS_DIR}/debug)
+#set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${LIBS_DIR}/release)
+
 # set_target_properties(lmodels PROPERTIES
 #     LIBRARY_OUTPUT_DIRECTORY ${LIBS_DIR}/debug)
 
-add_executable(${PROJECT_NAME} main.cpp)
+add_executable(${PROJECT_NAME} ${MODELS_SRC} main.cpp)
 target_link_libraries(${PROJECT_NAME}
-  lmodels
+  # lmodels
     # pugixml site:
     #   http://pugixml.org
   pugixml

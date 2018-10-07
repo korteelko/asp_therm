@@ -6,7 +6,7 @@ project(${PROJECT_NAME})
 
 add_definitions(-D_DEBUG)
 # i have problem with vscode
-add_definitions(-D_IDE_VSCODE)
+# add_definitions(-D_IDE_VSCODE)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 
 if(MSVC)
