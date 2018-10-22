@@ -7,6 +7,7 @@
 #include "model_redlich_kwong.h"
 #include "model_peng_robinson.h"
 
+#include <memory.h>
 #include <vector>
 
 #include <assert.h>
@@ -35,9 +36,12 @@ const std::string xml_propane = "propane.xml";
 model_input set_input(modelName mn, const binodalpoints &bp,
     double p, double t, const parameters_mix &components) {
   GAS_MARKS gm = 0x00;
-// gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
+#ifdef _DEBUG
   gm = (uint32_t)mn | ((uint32_t)modelName::REDLICH_KWONG2 
       << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
+#else
+  gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
+#endif  // _DEBUG
   return {gm, bp, {p, t, &components}};
 }
 
@@ -45,9 +49,12 @@ model_input set_input(modelName mn, const binodalpoints &bp,
     double p, double t, const const_parameters &cgp,
     const dyn_parameters &dgp) {
   GAS_MARKS gm = 0x00;
-// gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT);
+#ifdef _DEBUG
   gm = (uint32_t)mn | ((uint32_t)modelName::REDLICH_KWONG2 
       << BINODAL_MODEL_SHIFT);
+#else
+  gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT);
+#endif  // _DEBUG
   model_input mi{gm, bp, {p, t, NULL}};
   mi.gpi.const_dyn.cdp.cgp = &cgp;
   mi.gpi.const_dyn.cdp.dgp = &dgp;
@@ -119,8 +126,8 @@ int test_models_mix() {
     return 1;
   }
   */
-  GasMix *gm = GasMix::Init(xml_files);
-  if (!gm) {
+  std::unique_ptr<GasMix> gm(GasMix::Init(xml_files));
+  if (gm == nullptr) {
     std::cerr << "GasMix init error" << std::flush;
     return 1;
   }

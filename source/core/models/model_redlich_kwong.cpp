@@ -49,10 +49,6 @@ Redlich_Kwong2 *Redlich_Kwong2::Init(const model_input &mi) {
  }
 
 //  расчёт смотри в ежедневнике
-//  UPD: Matlab/GNUOctave files in dir somemath
-
-  // u(p, v, T) = u0 + integrate(....)dv
-//   return  u-u0
 double Redlich_Kwong2::internal_energy_integral(const parameters new_state,
     const parameters old_state) {
   double ans = 3.0 * model_coef_a_ *
@@ -62,7 +58,6 @@ double Redlich_Kwong2::internal_energy_integral(const parameters new_state,
   return ans;
 }
 
-// cv(p, v, T) = cv0 + integrate(...)dv
 //   return cv - cv0
 double Redlich_Kwong2::heat_capac_vol_integral(const parameters new_state,
     const parameters old_state) {
@@ -177,11 +172,11 @@ double Redlich_Kwong2::InitVolume(double p, double t,
 }
 
 void Redlich_Kwong2::SetVolume(double p, double t) {
-  setParameters(GetVolume(p, t), p, t);
+  set_parameters(GetVolume(p, t), p, t);
 }
 
 void Redlich_Kwong2::SetPressure(double v, double t) {
-  setParameters(v, GetPressure(v, t), t);
+  set_parameters(v, GetPressure(v, t), t);
 }
 
 #ifndef GAS_MIX_VARIANT
@@ -232,7 +227,6 @@ double Redlich_Kwong2::GetVolume(double p, double t) {
     const parameters_mix &cpm = gpar->GetComponents();
     double volume = 0.0;
     for (auto &x : cpm) {
-      // TODO: кажется метод арифметического среднего не оч
       volume += x.first * get_volume(p, t, x.second.first);
     }
     return volume;
@@ -252,10 +246,8 @@ double Redlich_Kwong2::GetPressure(double v, double t) {
   if (gpar != nullptr) {
     const parameters_mix &cpm = gpar->GetComponents();
     double pressure = 0.0;
-    for (auto &x : cpm) {
-      // TODO: кажется метод арифметического среднего не оч
+    for (auto &x : cpm)
       pressure += x.first * get_pressure(v, t, x.second.first);
-    }
     return pressure;
   } else {
     return get_pressure(v, t, parameters_->const_params);

@@ -8,6 +8,7 @@
 #ifdef _DEBUG
 #  include <iostream>
 #endif  // _DEBUG
+
 #include <vector>
 
 #include <assert.h>
@@ -32,7 +33,6 @@ void Peng_Robinson::set_model_coef(
       0.26992 * std::pow(cp.acentricfactor, 2.0);
 }
 
-// const model_input &mi
 Peng_Robinson::Peng_Robinson(const model_input &mi)
   : modelGeneral(mi.gm, mi.bp) {
   if (!set_gasparameters(mi.gpi, this))
@@ -56,18 +56,11 @@ Peng_Robinson *Peng_Robinson::Init(const model_input &mi) {
 }
 
 //  расчёт смотри в ежедневнике
-//  UPD: Matlab/GNUOctave files in dir somemath
-/* double log_pr(double v, double cb) {
-  return log(v + cb);
-} */
-
 double Peng_Robinson::log_pr(double v, bool is_posit) {
   return (is_posit) ? (1.0 + sq2) * model_coef_b_ + v : 
       (1.0 - sq2) * model_coef_b_ + v;
 }
 
-  // u(p, v, T) = u0 + integrate(....)dv
-//   return  u-u0
 double Peng_Robinson::internal_energy_integral(const parameters new_state,
     const parameters old_state, const double Tk) {
   double t  = new_state.temperature,
@@ -85,8 +78,7 @@ double Peng_Robinson::internal_energy_integral(const parameters new_state,
   return ans;
 }
 
-// cv(p, v, T) = cv0 + integrate(...)dv
-//   return cv - cv0
+// return cv - cv0
 double Peng_Robinson::heat_capac_vol_integral(const parameters new_state,
     const parameters prev_state, const double Tk) {
   double t  = new_state.temperature,
@@ -118,7 +110,6 @@ double Peng_Robinson::heat_capac_dif_prs_vol(const parameters new_state,
       pow((k*(-sqrt(Tr) + 1.0) + 1.0), 2.0) / pow((-b*b + 2.0*b*v + v*v), 2.0));
 }
 
-
 double Peng_Robinson::get_volume(double p, double t, const const_parameters &cp) {
   set_model_coef(cp);
   double alf = std::pow(1.0 + model_coef_k_*(1.0 -
@@ -128,7 +119,7 @@ double Peng_Robinson::get_volume(double p, double t, const const_parameters &cp)
       model_coef_b_ - cp.R*t/p,
       (model_coef_a_*alf - 2.0f * model_coef_b_ *
           cp.R*t)/p - 3.0f*model_coef_b_*model_coef_b_,
-      std::pow(model_coef_b_, 3.0f) + (cp.R*
+      std::pow(model_coef_b_, 3.0f) + (cp.R *
           t*model_coef_b_*model_coef_b_ - model_coef_a_ * alf *model_coef_b_)/p,
       0.0, 0.0, 0.0};
   CardanoMethod_HASUNIQROOT(&coef[0], &coef[4]);
@@ -154,23 +145,15 @@ double Peng_Robinson::get_pressure(double v, double t,
 
 void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state) {
-  // parameters prev_parm = prev_state.parm;
-  // internal_energy addition 
   double du  = internal_energy_integral(new_state, prev_state.parm, 
       parameters_->cgetT_K());
-  // heat_capacity_volume addition
   double dcv = heat_capac_vol_integral(new_state, prev_state.parm, 
       parameters_->cgetT_K());
-  // cp - cv
   double dif_c = heat_capac_dif_prs_vol(new_state,
       parameters_->cgetT_K(), parameters_->cgetR());
   prev_state.internal_energy += du;
   prev_state.heat_cap_vol    += dcv;
   prev_state.heat_cap_pres   = prev_state.heat_cap_vol + dif_c;
-/*#ifdef _DEBUG
-  std::cerr << "\nUPDATE DYN_PARAMETERS2: dcv " << dcv << " dif_c "
-      << dif_c << std::endl; 
-#endif  // _DEBUG */
   prev_state.parm = new_state;
   prev_state.Update();
 }
@@ -180,18 +163,12 @@ void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state, const const_parameters &cp) {
   set_model_coef(cp);
   double du  = internal_energy_integral(new_state, prev_state.parm, cp.T_K);
-  // heat_capacity_volume addition
   double dcv = heat_capac_vol_integral(new_state, prev_state.parm, cp.T_K);
-  // cp - cv
   double dif_c = heat_capac_dif_prs_vol(new_state,
       cp.T_K, cp.R);
   prev_state.internal_energy += du;
   prev_state.heat_cap_vol    += dcv;
   prev_state.heat_cap_pres   = prev_state.heat_cap_vol + dif_c;
-/*#ifdef _DEBUG
-  std::cerr << "\nUPDATE DYN_PARAMETERS2: dcv " << dcv << " dif_c "
-      << dif_c << std::endl; 
-#endif  // _DEBUG*/
   prev_state.parm = new_state;
   prev_state.Update();
 }
@@ -211,11 +188,11 @@ double Peng_Robinson::InitVolume(double p, double t,
 }
 
 void Peng_Robinson::SetVolume(double p, double t) {
-  setParameters(GetVolume(p, t), p, t);
+  set_parameters(GetVolume(p, t), p, t);
 }
 
 void Peng_Robinson::SetPressure(double v, double t) {
-  setParameters(v, GetPressure(v, t), t);
+  set_parameters(v, GetPressure(v, t), t);
 }
 
 #ifndef GAS_MIX_VARIANT
@@ -267,10 +244,8 @@ double Peng_Robinson::GetVolume(double p, double t) {
   if (gpar != nullptr) {
     const parameters_mix &cpm = gpar->GetComponents();
     double volume = 0.0;
-    for (auto &x : cpm) {
-      // TODO: кажется метод арифметического среднего не оч
+    for (auto &x : cpm)
       volume += x.first * get_volume(p, t, x.second.first);
-    }
     return volume;
   } else {
     return get_volume(p, t, parameters_->const_params);
@@ -288,10 +263,8 @@ double Peng_Robinson::GetPressure(double v, double t) {
   if (gpar != nullptr) {
     const parameters_mix &cpm = gpar->GetComponents();
     double pressure = 0.0;
-    for (auto &x : cpm) {
-      // TODO: кажется метод арифметического среднего не оч
+    for (auto &x : cpm)
       pressure += x.first * get_pressure(v, t, x.second.first);
-    }
     return pressure;
   } else {
     return get_pressure(v, t, parameters_->const_params);

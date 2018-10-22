@@ -11,7 +11,6 @@ GasParameters_dyn::GasParameters_dyn(parameters prs,
     const_parameters cgp, dyn_parameters dgp,
     modelGeneral *mg)
   : GasParameters(prs, cgp, dgp), prev_vpte_(prs), model_(mg) {}
- //   update_f_(&modelGeneral::update_dyn_params) {}
 
 GasParameters_dyn *GasParameters_dyn::Init(gas_params_input gpi,
     modelGeneral *mg) {
@@ -29,14 +28,11 @@ void GasParameters_dyn::csetParameters(double v, double p,
   vpte_.temperature  = t;
   sph_               = sp;
   model_->update_dyn_params(dyn_params_, vpte_);
- // assert(0);
-  // update dyn_pars
-  // updatePotentials();
 }
 
 std::ostream &operator<< (std::ostream &outstream,
     const GasParameters_dyn &gp) {
   outstream << "v: " << gp.cgetVolume() << " p: " << gp.cgetPressure()
-            << " t: " << gp.cgetTemperature() << "\n";
+      << " t: " << gp.cgetTemperature() << "\n";
   return outstream;
 }

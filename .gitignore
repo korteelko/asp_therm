@@ -4,6 +4,8 @@ build/
 .vscode/
 .vs/
 source/flow_modeling/
+source/gui/gui_build/
+source/gui/gui.pro.user
 CMakeLists.txt.user
 CMakeSettings.json
 *.swp

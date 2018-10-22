@@ -1,5 +1,8 @@
 #include "models_creator.h"
 
+#include "model_ideal_gas.h"
+#include "model_redlich_kwong.h"
+#include "model_peng_robinson.h"
 #include "models_errors.h"
 // #include "dynamic_modeling.h"
 // #include "models_output.h"
@@ -16,8 +19,48 @@
 
 #include <assert.h>
 
-Equation_of_state::~Equation_of_state() {}
+static const double standart_pressure    = 100000.0;
+static const double standart_temperature = 314.0;
 
+model_input ModelsCreater::set_input(modelName mn, const binodalpoints &bp,
+    double p, double t, const parameters_mix &components) {
+  GAS_MARKS gm = 0x00;
+  gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
+  return {gm, bp, {p, t, &components}};
+}
+
+modelGeneral *ModelsCreater::GetCalculatingModel(modelName mn,
+    std::vector<gas_mix_file> components, double p, double t) {
+  std::unique_ptr<GasMix> gm(GasMix::Init(components));
+  if (gm == nullptr)
+    return nullptr;
+  std::shared_ptr<parameters_mix> prs_mix = gm->GetParameters();
+  if (prs_mix == nullptr)
+    return nullptr;
+  PhaseDiagram &pd = PhaseDiagram::GetCalculated();
+  // for binodal available only RK2 and PR
+  modelName binodal_mn = (mn == modelName::PENG_ROBINSON) ? 
+      modelName::PENG_ROBINSON : modelName::REDLICH_KWONG2;
+  binodalpoints bp = pd.GetBinodalPoints(*prs_mix, binodal_mn);
+  switch (mn) {
+    case modelName::IDEAL_GAS:
+      return Ideal_Gas::Init(set_input(mn, bp, p, t, *prs_mix));
+    case modelName::REDLICH_KWONG2:
+      return Redlich_Kwong2::Init(set_input(mn, bp, p, t, *prs_mix));
+    case modelName::PENG_ROBINSON:
+      return Peng_Robinson::Init(set_input(mn, bp, p, t, *prs_mix));
+    default:
+      set_error_message(ERR_INIT_T, "undefined calculation model");
+  }
+  return nullptr;
+}
+
+modelGeneral *ModelsCreater::GetCalculatingModel(modelName mn,
+    std::vector<gas_mix_file> components) {
+  return ModelsCreater::GetCalculatingModel(mn, components,
+      standart_pressure, standart_temperature);
+}
+/*
 modelGeneral *Ideal_gas_equation::GetCalculatingModel(
     parameters prs, const_parameters cgp,
     dyn_parameters dgp, modelName mn = modelName::REDLICH_KWONG2) {
@@ -51,75 +94,7 @@ modelGeneral *Ideal_gas_equation::GetCalculatingModel(
   }
   return IdealGas::Init(mn, prs, components, bp);
 }
-
-modelGeneral *Redlich_Kwong_equation::GetCalculatingModel(
-    parameters prs, const_parameters cgp,
-    dyn_parameters dgp, modelName mn = modelName::REDLICH_KWONG2) {
-  // calculate binodal points
-  reset_error();
-  binodalpoints bp = PhaseDiagram::GetCalculated().GetBinodalPoints(
-       cgp.V_K, cgp.P_K, cgp.T_K, mn, cgp.acentricfactor);
-  // check calculated bp
-  if (bp.p.empty()) {
-    std::cerr << get_error_message();
-    std::cerr << "\n Could not create RedlichKwong2 Solver\n" << std::endl;
-    return nullptr;
-  }
-  return Redlich_Kwong2::Init(mn, prs, cgp, dgp, bp);
-}
-
-modelGeneral *Redlich_Kwong_equation::GetCalculatingModel(
-    parameters prs, parameters_mix &components,
-    modelName mn = modelName::REDLICH_KWONG2) {
-  reset_error();
-  if (components.empty()) {
-    std::cerr << " components of gas_mix was not setted!\n";
-    return NULL;
-  }
-  binodalpoints bp = PhaseDiagram::GetCalculated().GetBinodalPoints(
-      components, mn);
-  if (bp.p.empty()) {
-    std::cerr << get_error_message();
-    std::cerr << "\n Could not create RedlichKwong2 Solver\n" << std::endl;
-    return nullptr;
-  }
-  return Redlich_Kwong2::Init(mn, prs, components, bp);
-}
-
-modelGeneral *Peng_Robinson_equation::GetCalculatingModel(
-    parameters prs,
-    const_parameters cgp, dyn_parameters dgp, modelName mn = modelName::PENG_ROBINSON) {
-  // calculate binodal points
-  reset_error();
-  binodalpoints bp = PhaseDiagram::GetCalculated().GetBinodalPoints(
-       cgp.V_K, cgp.P_K, cgp.T_K, mn, cgp.acentricfactor);
-  // check calculated bp
-  if (bp.p.empty()) {
-    std::cerr << get_error_message();
-    std::cerr << "\n Could not create PengRobinson Solver\n" << std::endl;
-    return nullptr;
-  }
-  return Peng_Robinson::Init(mn, prs, cgp, dgp, bp);
-}
-
-modelGeneral *Peng_Robinson_equation::GetCalculatingModel(
-    parameters prs,
-    parameters_mix &components, modelName mn = modelName::PENG_ROBINSON) {
-  reset_error();
-  if (components.empty()) {
-    std::cerr << " components of gas_mix was not setted!\n";
-    return NULL;
-  }
-  binodalpoints bp = PhaseDiagram::GetCalculated().GetBinodalPoints(
-      components, mn);
-  if (bp.p.empty()) {
-    std::cerr << get_error_message();
-    std::cerr << "\n Could not create RedlichKwong2 Solver\n" << std::endl;
-    return nullptr;
-  }
-  return Peng_Robinson::Init(mn, prs, components, bp);
-}
-
+*/
 /*  to another file
 
 // Конфигурация расчёта, может изменяться
@@ -230,35 +205,4 @@ balloonFlowDynamic *GasDynamic::setCalculator(
     std::cout << e.what() << std::endl;
     return nullptr;
   }
-}
-
-//================================
-// GasDynamic::setEOS
-//================================
-
-std::shared_ptr<Equation_of_state>
-GasDynamic::setEOS() {
-  int eosch;
-  std::shared_ptr<Equation_of_state> eos;
-  try {
-    eosch = equations.at(idp_->getEquation());
-  } catch (std::exception &e) {
-    std::cout << idp_->getEquation()
-              << "\n Bad input cannot create Real_gas_equation creator!"
-              << std::endl;
-    return eos;
-  }
-  switch (eosch) {
-    case 1:
-      eos = std::shared_ptr<Equation_of_state> (new Ideal_gas_equation());
-      break;
-    case 2:
-      eos = std::shared_ptr<Equation_of_state> (new Redlich_Kwong_equation());
-      break;
-    case 3:
-      eos = std::shared_ptr<Equation_of_state> (new Peng_Robinson_equation());
-      break;
-    }
-  return eos;
-}
-*/
+} */

@@ -14,17 +14,12 @@
 bool is_equal(double a, double b, double accur);
 bool is_above0(double a);
 
-/// DEVELOP
-///   думаю можно понадобности и для других типов перегрузить
-
 template<class ...Targs>
 bool is_above0(double a, Targs ...fargs) {
   return (is_above0(a) && is_above0(fargs...));
 }
 
-//=========================================================================
 // Cardano(Viete triangular) Method
-//=========================================================================
 template<class T,
     class = typename std::enable_if<std::is_floating_point<T>::value>::type>
 void CardanoMethod(const T *coef, std::complex<T> *results) {

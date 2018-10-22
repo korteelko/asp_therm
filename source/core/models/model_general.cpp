@@ -8,7 +8,7 @@
 
 #include <algorithm>
 #ifdef _DEBUG
-# include <iostream>
+#  include <iostream>
 #endif  // _DEBUG
 
 //==================================================================
@@ -23,21 +23,21 @@ modelGeneral::modelGeneral(GAS_MARKS gm, binodalpoints bp)
 
 modelGeneral::~modelGeneral() {}
 
-void modelGeneral::setParameters(double v, double p, double t) {
-  parameters_->csetParameters(v, p, t, setState_phase(v, p, t));
+void modelGeneral::set_parameters(double v, double p, double t) {
+  parameters_->csetParameters(v, p, t, set_state_phase(v, p, t));
 }
 
-int32_t modelGeneral::setState_phasesub(double p) {
+int32_t modelGeneral::set_state_phasesub(double p) {
   return (bp_.p.end() - std::find_if(bp_.p.begin() + 1, bp_.p.end(),
       std::bind2nd(std::less_equal<double>(), p)));
 }
 
-state_phase modelGeneral::setState_phase(
+state_phase modelGeneral::set_state_phase(
     double v, double p, double t) {
   if (t >= parameters_->cgetT_K())
     return (p >= parameters_->cgetP_K()) ? state_phase::SCF : state_phase::GAS;
   // if p on the left of binodal graph  -  liquid
-  int32_t iter = setState_phasesub(p);
+  int32_t iter = set_state_phasesub(p);
   if (!iter) {
     // std::cerr << " modelGeneral: gas have too low pressure\n";
     return ((v <= parameters_->cgetV_K()) ?
@@ -162,6 +162,13 @@ parameters modelGeneral::GetParametersCopy() const {
 
 const_parameters modelGeneral::GetConstParameters() const {
   return parameters_->cgetConstparameters();
+}
+
+state_log modelGeneral::GetStateLog() const {
+  dyn_parameters dps = parameters_->cgetDynParameters();
+  // пока так
+  return {dps, dps.internal_energy * dps.parm.pressure * dps.parm.volume, 
+      stateToString[(int32_t)parameters_->cgetState()]};
 }
 
 std::string modelGeneral::ParametersString() const {

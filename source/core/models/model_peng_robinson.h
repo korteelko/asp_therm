@@ -24,7 +24,6 @@ protected:
   void update_dyn_params(dyn_parameters &prev_state,
       const parameters new_state, const const_parameters &cp) override;
 
-// integrals for calculating u, cv and cv
   double log_pr(double v, bool is_posit);
   double internal_energy_integral(const parameters new_state,
       const parameters prev_state, const double Tk);
@@ -38,7 +37,6 @@ protected:
 
 public:
   static Peng_Robinson *Init(const model_input &mi);
-
   void DynamicflowAccept(class DerivateFunctor &df);
   bool IsValid() const override;
   double InitVolume(double p, double t,
@@ -46,7 +44,7 @@ public:
   void SetVolume(double p, double t) override;
   void SetPressure(double v, double t) override;
 #ifndef GAS_MIX_VARIANT
-  double GetVolume(double p, double t)   const override;
+  double GetVolume(double p, double t) const override;
   double GetPressure(double v, double t) const override;
 #else
   double GetVolume(double p, double t) override;

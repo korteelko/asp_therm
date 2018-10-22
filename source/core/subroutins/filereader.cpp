@@ -30,14 +30,10 @@ std::vector<std::string> dynamic_capacities_path {
 const std::string cp_names[CP_PARAMETERS_COUNT] = {
     "volume", "pressure", "temperature"};
 
-// ===========================================================================
-// implicit declarations
-// ===========================================================================
 double get_val(std::vector<std::string> &vec, const std::string &valname,
     XMLReader *xml_doc) {
   std::string tmp_str = "";
   vec[XML_PATHLEN_SUBGROUP] = valname;
-  // код возврата можно не проверять, не в этом слyчае
   xml_doc->GetValueByPath(vec, &tmp_str);
   return std::stod(tmp_str);
 }
@@ -48,13 +44,7 @@ double get_intern_energy(double cv, double temper) {
 }
 }  // unnamed namespace
 
-bool operator< (const gas_mix_file &lg, const gas_mix_file &rg) {
-  return strcmp(lg.filename.c_str(), rg.filename.c_str()) <= 0;
-}
-
-// ===========================================================================
-// XmlGas class
-// ===========================================================================
+// XmlFile
 XmlFile::XmlFile(XMLReader *xml_doc)
   : xml_doc_(xml_doc) {}
 
@@ -116,9 +106,7 @@ XmlFile::~XmlFile() {
     delete xml_doc_;
 }
 
-// ===========================================================================
 // GasMix class
-// ===========================================================================
 GasMix *GasMix::Init(const std::vector<gas_mix_file> &parts) {
   if (check_input(parts))
     return nullptr;
@@ -176,15 +164,6 @@ std::pair<std::shared_ptr<const_parameters>, std::shared_ptr<dyn_parameters>>
   auto dp = xf->GetDynParameters();
   if ((cp == nullptr) || (dp == nullptr)) {
     set_error_message(ERR_INIT_T, "xml format and const/dyn -parameters");
-    /*
-    if (cp != nullptr) {
-      delete dp;
-    } else {
-      delete cp;
-      if (dp != nullptr)
-        delete dp;
-    }
-    */
     return {nullptr, nullptr};
   }
   return {cp, dp};
