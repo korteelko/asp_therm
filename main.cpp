@@ -105,7 +105,7 @@ int test_models_mix() {
     std::cerr << "cann't get current dir";
     return 1;
   }
-  std::vector<gas_mix_file> xml_files{
+  std::vector<gas_mix_file> xml_files = std::vector<gas_mix_file> {
     {(std::string(cwd) + xml_path + xml_methane).c_str(), 0.988},
     // add more (summ = 1.00)
     {(std::string(cwd) + xml_path + xml_ethane).c_str(), 0.009},

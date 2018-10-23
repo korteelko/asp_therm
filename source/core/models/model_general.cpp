@@ -27,6 +27,12 @@ void modelGeneral::setParameters(double v, double p, double t) {
   parameters_->csetParameters(v, p, t, setState_phase(v, p, t));
 }
 
+// расчиать паросодержание
+double modelGeneral::vapor_part(int32_t index) {
+  assert(index > bp_.vLeft.size());
+  return 0.0;
+}
+
 int32_t modelGeneral::setState_phasesub(double p) {
   return (bp_.p.end() - std::find_if(bp_.p.begin() + 1, bp_.p.end(),
       std::bind2nd(std::less_equal<double>(), p)));
@@ -51,6 +57,7 @@ state_phase modelGeneral::setState_phase(
         bp_.vLeft[iter]) * p_path;
     return ((v < vapprox) ? state_phase::LIQUID : state_phase::LIQ_STEAM);
   }
+  // rigth branch of binodal
   const double vapprox = bp_.vRigth[iter] + (bp_.vRigth[iter+1] -
       bp_.vRigth[iter])*p_path;
   return ((v > vapprox) ? state_phase::GAS : state_phase::LIQ_STEAM);
@@ -64,8 +71,8 @@ void modelGeneral::set_enthalpy() {
     bp_.hLeft.push_back(parameters_->cgetIntEnergy() + 
         bp_.p[i] * bp_.vLeft[i]);
   #ifdef _DEBUG
-    std::cerr << "\nSET_ENTHALPY: p " << bp_.p[i] << " t " << bp_.t[i]
-        << " v " << bp_.vLeft[i] << " h " << bp_.hLeft[i] << std::endl;
+//    std::cerr << "\nSET_ENTHALPY: p " << bp_.p[i] << " t " << bp_.t[i]
+//        << " v " << bp_.vLeft[i] << " h " << bp_.hLeft[i] << std::endl;
   #endif  // _DEBUG
   }
   if (!bp_.hRigth.empty())
@@ -75,8 +82,8 @@ void modelGeneral::set_enthalpy() {
     bp_.hRigth.push_back(parameters_->cgetIntEnergy() +
         bp_.p[i] * bp_.vRigth[i]);
   #ifdef _DEBUG
-    std::cerr << "\nSET_ENTHALPY: p " << bp_.p[i] << " t " << bp_.t[i]
-        << " v " << bp_.vRigth[i] << " h " << bp_.hRigth[i] << std::endl;
+ //   std::cerr << "\nSET_ENTHALPY: p " << bp_.p[i] << " t " << bp_.t[i]
+ //       << " v " << bp_.vRigth[i] << " h " << bp_.hRigth[i] << std::endl;
   #endif  // _DEBUG
   }
 }

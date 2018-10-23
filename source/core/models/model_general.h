@@ -60,6 +60,7 @@ protected:
 protected:
   modelGeneral(GAS_MARKS gm, binodalpoints bp);
 
+  double vapor_part(int32_t index);
   state_phase setState_phase(double v, double p, double t);
   int32_t  setState_phasesub(double p);
   void setParameters(double v, double p, double t);

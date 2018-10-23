@@ -9,9 +9,14 @@
 #include <string>
 #include <vector>
 
-struct gas_mix_file {
+class gas_mix_file {
+public:
   std::string  filename;
   const double part;
+
+  gas_mix_file(std::string filename, const double part);
+  gas_mix_file(const gas_mix_file &gmf);
+  gas_mix_file &operator= (const gas_mix_file &gmf);
 };
 
 bool operator< (const gas_mix_file &lg, const gas_mix_file &rg);
