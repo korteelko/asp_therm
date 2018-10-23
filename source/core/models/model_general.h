@@ -56,7 +56,7 @@ protected:
   void set_enthalpy();
   bool set_gasparameters(const gas_params_input &gpi,
       modelGeneral *mg);
-  const GasParameters *getGasParameters() const;
+  const GasParameters *get_gasparameters() const;
   static bool check_input(const model_input &mi);
 
 public:

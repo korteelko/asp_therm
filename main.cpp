@@ -106,10 +106,10 @@ int test_models_mix() {
     return 1;
   }
   std::vector<gas_mix_file> xml_files = std::vector<gas_mix_file> {
-    {(std::string(cwd) + xml_path + xml_methane).c_str(), 0.988},
+    gas_mix_file(std::string(cwd) + xml_path + xml_methane, 0.988),
     // add more (summ = 1.00)
-    {(std::string(cwd) + xml_path + xml_ethane).c_str(), 0.009},
-    {(std::string(cwd) + xml_path + xml_propane).c_str(), 0.003}
+    gas_mix_file(std::string(cwd) + xml_path + xml_ethane, 0.009),
+    gas_mix_file(std::string(cwd) + xml_path + xml_propane, 0.003)
   };
   /*
   std::unique_ptr<XmlFile> met_xml(XmlFile::Init(methane_path));

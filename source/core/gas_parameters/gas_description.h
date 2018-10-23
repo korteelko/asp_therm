@@ -8,6 +8,11 @@
 
 #include <stdint.h>
 
+#define GAS_TYPE_T            uint32_t
+#define GAS_TYPE_METHANE      0x01
+#define GAS_TYPE_ETHANE       0x02
+#define GAS_TYPE_PROPHANE     0x03
+
 // state_phase enum || stateToString
 /// Агрегатное состояние вещества (как )
 /// SCF: t>T_K, p>P_K;    GAS: p_binodal < p < p_K, t>t_binodal;
@@ -74,6 +79,8 @@ struct potentials {
 /// параметры газа, зависящие от его физической природы и
 ///   не изменяющиеся при изменении его состояния
 struct const_parameters {
+  // 23_10_2018 do it
+  // GAS_TYPE_T   gas;
   const double V_K,              // K point parameters (critical point)
                P_K,
                T_K,

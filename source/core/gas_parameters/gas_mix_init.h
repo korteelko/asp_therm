@@ -16,6 +16,11 @@
 struct gas_mix_file {
   std::string  filename;
   const double part;
+
+public:
+  gas_mix_file(const std::string filename, const double part);
+  gas_mix_file(const gas_mix_file &gmf);
+  gas_mix_file &operator= (const gas_mix_file &gmf);
 };
 
 bool operator< (const gas_mix_file &lg, const gas_mix_file &rg);
