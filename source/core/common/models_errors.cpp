@@ -44,10 +44,9 @@ const char *custom_msg_init[] = {
 //   приведенных выше
 // set errmessage
 static char *get_custom_err_msg() {
-  uint32_t err_type     = ERR_MASK_TYPE & err_tmp;
-  uint32_t err_concrete = ERR_MASK_SUBTYPE & err_tmp;
-  // DEVELOP
-  //   Прицеливаемся в ногу
+  ERROR_TYPE err_type     = ERR_MASK_TYPE & err_tmp;
+  ERROR_TYPE err_concrete = ERR_MASK_SUBTYPE & err_tmp;
+  // Прицеливаемся в ногу
   char **list_of_custom_msg = NULL;
   switch (err_type) {
     case ERR_SUCCESS_T:
@@ -82,14 +81,12 @@ ERROR_TYPE get_error_code() {
 
 void reset_error() {
   err_tmp  = ERR_SUCCESS_T;
- // memset(err_msg, 0, ERR_MSG_MAX_LEN);
   *err_msg = '\0';
 }
 
 void set_error_message(const char *msg) {
   if (!msg)
     return;
-//  msg[ERR_MSG_MAX_LEN - 1] = '\0';
   if (strlen(msg) > ERR_MSG_MAX_LEN) {
     strcpy(err_msg, "passed_errmsg too long. Print custom:\n  ");
     char *custom_err_msg = get_custom_err_msg();
@@ -110,8 +107,6 @@ void add_to_error_msg(const char *msg) {
   char *custom_err_msg = get_custom_err_msg();
   if (custom_err_msg != NULL)
     strcpy(err_msg, custom_err_msg);
-  // Если переданное сообщение слишком большое
-  //   выдаем только обычное
   if (strlen(err_msg) + strlen(msg) >= ERR_MSG_MAX_LEN)
     return;
   strcat(err_msg, msg);
@@ -120,7 +115,6 @@ void add_to_error_msg(const char *msg) {
 char *get_error_message() {
   if (*err_msg != '\0')
     return err_msg;
-  // вернем стандартное сообщение если не установлено другого
   char *custom_err_msg = get_custom_err_msg();
   if (!custom_err_msg)
     return NULL;

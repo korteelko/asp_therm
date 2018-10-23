@@ -9,39 +9,15 @@
 #include <vector>
 
 #include <assert.h>
+#include <string.h>
 
-/*
-static void add_part_const_parameters(const_parameters *res,
-    const double part_per, const const_parameters &part_val) {
-  assert(0);
-  // см комментарий ниже
-  res->molecularmass *= part_per * part_val.molecularmass;
-  res->T_K *= part_per * part_val.T_K;
-  res->V_K *= part_per * part_val.V_K;
-  res->P_K *= part_per * part_val.P_K;
+bool operator< (const gas_mix_file &lg, const gas_mix_file &rg) {
+  return strcmp(lg.filename.c_str(), rg.filename.c_str()) <= 0;
 }
 
-std::pair<const_parameters *, dyn_parameters *>
-    get_parameters_of_mix(parameters_mix cgp_mix) {
-  assert(0);
-  // Такой подход неверен, так как фактор ацентричности и индекс
-  //   адиабаты не адитивны, и среднее арифмитическое этих величин
-  //   не очень
-  reset_error();
-  if (cgp_mix.empty()) {
-    set_error_code(ERR_INIT | ERR_INIT_ZERO);
-    return {nullptr, nullptr};
-  }
-  const_parameters *cgp_p = nullptr;
-  dyn_parameters   *dgp_p = nullptr;
-}
-*/
-// =========================================================
 // implicit functions
-// =========================================================
 static std::array<double, 5> get_average_params(
     const parameters_mix &components) {
-  // avr_vals :        { V_K, P_K, T_K, molec_mass, acentric = 1.0}
   // acentric = 1.0, тому что считается через логарифм
   // и следовательно вычисляем как среднее ГЕОМЕТРИЧЕСКОЕ
   //   в отличии от других параметров
@@ -59,67 +35,37 @@ static std::array<double, 5> get_average_params(
   return avr_vals;
 }
 
-// =========================================================
-// GasParameters_mix methods
-// =========================================================
+// GasParameters_mix
 GasParameters_mix::GasParameters_mix(parameters prs, const_parameters cgp,
       dyn_parameters dgp, parameters_mix components)
   : GasParameters(prs, cgp, dgp), components_(components) {}
 
  GasParameters_mix::~GasParameters_mix() {}
 
-// =========================================================
-// GasParameters_mix_dyn methods
-// =========================================================
 GasParameters_mix_dyn::GasParameters_mix_dyn(parameters prs,
     const_parameters cgp, dyn_parameters dgp, parameters_mix components,
     modelGeneral *mg)
   : GasParameters_mix(prs, cgp, dgp, components), model_(mg) {}
 
-   // update_f_(&modelGeneral::update_dyn_params) {}
-  // DEVELOP
-  //   23_03_2018
-  /*   В общем, после долгих раздумий решено:
-   *     для статичных расчётов это всё инициализируется по
-   *     средним значениям.
-   *   В динамике всё пересчитывается по формулам
-   *     используемой МОДЕЛИ!
-   *   Т.о. для динамики пересчитывается:
-   *     -- Ср и Сv по формулам из "Начал тд"
-   *     -- Индекс адиабаты по Ср/Сv
-   *    НЕ ПЕРЕСЧИТЫВАЮТСЯ И ОБНУЛЕНЫ ВООБЩЕ
-   *     -- фактор ацентричности -он не адитивен (мне кажется)
-   *          и ладно, его использование ограничено
-   */
 GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
     gas_params_input gpi, modelGeneral *mg) {
   if (gpi.const_dyn.components->empty() || mg == nullptr) {
     set_error_code(ERR_INIT_T | ERR_INIT_NULLP_ST | ERR_GAS_MIX);
     return nullptr;
   }
-// РАСЧИТАЕМ СРЕДНИЕ КОНСТАНТНЫЕ ПАРАМЕТРЫ
   reset_error();
-  // количество параметров и их значения для критической точки
-  // АДИТИВНЫЕ ПАРАМЕТРЫ СМЕСИ (молекулярная масса и газовая постоянная)
-  std::array<double, 5> avr_vals = get_average_params(*gpi.const_dyn.components);
-  // инициализируем постоянные параметры
+  std::array<double, 5> avr_vals = get_average_params(
+      *gpi.const_dyn.components);
   // init gasmix const_parameters
   std::unique_ptr<const_parameters> tmp_cgp(const_parameters::Init(
-      avr_vals[0], avr_vals[1], avr_vals[2],
-      /* 0.0 throw excep */ avr_vals[3], avr_vals[4]));
+      avr_vals[0], avr_vals[1], avr_vals[2], avr_vals[3], avr_vals[4]));
   if (tmp_cgp == nullptr) {
     set_error_code(ERR_INIT_T | ERR_GAS_MIX | ERR_CALC_GAS_P_ST);
     return nullptr;
   }
-  // calculate volume
   double volume = 0.0;
   for (const auto &x : *gpi.const_dyn.components)
     volume += x.first * mg->InitVolume(gpi.p, gpi.t, x.second.first);
-  // инициализируем динамические параметры
-  //   т.е. перерасчитаем их для переданных параметров prs
-  // init gasmix dyn_parameters
-  // создадим временную копию динамических параметров
-  //   которую потом пересчитаем к prs
   std::vector<std::pair<double, dyn_parameters>> dgp_cpt;
   for (auto const &x : *gpi.const_dyn.components) {
     dgp_cpt.push_back({x.first, x.second.second});
@@ -148,22 +94,18 @@ std::unique_ptr<const_parameters> GasParameters_mix_dyn::GetAverageParams(
     set_error_code(ERR_INIT_T | ERR_INIT_NULLP_ST | ERR_GAS_MIX);
     return nullptr;
   }
-// РАСЧИТАЕМ СРЕДНИЕ КОНСТАНТНЫЕ ПАРАМЕТРЫ
   reset_error();
-  // количество параметров и их значения для критической точки
-  // АДИТИВНЫЕ ПАРАМЕТРЫ СМЕСИ (молекулярная масса и газовая постоянная)
   std::array<double, 5> avr_vals = get_average_params(components);
-  // инициализируем постоянные параметры
   // init gasmix const_parameters
   std::unique_ptr<const_parameters> tmp_cgp(const_parameters::Init(
-      avr_vals[0], avr_vals[1], avr_vals[2],
-      /* 0.0 throw excep */ avr_vals[3], avr_vals[4]));
+      avr_vals[0], avr_vals[1], avr_vals[2], avr_vals[3], avr_vals[4]));
   if (tmp_cgp == nullptr) {
     set_error_code(ERR_INIT_T | ERR_GAS_MIX | ERR_CALC_GAS_P_ST);
     return nullptr;
   }
   return tmp_cgp;
 }
+
 const parameters_mix &GasParameters_mix_dyn::GetComponents() const {
   return components_;
 }

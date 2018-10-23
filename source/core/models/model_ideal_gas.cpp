@@ -28,18 +28,16 @@ Ideal_Gas *Ideal_Gas::Init(const model_input &mi) {
   return ig; 
 }
 
-// Для идеального газа теплоёмкость газа постоянна
-// For ideal gas heat capacity is const
 void Ideal_Gas::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state) {
   prev_state.parm = new_state;
 }
+
 void Ideal_Gas::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state, const const_parameters &cp) {
   assert(0 && "Ideal_Gas update_dyn_params");
 }
 
-// visitor
 void Ideal_Gas::DynamicflowAccept(DerivateFunctor &df) {
   df.getFunctor(*this);
 }
@@ -55,23 +53,12 @@ double Ideal_Gas::InitVolume(double p, double t,
 }
 
 void Ideal_Gas::SetVolume(double p, double t) {
-  setParameters(GetVolume(p, t), p, t);
+  set_parameters(GetVolume(p, t), p, t);
 }
 
 void Ideal_Gas::SetPressure(double v, double t) {
-  setParameters(v, GetPressure(v, t), t);
+  set_parameters(v, GetPressure(v, t), t);
 }
-
-/*
-void Ideal_Gas::setTemperature(double v, double p) {
-  if (!is_above0(p, v)) {
-    set_error_code(ERR_CALCULATE);
-    return;
-  }
-  double temp = p * v / parameters_->cgetR();
-  setParameters(v, p, temp);
-}
-*/
 
 #ifndef GAS_MIX_VARIANT
 double Ideal_Gas::GetVolume(double p, double t) const {

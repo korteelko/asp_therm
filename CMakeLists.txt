@@ -17,7 +17,6 @@ if(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 endif()
 
-
 set(THERMCORE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source/core")
 
 set(THERMCORE_INCLUDES
@@ -72,7 +71,6 @@ set(
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_dynamic.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_static.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_mix_init.cpp
-  ${THERMCORE_SOURCE_DIR}/gas_parameters/init_by_file.cpp
 
 # phase_diagram sources
   ${THERMCORE_SOURCE_DIR}/phase_diagram/phase_diagram.cpp
@@ -87,19 +85,19 @@ set(
   ${THERMCORE_SOURCE_DIR}/models/model_ideal_gas.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_peng_robinson.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_redlich_kwong.cpp
-# ${THERMCORE_SOURCE_DIR}/models/models_creator.cpp
+  ${THERMCORE_SOURCE_DIR}/models/models_creator.cpp
 
 # plot sources
 # maybe OpenGL libs
 )
 
 # output for static libraries
-#add_library(lmodels STATIC ${MODELS_SRC})
-#set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${LIBS_DIR}/debug)
-#set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${LIBS_DIR}/release)
+add_library(lmodels STATIC ${MODELS_SRC})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${LIBS_DIR}/debug)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${LIBS_DIR}/release)
 
-# set_target_properties(lmodels PROPERTIES
-#     LIBRARY_OUTPUT_DIRECTORY ${LIBS_DIR}/debug)
+set_target_properties(lmodels PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${LIBS_DIR}/debug)
 
 add_executable(${PROJECT_NAME} ${MODELS_SRC} main.cpp)
 target_link_libraries(${PROJECT_NAME}

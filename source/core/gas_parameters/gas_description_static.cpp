@@ -5,10 +5,8 @@
 #include <array>
 
 #include <assert.h>
-//==================================================================
-// protected constructors
-//==================================================================
 
+// protected constructors
 GasParameters::GasParameters(double v, double p, double t,
     const const_parameters cgp, dyn_parameters dgp)
   : sph_(state_phase::GAS), vpte_(parameters{v, p, t}), 
@@ -19,10 +17,7 @@ GasParameters::GasParameters(parameters prs,
   : sph_(state_phase::GAS), vpte_(prs), dyn_params_(dgp), 
     const_params(cgp) {}
 
-//==================================================================
-// static Init methods
-//==================================================================
-
+// static
 GasParameters *GasParameters::Init(parameters prs,
     const const_parameters cgp, dyn_parameters dgp) {
   assert(0 && "unrealized Init GasParameters method!!!");
@@ -38,16 +33,10 @@ std::ostream &operator<< (std::ostream &outstream,
   sprintf(msg, "v: %8.2f  p: %8.2f t:%6.2f\n", prs.volume, prs.pressure,
       prs.temperature);
   outstream << msg;
- /* 26_09_2018
-   outstream << "v: " << gp.cgetVolume() << " p: " << gp.cgetPressure()
-            << " t: " << gp.cgetTemperature() << "\n";*/
   return outstream;
 }
 
-//==================================================================
 // const_gasparametrs fields
-//==================================================================
-
 double GasParameters::cgetV_K() const {
   return const_params.V_K;
 }
@@ -72,9 +61,7 @@ double GasParameters::cgetAcentricFactor() const {
   return const_params.acentricfactor;
 }
 
-//==================================================================
 // dyn_gasparametrs fields
-//==================================================================
 double GasParameters::cgetAdiabatic() const {
   return dyn_params_.heat_cap_pres / dyn_params_.heat_cap_vol;
 }
@@ -87,10 +74,7 @@ double GasParameters::cgetBeta() const {
   return dyn_params_.beta_kr;
 }
 
-//==================================================================
 // current parametrs of gas
-//==================================================================
-
 double GasParameters::cgetVolume() const {
   return vpte_.volume;
 }
