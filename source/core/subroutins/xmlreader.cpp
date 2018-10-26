@@ -119,6 +119,10 @@ void XMLReader::init_parameter(pugi::xml_node *xml_nd, gas_node *gas_nd) {
   }
 }
 
+std::string XMLReader::GetRootName() {
+  return gas_root_node_->name_;
+}
+
 int XMLReader::GetValueByPath(const std::vector<std::string> &xml_path,
     std::string *outstr) const {
   const gas_node *tmp_gas_node = gas_root_node_.get();

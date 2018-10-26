@@ -4,6 +4,7 @@
 #include "models_math.h"
 
 #include <algorithm>
+#include <map>
 
 #include <assert.h>
 #include <string.h>
@@ -38,6 +39,11 @@ double get_val(std::vector<std::string> &vec, const std::string &valname,
   return std::stod(tmp_str);
 }
 
+std::map<std::string, gas_t> gas_names = std::map<std::string, gas_t> {
+  {"methane", GAS_TYPE_METHANE},
+  {"ethane", GAS_TYPE_ETHANE},
+  {"propane", GAS_TYPE_PROPANE}
+};
 // не оч точная функция
 double get_intern_energy(double cv, double temper) {
   return cv * temper;
@@ -46,7 +52,7 @@ double get_intern_energy(double cv, double temper) {
 
 // XmlFile
 XmlFile::XmlFile(XMLReader *xml_doc)
-  : xml_doc_(xml_doc) {}
+  : xml_doc_(xml_doc), gas_name_(GAS_TYPE_UNDEFINED) {}
 
 XmlFile *XmlFile::Init(const std::string filename) {
   XMLReader *xml_doc = XMLReader::Init(filename);
@@ -73,7 +79,8 @@ std::shared_ptr<const_parameters> XmlFile::GetConstParameters() {
       const_parameters_path[XML_PATHLEN_SUBGROUP - 1];
   mol = get_val(tmp_vec, "molec_mass", xml_doc_);
   af  = get_val(tmp_vec, "acentric", xml_doc_);
-  return std::shared_ptr<const_parameters>(const_parameters::Init(
+  set_gas_name();
+  return std::shared_ptr<const_parameters>(const_parameters::Init(gas_name_,
       cp[0], cp[1], cp[2], mol, af));
 }
 
@@ -99,6 +106,12 @@ std::shared_ptr<dyn_parameters> XmlFile::GetDynParameters() {
   return std::shared_ptr<dyn_parameters>(dyn_parameters::Init(
       hcv, hcp, get_intern_energy(hcv, cp[CP_TEMPERATURE]),
       parameters{cp[0], cp[1], cp[2]}));
+}
+
+void XmlFile::set_gas_name() {
+  auto x = gas_names.find(xml_doc_->GetRootName());
+  if (x != gas_names.end())
+    gas_name_ = x->second;
 }
 
 XmlFile::~XmlFile() {
