@@ -124,4 +124,4 @@ public:
 bool operator< (const PhaseDiagram::uniqueMark &lum,
     const PhaseDiagram::uniqueMark &rum);
 
-#endif  // _CORE__PHASE_DIAGRAM__PHASE_DIAGRAM_H_
+#endif  // !_CORE__PHASE_DIAGRAM__PHASE_DIAGRAM_H_

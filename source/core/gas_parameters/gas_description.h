@@ -122,4 +122,4 @@ struct state_log {
   double enthalpy;
   std::string state_phase;
 };
-#endif  // ! _CORE__GAS_PARAMETERS__GAS_DESCRIPTION_H_
+#endif  // !_CORE__GAS_PARAMETERS__GAS_DESCRIPTION_H_

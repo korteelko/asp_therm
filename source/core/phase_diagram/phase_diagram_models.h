@@ -30,5 +30,5 @@ struct initializePR {
   void operator() (std::vector<double>& tempvec, double pi,
       double t, double ac);
 };
-#endif  // _CORE__PHASE_DIAGRAM__PHASE_DIAGRAM_MODELS_H_
+#endif  // !_CORE__PHASE_DIAGRAM__PHASE_DIAGRAM_MODELS_H_
 

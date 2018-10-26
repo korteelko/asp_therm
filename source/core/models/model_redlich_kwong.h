@@ -53,4 +53,4 @@ public:
   double GetCoefficient_a() const;
   double GetCoefficient_b() const;
 };
-#endif  // ! _CORE__MODELS__MODEL_REDLICH_KWONG_H_
+#endif  // !_CORE__MODELS__MODEL_REDLICH_KWONG_H_

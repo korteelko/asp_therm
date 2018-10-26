@@ -57,4 +57,4 @@ public:
 
 std::ostream& operator<< (std::ostream &outstream, const GasParameters &gp);
 
-#endif  // ! _CORE__GAS_PARAMETERS__GAS_DESCRIPTION_STATIC_H_
+#endif  // !_CORE__GAS_PARAMETERS__GAS_DESCRIPTION_STATIC_H_

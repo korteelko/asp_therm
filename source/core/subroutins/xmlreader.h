@@ -1,5 +1,5 @@
-#ifndef _CORE__COMMON__XML_READER_H_
-#define _CORE__COMMON__XML_READER_H_
+#ifndef _CORE__SUBROUTINS__XML_READER_H_
+#define _CORE__SUBROUTINS__XML_READER_H_
 
 #include "pugixml.hpp"
 
@@ -54,4 +54,4 @@ public:
   int GetValueByPath(const std::vector<std::string> &xml_path,
       std::string *outstr) const;
 };
-#endif // ! _CORE__COMMON__XML_READER_H_
+#endif  // !_CORE__SUBROUTINS__XML_READER_H_

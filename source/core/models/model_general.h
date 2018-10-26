@@ -101,4 +101,4 @@ public:
 
   virtual ~modelGeneral();
 };
-#endif  // ! _CORE__MODELS__MODEL_GENERAL_H_
+#endif  // !_CORE__MODELS__MODEL_GENERAL_H_

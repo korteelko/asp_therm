@@ -22,4 +22,4 @@ private:
 std::ostream &operator<< (std::ostream &outstream,
     const GasParameters_dyn &gp);
 
-#endif  // ! _CORE__GAS_PARAMETERS__GAS_DESCRIPTION_DYNAMIC_H_
+#endif  // !_CORE__GAS_PARAMETERS__GAS_DESCRIPTION_DYNAMIC_H_

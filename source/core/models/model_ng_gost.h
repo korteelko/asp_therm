@@ -47,4 +47,4 @@ public:
   double GetPressure(double v, double t)  override;
 #endif  // !GAS_MIX_VARIANT
 };
-#endif  // ! _CORE__MODELS__MODEL_NG_GOST_H_
+#endif  // !_CORE__MODELS__MODEL_NG_GOST_H_

@@ -15,12 +15,10 @@
 
 struct gas_mix_file {
   std::string  filename;
-  const double part;
+  double part;
 
 public:
   gas_mix_file(const std::string filename, const double part);
-  gas_mix_file(const gas_mix_file &gmf);
-  gas_mix_file &operator= (const gas_mix_file &gmf);
 };
 
 bool operator< (const gas_mix_file &lg, const gas_mix_file &rg);
@@ -52,4 +50,4 @@ public:
   const parameters_mix &GetComponents() const;
   void csetParameters(double v, double p, double t, state_phase sp) override;
 };
-#endif  // _CORE__GAS_PARAMETERS__GAS_MIX_INIT_H_
+#endif  // !_CORE__GAS_PARAMETERS__GAS_MIX_INIT_H_

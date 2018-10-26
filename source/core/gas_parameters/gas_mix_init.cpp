@@ -14,13 +14,6 @@
 gas_mix_file::gas_mix_file(const std::string filename, const double part) 
   : filename(filename), part(part) {}
 
-gas_mix_file::gas_mix_file(const gas_mix_file &gmf) 
-  : filename(gmf.filename), part(gmf.part) {}
-
-gas_mix_file &gas_mix_file::operator= (const gas_mix_file &gmf) {
-  return *this;
-}
-
 bool operator< (const gas_mix_file &lg, const gas_mix_file &rg) {
   return strcmp(lg.filename.c_str(), rg.filename.c_str()) <= 0;
 }

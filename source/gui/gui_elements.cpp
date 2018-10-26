@@ -38,7 +38,9 @@ GasMixComponent::GasMixComponent(const GasMixComponent &gmc)
   : mix_component_(gmc.mix_component_) {}
 
 GasMixComponent &GasMixComponent::operator= (const GasMixComponent &gmc) {
-  return (*this);
+  if (&gmc != this)
+    mix_component_ = gmc.mix_component_;
+  return *this;
 }
 
 QString GasMixComponent::GetName() const {
@@ -75,12 +77,17 @@ QVariant GasMixComponentModel::data(const QModelIndex &index, int role) const {
 
 QVariant GasMixComponentModel::headerData(int section,
     Qt::Orientation orientation, int role) const {
-  if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
+  if (role != Qt::DisplayRole)
     return QVariant();
-  if (section < GASMIX_COMPONENTS_FIELDS_COUNT)
-    return table_components_header[section];
-  else
-    return QVariant();
+  if (orientation == Qt::Vertical)
+    return data_.count();
+  if (orientation == Qt::Horizontal) {
+    if (section < GASMIX_COMPONENTS_FIELDS_COUNT)
+      return table_components_header[section];
+    else
+      return QVariant();
+  }
+  return QVariant();
 }
 
 bool GasMixComponentModel::removeRows(int row, int count,
@@ -96,6 +103,10 @@ void GasMixComponentModel::append(const GasMixComponent &component) {
   beginInsertRows(QModelIndex(), data_.count(), data_.count());
   data_.append(component);
   endInsertRows();
+}
+
+QString GasMixComponentModel::getName(const QModelIndex &i) {
+  return data_[i.row()].GetName();
 }
 
 ResultHistory::ResultHistory(const state_log &st_log)

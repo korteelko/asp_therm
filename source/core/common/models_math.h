@@ -103,4 +103,4 @@ bool CardanoMethod_HASUNIQROOT(const T *coef, T *results) {
   return true;
 }
 
-#endif  // _CORE__COMMON__MODELS_MATH_H_
+#endif  // !_CORE__COMMON__MODELS_MATH_H_

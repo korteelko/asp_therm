@@ -35,6 +35,7 @@ public:
       Qt::Orientation orientation, int role) const override;
   bool removeRows(int row, int count, const QModelIndex &parent) override;
   void append(const GasMixComponent &component);
+  QString getName(const QModelIndex &i);
 };
 
 // history table

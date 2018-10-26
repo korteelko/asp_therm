@@ -59,4 +59,4 @@ void set_error_message(int err_code, const char *msg);
 void add_to_error_msg(const char *msg);
 char *get_error_message();
 
-#endif  // _CORE__COMMON__MODELS_ERRORS_H_
+#endif  // !_CORE__COMMON__MODELS_ERRORS_H_

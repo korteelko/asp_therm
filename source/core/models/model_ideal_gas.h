@@ -35,4 +35,4 @@ public:
 #endif  // !GAS_MIX_VARIANT
 };
 
-#endif  // ! _CORE__MODELS__MODEL_IDEAL_GAS_H_
+#endif  // !_CORE__MODELS__MODEL_IDEAL_GAS_H_

@@ -45,4 +45,4 @@ public:
   std::shared_ptr<parameters_mix> GetParameters();
 };
 
-#endif  // _CORE__SUBROUTINS__FILE_READING_H_
+#endif  // !_CORE__SUBROUTINS__FILE_READING_H_

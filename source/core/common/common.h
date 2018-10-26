@@ -27,4 +27,4 @@ enum class modelName : uint32_t {
   PENG_ROBINSON = MODEL_PENG_ROBINSON
 };
 
-#endif  // _CORE__COMMON__COMMON_H_
+#endif  // !_CORE__COMMON__COMMON_H_

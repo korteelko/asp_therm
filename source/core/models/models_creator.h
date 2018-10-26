@@ -19,4 +19,4 @@ public:
   static modelGeneral *GetCalculatingModel(modelName mn,
       std::vector<gas_mix_file> components);
 };
-#endif  // ! _CORE__MODELS__MODELS_CREATOR_H_
+#endif  // !_CORE__MODELS__MODELS_CREATOR_H_

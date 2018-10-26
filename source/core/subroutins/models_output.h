@@ -27,4 +27,4 @@ public:
   }
 };
 
-#endif  // _CORE__SUBROUTINS__MODELS_OUTPUT_H_
+#endif  // !_CORE__SUBROUTINS__MODELS_OUTPUT_H_
