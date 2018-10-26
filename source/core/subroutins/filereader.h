@@ -15,9 +15,11 @@ class XmlFile {
 
 private:
   XMLReader *xml_doc_;
+  gas_t gas_name_;
 
 private:
   XmlFile(XMLReader *xml_doc);
+  void set_gas_name();
 
 public:
   static XmlFile *Init(const std::string filename);

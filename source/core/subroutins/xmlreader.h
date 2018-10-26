@@ -51,6 +51,7 @@ private:
 
 public:
   static XMLReader *Init(std::string gas_xml_file);
+  std::string GetRootName();
   int GetValueByPath(const std::vector<std::string> &xml_path,
       std::string *outstr) const;
 };

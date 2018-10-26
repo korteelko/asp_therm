@@ -60,7 +60,7 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
   std::array<double, 5> avr_vals = get_average_params(
       *gpi.const_dyn.components);
   // init gasmix const_parameters
-  std::unique_ptr<const_parameters> tmp_cgp(const_parameters::Init(
+  std::unique_ptr<const_parameters> tmp_cgp(const_parameters::Init(GAS_TYPE_MIX,
       avr_vals[0], avr_vals[1], avr_vals[2], avr_vals[3], avr_vals[4]));
   if (tmp_cgp == nullptr) {
     set_error_code(ERR_INIT_T | ERR_GAS_MIX | ERR_CALC_GAS_P_ST);
@@ -100,7 +100,7 @@ std::unique_ptr<const_parameters> GasParameters_mix_dyn::GetAverageParams(
   reset_error();
   std::array<double, 5> avr_vals = get_average_params(components);
   // init gasmix const_parameters
-  std::unique_ptr<const_parameters> tmp_cgp(const_parameters::Init(
+  std::unique_ptr<const_parameters> tmp_cgp(const_parameters::Init(GAS_TYPE_MIX,
       avr_vals[0], avr_vals[1], avr_vals[2], avr_vals[3], avr_vals[4]));
   if (tmp_cgp == nullptr) {
     set_error_code(ERR_INIT_T | ERR_GAS_MIX | ERR_CALC_GAS_P_ST);

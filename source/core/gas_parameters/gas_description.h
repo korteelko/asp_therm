@@ -8,10 +8,14 @@
 
 #include <stdint.h>
 
-#define GAS_TYPE_T            uint32_t
+#define GAS_TYPE_UNDEFINED    0x00
 #define GAS_TYPE_METHANE      0x01
 #define GAS_TYPE_ETHANE       0x02
-#define GAS_TYPE_PROPHANE     0x03
+#define GAS_TYPE_PROPANE      0x03
+#define GAS_TYPE_MIX          0xFF
+
+typedef uint32_t gas_t;
+bool is_valid_gas(gas_t gas_name);
 
 // state_phase enum || stateToString
 /// Агрегатное состояние вещества (как )
@@ -79,8 +83,7 @@ struct potentials {
 /// параметры газа, зависящие от его физической природы и
 ///   не изменяющиеся при изменении его состояния
 struct const_parameters {
-  // 23_10_2018 do it
-  // GAS_TYPE_T   gas;
+  const gas_t gas_name;
   const double V_K,              // K point parameters (critical point)
                P_K,
                T_K,
@@ -89,14 +92,14 @@ struct const_parameters {
                acentricfactor;
 
 private:
-  const_parameters(double vk, double pk, double tk, double mol,
+  const_parameters(gas_t gas_name, double vk, double pk, double tk, double mol,
       double R, double af);
+  const_parameters &operator= (const const_parameters &) = delete;
 
 public:
-  static const_parameters *Init(double vk, double pk,
+  static const_parameters *Init(gas_t gas_name, double vk, double pk,
       double tk, double mol, double af);
   const_parameters(const const_parameters &cgp);
-  const_parameters &operator= (const const_parameters &cgp);
 };
 
 bool is_valid_cgp(const const_parameters &cgp);
