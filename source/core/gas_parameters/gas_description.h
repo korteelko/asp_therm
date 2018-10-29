@@ -8,11 +8,21 @@
 
 #include <stdint.h>
 
-#define GAS_TYPE_UNDEFINED    0x00
-#define GAS_TYPE_METHANE      0x01
-#define GAS_TYPE_ETHANE       0x02
-#define GAS_TYPE_PROPANE      0x03
-#define GAS_TYPE_MIX          0xFF
+#define GAS_TYPE_UNDEFINED         0x00
+#define GAS_TYPE_METHANE           0x01   // CH4
+#define GAS_TYPE_ETHANE            0x02   // C2H6
+#define GAS_TYPE_PROPANE           0x03   // C3H8
+#define GAS_TYPE_HYDROGEN_SULFIDE  0x04   // H2S
+#define GAS_TYPE_HEXANE            0x05   // C6H14   // n-Hexane
+#define GAS_TYPE_NITROGEN          0x06   // N2
+#define GAS_TYPE_CARBON_DIOXIDE    0x07   // CO2
+#define GAS_TYPE_HELIUM            0x08   // He
+#define GAS_TYPE_HYDROGEN          0x09   // H2
+#define GAS_TYPE_N_BUTAN           0x0A   // C4H10
+#define GAS_TYPE_I_BUTAN           0x0B   // C4H10
+#define GAS_TYPE_N_PENTANE         0x0C   // C5H12
+#define GAS_TYPE_I_PENTANE         0x0D   // C5H12
+#define GAS_TYPE_MIX               0xFF
 
 typedef uint32_t gas_t;
 bool is_valid_gas(gas_t gas_name);
