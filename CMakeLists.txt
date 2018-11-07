@@ -71,6 +71,7 @@ set(
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_dynamic.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_static.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_mix_init.cpp
+  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_ng_gost_defines.cpp
 
 # phase_diagram sources
   ${THERMCORE_SOURCE_DIR}/phase_diagram/phase_diagram.cpp

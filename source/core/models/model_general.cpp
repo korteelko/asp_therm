@@ -122,6 +122,20 @@ bool modelGeneral::check_input(const model_input &mi) {
         is_valid = false;
     }
   }
+  if (mi.gm & GAS_NG_GOST_MARK) {
+    is_valid = !mi.gpi.const_dyn.ng_gost_components->empty();
+    if (is_valid) {
+      // для проверки установленных доль
+      double parts_sum = 0.0;
+      std::for_each(mi.gpi.const_dyn.ng_gost_components->begin(),
+          mi.gpi.const_dyn.ng_gost_components->end(),
+          [&parts_sum] (const std::pair<gas_t, double> &x)
+          {parts_sum += x.second;});
+      if (parts_sum < (GAS_MIX_PERSENT_AVR - GAS_MIX_PERCENT_EPS) ||
+          parts_sum > (GAS_MIX_PERSENT_AVR + GAS_MIX_PERCENT_EPS))
+        is_valid = false;
+    }
+  }
   if (is_valid)
     is_valid = is_above0(mi.gpi.p, mi.gpi.t);
   if (!is_valid) {

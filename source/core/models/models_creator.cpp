@@ -23,10 +23,21 @@ static const double standart_pressure    = 100000.0;
 static const double standart_temperature = 314.0;
 
 model_input ModelsCreater::set_input(modelName mn, const binodalpoints &bp,
-    double p, double t, const parameters_mix &components) {
+    double p, double t, const parameters_mix &mix_components) {
   GAS_MARKS gm = 0x00;
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
-  return {gm, bp, {p, t, &components}};
+  model_input &&mi = {gm, bp, {p, t, NULL}};
+  mi.gpi.const_dyn.components = &mix_components;
+  return mi;
+}
+
+model_input ModelsCreater::set_input(modelName mn, const binodalpoints &bp,
+    double p, double t, const ng_gost_mix &mix_components) {
+  GAS_MARKS gm = 0x00;
+  gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_NG_GOST_MARK;
+  model_input &&mi = {gm, bp, {p, t, NULL}};
+  mi.gpi.const_dyn.ng_gost_components = &mix_components;
+  return mi;
 }
 
 modelGeneral *ModelsCreater::GetCalculatingModel(modelName mn,

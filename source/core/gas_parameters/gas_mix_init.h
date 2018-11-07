@@ -1,7 +1,6 @@
 #ifndef _CORE__GAS_PARAMETERS__GAS_MIX_INIT_H_
 #define _CORE__GAS_PARAMETERS__GAS_MIX_INIT_H_
 
-#include "gas_description.h"
 #include "gas_description_static.h"
 
 // Не имеет слысла определять все составляющие газовой

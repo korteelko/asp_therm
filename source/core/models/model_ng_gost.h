@@ -8,7 +8,7 @@
 #include <memory>
 
 class NG_Gost final: public modelGeneral {
-  double model_coef_z_;
+  
 
 private:
   NG_Gost(const model_input &mi);

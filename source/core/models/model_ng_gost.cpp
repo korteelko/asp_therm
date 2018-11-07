@@ -13,32 +13,10 @@
 #  include <iostream>
 #endif  // _DEBUG
 
-namespace {
-// typedef std::pair<double, double> mix_valid_limits_t;
-  struct max_valid_limits_t {
-    double min,
-           max;
-  };
-  std::map<gas_t, max_valid_limits_t> mix_valid_molar =
-      std::map<gas_t, max_valid_limits_t> {
-    {GAS_TYPE_METHANE, {0.7, 0.99999}},
-    {GAS_TYPE_ETHANE,  {0.0, 0.1}},
-    {GAS_TYPE_PROPANE, {0.0, 0.035}},
-    {GAS_TYPE_BUTAN,   {0.0, 0.015}},
-    {GAS_TYPE_PENTANE, {0.0, 0.005}},
-    {GAS_TYPE_HEXANE,  {0.0, 0.001}},
-    {GAS_TYPE_NITROGEN, {0.0, 0.2}},
-    {GAS_TYPE_CARBON_DIOXIDE, {0.0, 0.2}},
-    {GAS_TYPE_HELIUM, {0.0, 0.005}},
-    {GAS_TYPE_HYDROGEN, {0.0, 0.1}},
-    // SUM of others
-    {GAS_TYPE_UNDEFINED, {0.0, 0.0015}}
-  };
-}  // anonymus namespace
-
 NG_Gost::NG_Gost(const model_input &mi) 
-  : modelGeneral(mi.gm, mi.bp), model_coef_z_(0.0) {
-  set_model_coef();
+  : modelGeneral(mi.gm, mi.bp) {
+  assert(0);
+  // init GasParameters_NG_Gost_dyn
 }
 
 NG_Gost *NG_Gost::Init(const model_input &mi) {
@@ -48,10 +26,10 @@ NG_Gost *NG_Gost::Init(const model_input &mi) {
   // only for gas_mix
   if (!(mi.gm & GAS_MIX_MARK))
     return nullptr;
+  return new NG_Gost(mi);
 }
 
 void NG_Gost::set_model_coef() { 
-  model_coef_z_ = 1.0;
   assert(0);
 }
 
@@ -80,6 +58,44 @@ double NG_Gost::get_volume(double p, double t, const const_parameters &cp) {
 double NG_Gost::get_pressure(double v, double t, const const_parameters &cp) {
   assert(0);
 }
+
+void NG_Gost::DynamicflowAccept(class DerivateFunctor &df) {
+  assert(0);
+}
+
+bool NG_Gost::IsValid() const {
+  assert(0);
+  return false;
+}
+
+double NG_Gost::InitVolume(double p, double t,
+    const const_parameters &cp) {
+  assert(0);
+  return 0.0;
+}
+
+void NG_Gost::SetVolume(double p, double t) {
+  assert(0);
+}
+
+void NG_Gost::SetPressure(double v, double t) {
+  set_error_message("invalid operation for this model");
+}
+
+#ifndef GAS_MIX_VARIANT
+  double NG_Gost::GetVolume(double p, double t)    const override;
+  double NG_Gost::GetPressure(double v, double t)  const override;
+#else
+  double NG_Gost::GetVolume(double p, double t) {
+    assert(0);
+    return 0.0;
+  }
+
+  double NG_Gost::GetPressure(double v, double t) {
+    set_error_message("invalid operation for gost model");
+    return 0.0;
+  }
+#endif  // !GAS_MIX_VARIANT
 
 /*
 void DynamicflowAccept(class DerivateFunctor &df);

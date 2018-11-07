@@ -5,10 +5,14 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <stdint.h>
 
+#define GAS_TYPE_MIX               0xFF
+
 #define GAS_TYPE_UNDEFINED         0x00
+
 #define GAS_TYPE_METHANE           0x01   // CH4
 #define GAS_TYPE_ETHANE            0x02   // C2H6
 #define GAS_TYPE_PROPANE           0x03   // C3H8
@@ -18,11 +22,20 @@
 #define GAS_TYPE_CARBON_DIOXIDE    0x07   // CO2
 #define GAS_TYPE_HELIUM            0x08   // He
 #define GAS_TYPE_HYDROGEN          0x09   // H2
-#define GAS_TYPE_N_BUTAN           0x0A   // C4H10
-#define GAS_TYPE_I_BUTAN           0x0B   // C4H10
+#define GAS_TYPE_N_BUTANE          0x0A   // C4H10
+#define GAS_TYPE_I_BUTANE          0x0B   // C4H10
 #define GAS_TYPE_N_PENTANE         0x0C   // C5H12
 #define GAS_TYPE_I_PENTANE         0x0D   // C5H12
-#define GAS_TYPE_MIX               0xFF
+#define GAS_TYPE_OXYGEN            0x0E   // O2
+#define GAS_TYPE_ARGON             0x0F   // Ar
+#define GAS_TYPE_HEPTANE           0x11   // C7H16
+#define GAS_TYPE_OCTANE            0x12   // C8H18
+
+// +++ местами учитывается не определенный
+//   тип газа, а сумма нескольких
+#define GAS_TYPE_ALL_PENTANES      0x13
+#define GAS_TYPE_ALL_BUTANES       0x14
+
 
 typedef uint32_t gas_t;
 bool is_valid_gas(gas_t gas_name);
@@ -115,19 +128,30 @@ public:
 bool is_valid_cgp(const const_parameters &cgp);
 bool is_valid_dgp(const dyn_parameters &dgp);
 
+
+
 typedef std::pair<const_parameters, dyn_parameters>
     const_dyn_parameters;
 typedef std::multimap<const double, const_dyn_parameters> parameters_mix;
 
+typedef std::pair<gas_t, double> ng_gost_component;
+typedef std::vector<ng_gost_component> ng_gost_mix;
+
+struct cd_pair {
+  const const_parameters *cgp;
+  const dyn_parameters *dgp;
+} ;
+
+union cd {
+  const parameters_mix *components;
+  const ng_gost_mix *ng_gost_components;
+  const cd_pair cdp;
+  ~cd();
+};
+
 struct gas_params_input {
   double p, t;
-  union cd {
-    const parameters_mix *components;
-    struct cd_pair {
-      const const_parameters *cgp;
-      const dyn_parameters *dgp;
-    } cdp;
-  } const_dyn;
+  cd const_dyn;
 };
 
 struct state_log {

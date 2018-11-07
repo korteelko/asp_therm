@@ -2,16 +2,25 @@
 
 #include <stdint.h>
 
+#define GET_ARRAY_SIZE(M) (sizeof(M) / sizeof(M[0]))
+#define SET_GOST_TABLE_INDEX(M, name, ind) \
+  ({int m_count = GET_ARRAY_SIZE(M); \
+  for (int i = 0; i < m_count; ++i) { \
+    if (M[i].gas_name == name) { \
+      *ind = i; \
+      break; \
+    } \
+  }})
+
 // Параметры бинарного взаимодействия
-namespace {
-const size_t gases_count = 13;
-const component_characteristic gases[gases_count] = {
+// const size_t gases_count = 13;
+const component_characteristics gases[] = {
 // gas                  M        z       E           K          G         Q     F    S    W
   {GAS_TYPE_METHANE,    16.0430, 0.9981, 151.318300, 0.4619255, 0.0,      0.0,  0.0, 0.0, 0.0},
   {GAS_TYPE_ETHANE,     30.0700, 0.9920, 244.166700, 0.5279209, 0.0793,   0.0,  0.0, 0.0, 0.0},
   {GAS_TYPE_PROPANE,    44.0970, 0.9834, 298.118300, 0.5837490, 0.141239, 0.0,  0.0, 0.0, 0.0},
-  {GAS_TYPE_I_BUTAN,    58.1230, 0.9710, 324.068900, 0.6406937, 0.256692, 0.0,  0.0, 0.0, 0.0},
-  {GAS_TYPE_N_BUTAN,    58.1230, 0.9682, 337.638900, 0.6341423, 0.281835, 0.0,  0.0, 0.0, 0.0},
+  {GAS_TYPE_I_BUTANE,   58.1230, 0.9710, 324.068900, 0.6406937, 0.256692, 0.0,  0.0, 0.0, 0.0},
+  {GAS_TYPE_N_BUTANE,   58.1230, 0.9682, 337.638900, 0.6341423, 0.281835, 0.0,  0.0, 0.0, 0.0},
   {GAS_TYPE_I_PENTANE,  72.1500, 0.9530, 365.599900, 0.6738577, 0.332267, 0.0,  0.0, 0.0, 0.0},
   {GAS_TYPE_N_PENTANE,  72.1500, 0.9450, 370.682300, 0.6798307, 0.366911, 0.0,  0.0, 0.0, 0.0},
   {GAS_TYPE_N_PENTANE,  72.1500, 0.9450, 370.682300, 0.6798307, 0.366911, 0.0,  0.0, 0.0, 0.0},
@@ -23,14 +32,23 @@ const component_characteristic gases[gases_count] = {
   {GAS_TYPE_HYDROGEN,    2.0159, 1.0006,  26.957940, 0.3514916, 0.034369, 0.0, 0.0,  0.0, 0.0}
 };
 
-const size_t binary_associate_count = 38;
-const binary_associate_coef gases_coef[binary_associate_count] = {
-// gas i                gas j                   E         V         K         G 
-  {GAS_TYPE_UNDEFINED,  GAS_TYPE_UNDEFINED,     1.000000, 1.000000, 1.000000, 1.0},
+const component_characteristics *get_characteristics(gas_t gas_name) {
+  int ind = -1;
+  SET_GOST_TABLE_INDEX(gases, gas_name, &ind);
+  return (ind != -1) ? &gases[ind] : NULL;
+ /* size_t gases_count = sizeof(gases) / sizeof(gases[0]);
+  for (int i = 0; i < gases_count; ++i)
+    if (gases[i].gas_name == gas_name)
+      return &gases[i];
+  return NULL; */
+}
 
+// const size_t binary_associate_count = 38;
+const binary_associate_coef gases_coef[] = {
+// gas i                gas j                   E         V         K         G 
   {GAS_TYPE_METHANE,    GAS_TYPE_PROPANE,       0.994635, 0.990877, 1.007619, 1.0},
-  {GAS_TYPE_METHANE,    GAS_TYPE_I_BUTAN,       1.019530, 1.000000, 1.000000, 1.0},
-  {GAS_TYPE_METHANE,    GAS_TYPE_N_BUTAN,       0.989844, 0.992291, 0.997596, 1.0},
+  {GAS_TYPE_METHANE,    GAS_TYPE_I_BUTANE,      1.019530, 1.000000, 1.000000, 1.0},
+  {GAS_TYPE_METHANE,    GAS_TYPE_N_BUTANE,      0.989844, 0.992291, 0.997596, 1.0},
   {GAS_TYPE_METHANE,    GAS_TYPE_I_PENTANE,     1.002350, 1.000000, 1.000000, 1.0},
   {GAS_TYPE_METHANE,    GAS_TYPE_N_PENTANE,     0.999268, 1.003670, 1.002529, 1.0},
   {GAS_TYPE_METHANE,    GAS_TYPE_HEXANE,        1.107274, 1.302576, 0.982962, 1.0},
@@ -39,26 +57,26 @@ const binary_associate_coef gases_coef[binary_associate_count] = {
   {GAS_TYPE_METHANE,    GAS_TYPE_HYDROGEN,      1.170520, 1.156390, 1.023260, 1.957310},
 
   {GAS_TYPE_ETHANE,     GAS_TYPE_PROPANE,       1.022560, 1.065173, 0.986893, 1.0},
-  {GAS_TYPE_ETHANE,     GAS_TYPE_I_BUTAN,       1.000000, 1.250000, 1.000000, 1.0},
-  {GAS_TYPE_ETHANE,     GAS_TYPE_N_BUTAN,       1.013060, 1.250000, 1.000000, 1.0},
+  {GAS_TYPE_ETHANE,     GAS_TYPE_I_BUTANE,      1.000000, 1.250000, 1.000000, 1.0},
+  {GAS_TYPE_ETHANE,     GAS_TYPE_N_BUTANE,      1.013060, 1.250000, 1.000000, 1.0},
   {GAS_TYPE_ETHANE,     GAS_TYPE_I_PENTANE,     1.000000, 1.250000, 1.000000, 1.0},
   {GAS_TYPE_ETHANE,     GAS_TYPE_N_PENTANE,     1.005320, 1.250000, 1.000000, 1.0},
   {GAS_TYPE_ETHANE,     GAS_TYPE_NITROGEN,      0.970120, 0.816431, 1.007960, 1.0},
   {GAS_TYPE_ETHANE,     GAS_TYPE_CARBON_DIOXIDE,0.925053, 0.969870, 1.008510, 0.370296},
   {GAS_TYPE_ETHANE,     GAS_TYPE_HYDROGEN,      1.164460, 1.616660, 1.020340, 1.0},
 
-  {GAS_TYPE_PROPANE,    GAS_TYPE_N_BUTAN,       1.004900, 1.000000, 1.000000, 1.0},
+  {GAS_TYPE_PROPANE,    GAS_TYPE_N_BUTANE,      1.004900, 1.000000, 1.000000, 1.0},
   {GAS_TYPE_PROPANE,    GAS_TYPE_NITROGEN,      0.945939, 0.915502, 1.000000, 1.0},
   {GAS_TYPE_PROPANE,    GAS_TYPE_CARBON_DIOXIDE,0.960237, 1.000000, 1.000000, 1.0},
   {GAS_TYPE_PROPANE,    GAS_TYPE_HYDROGEN,      1.034787, 1.000000, 1.000000, 1.0},
 
-  {GAS_TYPE_I_BUTAN,    GAS_TYPE_NITROGEN,      0.946914, 1.000000, 1.000000, 1.0},
-  {GAS_TYPE_I_BUTAN,    GAS_TYPE_CARBON_DIOXIDE,0.906849, 1.000000, 1.000000, 1.0},
-  {GAS_TYPE_I_BUTAN,    GAS_TYPE_HYDROGEN,      1.300000, 1.000000, 1.000000, 1.0},
+  {GAS_TYPE_I_BUTANE,   GAS_TYPE_NITROGEN,      0.946914, 1.000000, 1.000000, 1.0},
+  {GAS_TYPE_I_BUTANE,   GAS_TYPE_CARBON_DIOXIDE,0.906849, 1.000000, 1.000000, 1.0},
+  {GAS_TYPE_I_BUTANE,   GAS_TYPE_HYDROGEN,      1.300000, 1.000000, 1.000000, 1.0},
 
-  {GAS_TYPE_N_BUTAN,    GAS_TYPE_NITROGEN,      0.973384, 0.993556, 1.000000, 1.0},
-  {GAS_TYPE_N_BUTAN,    GAS_TYPE_CARBON_DIOXIDE,0.897362, 1.000000, 1.000000, 1.0},
-  {GAS_TYPE_N_BUTAN,    GAS_TYPE_HYDROGEN,      1.300000, 1.000000, 1.000000, 1.0},
+  {GAS_TYPE_N_BUTANE,   GAS_TYPE_NITROGEN,      0.973384, 0.993556, 1.000000, 1.0},
+  {GAS_TYPE_N_BUTANE,   GAS_TYPE_CARBON_DIOXIDE,0.897362, 1.000000, 1.000000, 1.0},
+  {GAS_TYPE_N_BUTANE,   GAS_TYPE_HYDROGEN,      1.300000, 1.000000, 1.000000, 1.0},
 
   {GAS_TYPE_I_PENTANE,  GAS_TYPE_NITROGEN,      0.959340, 1.000000, 1.000000, 1.0},
   {GAS_TYPE_I_PENTANE,  GAS_TYPE_CARBON_DIOXIDE,0.726255, 1.000000, 1.000000, 1.0},
@@ -71,9 +89,28 @@ const binary_associate_coef gases_coef[binary_associate_count] = {
   {GAS_TYPE_NITROGEN,   GAS_TYPE_CARBON_DIOXIDE,1.022740, 0.835058, 0.982361, 0.982746},
   {GAS_TYPE_NITROGEN,   GAS_TYPE_HYDROGEN,      1.086320, 0.408838, 1.032270, 1.0},
 
-  {GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_HYDROGEN,  1.281790, 1.000000, 1.000000, 1.0}
+  {GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_HYDROGEN,  1.281790, 1.000000, 1.000000, 1.0},
+
+  {GAS_TYPE_UNDEFINED,  GAS_TYPE_UNDEFINED,     1.000000, 1.000000, 1.000000, 1.0}
 };
 
+const binary_associate_coef *get_binary_associate_coefs(gas_t i, gas_t j) {
+  if (j > i)
+    std::swap(i, j);
+  size_t bin_coef_count = sizeof(gases_coef) / sizeof(gases_coef[0]);
+  size_t z = 0;
+  for (; z < bin_coef_count; ++z)
+    if (gases_coef[z].i == i) 
+      break;
+  while (gases_coef[z].i == i) {
+    if (gases_coef[z].j == j)
+      return &(gases_coef[z]);
+    ++z;
+  }
+  return &(gases_coef[bin_coef_count - 1]);
+}
+
+const size_t A0_3_coefs_count = 58;
 const A0_3_coef A0_3_coefs[] = {
 // a              b    c    k     u    g    q    t    s    w
   { 0.153832600,  1.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 1
@@ -94,5 +131,179 @@ const A0_3_coef A0_3_coefs[] = {
   {-0.044081590,  1.0, 1.0, 2.0,  2.0, 0.0, 1.0, 0.0, 0.0, 0.0},  // 16
   {-0.003433888,  1.0, 1.0, 4.0,  2.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 17
   { 0.032059050,  1.0, 1.0, 4.0, 11.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 18
+  { 0.024873550,  2.0, 0.0, 0.0, -0.5, 0.0, 0.0, 0.0, 0.0, 0.0},  // 19
+  { 0.073322790,  2.0, 0.0, 0.0,  0.5, 0.0, 0.0, 0.0, 0.0, 0.0},  // 20
+  {-0.001600573,  2.0, 1.0, 2.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 21
+  { 0.642470600,  2.0, 1.0, 2.0,  4.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 22
+  {-0.416260100,  2.0, 1.0, 2.0,  6.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 23
+  {-0.066899570,  2.0, 1.0, 4.0, 21.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 24
+  { 0.279179500,  2.0, 1.0, 4.0, 23.0, 1.0, 0.0, 0.0, 0.0, 0.0},  // 25
+  {-0.696605100,  2.0, 1.0, 4.0, 23.0, 0.0, 1.0, 0.0, 0.0, 0.0},  // 26
+  {-0.002860589,  2.0, 1.0, 4.0, -1.0, 0.0, 0.0, 1.0, 0.0, 0.0},  // 27
+  {-0.008098836,  3.0, 0.0, 0.0, -0.5, 0.0, 0.0, 1.0, 0.0, 0.0},  // 28
+  { 3.150547000,  3.0, 1.0, 1.0,  7.0, 1.0, 0.0, 0.0, 0.0, 0.0},  // 29
+  { 0.007224479,  3.0, 1.0, 1.0, -1.0, 0.0, 0.0, 1.0, 0.0, 0.0},  // 30
+  {-0.705752900,  3.0, 1.0, 2.0,  6.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 31
+  { 0.534979200,  3.0, 1.0, 2.0,  4.0, 1.0, 0.0, 0.0, 0.0, 0.0},  // 32
+  {-0.079314910,  3.0, 1.0, 3.0,  1.0, 1.0, 0.0, 0.0, 0.0, 0.0},  // 33
+  {-1.418465000,  3.0, 1.0, 3.0,  9.0, 1.0, 0.0, 0.0, 0.0, 0.0},  // 34
+  {-5.99905e-17,  3.0, 1.0, 4.0,-13.0, 0.0, 0.0, 1.0, 0.0, 0.0},  // 35
+  { 1.105840200,  3.0, 1.0, 4.0, 21.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 36
+  { 0.034317290,  3.0, 1.0, 4.0,  8.0, 0.0, 1.0, 0.0, 0.0, 0.0},  // 37
+  {-0.007022847,  4.0, 0.0, 0.0, -0.5, 0.0, 0.0, 0.0, 0.0, 0.0},  // 38
+  { 0.024955870,  4.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 39
+  { 0.042968180,  4.0, 1.0, 2.0,  2.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 40
+  { 0.746545300,  4.0, 1.0, 2.0,  7.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 41
+  {-0.291961300,  4.0, 1.0, 2.0,  9.0, 0.0, 1.0, 0.0, 0.0, 0.0},  // 42
+  { 7.294616000,  4.0, 1.0, 4.0, 22.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 43
+  {-9.936757000,  4.0, 1.0, 4.0, 23.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 44
+  {-0.005399808,  5.0, 0.0, 0.0,  1.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 45
+  {-0.243256700,  5.0, 1.0, 2.0,  9.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 46
+  { 0.049870160,  5.0, 1.0, 2.0,  3.0, 0.0, 1.0, 0.0, 0.0, 0.0},  // 47
+  { 0.003733797,  5.0, 1.0, 4.0,  8.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 48
+  { 1.874951000,  5.0, 1.0, 4.0, 23.0, 0.0, 1.0, 0.0, 0.0, 0.0},  // 49
+  { 0.002168144,  6.0, 0.0, 0.0,  1.5, 0.0, 0.0, 0.0, 0.0, 0.0},  // 50
+  {-0.658716400,  6.0, 1.0, 2.0,  5.0, 1.0, 0.0, 0.0, 0.0, 0.0},  // 51
+  { 0.000205518,  7.0, 0.0, 0.0, -0.5, 0.0, 1.0, 0.0, 0.0, 0.0},  // 52
+  { 0.009776195,  7.0, 1.0, 2.0,  4.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 53
+  {-0.020487080,  8.0, 1.0, 1.0,  7.0, 1.0, 0.0, 0.0, 0.0, 0.0},  // 54
+  { 0.015573220,  8.0, 1.0, 2.0,  3.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 55
+  { 0.006862415,  8.0, 1.0, 2.0,  0.0, 1.0, 0.0, 0.0, 0.0, 0.0},  // 56
+  {-0.001226752,  9.0, 1.0, 2.0,  1.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 57
+  { 0.002850908,  9.0, 1.0, 2.0,  0.0, 0.0, 1.0, 0.0, 0.0, 0.0},  // 58
 };
-}  // anonymus namespace
+
+const A4_coef A4_coefs[] = {
+  {GAS_TYPE_METHANE,       4.00088, 0.76315, 820.6590, 0.00460, 178.410, 
+                           8.74432, 1062.82, -4.46921, 1090.53}, 
+  {GAS_TYPE_ETHANE,        4.00263, 4.33939, 559.3140, 1.23722, 223.284, 
+                          13.19740, 1031.38, -6.01989, 1071.29}, 
+  {GAS_TYPE_PROPANE,       4.02939, 6.60569, 479.8560, 3.19700, 200.893, 
+                          19.19210, 955.312, -8.37267, 1027.29}, 
+  {GAS_TYPE_I_BUTANE,      4.06714, 8.97575, 438.2700, 5.25156, 198.018, 
+                          25.14230, 1905.02, 16.13880, 893.765}, 
+  {GAS_TYPE_N_BUTANE,      4.33944, 9.44893, 468.2700, 6.89406, 183.636, 
+                          24.46180, 1914.10, 14.78240, 903.185}, 
+  {GAS_TYPE_I_PENTANE,     4.00000, 11.7618, 292.5030, 20.1101, 910.237, 
+                          33.16880, 1919.37,  0.00000,   0.000}, 
+  {GAS_TYPE_N_PENTANE,     4.00000, 8.95043, 178.6700, 21.8360, 840.538, 
+                          33.40320, 1774.25,  0.00000,   0.000}, 
+  {GAS_TYPE_HEXANE,        4.00000, 11.6977, 182.3260, 26.8142, 859.207, 
+                          38.61640, 1826.59,  0.00000,   0.000}, 
+  {GAS_TYPE_OXYGEN,        3.50146, 1.07558, 2235.710, 1.01334, 1116.69, 
+                           0.00000, 0.00000,  0.00000,   0.000}, 
+  {GAS_TYPE_NITROGEN,      3.50031, 0.13732, 662.7380, -0.1466, 680.562, 
+                           0.90066, 1740.06,  0.00000,   0.000}, 
+  {GAS_TYPE_CARBON_DIOXIDE,3.50002, 2.04452, 919.3060,-1.06044, 865.070, 
+                           2.03366, 483.553,  0.01393, 341.109}, 
+  {GAS_TYPE_HELIUM,        2.50000, 0.00000,   0.0000, 0.00000,   0.000, 
+                           0.00000,   0.000,  0.00000,   0.000}, 
+  {GAS_TYPE_HYDROGEN,      2.47906, 0.95806,  228.734, 0.45444, 326.843, 
+                           1.56039, 1651.71,  -1.3756, 1671.69}, 
+};
+
+const A4_coef *get_A4_coefs(gas_t gas_name) {
+  int ind = -1;
+  SET_GOST_TABLE_INDEX(A4_coefs, gas_name, &ind);
+  return (ind != -1) ? &A4_coefs[ind] : NULL;
+}
+
+const critical_params A5_critical_params[] = {
+  {GAS_TYPE_METHANE,       190.564, 162.66, 0.064294},
+  {GAS_TYPE_ETHANE,        305.320, 206.58, 0.109580},
+  {GAS_TYPE_PROPANE,       369.825, 220.49, 0.184260},
+  {GAS_TYPE_I_BUTANE,      407.850, 224.36, 0.161570},
+  {GAS_TYPE_N_BUTANE,      425.160, 227.85, 0.213400},
+  {GAS_TYPE_I_PENTANE,     460.390, 236.00, 0.261960},
+  {GAS_TYPE_N_PENTANE,     469.650, 232.00, 0.295560},
+  {GAS_TYPE_HEXANE,        507.850, 233.60, 0.299650},
+  {GAS_TYPE_NITROGEN,      126.200, 313.10, 0.013592},
+  {GAS_TYPE_CARBON_DIOXIDE,304.200, 468.00, 0.206250},
+  {GAS_TYPE_HELIUM,        5.19000,  69.64, -0.14949},
+  {GAS_TYPE_HYDROGEN,      32.9380,  31.36, -0.12916}
+};
+
+const critical_params *get_critical_params(gas_t gas_name) {
+  int ind = -1;
+  SET_GOST_TABLE_INDEX(A5_critical_params, gas_name, &ind);
+  return (ind != -1) ? &A5_critical_params[ind] : NULL;
+}
+
+const A6_coef A6_coefs[] = {
+  {GAS_TYPE_HYDROGEN,      -0.279070091, 7.81221301,  -0.699863421, 0.0378831186},
+  {GAS_TYPE_CARBON_DIOXIDE,-0.468233636, 5.37907799,  -0.034963335, -0.0126198032},
+  {GAS_TYPE_METHANE,       -0.838029104, 4.88406903,  -0.344504244, 0.0151593109},
+  {GAS_TYPE_ETHANE,        -1.219244900, 4.05145591,  -0.200150993, 0.00662746099},
+  {GAS_TYPE_PROPANE,        0.254518256, 2.54779249,  0.0683095277, -0.0114348793},
+  {GAS_TYPE_N_BUTANE,      -0.524058048, 2.81260308, -0.0496574363, 0.0},
+  {GAS_TYPE_I_BUTANE,       1.042738430, 1.69220741,  0.1940774190, -0.0159867334},
+  {GAS_TYPE_N_PENTANE,      0.452603096, 1.79775689,  0.1570027760, -0.0158057627},
+  {GAS_TYPE_I_PENTANE,      0.550744125, 1.75702204,  0.1733634560, -0.0167839786},
+  {GAS_TYPE_HEXANE,         0.658064311, 1.50818329,  0.1782800270, -0.0161050134},
+  {GAS_TYPE_HELIUM,         2.959298170, 7.17751320, -0.6411919460,  0.0451852767},
+  {GAS_TYPE_HYDROGEN,       1.424108950, 3.03739469, -0.2030487370,  0.0106137856}
+};
+
+const A6_coef *get_A6_coefs(gas_t gas_name) {
+  int ind = -1;
+  SET_GOST_TABLE_INDEX(A6_coefs, gas_name, &ind);
+  return (ind != -1) ? &A6_coefs[ind] : NULL;
+}
+
+const A7_coef A7_coefs[] = {
+  {3.063313020,   1, 1},  // 1
+  {-8.64573627,   1, 2},  // 2
+  { 8.96123185,   1, 3},  // 3
+  {-3.00860053,   1, 4},  // 4
+  { 1.27196662,   2, 1},  // 5
+  {-0.875183697,  2, 2},  // 6
+  {-0.0577055575, 3, 1},  // 7
+  { 0.0352272638, 5, 1}   // 8
+};
+
+const int A8_sigmas[] = {1, 1, 0, 1, 0, 1};
+
+const A8_coef A8_coefs[] = {
+  {GAS_TYPE_NITROGEN,       -0.005352690, 0.09101896, 0.01501200,
+                             0.26406420,  -0.1032012, -0.1078872},
+  {GAS_TYPE_CARBON_DIOXIDE, -0.034682020, 0.11304980, 0.05811886,
+                             0.05767935, -0.1814105, -0.5971794},
+  {GAS_TYPE_METHANE,         0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+  {GAS_TYPE_ETHANE,          0.041569310,        0.0, 0.06408111,
+                             0.04763455, -0.1889656,  0.1533738},
+  {GAS_TYPE_PROPANE,         0.039765380, 0.08375624, 0.17471800,
+                             1.25027200, -0.5283498,  0.2458511},
+  {GAS_TYPE_N_BUTANE,       -0.066677750, 0.21001740, 0.06330205,
+                             0.31826600,  0.1474434, -1.1139350},
+  {GAS_TYPE_I_BUTANE,        0.072349270, 0.00943521,-0.03673568,
+                             0.45167220, -0.3272680, -0.6135352},
+  {GAS_TYPE_N_PENTANE,              0.0, 0.16511560,-0.07126922,
+                             0.06698673, -0.5283166, -0.7803174},
+  {GAS_TYPE_I_PENTANE,       0.02229787, 0.08380246, 0.04639638,
+                            -0.14505830, 0.03725585, -0.4106772},
+  {GAS_TYPE_HEXANE,          0.17535290, -0.08018375,-0.03543316,
+                            -0.09677546, -0.2015218, -1.2065620},
+  {GAS_TYPE_HELIUM,          0.29924900, -0.14909410,-0.15773290,
+                            -0.22532400, -0.2731058, -0.8827831},
+  {GAS_TYPE_HYDROGEN,       -0.03937273,  0.01532106,-0.03423876,
+                            -0.13992090, -0.06955475,-1.0490550}
+};
+
+const A8_coef *get_A8_coefs(gas_t gas_name) {
+  int ind = -1;
+  SET_GOST_TABLE_INDEX(A8_coefs, gas_name, &ind);
+  return (ind != -1) ? &A8_coefs[ind] : NULL;
+}
+
+const A9_molar_mass A9_molar_masses[] = {
+  {GAS_TYPE_OXYGEN,  31.9988},
+  {GAS_TYPE_ARGON,   39.9480},
+  {GAS_TYPE_HEPTANE, 100.204},
+  {GAS_TYPE_OCTANE,  114.231}
+};
+
+const A9_molar_mass *get_molar_mass(gas_t gas_name) {
+  int ind = -1;
+  SET_GOST_TABLE_INDEX(A9_molar_masses, gas_name, &ind);
+  return (ind != -1) ? &A9_molar_masses[ind] : NULL;
+}

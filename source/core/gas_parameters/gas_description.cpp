@@ -3,13 +3,12 @@
 #include "models_errors.h"
 #include "models_math.h"
 
-static gas_t valid_gases[5] = {
+static gas_t valid_gases[] = {
   GAS_TYPE_UNDEFINED,
   GAS_TYPE_METHANE,
   GAS_TYPE_ETHANE,
-  GAS_TYPE_PROPANE,
-  GAS_TYPE_MIX
-};
+  GAS_TYPE_PROPANE 
+}; 
 
 bool is_valid_gas(gas_t gas_name) {
   size_t valid_gases_count = sizeof(valid_gases) / sizeof(*valid_gases);
@@ -87,3 +86,6 @@ bool is_valid_dgp(const dyn_parameters &dgp) {
   }
   return true;
 }
+
+// gas_input union
+cd::~cd() {}
