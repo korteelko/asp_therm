@@ -140,7 +140,7 @@ typedef std::vector<ng_gost_component> ng_gost_mix;
 struct cd_pair {
   const const_parameters *cgp;
   const dyn_parameters *dgp;
-} ;
+};
 
 union cd {
   const parameters_mix *components;

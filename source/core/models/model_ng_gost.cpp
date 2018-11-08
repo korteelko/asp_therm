@@ -49,14 +49,17 @@ double NG_Gost::heat_capac_vol_integral(const parameters new_state,
 
 double NG_Gost::heat_capac_dif_prs_vol(const parameters new_state, double R) {
   assert(0);
+  return 0.0;
 }
 
 double NG_Gost::get_volume(double p, double t, const const_parameters &cp) {
   assert(0);
+  return 0.0;
 }
 
 double NG_Gost::get_pressure(double v, double t, const const_parameters &cp) {
   assert(0);
+  return 0.0;
 }
 
 void NG_Gost::DynamicflowAccept(class DerivateFunctor &df) {

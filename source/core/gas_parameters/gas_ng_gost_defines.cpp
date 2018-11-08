@@ -4,13 +4,13 @@
 
 #define GET_ARRAY_SIZE(M) (sizeof(M) / sizeof(M[0]))
 #define SET_GOST_TABLE_INDEX(M, name, ind) \
-  ({int m_count = GET_ARRAY_SIZE(M); \
+  {int m_count = GET_ARRAY_SIZE(M); \
   for (int i = 0; i < m_count; ++i) { \
     if (M[i].gas_name == name) { \
       *ind = i; \
       break; \
     } \
-  }})
+  }}
 
 // Параметры бинарного взаимодействия
 // const size_t gases_count = 13;
@@ -112,7 +112,7 @@ const binary_associate_coef *get_binary_associate_coefs(gas_t i, gas_t j) {
 
 const size_t A0_3_coefs_count = 58;
 const A0_3_coef A0_3_coefs[] = {
-// a              b    c    k     u    g    q    t    s    w
+// a              b    c    k     u    g    q    f    s    w
   { 0.153832600,  1.0, 0.0, 0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 1
   { 1.341953000,  1.0, 0.0, 0.0,  0.5, 0.0, 0.0, 0.0, 0.0, 0.0},  // 2
   {-2.998583000,  1.0, 0.0, 0.0,  1.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 3
@@ -170,7 +170,7 @@ const A0_3_coef A0_3_coefs[] = {
   { 0.015573220,  8.0, 1.0, 2.0,  3.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 55
   { 0.006862415,  8.0, 1.0, 2.0,  0.0, 1.0, 0.0, 0.0, 0.0, 0.0},  // 56
   {-0.001226752,  9.0, 1.0, 2.0,  1.0, 0.0, 0.0, 0.0, 0.0, 0.0},  // 57
-  { 0.002850908,  9.0, 1.0, 2.0,  0.0, 0.0, 1.0, 0.0, 0.0, 0.0},  // 58
+  { 0.002850908,  9.0, 1.0, 2.0,  0.0, 0.0, 1.0, 0.0, 0.0, 0.0}   // 58
 };
 
 const A4_coef A4_coefs[] = {

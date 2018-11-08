@@ -39,7 +39,7 @@ bool is_valid_limits(std::map<const gas_t, max_valid_limits_t>::const_iterator l
   return false;
 }
 
-bool is_valid_limits(const ng_gost_component component) {
+bool is_valid_limits(const ng_gost_component &component) {
   const auto limits_it = mix_valid_molar.find(component.first);
   if (limits_it == mix_valid_molar.cend())
     return false;
@@ -73,27 +73,17 @@ bool is_valid_limits(const ng_gost_mix &components) {
   is_valid &= is_valid_limits(others);
   return is_valid;
 }
-
-std::array<double, 3> get_EVGij(gas_t i, gas_t j) {
-  const binary_associate_coef *assoc_coefs = get_binary_associate_coefs(i, j);
-  const component_characteristics *xi_ch = get_characteristics(i);
-  const component_characteristics *xj_ch = get_characteristics(j);
-  std::array<double, 3> ans = std::array<double, 3> {0.0, 0.0, 0.0};
-  if (xi_ch == NULL || xj_ch == NULL) {
-    set_error_message(ERR_INIT_T, "undefined gas type");
-    return ans;
-  }
-  ans[0] = assoc_coefs->E * sqrt(xi_ch->E * xj_ch->E);
-  ans[1] = assoc_coefs->V;
-  ans[2] = assoc_coefs->G * (xi_ch->G + xj_ch->G) / 2.0;
-  return ans;
-}
 }  // anonymus namespace
 
 GasParameters_NG_Gost_dyn::GasParameters_NG_Gost_dyn(
     parameters prs, ng_gost_mix components)
   : components_(components) {
-  initKx();
+  if (initKx() != ERR_SUCCESS_T)
+    return;
+  setV();
+  setQ();
+  setF();
+  setG();
 }
 
 GasParameters_NG_Gost_dyn *GasParameters_NG_Gost_dyn::Init(
@@ -188,6 +178,46 @@ void GasParameters_NG_Gost_dyn::setG() {
   coef_G = G;
 }
 
+void GasParameters_NG_Gost_dyn::setBn() {
+  size_t n_max = A0_3_coefs_count;
+  if (!Bn.empty())
+    Bn.clear();
+  Bn.assign(n_max, 0.0);
+  const component_characteristics *xi_ch = NULL;
+  const component_characteristics *xj_ch = NULL;
+  const binary_associate_coef *assoc_coef = NULL;
+  for (int n = 0; n < n_max; ++n) {
+    // set Bnij
+    const A0_3_coef &A3c = A0_3_coefs[n];
+    for(int i = 0; i < components_.size(); ++i) {
+      xi_ch = get_characteristics(components_[i].first);
+      for (int j = 0; j < components_.size(); ++j) {
+        xj_ch = get_characteristics(components_[j].first);
+        assoc_coef = get_binary_associate_coefs(
+            components_[i].first, components_[j].first);
+        double Gij = assoc_coef->G * (xi_ch->G + xj_ch->G) / 2.0;
+        double Bnij = pow(Gij + 1.0 - A3c.g, A3c.g) * pow(xi_ch->Q*xj_ch->Q + 1.0 - A3c.q, A3c.q) *
+            pow(sqrt(xi_ch->F*xj_ch->F) + 1.0 - A3c.f, A3c.f) * pow(xi_ch->S*xj_ch->S + 1.0 - A3c.s, A3c.s) *
+            pow(xi_ch->W*xj_ch->W + 1.0 - A3c.w, A3c.w);
+        double Eij = assoc_coef->E * sqrt(xi_ch->E*xj_ch->E);
+        Bn[i] += components_[i].second * components_[j].second * Bnij * pow(Eij, A3c.u) *
+            pow(xi_ch->K * xj_ch->K, 1.5);
+      }
+    }
+  }
+}
+
+void GasParameters_NG_Gost_dyn::setCn() {
+  size_t n_max = A0_3_coefs_count;
+  if (!Cn.empty())
+    Cn.clear();
+  Cn.assign(n_max, 0.0);
+  for (int n = 0; n < n_max; ++n) {
+    const A0_3_coef &A3c = A0_3_coefs[n];
+    Cn[n] = pow(coef_G +1.0 - A3c.g, A3c.g) * pow(coef_Q * coef_Q  + 1.0 - A3c.q, A3c.q) *
+        pow(coef_F +1.0 - A3c.f, A3c.f) * pow(coef_V, A3c.u);
+  }
+}
 // calculating
 ERROR_TYPE GasParameters_NG_Gost_dyn::initKx() {
   double x = 0.0;

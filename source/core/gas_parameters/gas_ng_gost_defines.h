@@ -38,7 +38,7 @@ struct A0_3_coef {
                u,
                g,
                q,
-               t,
+               f,
                s,
                w;
 };

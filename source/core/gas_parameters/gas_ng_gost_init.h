@@ -4,6 +4,8 @@
 #include "gas_description_static.h"
 #include "models_errors.h"
 
+#include <vector>
+
 // размерности, константы, параметры при НФУ см.
 //   в ГОСТ 30319.1-2015 (!!! коэффициенты в третьем(30319.3) а константы в первом)
 
@@ -11,12 +13,15 @@
 class GasParameters_NG_Gost_dyn {
   ng_gost_mix components_;
   parameters vpte_;
+
   // NG_Gost *model_;
   double coef_kx;
-  double coef_G,
+  double coef_V,
          coef_Q,
          coef_F,
-         coef_V;
+         coef_G;
+  std::vector<double> Bn;
+  std::vector<double> Cn;
 
 private:
   GasParameters_NG_Gost_dyn(parameters prs, ng_gost_mix components);
@@ -27,6 +32,8 @@ private:
   void setQ();
   void setF();
   void setG();
+  void setBn();
+  void setCn();
   double getA0(double dens, double temp);
 
 public:
