@@ -3,12 +3,14 @@
 #include "gas_ng_gost_defines.h"
 #include "models_errors.h"
 
+#include <array>
 #include <utility>
 
 #include <assert.h>
 #include <math.h>
 
 namespace {
+const double R = 8.31451;
 // typedef std::pair<double, double> mix_valid_limits_t;
 struct max_valid_limits_t {
   double min,
@@ -71,6 +73,21 @@ bool is_valid_limits(const ng_gost_mix &components) {
   is_valid &= is_valid_limits(others);
   return is_valid;
 }
+
+std::array<double, 3> get_EVGij(gas_t i, gas_t j) {
+  const binary_associate_coef *assoc_coefs = get_binary_associate_coefs(i, j);
+  const component_characteristics *xi_ch = get_characteristics(i);
+  const component_characteristics *xj_ch = get_characteristics(j);
+  std::array<double, 3> ans = std::array<double, 3> {0.0, 0.0, 0.0};
+  if (xi_ch == NULL || xj_ch == NULL) {
+    set_error_message(ERR_INIT_T, "undefined gas type");
+    return ans;
+  }
+  ans[0] = assoc_coefs->E * sqrt(xi_ch->E * xj_ch->E);
+  ans[1] = assoc_coefs->V;
+  ans[2] = assoc_coefs->G * (xi_ch->G + xj_ch->G) / 2.0;
+  return ans;
+}
 }  // anonymus namespace
 
 GasParameters_NG_Gost_dyn::GasParameters_NG_Gost_dyn(
@@ -92,15 +109,131 @@ GasParameters_NG_Gost_dyn *GasParameters_NG_Gost_dyn::Init(
       *gpi.const_dyn.ng_gost_components);
 }
 
+void GasParameters_NG_Gost_dyn::setV() {
+  double x = 0.0;
+  double V = 0.0;
+  const component_characteristics *xi_ch = NULL;
+  for (int i = 0; i < components_.size(); ++i) {
+    xi_ch = get_characteristics(components_[i].first);
+    if (xi_ch == NULL) {
+      set_error_message(ERR_INIT_T, "undefined component in gost model");
+      return;
+    }
+    V += components_[i].second * pow(xi_ch->E, 2.5);
+  }
+  V *= V;
+  double associate_V_part = 0.0;
+  const binary_associate_coef *assoc_coefs = NULL;
+  const component_characteristics *xj_ch = NULL;
+  for (int i = 0; i < components_.size() - 1; ++i) {
+    xi_ch = get_characteristics(components_[i].first);
+    for (int j = i + 1; j < components_.size(); ++j) {
+      xj_ch = get_characteristics(components_[j].first);
+      assoc_coefs = get_binary_associate_coefs(
+          components_[i].first, components_[j].first);
+      associate_V_part += components_[i].second * components_[j].second *
+          ((pow(assoc_coefs->V, 5.0) - 1.0) * pow(xi_ch->E * xj_ch->E, 2.5));
+    }
+  }
+  associate_V_part *= 2.0;
+  V += associate_V_part;
+  V = pow(V, 0.2);
+  coef_V = V;
+}
+
+void GasParameters_NG_Gost_dyn::setQ() {
+  coef_Q = 0.0;
+  const component_characteristics *xi_ch = NULL;
+  for (int i = 0; i < components_.size(); ++i) {
+    xi_ch = get_characteristics(components_[i].first);
+    coef_Q += components_[i].second * xi_ch->Q;
+  }
+}
+
+void GasParameters_NG_Gost_dyn::setF() {
+  coef_F = 0.0;
+  const component_characteristics *xi_ch = NULL;
+  for (int i = 0; i < components_.size(); ++i) {
+    xi_ch = get_characteristics(components_[i].first);
+    coef_F += pow(components_[i].second, 2.0) * xi_ch->F;
+  }
+}
+
+void GasParameters_NG_Gost_dyn::setG() {
+  double x = 0.0;
+  double G = 0.0;
+  const component_characteristics *xi_ch = NULL;
+  for (int i = 0; i < components_.size(); ++i) {
+    xi_ch = get_characteristics(components_[i].first);
+    if (xi_ch == NULL) {
+      set_error_message(ERR_INIT_T, "undefined component in gost model");
+      return;
+    }
+    G += components_[i].second * xi_ch->G;
+  }
+  double associate_G_part = 0.0;
+  const binary_associate_coef *assoc_coefs = NULL;
+  const component_characteristics *xj_ch = NULL;
+  for (int i = 0; i < components_.size() - 1; ++i) {
+    xi_ch = get_characteristics(components_[i].first);
+    for (int j = i + 1; j < components_.size(); ++j) {
+      xj_ch = get_characteristics(components_[j].first);
+      assoc_coefs = get_binary_associate_coefs(
+          components_[i].first, components_[j].first);
+      associate_G_part += components_[i].second * components_[j].second *
+          ((assoc_coefs->G - 1.0) * (xi_ch->G + xj_ch->G));
+    }
+  }
+  G += associate_G_part;
+  coef_G = G;
+}
+
 // calculating
-void GasParameters_NG_Gost_dyn::initKx() {
+ERROR_TYPE GasParameters_NG_Gost_dyn::initKx() {
   double x = 0.0;
   coef_kx = 0.0;
+  const component_characteristics *xi_ch = NULL;
   for (int i = 0; i < components_.size(); ++i) {
-
+    xi_ch = get_characteristics(components_[i].first);
+    if (xi_ch == NULL) {
+      set_error_message(ERR_INIT_T, "undefined component in gost model");
+      return ERR_INIT_T;
+    }
+    coef_kx += components_[i].second * pow(xi_ch->K, 2.5);
   }
-  assert(0);
+  coef_kx *= coef_kx;
+  double associate_Kx_part = 0.0;
+  const binary_associate_coef *assoc_coefs = NULL;
+  const component_characteristics *xj_ch = NULL;
+  for (int i = 0; i < components_.size() - 1; ++i) {
+    xi_ch = get_characteristics(components_[i].first);
+    for (int j = i + 1; j < components_.size(); ++j) {
+      xj_ch = get_characteristics(components_[j].first);
+      assoc_coefs = get_binary_associate_coefs(
+          components_[i].first, components_[j].first);
+      associate_Kx_part += components_[i].second * components_[j].second *
+          ((pow(assoc_coefs->K, 5.0) - 1.0) * pow(xi_ch->K * xj_ch->K, 2.5));
+    }
+  }
+  associate_Kx_part *= 2.0;
+  coef_kx += associate_Kx_part;
+  coef_kx = pow(coef_kx, 0.2);
+  return ERR_SUCCESS_T;
 }
+
+double GasParameters_NG_Gost_dyn::sigma_start() const {
+  return 1000.0 * vpte_.pressure * pow(coef_kx, 3.0) / (R * vpte_.pressure);
+}
+
+double GasParameters_NG_Gost_dyn::getA0_sub() {
+  assert(0);
+  double Eij = 0.0;
+  double Vij = 0.0;
+  double Gij = 0.0;
+ // for (int i = 0; i < compo)
+  return 0.0;
+}
+
 //   dens is sigma, temp is tau
 double GasParameters_NG_Gost_dyn::getA0(double dens, double temp) {
   double A0 = 0.0;
