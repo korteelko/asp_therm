@@ -9,32 +9,61 @@
 // размерности, константы, параметры при НФУ см.
 //   в ГОСТ 30319.1-2015 (!!! коэффициенты в третьем(30319.3) а константы в первом)
 
-// const_dyn_parameters init_natural_gas(const gost_ng_components &comps);
-class GasParameters_NG_Gost_dyn {
-  ng_gost_mix components_;
-  parameters vpte_;
+struct ng_gost_params {
+  double A0,
+         A1,
+         A2,
+         A3;
+  double z,     // фактор сжимаемости
+         k,     // показатель адиабаты
+         u,     // скорорсть звука
+         cp0r,  // изобарная теплоёмкость (в идеальном состоянии)
+         mu;    // динамическая вязкость
+};
 
-  // NG_Gost *model_;
-  double coef_kx;
-  double coef_V,
-         coef_Q,
-         coef_F,
-         coef_G;
-  std::vector<double> Bn;
-  std::vector<double> Cn;
+// const_dyn_parameters init_natural_gas(const gost_ng_components &comps);
+class GasParameters_NG_Gost_dyn : public GasParameters {
+  ERROR_TYPE error_status_;
+  ng_gost_mix components_;
+  parameters pseudocrit_vpte_;
+  ng_gost_params ng_gost_params_;
+
+  double ng_molar_mass_;
+  double coef_kx_;
+  double coef_V_,
+         coef_Q_,
+         coef_F_,
+         coef_G_,
+         coef_p0m_;
+  std::vector<double> Bn_;
+  std::vector<double> Cn_;
 
 private:
-  GasParameters_NG_Gost_dyn(parameters prs, ng_gost_mix components);
-  ERROR_TYPE initKx();
+  GasParameters_NG_Gost_dyn(parameters prs, const_parameters cgp,
+      dyn_parameters dgp, ng_gost_mix components);
+  // init methods
+  //   call 1 time in ctor
+  void set_V();
+  void set_Q();
+  void set_F();
+  void set_G();
+  void set_Bn();
+  void set_Cn();
+  ERROR_TYPE set_molar_mass();
+  void set_p0m();
+  ERROR_TYPE init_kx();
+  ERROR_TYPE init_pseudocrit_vpte();
+  // init methods end
+  double get_Dn(int n) const;
+  double get_Un(int n) const;
+  // calculating sigma(it is volume)
+  ERROR_TYPE set_volume();
   double sigma_start() const;
-  double getA0_sub();
-  void setV();
-  void setQ();
-  void setF();
-  void setG();
-  void setBn();
-  void setCn();
-  double getA0(double dens, double temp);
+  double calculate_d_sigm(double sigm, double A0) const;
+  double calculate_A0(double sigm) const;
+  double calculate_A1(double sigm) const;
+  double calculate_A2(double sigm) const;
+  double calculate_A3(double sigm) const;
 
 public:
   static GasParameters_NG_Gost_dyn *Init(gas_params_input &gpi);

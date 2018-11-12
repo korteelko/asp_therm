@@ -109,4 +109,14 @@ extern const A8_coef A8_coefs[];
 extern const int A8_sigmas[];
 extern const A9_molar_mass A9_molar_masses[];
 
+template <class NG_COEF_T>
+const NG_COEF_T *get_coefs(const NG_COEF_T *coefs_array,
+    size_t array_size, gas_t gas_name) {
+  for (size_t i = 0; i < array_size; ++i) {
+    if (coefs_array[i].gas_name == gas_name)
+      return (coefs_array + i);
+  }
+  return NULL;
+}
+
 #endif  // !_CORE__GAS_PARAMETERS__GAS_NG_GOST_DEFINES_H_

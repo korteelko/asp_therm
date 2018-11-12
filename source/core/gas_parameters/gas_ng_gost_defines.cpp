@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #define GET_ARRAY_SIZE(M) (sizeof(M) / sizeof(M[0]))
+// just for lulz
 #define SET_GOST_TABLE_INDEX(M, name, ind) \
   {int m_count = GET_ARRAY_SIZE(M); \
   for (int i = 0; i < m_count; ++i) { \
@@ -33,14 +34,10 @@ const component_characteristics gases[] = {
 };
 
 const component_characteristics *get_characteristics(gas_t gas_name) {
-  int ind = -1;
+  return get_coefs(gases, GET_ARRAY_SIZE(gases), gas_name);
+  /* int ind = -1;
   SET_GOST_TABLE_INDEX(gases, gas_name, &ind);
-  return (ind != -1) ? &gases[ind] : NULL;
- /* size_t gases_count = sizeof(gases) / sizeof(gases[0]);
-  for (int i = 0; i < gases_count; ++i)
-    if (gases[i].gas_name == gas_name)
-      return &gases[i];
-  return NULL; */
+  return (ind != -1) ? &gases[ind] : NULL; */
 }
 
 // const size_t binary_associate_count = 38;
@@ -203,9 +200,7 @@ const A4_coef A4_coefs[] = {
 };
 
 const A4_coef *get_A4_coefs(gas_t gas_name) {
-  int ind = -1;
-  SET_GOST_TABLE_INDEX(A4_coefs, gas_name, &ind);
-  return (ind != -1) ? &A4_coefs[ind] : NULL;
+  return get_coefs(A4_coefs, GET_ARRAY_SIZE(A4_coefs), gas_name);
 }
 
 const critical_params A5_critical_params[] = {
@@ -224,9 +219,7 @@ const critical_params A5_critical_params[] = {
 };
 
 const critical_params *get_critical_params(gas_t gas_name) {
-  int ind = -1;
-  SET_GOST_TABLE_INDEX(A5_critical_params, gas_name, &ind);
-  return (ind != -1) ? &A5_critical_params[ind] : NULL;
+  return get_coefs(A5_critical_params, GET_ARRAY_SIZE(A5_critical_params), gas_name);
 }
 
 const A6_coef A6_coefs[] = {
@@ -245,9 +238,7 @@ const A6_coef A6_coefs[] = {
 };
 
 const A6_coef *get_A6_coefs(gas_t gas_name) {
-  int ind = -1;
-  SET_GOST_TABLE_INDEX(A6_coefs, gas_name, &ind);
-  return (ind != -1) ? &A6_coefs[ind] : NULL;
+  return get_coefs(A6_coefs, GET_ARRAY_SIZE(A6_coefs), gas_name);
 }
 
 const A7_coef A7_coefs[] = {
@@ -290,9 +281,7 @@ const A8_coef A8_coefs[] = {
 };
 
 const A8_coef *get_A8_coefs(gas_t gas_name) {
-  int ind = -1;
-  SET_GOST_TABLE_INDEX(A8_coefs, gas_name, &ind);
-  return (ind != -1) ? &A8_coefs[ind] : NULL;
+  return get_coefs(A8_coefs, GET_ARRAY_SIZE(A8_coefs), gas_name);
 }
 
 const A9_molar_mass A9_molar_masses[] = {
@@ -303,7 +292,5 @@ const A9_molar_mass A9_molar_masses[] = {
 };
 
 const A9_molar_mass *get_molar_mass(gas_t gas_name) {
-  int ind = -1;
-  SET_GOST_TABLE_INDEX(A9_molar_masses, gas_name, &ind);
-  return (ind != -1) ? &A9_molar_masses[ind] : NULL;
+  return get_coefs(A9_molar_masses, GET_ARRAY_SIZE(A9_molar_masses), gas_name);
 }
