@@ -1,6 +1,5 @@
 #include "model_ng_gost.h"
 
-#include "common.h"
 #include "gas_description.h"
 #include "gas_description_dynamic.h"
 #include "models_errors.h"
@@ -15,8 +14,8 @@
 
 NG_Gost::NG_Gost(const model_input &mi) 
   : modelGeneral(mi.gm, mi.bp) {
-  assert(0);
-  // init GasParameters_NG_Gost_dyn
+  if (!set_gasparameters(mi.gpi, this))
+    return;
 }
 
 NG_Gost *NG_Gost::Init(const model_input &mi) {
@@ -24,47 +23,18 @@ NG_Gost *NG_Gost::Init(const model_input &mi) {
   if (!check_input(mi))
     return nullptr;
   // only for gas_mix
-  if (!(mi.gm & GAS_MIX_MARK))
+  if (!(mi.gm & GAS_NG_GOST_MARK))
     return nullptr;
   return new NG_Gost(mi);
 }
 
-void NG_Gost::set_model_coef() { 
-  assert(0);
-}
-
-void NG_Gost::set_model_coef(const const_parameters &cp) { assert(0);}
+void NG_Gost::DynamicflowAccept(class DerivateFunctor &df) {}
 
 void NG_Gost::update_dyn_params(dyn_parameters &prev_state,
-    const parameters new_state) { assert(0);}
+    const parameters new_state) {}
 
 void NG_Gost::update_dyn_params(dyn_parameters &prev_state,
-    const parameters new_state, const const_parameters &cp) { assert(0);}
-
-double NG_Gost::internal_energy_integral(const parameters new_state,
-    const parameters prev_state) { assert(0);}
-
-double NG_Gost::heat_capac_vol_integral(const parameters new_state,
-    const parameters prev_state) { assert(0);}
-
-double NG_Gost::heat_capac_dif_prs_vol(const parameters new_state, double R) {
-  assert(0);
-  return 0.0;
-}
-
-double NG_Gost::get_volume(double p, double t, const const_parameters &cp) {
-  assert(0);
-  return 0.0;
-}
-
-double NG_Gost::get_pressure(double v, double t, const const_parameters &cp) {
-  assert(0);
-  return 0.0;
-}
-
-void NG_Gost::DynamicflowAccept(class DerivateFunctor &df) {
-  assert(0);
-}
+    const parameters new_state, const const_parameters &cp) {}
 
 bool NG_Gost::IsValid() const {
   assert(0);
@@ -78,7 +48,7 @@ double NG_Gost::InitVolume(double p, double t,
 }
 
 void NG_Gost::SetVolume(double p, double t) {
-  assert(0);
+  parameters_->csetParameters(0.0, p, t, state_phase::GAS);
 }
 
 void NG_Gost::SetPressure(double v, double t) {
@@ -86,19 +56,22 @@ void NG_Gost::SetPressure(double v, double t) {
 }
 
 #ifndef GAS_MIX_VARIANT
-  double NG_Gost::GetVolume(double p, double t)    const override;
-  double NG_Gost::GetPressure(double v, double t)  const override;
+double NG_Gost::GetVolume(double p, double t) const {
 #else
-  double NG_Gost::GetVolume(double p, double t) {
-    assert(0);
-    return 0.0;
-  }
-
-  double NG_Gost::GetPressure(double v, double t) {
-    set_error_message("invalid operation for gost model");
-    return 0.0;
-  }
+double NG_Gost::GetVolume(double p, double t) {
 #endif  // !GAS_MIX_VARIANT
+  parameters_->csetParameters(0.0, p, t, state_phase::GAS);
+  return parameters_->cgetVolume();
+}
+
+#ifndef GAS_MIX_VARIANT
+double NG_Gost::GetPressure(double v, double t) const {
+#else
+double NG_Gost::GetPressure(double v, double t) {
+#endif  // !GAS_MIX_VARIANT
+  set_error_message("invalid operation for gost model");
+  return 0.0;
+}
 
 /*
 void DynamicflowAccept(class DerivateFunctor &df);

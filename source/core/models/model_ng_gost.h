@@ -8,29 +8,14 @@
 #include <memory>
 
 class NG_Gost final: public modelGeneral {
-  
-
 private:
   NG_Gost(const model_input &mi);
-
-  void set_model_coef();
-  void set_model_coef(const const_parameters &cp);
 
 protected:
   void update_dyn_params(dyn_parameters &prev_state,
       const parameters new_state) override;
   void update_dyn_params(dyn_parameters &prev_state,
       const parameters new_state, const const_parameters &cp) override;
-
-// integrals for calculating u, cv and cv
-  double internal_energy_integral(const parameters new_state,
-      const parameters prev_state);
-  double heat_capac_vol_integral(const parameters new_state,
-      const parameters prev_state);
-  double heat_capac_dif_prs_vol(const parameters new_state, double R);
-// sub functions to update parameters
-  double get_volume(double p, double t, const const_parameters &cp);
-  double get_pressure(double v, double t, const const_parameters &cp);
 
 public:
   static NG_Gost *Init(const model_input &mi);

@@ -4,6 +4,7 @@
 #include "models_errors.h"
 
 #include <array>
+#include <functional>
 #include <utility>
 
 #include <assert.h>
@@ -95,11 +96,15 @@ GasParameters_NG_Gost_dyn::GasParameters_NG_Gost_dyn(
     return;
   }
   set_p0m();
-  init_pseudocrit_vpte();
+  if (init_pseudocrit_vpte()) {
+    set_error_message(ERR_INIT_T, "udefined component of natural gas");
+    error_status_ = ERR_INIT_T;
+    return;
+  }
 }
 
 GasParameters_NG_Gost_dyn *GasParameters_NG_Gost_dyn::Init(
-    gas_params_input &gpi) {
+    gas_params_input gpi) {
   if (gpi.const_dyn.ng_gost_components->empty()) {
     set_error_code(ERR_INIT_T | ERR_INIT_NULLP_ST | ERR_GAS_MIX);
     return nullptr;
@@ -299,7 +304,37 @@ ERROR_TYPE GasParameters_NG_Gost_dyn::init_kx() {
 }
 
 ERROR_TYPE GasParameters_NG_Gost_dyn::init_pseudocrit_vpte() {
-  assert(0);
+  double vol = 0.0;
+  double temp = 0.0;
+  double press_var = 0.0;
+  double tmp_var = 0;
+  const component_characteristics *xi_ch = NULL;
+  const component_characteristics *xj_ch = NULL;
+  const critical_params *i_cp = NULL;
+  const critical_params *j_cp = NULL;
+  for (int i = 0; i < components_.size(); ++i) {
+    xi_ch = get_characteristics(components_[i].first);
+    i_cp = get_critical_params(components_[i].first);
+    if (i_cp == NULL)
+      return ERR_INIT_T;
+    for (int j = 0; j < components_.size(); ++j) {
+      xj_ch = get_characteristics(components_[j].first);
+      j_cp = get_critical_params(components_[j].first);
+      if (j_cp == NULL)
+        return ERR_INIT_T;
+      tmp_var = components_[i].second * components_[j].second * pow( 
+          pow(xi_ch->M / i_cp->density, 0.3333) + pow(xj_ch->M / j_cp->density, 0.3333), 3.0);
+      vol += tmp_var;
+      temp += tmp_var * sqrt(i_cp->temperature * j_cp->temperature);
+    }
+    press_var += components_[i].second * i_cp->acentric;
+  }
+  press_var *= 0.08;
+  press_var = 0.291 - press_var;
+  pseudocrit_vpte_.volume = 0.125 * vol;
+  pseudocrit_vpte_.temperature = 0.125 / pseudocrit_vpte_.volume;
+  pseudocrit_vpte_.pressure = 0.001 * R * pseudocrit_vpte_.temperature * 
+      press_var / pseudocrit_vpte_.volume;
 }
 
 double GasParameters_NG_Gost_dyn::get_Dn(int n) const {
@@ -338,6 +373,41 @@ ERROR_TYPE GasParameters_NG_Gost_dyn::set_volume() {
   // set error, break procedure
 #endif  // _DEBUG
   vpte_.volume = 1.0 / (ng_molar_mass_ * pow(coef_kx_, -3.0) * sigm);
+  // separate function
+  ng_gost_params_.A0 = A0;
+  ng_gost_params_.A1 = calculate_A1(sigm);
+  ng_gost_params_.A2 = calculate_A2(sigm);
+  ng_gost_params_.A3 = calculate_A3(sigm);
+  ng_gost_params_.z = 1.0 + A0;
+  // function end
+  return ERR_SUCCESS_T;
+}
+
+ERROR_TYPE GasParameters_NG_Gost_dyn::set_cp0r() {
+  double cp0r = 0.0;
+  double tet = 1.0 / vpte_.temperature;
+  auto pow_sinh = [tet] (double C, double D) {
+    return C * pow(D * tet / sinh(D * tet), 2.0);};
+  auto pow_cosh = [tet] (double C, double D) {
+    return C * pow(D * tet / cosh(D * tet), 2.0);};
+  const A4_coef *cp_coefs = NULL;
+  for (int i = 0; i < components_.size(); ++i) {
+    cp_coefs = get_A4_coefs(components_[i].first);
+    if (cp_coefs == NULL)
+      return ERR_INIT_T;
+    cp0r += components_[i].second * (cp_coefs->B + pow_sinh(cp_coefs->C, cp_coefs->D) +
+        pow_cosh(cp_coefs->E, cp_coefs->F) + pow_sinh(cp_coefs->G, cp_coefs->H) + 
+        pow_cosh(cp_coefs->I, cp_coefs->J));
+  }
+  ng_gost_params_.cp0r = cp0r;
+  // да, это неправильно и снова отдельная функция должна быть
+  ng_gost_params_.k = (1.0 + ng_gost_params_.A1 + pow(1.0 + ng_gost_params_.A2, 2.0) /
+      (ng_gost_params_.cp0r - 1.0 + ng_gost_params_.A3)) / ng_gost_params_.z;
+  ng_gost_params_.u = 1000 * R * vpte_.temperature * (
+      1.0 + ng_gost_params_.A1 + pow(1.0 + ng_gost_params_.A2, 2.0) /
+      (ng_gost_params_.cp0r - 1.0 + ng_gost_params_.A3)
+      )/ ng_molar_mass_;
+  ng_gost_params_.u = sqrt(ng_gost_params_.u);
   return ERR_SUCCESS_T;
 }
 
@@ -403,5 +473,7 @@ double GasParameters_NG_Gost_dyn::calculate_A3(double sigm) const {
 
 void GasParameters_NG_Gost_dyn::csetParameters(
     double v, double p, double t, state_phase) {
-  assert(0);
+  vpte_.pressure = p;
+  vpte_.temperature = t;
+  set_volume();
 }

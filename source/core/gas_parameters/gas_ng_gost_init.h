@@ -58,6 +58,7 @@ private:
   double get_Un(int n) const;
   // calculating sigma(it is volume)
   ERROR_TYPE set_volume();
+  ERROR_TYPE set_cp0r();
   double sigma_start() const;
   double calculate_d_sigm(double sigm, double A0) const;
   double calculate_A0(double sigm) const;
@@ -66,7 +67,7 @@ private:
   double calculate_A3(double sigm) const;
 
 public:
-  static GasParameters_NG_Gost_dyn *Init(gas_params_input &gpi);
+  static GasParameters_NG_Gost_dyn *Init(gas_params_input gpi);
   void csetParameters(double v, double p, double t, state_phase);
 }; 
 

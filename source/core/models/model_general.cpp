@@ -3,6 +3,7 @@
 #include "common.h"
 #include "gas_description_dynamic.h"
 #include "gas_mix_init.h"
+#include "gas_ng_gost_init.h"
 #include "models_math.h"
 #include "models_errors.h"
 
@@ -95,7 +96,11 @@ const GasParameters *modelGeneral::get_gasparameters() const {
 
 bool modelGeneral::set_gasparameters(const gas_params_input &gpi,
     modelGeneral *mg) {
-  if (gm_ & GAS_MIX_MARK) {
+  if (gm_ & GAS_NG_GOST_MARK) {
+    parameters_ = std::unique_ptr<GasParameters>(
+        GasParameters_NG_Gost_dyn::Init(gpi));
+  }
+  else if (gm_ & GAS_MIX_MARK) {
     parameters_ = std::unique_ptr<GasParameters>(
         GasParameters_mix_dyn::Init(gpi, mg));
   } else {
