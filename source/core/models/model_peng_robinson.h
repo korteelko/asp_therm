@@ -17,6 +17,9 @@ private:
 
   void set_model_coef();
   void set_model_coef(const const_parameters &cp);
+// #ifdef BY_PSEUDO_CRITIC
+  model_input set_pseudo_critic_parameters(const model_input &mi);
+// #endif  // BY_PSEUDO_CRITIC
 
 protected:
   void update_dyn_params(dyn_parameters &prev_state,

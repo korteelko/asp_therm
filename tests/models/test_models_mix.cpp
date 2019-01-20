@@ -33,11 +33,11 @@ const std::string xml_methane = "methane.xml";
 const std::string xml_ethane = "ethane.xml";
 const std::string xml_propane = "propane.xml";
 
-model_input set_input(modelName mn, const binodalpoints &bp,
+model_input set_input(rg_model_t mn, const binodalpoints &bp,
     double p, double t, const parameters_mix &components) {
   GAS_MARKS gm = 0x00;
 #ifdef _DEBUG
-  gm = (uint32_t)mn | ((uint32_t)modelName::REDLICH_KWONG2 
+  gm = (uint32_t)mn | ((uint32_t)rg_model_t::REDLICH_KWONG2 
       << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
 #else
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
@@ -45,12 +45,12 @@ model_input set_input(modelName mn, const binodalpoints &bp,
   return {gm, bp, {p, t, &components}};
 }
 
-model_input set_input(modelName mn, const binodalpoints &bp,
+model_input set_input(rg_model_t mn, const binodalpoints &bp,
     double p, double t, const const_parameters &cgp,
     const dyn_parameters &dgp) {
   GAS_MARKS gm = 0x00;
 #ifdef _DEBUG
-  gm = (uint32_t)mn | ((uint32_t)modelName::REDLICH_KWONG2 
+  gm = (uint32_t)mn | ((uint32_t)rg_model_t::REDLICH_KWONG2 
       << BINODAL_MODEL_SHIFT);
 #else
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT);
@@ -68,7 +68,7 @@ int test_models() {
     return 1;
   }
   std::string filename = std::string(cwd) + xml_path + xml_methane;
-  std::unique_ptr<XmlFile> met_xml(XmlFile::Init(filename));
+  std::unique_ptr<GasComponentByFile> met_xml(GasComponentByFile::Init(filename));
   if (met_xml == nullptr) {
     std::cerr << "Object of XmlFile wasn't created\n";
     return 1;
@@ -87,12 +87,12 @@ int test_models() {
   // ссылочку а не объект
   // TODO udalit' modelname otsuda ili luchshee pereustanovit' gm.binodal 
   binodalpoints bp = pd.GetBinodalPoints(cp->V_K, cp->P_K, cp->T_K,
-      modelName::REDLICH_KWONG2, cp->acentricfactor);
+      rg_model_t::REDLICH_KWONG2, cp->acentricfactor);
 #if defined(RK2_TEST)
   Redlich_Kwong2 *calc_mod = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
       {1.42, 100000, 275}, *cp, *dp, bp);
 #elif defined(PR_TEST)
-  Peng_Robinson *calc_mod = Peng_Robinson::Init(set_input(modelName::PENG_ROBINSON, bp,
+  Peng_Robinson *calc_mod = Peng_Robinson::Init(set_input(rg_model_t::PENG_ROBINSON, bp,
       100000, 275, *cp, *dp));
 #endif  // _TEST
   std::cerr << calc_mod->ParametersString() << std::flush;
@@ -137,12 +137,12 @@ int test_models_mix() {
     return 1;
   }
   PhaseDiagram &pd = PhaseDiagram::GetCalculated();
-  binodalpoints bp = pd.GetBinodalPoints(*prs_mix, modelName::PENG_ROBINSON);
+  binodalpoints bp = pd.GetBinodalPoints(*prs_mix, rg_model_t::PENG_ROBINSON);
 #if defined(RK2_TEST)
   Redlich_Kwong2 *calc_mod = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
       {1.42, 100000, 275}, *prs_mix, bp);
 #elif defined(PR_TEST)
-  Peng_Robinson *calc_mod = Peng_Robinson::Init(set_input(modelName::PENG_ROBINSON, bp,
+  Peng_Robinson *calc_mod = Peng_Robinson::Init(set_input(rg_model_t::PENG_ROBINSON, bp,
       100000, 275, *prs_mix));
 #endif  // _TEST
   std::cerr << calc_mod->ConstParametersString() << std::flush;

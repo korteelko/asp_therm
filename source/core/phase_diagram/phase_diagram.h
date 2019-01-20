@@ -2,7 +2,7 @@
 #define _CORE__PHASE_DIAGRAM__PHASE_DIAGRAM_H_
 
 #include "common.h"
-#include "gas_mix_init.h"
+#include "gasmix_init.h"
 #include "phase_diagram_models.h"
 #include "target_sys.h"
 
@@ -36,7 +36,7 @@ class binodalpoints {
   binodalpoints();
 
 public:
-  modelName mn;
+  rg_model_t mn;
   // вектор значений безразмерной температуры по которым будут вычисляться
   //   параметры объёма и давления
   //   BASIC STRUCT
@@ -88,9 +88,9 @@ class PhaseDiagram {
           lineIntegrateRK2(), lineIntegratePR()};
   std::vector<init_func_t> initialize_f_ = 
       std::vector<init_func_t> {initializeRK2(), initializePR()};
-  std::vector<modelName> functions_indexes_ =
-     std::vector<modelName> {modelName::REDLICH_KWONG2,
-     modelName::PENG_ROBINSON};
+  std::vector<rg_model_t> functions_indexes_ =
+     std::vector<rg_model_t> {rg_model_t::REDLICH_KWONG2,
+     rg_model_t::PENG_ROBINSON};
   // DEVELOP
   //   ASSERT
   // static_assert(line_integrate_f_.size() == initialize_f_,
@@ -99,9 +99,9 @@ class PhaseDiagram {
 private:
   PhaseDiagram();
 
-  size_t set_functions_index(modelName mn);
+  size_t set_functions_index(rg_model_t mn);
   void calculateBinodal(std::shared_ptr<binodalpoints> &bdp,
-      modelName mn, double acentric);
+      rg_model_t mn, double acentric);
   void checkResult(std::shared_ptr<binodalpoints> &bdp);
   void eraseElements(std::shared_ptr<binodalpoints> &bdp, const uint32_t i);
   void searchNegative(std::shared_ptr<binodalpoints> &bdp,
@@ -113,12 +113,12 @@ public:
   // Рассчитать или получить копию, если уже было рассчитано,
   //   для этих параметров, точек на бинодали.
   binodalpoints GetBinodalPoints(double VK, double PK, double TK,
-      modelName mn, double acentric);
+      rg_model_t mn, double acentric);
   // for gas_mix
   binodalpoints GetBinodalPoints(parameters_mix &components,
-      modelName mn);
+      rg_model_t mn);
   // just for lulz
-  void EraseBinodalPoints(modelName mn, double acentric);
+  void EraseBinodalPoints(rg_model_t mn, double acentric);
 };
 
 bool operator< (const PhaseDiagram::uniqueMark &lum,

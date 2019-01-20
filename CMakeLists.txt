@@ -70,7 +70,7 @@ set(
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_dynamic.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_static.cpp
-  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_mix_init.cpp
+  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_mixinit.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_ng_gost_defines.cpp
 
 # phase_diagram sources
@@ -78,8 +78,8 @@ set(
   ${THERMCORE_SOURCE_DIR}/phase_diagram/phase_diagram_models.cpp
 
 # subroutins sources
-  ${THERMCORE_SOURCE_DIR}/subroutins/filereader.cpp
-  ${THERMCORE_SOURCE_DIR}/subroutins/xmlreader.cpp
+  ${THERMCORE_SOURCE_DIR}/subroutins/gas_by_file.cpp
+  ${THERMCORE_SOURCE_DIR}/subroutins/xml_reader.cpp
 
 # models sources
   ${THERMCORE_SOURCE_DIR}/models/model_general.cpp

@@ -1,8 +1,9 @@
 #include "test_xml.h"
 
 // #include
-#include "filereader.h"
-#include "xmlreader.h"
+#include "gas_by_file.h"
+#include "gasmix_by_file.h"
+#include "xml_reader.h"
 
 #include <iostream>
 #include <memory>
@@ -16,16 +17,14 @@
 
 const std::string xml_path = "/../../asp_therm/data/gases/";
 const std::string xml_methane = "methane.xml";
+const std::string xml_gasmix = "gasmix_inp_example.xml";
+char cwd[512] = {0};
 
-int run_tests_xml() {
+int test_component_init() {
   std::string methane_path = xml_path + xml_methane;
-  char cwd[512] = {0};
-  if (getcwd(cwd, (sizeof(cwd))))
-    methane_path = std::string(cwd) + methane_path;
-  else
-    std::cerr << "cann't get current dir";
-  // std::unique_ptr<XMLReader> xml_doc(XMLReader::Init(methane_path));
-  std::unique_ptr<XmlFile> met_xml(XmlFile::Init(methane_path));
+  methane_path = std::string(cwd) + methane_path;
+  std::unique_ptr<ComponentByFile> met_xml(
+      ComponentByFile::Init(methane_path));
   if (met_xml == nullptr) {
     std::cerr << "Object of XmlFile wasn't created\n";
     return 1;
@@ -41,4 +40,32 @@ int run_tests_xml() {
     return 2;
   }
   return 0;
+}
+
+int test_components_init() {
+  std::string gasmix_path = xml_path + xml_gasmix;
+  gasmix_path = std::string(cwd) + gasmix_path;
+  std::unique_ptr<GasMixComponentsFile> gasmix_comps(
+      GasMixComponentsFile::Init(gasmix_path));
+  if (gasmix_comps == nullptr) {
+    std::cerr << "cannot create xml_components handler";
+    return 1;
+  }
+  auto components_parameters = gasmix_comps->GetParameters();
+  if (components_parameters == nullptr) {
+    std::cerr << "cannot initilize parameters of mix";
+    return 1;
+  }
+  return 0;
+}
+
+int run_tests_xml() {
+  if (!getcwd(cwd, (sizeof(cwd)))) {
+    std::cerr << "cann't get current dir";
+    return 2;
+  }
+ // int err = test_component_init();  // passed
+ // err |= test_components_init();
+  int err = test_components_init();
+  return err;
 }

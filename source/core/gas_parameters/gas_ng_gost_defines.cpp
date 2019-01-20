@@ -99,6 +99,9 @@ const binary_associate_coef *get_binary_associate_coefs(gas_t i, gas_t j) {
   for (; z < bin_coef_count; ++z)
     if (gases_coef[z].i == i) 
       break;
+  // undefined gas or gas isn't in list
+  if (z >= bin_coef_count - 1)
+    return &(gases_coef[bin_coef_count - 1]);
   while (gases_coef[z].i == i) {
     if (gases_coef[z].j == j)
       return &(gases_coef[z]);

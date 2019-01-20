@@ -6,6 +6,7 @@
 // separate calculation of parameters of mix 
 //   просто интересно
 #define GAS_MIX_VARIANT
+#define BY_PSEUDO_CRITIC
 
 #define MODEL_IDEAL_GAS       0x01
 #define MODEL_REDLICH_KWONG   0x02
@@ -22,9 +23,10 @@
 #define GAS_NG_GOST_MARK      0x00000200
 #define MARK_MASK_SHIFT       8
 
-typedef unsigned int GAS_MARKS;
+typedef uint32_t GAS_MARKS;
+typedef uint32_t MODEL_MARKS;
 
-enum class modelName : uint32_t {
+enum class rg_model_t : uint32_t {
   IDEAL_GAS = MODEL_IDEAL_GAS,
   REDLICH_KWONG2 = MODEL_REDLICH_KWONG,
   PENG_ROBINSON = MODEL_PENG_ROBINSON,

@@ -1,6 +1,7 @@
 doc/
 libs/
 build/
+.kdev4/
 .vscode/
 .vs/
 source/flow_modeling/

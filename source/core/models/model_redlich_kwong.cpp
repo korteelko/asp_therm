@@ -25,6 +25,24 @@ void Redlich_Kwong2::set_model_coef(
   model_coef_b_ = 0.08664 * cp.R * cp.T_K / cp.P_K;
 }
 
+
+model_input Redlich_Kwong2::set_pseudo_critic_parameters(
+    const model_input &mi) {
+  if (!(mi.gm & GAS_MIX_MARK))
+    return mi;
+  // original by Brusilobski (4.15) page 134 
+  const parameters_mix *pm_p = mi.gpi.const_dyn.components;
+  double part_x = 0.0;
+  double result_a_coef = 0.0;
+  double result_b_coef = 0.0;
+  for (const auto &x : *pm_p) {
+    set_model_coef(x.second.first);
+  }
+  model_coef_a_ = result_a_coef;
+  model_coef_b_ = result_b_coef;
+}
+// #endif  // BY_PSEUDO_CRITIC
+
 Redlich_Kwong2::Redlich_Kwong2(const model_input &mi)
   : modelGeneral(mi.gm, mi.bp) {
   if (!set_gasparameters(mi.gpi, this))

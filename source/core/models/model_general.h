@@ -6,7 +6,7 @@
 #include "common.h"
 #include "gas_description.h"
 #include "gas_description_static.h"
-#include "gas_mix_init.h"
+#include "gasmix_init.h"
 #include "phase_diagram.h"
 
 #ifdef BOOST_LIB_USED
@@ -43,6 +43,7 @@ class modelGeneral {
   modelGeneral &operator=(const modelGeneral &) = delete;
 protected:
   std::unique_ptr<GasParameters> parameters_;
+  rg_model_t model_conf_;
   GAS_MARKS gm_;
   binodalpoints bp_;
 

@@ -10,7 +10,7 @@
 #  include <iostream>
 #endif
 
-size_t PhaseDiagram::set_functions_index(modelName mn) {
+size_t PhaseDiagram::set_functions_index(rg_model_t mn) {
   size_t functions_index = 0xFF;
   for (size_t i = 0; i < functions_indexes_.size(); ++i)
     if (functions_indexes_[i] == mn) {
@@ -21,7 +21,7 @@ size_t PhaseDiagram::set_functions_index(modelName mn) {
 }
 
 void PhaseDiagram::calculateBinodal(
-    std::shared_ptr<binodalpoints>& bdp, modelName mn, double acentric) {
+    std::shared_ptr<binodalpoints>& bdp, rg_model_t mn, double acentric) {
   const uint32_t nPoints = bdp->t.size();
   // Суть правила Максвелла: Расчитанные значения va и vb лежат на
   //   бинодали если
@@ -186,7 +186,7 @@ PhaseDiagram &PhaseDiagram::GetCalculated() {
 }
 
 binodalpoints PhaseDiagram::GetBinodalPoints(double VK, double PK,
-    double TK, modelName mn, double acentric) {
+    double TK, rg_model_t mn, double acentric) {
   reset_error();
   bool isValid = is_above0(VK, PK, TK, acentric);
   if (!isValid) {
@@ -224,7 +224,7 @@ binodalpoints PhaseDiagram::GetBinodalPoints(double VK, double PK,
 }
 
 binodalpoints PhaseDiagram::GetBinodalPoints(parameters_mix &components,
-    modelName mn) {
+    rg_model_t mn) {
   std::unique_ptr<const_parameters> cgp = 
       GasParameters_mix_dyn::GetAverageParams(components);
   return PhaseDiagram::GetBinodalPoints(cgp->V_K, cgp->P_K, cgp->T_K, 
@@ -232,7 +232,7 @@ binodalpoints PhaseDiagram::GetBinodalPoints(parameters_mix &components,
 }
 // DEVELOP
 //   NOT TESTED
-void PhaseDiagram::EraseBinodalPoints(modelName mn,
+void PhaseDiagram::EraseBinodalPoints(rg_model_t mn,
     double acentric) {
 // std::lock_guard<std::mutex> lg(mtx);
   auto iter = calculated_.find({(size_t)mn, acentric});

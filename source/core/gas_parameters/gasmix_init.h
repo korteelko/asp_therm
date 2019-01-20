@@ -1,5 +1,5 @@
-#ifndef _CORE__GAS_PARAMETERS__GAS_MIX_INIT_H_
-#define _CORE__GAS_PARAMETERS__GAS_MIX_INIT_H_
+#ifndef _CORE__GAS_PARAMETERS__GASMIX_INIT_H_
+#define _CORE__GAS_PARAMETERS__GASMIX_INIT_H_
 
 #include "gas_description_static.h"
 
@@ -9,18 +9,18 @@
 //   отведём ей 1%
 // Итого проверяем тождество :
 //   |0.99 - ${summ_of_components}| < 0.02
-#define GAS_MIX_PERSENT_AVR  0.99
-#define GAS_MIX_PERCENT_EPS  0.02
+#define GASMIX_PERSENT_AVR  0.99
+#define GASMIX_PERCENT_EPS  0.02
 
-struct gas_mix_file {
+struct gasmix_file {
   std::string  filename;
   double part;
 
 public:
-  gas_mix_file(const std::string filename, const double part);
+  gasmix_file(const std::string filename, const double part);
 };
 
-bool operator< (const gas_mix_file &lg, const gas_mix_file &rg);
+bool operator< (const gasmix_file &lg, const gasmix_file &rg);
 
 class GasParameters_mix : public GasParameters {
 protected:
@@ -49,4 +49,4 @@ public:
   const parameters_mix &GetComponents() const;
   void csetParameters(double v, double p, double t, state_phase sp) override;
 };
-#endif  // !_CORE__GAS_PARAMETERS__GAS_MIX_INIT_H_
+#endif  // !_CORE__GAS_PARAMETERS__GASMIX_INIT_H_

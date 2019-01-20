@@ -22,16 +22,16 @@
 static const double standart_pressure    = 100000.0;
 static const double standart_temperature = 314.0;
 
-model_input ModelsCreater::set_input(modelName mn, const binodalpoints &bp,
+model_input ModelsCreater::set_input(rg_model_t mn, const binodalpoints &bp,
     double p, double t, const parameters_mix &mix_components) {
   GAS_MARKS gm = 0x00;
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
-  model_input &&mi = {gm, bp, {p, t, NULL}};
-  mi.gpi.const_dyn.components = &mix_components;
+  // cd cd_{&mix_components};
+  model_input &&mi = {gm, bp, {p, t, cd{ .components = &mix_components}}};
   return mi;
 }
 
-model_input ModelsCreater::set_input(modelName mn, const binodalpoints &bp,
+model_input ModelsCreater::set_input(rg_model_t mn, const binodalpoints &bp,
     double p, double t, const ng_gost_mix &mix_components) {
   GAS_MARKS gm = 0x00;
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_NG_GOST_MARK;
@@ -40,7 +40,7 @@ model_input ModelsCreater::set_input(modelName mn, const binodalpoints &bp,
   return mi;
 }
 
-modelGeneral *ModelsCreater::GetCalculatingModel(modelName mn,
+modelGeneral *ModelsCreater::GetCalculatingModel(rg_model_t mn,
     std::vector<gas_mix_file> components, double p, double t) {
   std::unique_ptr<GasMix> gm(GasMix::Init(components));
   if (gm == nullptr)
@@ -50,15 +50,15 @@ modelGeneral *ModelsCreater::GetCalculatingModel(modelName mn,
     return nullptr;
   PhaseDiagram &pd = PhaseDiagram::GetCalculated();
   // for binodal available only RK2 and PR
-  modelName binodal_mn = (mn == modelName::PENG_ROBINSON) ? 
-      modelName::PENG_ROBINSON : modelName::REDLICH_KWONG2;
+  rg_model_t binodal_mn = (mn == rg_model_t::PENG_ROBINSON) ? 
+      rg_model_t::PENG_ROBINSON : rg_model_t::REDLICH_KWONG2;
   binodalpoints bp = pd.GetBinodalPoints(*prs_mix, binodal_mn);
   switch (mn) {
-    case modelName::IDEAL_GAS:
+    case rg_model_t::IDEAL_GAS:
       return Ideal_Gas::Init(set_input(mn, bp, p, t, *prs_mix));
-    case modelName::REDLICH_KWONG2:
+    case rg_model_t::REDLICH_KWONG2:
       return Redlich_Kwong2::Init(set_input(mn, bp, p, t, *prs_mix));
-    case modelName::PENG_ROBINSON:
+    case rg_model_t::PENG_ROBINSON:
       return Peng_Robinson::Init(set_input(mn, bp, p, t, *prs_mix));
     default:
       set_error_message(ERR_INIT_T, "undefined calculation model");
@@ -66,7 +66,7 @@ modelGeneral *ModelsCreater::GetCalculatingModel(modelName mn,
   return nullptr;
 }
 
-modelGeneral *ModelsCreater::GetCalculatingModel(modelName mn,
+modelGeneral *ModelsCreater::GetCalculatingModel(rg_model_t mn,
     std::vector<gas_mix_file> components) {
   return ModelsCreater::GetCalculatingModel(mn, components,
       standart_pressure, standart_temperature);

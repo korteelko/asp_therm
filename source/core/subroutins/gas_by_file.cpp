@@ -1,4 +1,4 @@
-#include "filereader.h"
+#include "gas_by_file.h"
 
 #include "models_errors.h"
 #include "models_math.h"
@@ -32,7 +32,7 @@ const std::string cp_names[CP_PARAMETERS_COUNT] = {
     "volume", "pressure", "temperature"};
 
 double get_val(std::vector<std::string> &vec, const std::string &valname,
-    XMLReader *xml_doc) {
+    XMLReader<gas_node> *xml_doc) {
   std::string tmp_str = "";
   vec[XML_PATHLEN_SUBGROUP] = valname;
   xml_doc->GetValueByPath(vec, &tmp_str);
@@ -51,17 +51,17 @@ double get_intern_energy(double cv, double temper) {
 }  // unnamed namespace
 
 // XmlFile
-XmlFile::XmlFile(XMLReader *xml_doc)
+ComponentByFile::ComponentByFile(XMLReader<gas_node> *xml_doc)
   : xml_doc_(xml_doc), gas_name_(GAS_TYPE_UNDEFINED) {}
 
-XmlFile *XmlFile::Init(const std::string filename) {
-  XMLReader *xml_doc = XMLReader::Init(filename);
+ComponentByFile *ComponentByFile::Init(const std::string &filename) {
+  XMLReader<gas_node> *xml_doc = XMLReader<gas_node>::Init(filename);
   if (xml_doc == nullptr)
     return nullptr;
-  return new XmlFile(xml_doc);
+  return new ComponentByFile(xml_doc);
 }
 
-std::shared_ptr<const_parameters> XmlFile::GetConstParameters() {
+std::shared_ptr<const_parameters> ComponentByFile::GetConstParameters() {
   reset_error();
   if (xml_doc_ == nullptr)
     return nullptr;
@@ -84,7 +84,7 @@ std::shared_ptr<const_parameters> XmlFile::GetConstParameters() {
       cp[0], cp[1], cp[2], mol, af));
 }
 
-std::shared_ptr<dyn_parameters> XmlFile::GetDynParameters() {
+std::shared_ptr<dyn_parameters> ComponentByFile::GetDynParameters() {
   reset_error();
   if (xml_doc_ == nullptr)
     return nullptr;
@@ -108,80 +108,13 @@ std::shared_ptr<dyn_parameters> XmlFile::GetDynParameters() {
       parameters{cp[0], cp[1], cp[2]}));
 }
 
-void XmlFile::set_gas_name() {
+void ComponentByFile::set_gas_name() {
   auto x = gas_names.find(xml_doc_->GetRootName());
   if (x != gas_names.end())
     gas_name_ = x->second;
 }
 
-XmlFile::~XmlFile() {
+ComponentByFile::~ComponentByFile() {
   if (xml_doc_ != nullptr)
     delete xml_doc_;
-}
-
-// GasMix class
-GasMix *GasMix::Init(const std::vector<gas_mix_file> &parts) {
-  if (check_input(parts))
-    return nullptr;
-  return new GasMix(parts);
-}
-
-GasMix::GasMix(const std::vector<gas_mix_file> &parts)
-  : is_valid_(true), prs_mix_(nullptr) {
-  prs_mix_ = std::unique_ptr<parameters_mix>(new parameters_mix());
-  for (const auto &x : parts) {
-    auto cdp = init_pars(x.filename);
-    if (cdp.first == nullptr) {
-      set_error_message(ERR_INIT_T, "One component of gas mix: ");
-      add_to_error_msg(x.filename.c_str());
-      is_valid_ = false;
-      break;
-    }
-    prs_mix_->insert({x.part, {*cdp.first, *cdp.second}});
-  }
-}
-
-// finished
-int GasMix::check_input(const std::vector<gas_mix_file> &parts) {
-  if (parts.empty()) {
-    set_error_message(ERR_INIT_T | ERR_INIT_ZERO_ST, "init mix by file empty");
-    return ERR_INIT_T;
-  }
-  // check parts > 0 and sum pf parts == 1.0
-  double parts_sum = 0;
-  for (const auto &x: parts) {
-    if (x.part >= 0.0) {
-      parts_sum += x.part;
-    } else {
-      set_error_message(ERR_INIT_T | ERR_INIT_ZERO_ST,
-          "init mix by files part <=0");
-      return ERR_INIT_T;
-    }
-  }
-  if (!is_equal(parts_sum, 1.0, GAS_MIX_PERCENT_EPS)) {
-    set_error_message(ERR_CALCULATE_T | ERR_CALC_MIX_ST, "gas components");
-    return ERR_INIT_T;
-  }
-  return ERR_SUCCESS_T;
-}
-
-std::pair<std::shared_ptr<const_parameters>, std::shared_ptr<dyn_parameters>>
-    GasMix::init_pars(const std::string filename) {
-  std::shared_ptr<XmlFile> xf(XmlFile::Init(filename));
-  if (xf == nullptr) {
-    set_error_message(ERR_FILEIO_T | ERR_FILE_IN_ST, "gas xml init");
-    return {nullptr, nullptr};
-  }
-  // unique_ptrs
-  auto cp = xf->GetConstParameters();
-  auto dp = xf->GetDynParameters();
-  if ((cp == nullptr) || (dp == nullptr)) {
-    set_error_message(ERR_INIT_T, "xml format and const/dyn -parameters");
-    return {nullptr, nullptr};
-  }
-  return {cp, dp};
-}
-
-std::shared_ptr<parameters_mix> GasMix::GetParameters() {
-  return (is_valid_) ? prs_mix_ : nullptr;
 }

@@ -8,10 +8,67 @@
 #ifdef _DEBUG
 #  include <iostream>
 #endif  // _DEBUG
-
 #include <vector>
 
 #include <assert.h>
+
+struct binary_associate_PR {
+  gas_t i,
+        j;
+  double c;
+};
+
+static binary_associate_PR PR_coefs[] = {
+  {GAS_TYPE_NITROGEN, GAS_TYPE_CARBON_DIOXIDE, 0.0},
+  {GAS_TYPE_NITROGEN, GAS_TYPE_HYDROGEN_SULFIDE, 0.130},
+  {GAS_TYPE_NITROGEN, GAS_TYPE_METHANE, 0.025},
+  {GAS_TYPE_NITROGEN, GAS_TYPE_ETHANE, 0.010},
+  {GAS_TYPE_NITROGEN, GAS_TYPE_PROPANE, 0.090},
+  {GAS_TYPE_NITROGEN, GAS_TYPE_N_BUTANE, 0.095},
+
+  {GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_HYDROGEN_SULFIDE, 0.135},
+  {GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_METHANE, 0.105},
+  {GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_ETHANE, 0.130},
+  {GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_PROPANE, 0.125},
+  {GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_N_BUTANE, 0.115},
+
+  {GAS_TYPE_HYDROGEN_SULFIDE, GAS_TYPE_METHANE, 0.070},
+  {GAS_TYPE_HYDROGEN_SULFIDE, GAS_TYPE_ETHANE, 0.085},
+  {GAS_TYPE_HYDROGEN_SULFIDE, GAS_TYPE_PROPANE, 0.080},
+  {GAS_TYPE_HYDROGEN_SULFIDE, GAS_TYPE_N_BUTANE, 0.075},
+
+  {GAS_TYPE_METHANE, GAS_TYPE_ETHANE, 0.005},
+  {GAS_TYPE_METHANE, GAS_TYPE_PROPANE, 0.010},
+  {GAS_TYPE_METHANE, GAS_TYPE_N_BUTANE, 0.010},
+
+  {GAS_TYPE_N_PENTANE, GAS_TYPE_NITROGEN, 0.100},
+  {GAS_TYPE_N_PENTANE, GAS_TYPE_CARBON_DIOXIDE, 0.115},
+  {GAS_TYPE_N_PENTANE, GAS_TYPE_HYDROGEN_SULFIDE, 0.070},
+  {GAS_TYPE_N_PENTANE, GAS_TYPE_METHANE, 0.030},
+  {GAS_TYPE_N_PENTANE, GAS_TYPE_ETHANE, 0.010},
+  {GAS_TYPE_N_PENTANE, GAS_TYPE_PROPANE, 0.020},
+  {GAS_TYPE_N_PENTANE, GAS_TYPE_N_BUTANE, 0.005},
+
+  {GAS_TYPE_UNDEFINED, GAS_TYPE_UNDEFINED, 0.000}
+};
+
+static double get_binary_associate_coef_PR(gas_t i, gas_t j) {
+  if (i == j)
+    return 0.0;
+  size_t bin_coef_count = sizeof(PR_coefs) / sizeof(*PR_coefs);
+  size_t z = 0;
+  for (; z <  bin_coef_count; ++z)
+    if (PR_coefs[z].i == i)
+      break;
+  if (z >= bin_coef_count - 1)
+    return 0.0;
+  while (PR_coefs[z].i == i) {
+    if (PR_coefs[z].j == j)
+      return PR_coefs[z].c;
+    ++z;
+  }
+  return 0.0;
+}
 
 static double sq2 = std::sqrt(2.0);
 
@@ -33,10 +90,50 @@ void Peng_Robinson::set_model_coef(
       0.26992 * std::pow(cp.acentricfactor, 2.0);
 }
 
+// #ifdef BY_PSEUDO_CRITIC
+model_input Peng_Robinson::set_pseudo_critic_parameters(
+    const model_input &mi) {
+  // available only for GAS_MIX
+  //   я ничего уже не понимаю (((((((((((((
+  //     сделаю как в статье из университета Келдыша
+  if (!(mi.gm & GAS_MIX_MARK))
+    return mi;
+  const parameters_mix *pm_p = mi.gpi.const_dyn.components;
+  double part_x = 0.0,
+         part_y = 0.0;
+  double k_coef = 0.0;
+  double result_a_coef = 0.0,
+         result_b_coef = 0.0;
+  double tmp_ax_coef = 0.0;
+  for (const auto &x : *pm_p) {
+    set_model_coef(x.second.first);
+    tmp_ax_coef = model_coef_a_;
+    result_b_coef += part_x * model_coef_b_;
+    part_x = x.first;
+    for (const auto &y : *pm_p) {
+      set_model_coef(y.second.first);
+      part_y = y.first;
+      k_coef = get_binary_associate_coef_PR(
+          x.second.first.gas_name, y.second.first.gas_name);
+      result_a_coef += part_x * part_y * (1.0 - k_coef) *
+          sqrt(tmp_ax_coef * model_coef_a_);
+    }
+  }
+  model_coef_a_ = result_a_coef;
+  model_coef_b_ = result_b_coef;
+}
+// #endif  // BY_PSEUDO_CRITIC
+
 Peng_Robinson::Peng_Robinson(const model_input &mi)
   : modelGeneral(mi.gm, mi.bp) {
+#ifdef BY_PSEUDO_CRITIC
+  auto mi_pc = set_pseudo_critic_parameters(mi);
+  if (!set_gasparameters(mi_pc.gpi, this))
+    return;
+#else
   if (!set_gasparameters(mi.gpi, this))
     return;
+#endif  // BY_PSEUDO_CRITIC
   set_model_coef();
   set_enthalpy();
 }
