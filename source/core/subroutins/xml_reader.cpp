@@ -13,7 +13,11 @@ gas_node::gas_node(int itype, std::string name)
   : gas_node_type(itype), name(name), value("") {}
 
 gas_node::gas_node(int itype, std::string name, std::string value)
-  : gas_node_type(itype), name(name), value(value) {}
+  : gas_node_type(itype), name(name), value(value) {
+#ifdef _DEBUG_SUBROUTINS
+  std::cerr << "Create gas node: " << value << " #" << itype << " " << name << "\n";
+#endif  // _DEBUG
+  }
 
 gas_node::gas_node(std::string type, std::string name)
   : gas_node(type, name, "") {}
@@ -45,13 +49,14 @@ gasmix_node::gasmix_node(int itype, std::string value)
   : mix_node_type(itype), value(value) {} 
 
 gasmix_node::gasmix_node(int itype, std::string name, std::string value)
-  : mix_node_type(itype), name(name), value(value) {}
-  
-gasmix_node::gasmix_node(std::string type) 
-  : gasmix_node(type, "") {}
+  : mix_node_type(itype), name(name), value(value) {
+#ifdef _DEBUG_SUBROUTINS
+  std::cerr << "Create gasmix node: " << value << " #" << itype << " " << name << "\n";
+#endif  // _DEBUG
+}
 
-gasmix_node::gasmix_node(std::string type, std::string value) 
-  : gasmix_node(type, "", value) {}
+gasmix_node::gasmix_node(std::string type, std::string name)
+  : gasmix_node(type, name, "") {}
 
 gasmix_node::gasmix_node(std::string type, std::string name, std::string value)
   : name(name), value(value) {
@@ -61,6 +66,9 @@ gasmix_node::gasmix_node(std::string type, std::string name, std::string value)
     mix_node_type = NODE_T_PARAMETER;
   else
     mix_node_type = NODE_T_UNDEFINED;
+#ifdef _DEBUG_SUBROUTINS
+  std::cerr << "Create gasmix node: " << value << " " << type << " " << name << "\n";
+#endif  // _DEBUG
 }
 
 // static

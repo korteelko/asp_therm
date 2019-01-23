@@ -5,6 +5,7 @@ set (PROJECT_NAME test_subroutins)
 project(${PROJECT_NAME})
 
 add_definitions(-D_DEBUG)
+add_definitions(-D_DEBUG_SUBROUTINS)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 
 set(

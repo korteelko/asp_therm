@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<gasmix name="example">
+<gasmix name="example" version="1.0">
   <group name="component1">
      <parameter name="name"> methane </parameter>
      <parameter name="part"> 93.5 </parameter>

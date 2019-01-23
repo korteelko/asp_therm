@@ -47,8 +47,8 @@ GasMixComponentsFile::GasMixComponentsFile(XMLReader<gasmix_node> *xml_doc)
 void GasMixComponentsFile::init_components() {
   char buf[constint_64] = {0};
   std::string gasname;
-  std::string part_str;
-  int part;
+  std::string part_str="";
+  int part = 0.0;
   std::vector<std::string> xml_path(2);
   for (int i = 0; i < 32; ++i) {
     gasname = "";

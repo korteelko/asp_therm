@@ -64,8 +64,8 @@ int run_tests_xml() {
     std::cerr << "cann't get current dir";
     return 2;
   }
- // int err = test_component_init();  // passed
- // err |= test_components_init();
+  // int err = test_component_init();  // passed
+  // err |= test_components_init();
   int err = test_components_init();
   return err;
 }
