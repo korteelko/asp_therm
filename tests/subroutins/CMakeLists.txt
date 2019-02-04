@@ -33,6 +33,9 @@ set(
   ${MAIN_APP_ROOT}/asp_therm/source/core/subroutins/xml_reader.cpp
   ${MAIN_APP_ROOT}/asp_therm/source/core/subroutins/gas_by_file.cpp
   ${MAIN_APP_ROOT}/asp_therm/source/core/subroutins/gasmix_by_file.cpp
+
+# common sources
+  ${MAIN_APP_ROOT}/asp_therm/source/core/common/models_common.cpp
   ${MAIN_APP_ROOT}/asp_therm/source/core/common/models_errors.cpp
   ${MAIN_APP_ROOT}/asp_therm/source/core/common/models_math.cpp
   

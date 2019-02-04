@@ -48,12 +48,13 @@ int test_components_init() {
   std::unique_ptr<GasMixComponentsFile> gasmix_comps(
       GasMixComponentsFile::Init(gasmix_path));
   if (gasmix_comps == nullptr) {
-    std::cerr << "cannot create xml_components handler";
+    std::cerr << "cannot create xml_components handler\n";
     return 1;
   }
   auto components_parameters = gasmix_comps->GetParameters();
   if (components_parameters == nullptr) {
-    std::cerr << "cannot initilize parameters of mix";
+    std::cerr << "cannot initilize parameters of mix\n";
+    std::cerr << get_error_message() << std::endl;
     return 1;
   }
   return 0;

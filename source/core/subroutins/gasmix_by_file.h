@@ -19,7 +19,7 @@ class GasMixComponentsFile {
 private:
   std::unique_ptr<GasMixByFiles> files_handler_;
   XMLReader<gasmix_node> *xml_doc_;
-  std::vector<gasmix_file> gas_mix_files_;
+  std::vector<gasmix_file> gasmix_files_;
 
 private:
   GasMixComponentsFile(XMLReader<gasmix_node> *xml_doc);

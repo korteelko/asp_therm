@@ -1,11 +1,7 @@
 #ifndef _CORE__MODELS__MODEL_IDEAL_GAS_H_
 #define _CORE__MODELS__MODEL_IDEAL_GAS_H_
 
-#include "common.h"
-#include "gas_mix_init.h"
 #include "model_general.h"
-
-#include <memory>
 
 class Ideal_Gas final: public modelGeneral {
 private:

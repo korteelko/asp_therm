@@ -2,7 +2,7 @@
 #define _CORE__MODELS__MODEL_NG_GOST_H_
 
 #include "common.h"
-#include "gas_mix_init.h"
+#include "gasmix_init.h"
 #include "model_general.h"
 
 #include <memory>

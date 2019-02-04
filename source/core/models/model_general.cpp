@@ -2,7 +2,7 @@
 
 #include "common.h"
 #include "gas_description_dynamic.h"
-#include "gas_mix_init.h"
+#include "gasmix_init.h"
 #include "gas_ng_gost_init.h"
 #include "models_math.h"
 #include "models_errors.h"
@@ -122,8 +122,8 @@ bool modelGeneral::check_input(const model_input &mi) {
           mi.gpi.const_dyn.components->end(),
           [&parts_sum] (const std::pair<const double, const_dyn_parameters> &x)
           {parts_sum += x.first;});
-      if (parts_sum < (GAS_MIX_PERSENT_AVR - GAS_MIX_PERCENT_EPS) ||
-          parts_sum > (GAS_MIX_PERSENT_AVR + GAS_MIX_PERCENT_EPS))
+      if (parts_sum < (GASMIX_PERSENT_AVR - GASMIX_PERCENT_EPS) ||
+          parts_sum > (GASMIX_PERSENT_AVR + GASMIX_PERCENT_EPS))
         is_valid = false;
     }
   }
@@ -136,8 +136,8 @@ bool modelGeneral::check_input(const model_input &mi) {
           mi.gpi.const_dyn.ng_gost_components->end(),
           [&parts_sum] (const std::pair<gas_t, double> &x)
           {parts_sum += x.second;});
-      if (parts_sum < (GAS_MIX_PERSENT_AVR - GAS_MIX_PERCENT_EPS) ||
-          parts_sum > (GAS_MIX_PERSENT_AVR + GAS_MIX_PERCENT_EPS))
+      if (parts_sum < (GASMIX_PERSENT_AVR - GASMIX_PERCENT_EPS) ||
+          parts_sum > (GASMIX_PERSENT_AVR + GASMIX_PERCENT_EPS))
         is_valid = false;
     }
   }

@@ -13,7 +13,7 @@
 #define GASMIX_PERCENT_EPS  0.02
 
 struct gasmix_file {
-  std::string  filename;
+  std::string filename;
   double part;
 
 public:
@@ -44,6 +44,7 @@ private:
 
 public:
   static GasParameters_mix_dyn *Init(gas_params_input gpi, modelGeneral *mg);
+  //  неправильно, средние параметры зависят от модели
   static std::unique_ptr<const_parameters> 
       GetAverageParams(parameters_mix &components);
   const parameters_mix &GetComponents() const;

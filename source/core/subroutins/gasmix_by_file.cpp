@@ -1,5 +1,6 @@
 #include "gasmix_by_file.h"
 
+#include "models_common.h"
 #include "models_errors.h"
 #include "models_math.h"
 
@@ -32,7 +33,11 @@
 
 namespace {
 const int constint_64 = 64;
+#ifdef _DEBUG_SUBROUTINS
+const char *gases_root_dir = "../../asp_therm/data/gases/";
+#else
 const char *gases_root_dir = "../../data/gases/";
+#endif  // _DEBUG_SUBROUTINS
 
 std::string gasmix_component = "component";
 std::string gasmix_parameter_name = "name";
@@ -40,11 +45,12 @@ std::string gasmix_parameter_part = "part";
 }  // unnamed namespace
 
 GasMixComponentsFile::GasMixComponentsFile(XMLReader<gasmix_node> *xml_doc) 
-  : xml_doc_(xml_doc) {
+  : files_handler_(nullptr), xml_doc_(xml_doc) {
   init_components();
 }
 
 void GasMixComponentsFile::init_components() {
+  gasmix_files_.clear();
   char buf[constint_64] = {0};
   std::string gasname;
   std::string part_str="";
@@ -63,8 +69,19 @@ void GasMixComponentsFile::init_components() {
     xml_path[1] = gasmix_parameter_part;
     err = xml_doc_->GetValueByPath(xml_path, &part_str);
     part = std::stod(part_str);
-    gas_mix_files_.push_back(gasmix_file(gasname, part));
+    gasmix_files_.push_back(gasmix_file(gasname, part));
   }
+  for (auto &x : gasmix_files_) {
+    x.filename = gases_root_dir + trim_str(x.filename) + ".xml";
+    x.part /= 100.0;
+  }
+  if (gasmix_files_.empty()) {
+    set_error_message(ERR_FILEIO_T | ERR_FILE_IN_ST,
+        "gasmix input file is empty or broken");
+    return;
+  }
+  files_handler_ = std::unique_ptr<GasMixByFiles>(
+      GasMixByFiles::Init(gasmix_files_));
   // и т.д.
   // update path
 }
@@ -127,7 +144,7 @@ int GasMixByFiles::check_input(const std::vector<gasmix_file> &parts) {
     }
   }
   if (!is_equal(parts_sum, 1.0, GASMIX_PERCENT_EPS)) {
-    set_error_message(ERR_CALCULATE_T | ERR_CALC_MIX_ST, "gas components");
+    set_error_message(ERR_CALCULATE_T | ERR_CALC_MIX_ST, "gasmix sum of part != 100%");
     return ERR_INIT_T;
   }
   return ERR_SUCCESS_T;

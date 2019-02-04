@@ -225,6 +225,8 @@ binodalpoints PhaseDiagram::GetBinodalPoints(double VK, double PK,
 
 binodalpoints PhaseDiagram::GetBinodalPoints(parameters_mix &components,
     rg_model_t mn) {
+// 25.01.2019
+// Здесь нужно прописать как считать линию перехода для газовых смесей
   std::unique_ptr<const_parameters> cgp = 
       GasParameters_mix_dyn::GetAverageParams(components);
   return PhaseDiagram::GetBinodalPoints(cgp->V_K, cgp->P_K, cgp->T_K, 

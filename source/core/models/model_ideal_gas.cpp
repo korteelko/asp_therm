@@ -1,11 +1,13 @@
 #include "model_ideal_gas.h"
 
 #include "common.h"
+#include "gasmix_init.h"
 #include "gas_description_dynamic.h"
 #include "models_errors.h"
 #include "models_math.h"
 
 #include <cmath>
+#include <memory>
 
 Ideal_Gas::Ideal_Gas(const model_input &mi)
   : modelGeneral(mi.gm, mi.bp) {

@@ -63,6 +63,7 @@ endif()
 set(
   MODELS_SRC
 # common sources
+  ${THERMCORE_SOURCE_DIR}/common/models_common.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_errors.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 
@@ -70,7 +71,7 @@ set(
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_dynamic.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_static.cpp
-  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_mixinit.cpp
+  ${THERMCORE_SOURCE_DIR}/gas_parameters/gasmix_init.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_ng_gost_defines.cpp
 
 # phase_diagram sources
@@ -79,6 +80,7 @@ set(
 
 # subroutins sources
   ${THERMCORE_SOURCE_DIR}/subroutins/gas_by_file.cpp
+  ${THERMCORE_SOURCE_DIR}/subroutins/gasmix_by_file.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/xml_reader.cpp
 
 # models sources
@@ -87,6 +89,8 @@ set(
   ${THERMCORE_SOURCE_DIR}/models/model_ng_gost.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_peng_robinson.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_redlich_kwong.cpp
+
+  ${THERMCORE_SOURCE_DIR}/models/models_configurations.cpp
   ${THERMCORE_SOURCE_DIR}/models/models_creator.cpp
 
 # plot sources

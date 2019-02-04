@@ -2,8 +2,7 @@
 #define _CORE__MODELS__MODELS_CREATOR_H_
 
 #include "gas_description.h"
-#include "filereader.h"
-#include "xmlreader.h"
+#include "xml_reader.h"
 #include "model_general.h"
 #include "phase_diagram.h"
 
@@ -19,8 +18,8 @@ class ModelsCreater {
 
 public:
   static modelGeneral *GetCalculatingModel(rg_model_t mn,
-      std::vector<gas_mix_file> components, double p, double t);
+      std::vector<gasmix_file> components, double p, double t);
   static modelGeneral *GetCalculatingModel(rg_model_t mn,
-      std::vector<gas_mix_file> components);
+      std::vector<gasmix_file> components);
 };
 #endif  // !_CORE__MODELS__MODELS_CREATOR_H_

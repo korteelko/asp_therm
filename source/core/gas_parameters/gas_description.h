@@ -92,7 +92,6 @@ public:
   void Update();
 };
 
-class modelGeneral;
 struct potentials {
   double  // internalenergy,
          Hermholtz_free,
@@ -128,8 +127,7 @@ public:
 bool is_valid_cgp(const const_parameters &cgp);
 bool is_valid_dgp(const dyn_parameters &dgp);
 
-
-
+class modelGeneral;
 typedef std::pair<const_parameters, dyn_parameters>
     const_dyn_parameters;
 typedef std::multimap<const double, const_dyn_parameters> parameters_mix;

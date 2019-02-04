@@ -1,7 +1,9 @@
 #include "model_ng_gost.h"
 
+#include "common.h"
 #include "gas_description.h"
 #include "gas_description_dynamic.h"
+#include "gasmix_init.h"
 #include "models_errors.h"
 #include "models_math.h"
 

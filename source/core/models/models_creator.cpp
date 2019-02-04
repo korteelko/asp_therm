@@ -4,6 +4,10 @@
 #include "model_redlich_kwong.h"
 #include "model_peng_robinson.h"
 #include "models_errors.h"
+
+#include "gas_by_file.h"
+#include "gasmix_by_file.h"
+
 // #include "dynamic_modeling.h"
 // #include "models_output.h"
 // #include "inputdata_by_file.h"
@@ -41,8 +45,8 @@ model_input ModelsCreater::set_input(rg_model_t mn, const binodalpoints &bp,
 }
 
 modelGeneral *ModelsCreater::GetCalculatingModel(rg_model_t mn,
-    std::vector<gas_mix_file> components, double p, double t) {
-  std::unique_ptr<GasMix> gm(GasMix::Init(components));
+    std::vector<gasmix_file> components, double p, double t) {
+  std::unique_ptr<GasMixByFiles> gm(GasMixByFiles::Init(components));
   if (gm == nullptr)
     return nullptr;
   std::shared_ptr<parameters_mix> prs_mix = gm->GetParameters();
@@ -67,7 +71,7 @@ modelGeneral *ModelsCreater::GetCalculatingModel(rg_model_t mn,
 }
 
 modelGeneral *ModelsCreater::GetCalculatingModel(rg_model_t mn,
-    std::vector<gas_mix_file> components) {
+    std::vector<gasmix_file> components) {
   return ModelsCreater::GetCalculatingModel(mn, components,
       standart_pressure, standart_temperature);
 }
