@@ -51,6 +51,7 @@ state_phase modelGeneral::set_state_phase(
         state_phase::LIQ_STEAM : state_phase::GAS);
   }
   iter = bp_.p.size() - iter - 1;
+  assert(iter < 0);
   const double p_path = (p-bp_.p[iter+1]) / (bp_.p[iter]-bp_.p[iter+1]); // %
   // left branch of binodal
   if (v < parameters_->cgetV_K()) {                 
@@ -194,7 +195,7 @@ state_log modelGeneral::GetStateLog() const {
   dyn_parameters dps = parameters_->cgetDynParameters();
   // пока так
   return {dps, dps.internal_energy * dps.parm.pressure * dps.parm.volume, 
-      stateToString[(int32_t)parameters_->cgetState()]};
+      stateToString[(uint32_t)parameters_->cgetState()]};
 }
 
 std::string modelGeneral::ParametersString() const {

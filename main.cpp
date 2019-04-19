@@ -1,7 +1,8 @@
 #include "target_sys.h"
 
-#include "filereader.h"
-#include "xmlreader.h"
+#include "gas_by_file.h"
+#include "gasmix_by_file.h"
+#include "xml_reader.h"
 #include "model_redlich_kwong.h"
 #include "model_peng_robinson.h"
 
@@ -59,7 +60,7 @@ int test_models() {
     return 1;
   }
   std::string filename = std::string(cwd) + xml_path + xml_methane;
-  std::unique_ptr<GasComponentByFile> met_xml(GasComponentByFile::Init(filename));
+  std::unique_ptr<ComponentByFile> met_xml(ComponentByFile::Init(filename));
   if (met_xml == nullptr) {
     std::cerr << "Object of XmlFile wasn't created\n";
     return 1;
@@ -104,11 +105,11 @@ int test_models_mix() {
     std::cerr << "cann't get current dir";
     return 1;
   }
-  std::vector<gas_mix_file> xml_files = std::vector<gas_mix_file> {
-    gas_mix_file(std::string(cwd) + xml_path + xml_methane, 0.988),
+  std::vector<gasmix_file> xml_files = std::vector<gasmix_file> {
+    gasmix_file(std::string(cwd) + xml_path + xml_methane, 0.988),
     // add more (summ = 1.00)
-    gas_mix_file(std::string(cwd) + xml_path + xml_ethane, 0.009),
-    gas_mix_file(std::string(cwd) + xml_path + xml_propane, 0.003)
+    gasmix_file(std::string(cwd) + xml_path + xml_ethane, 0.009),
+    gasmix_file(std::string(cwd) + xml_path + xml_propane, 0.003)
   };
   /*
   std::unique_ptr<XmlFile> met_xml(XmlFile::Init(methane_path));
@@ -117,7 +118,7 @@ int test_models_mix() {
     return 1;
   }
   */
-  GasMix *gm = GasMix::Init(xml_files);
+  GasMixByFiles *gm = GasMixByFiles::Init(xml_files);
   if (!gm) {
     std::cerr << "GasMix init error" << std::flush;
     return 1;

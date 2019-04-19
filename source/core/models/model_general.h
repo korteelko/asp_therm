@@ -52,7 +52,7 @@ protected:
 
   double vapor_part(int32_t index);
   state_phase set_state_phase(double v, double p, double t);
-  int32_t  set_state_phasesub(double p);
+  int32_t set_state_phasesub(double p);
   void set_parameters(double v, double p, double t);
   void set_enthalpy();
   bool set_gasparameters(const gas_params_input &gpi,

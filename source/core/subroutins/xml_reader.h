@@ -37,8 +37,8 @@ public:
   std::string name,
               value;
               
-  gas_node(int itype, std::string name);
-  gas_node(int itype, std::string name, std::string value);
+  gas_node(node_type itype, std::string name);
+  gas_node(node_type itype, std::string name, std::string value);
   gas_node(std::string type, std::string name);
   gas_node(std::string type, std::string name, std::string value);
   
@@ -52,8 +52,8 @@ public:
   std::string name,
               value;
   
-  gasmix_node(int itype, std::string value);
-  gasmix_node(int itype, std::string name, std::string value);
+  gasmix_node(node_type itype, std::string value);
+  gasmix_node(node_type itype, std::string name, std::string value);
   gasmix_node(std::string type, std::string name);
   gasmix_node(std::string type, std::string name, std::string value);
   
@@ -140,9 +140,6 @@ private:
   // обход вглубь
   // void init_subnode(pugi::xml_node *xml_nd, gasmix_node *gasmix_nd);
   void init_subnode(pugi::xml_node *xml_nd, gasxml_node<xml_node_t> *gasxml_nd) {
-# ifdef _DEBUG_SUBROUTINS
-    std::cerr << "Call init_subnode: " << xml_nd->attribute("name").value() << "\n";
-# endif  // _DEBUG
     pugi::xml_node nx_xml_nd = xml_nd->first_child();
     gasxml_nd->first_child = std::unique_ptr<gasxml_node<xml_node_t>>(
         new gasxml_node<xml_node_t>(xml_node_t(nx_xml_nd.name(),
@@ -161,25 +158,9 @@ private:
   
   // template <class gasxml_node>
   void init_parameters(pugi::xml_node *&xml_nd, gasxml_node<xml_node_t> *gasxml_nd) {
-# ifdef _DEBUG_SUBROUTINS
-    std::cerr << "Call init_parameter: " << xml_nd->attribute("name").value() << "\n";
-# endif  // _DEBUG
     gasxml_nd->SetValue(xml_nd->text().as_string());
     gasxml_nd->SetName(xml_nd->attribute("name").value());
     gasxml_nd->first_child = nullptr;
-   /* pugi::xml_node nx_xml_nd = xml_nd->next_sibling();
-    gasxml_nd->siblings.push_back(std::unique_ptr<gasxml_node<xml_node_t>>(
-        new gasxml_node<xml_node_t>(xml_node_t(NODE_T_PARAMETER,
-        nx_xml_nd.attribute("name").value(), nx_xml_nd.text().as_string()))));
-    while (true) {
-      if (nx_xml_nd == xml_nd->parent().last_child())
-        break;
-      nx_xml_nd = nx_xml_nd.next_sibling();
-      gasxml_nd->siblings.push_back(std::unique_ptr<gasxml_node<xml_node_t>>(
-            new gasxml_node<xml_node_t>(xml_node_t(NODE_T_PARAMETER,
-            nx_xml_nd.attribute("name").value(), nx_xml_nd.text().as_string()))));
-    }
-    */
   }
 
 public:
@@ -207,25 +188,11 @@ public:
   
   error_t GetValueByPath(const std::vector<std::string> &xml_path,
       std::string *outstr) const {
-# ifdef _DEBUG_SUBROUTINS
-    std::cerr << "\nPath to xml value is:\n";
-    for (auto const &x : xml_path)
-      std::cerr << x << " --> ";
-    std::cerr << "\nThis is all!!!\n";
-# endif  // _DEBUG
     const gasxml_node<xml_node_t> *tmp_gas_node = gas_root_node_.get();
     for (const auto &x : xml_path) {
       // check ypuself and sublings
-# ifdef _DEBUG_SUBROUTINS
-      auto debug_node = tmp_gas_node;
-# endif
       tmp_gas_node = tmp_gas_node->search_child_by_name(x);
       if (!tmp_gas_node) {
-# ifdef _DEBUG_SUBROUTINS
-        std::cerr << "Current xml_node: " << debug_node->GetName() << "\n";
-        std::cerr << "First child is: " << debug_node->first_child->GetName();
-        std::cerr << "Cannot find xml_child: " << x << "\n";
-#endif  // _DEBUG
         return 1;
       }
     }

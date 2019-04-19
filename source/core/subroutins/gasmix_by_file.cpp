@@ -35,6 +35,8 @@ namespace {
 const int constint_64 = 64;
 #ifdef _DEBUG_SUBROUTINS
 const char *gases_root_dir = "../../asp_therm/data/gases/";
+#elif defined (_RELEASE)
+const char *gases_root_dir = "data/gases/";
 #else
 const char *gases_root_dir = "../../data/gases/";
 #endif  // _DEBUG_SUBROUTINS
@@ -54,7 +56,7 @@ void GasMixComponentsFile::init_components() {
   char buf[constint_64] = {0};
   std::string gasname;
   std::string part_str="";
-  int part = 0.0;
+  double part = 0.0;
   std::vector<std::string> xml_path(2);
   for (int i = 0; i < 32; ++i) {
     gasname = "";

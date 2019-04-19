@@ -47,7 +47,7 @@ bool is_valid_gas(gas_t gas_name);
 ///   in perspective:  LIQ_STEAM: p<p_binodal, vleft < v < vrigth;
 /// Без метастабильных состояний (между бинодалью и спинодалью)
 /// There are not metastable states (between binodal and spinodal)
-enum class state_phase : int32_t {
+enum class state_phase : uint32_t {
   SCF = 0,
   LIQUID,
   LIQ_STEAM,

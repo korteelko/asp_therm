@@ -8,7 +8,7 @@ project(${PROJECT_NAME})
 # debug
 add_definitions(-D_DEBUG)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-add_definitions(-D_IDE_VSCODE)
+# add_definitions(-D_IDE_VSCODE)
 # release
 # add_definitions(-DNDEBUG)
 # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
@@ -71,8 +71,9 @@ set(
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_dynamic.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_static.cpp
-  ${THERMCORE_SOURCE_DIR}/gas_parameters/gasmix_init.cpp
+  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_ng_gost_init.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_ng_gost_defines.cpp
+  ${THERMCORE_SOURCE_DIR}/gas_parameters/gasmix_init.cpp
 
 # phase_diagram sources
   ${THERMCORE_SOURCE_DIR}/phase_diagram/phase_diagram.cpp
@@ -89,7 +90,6 @@ set(
   ${THERMCORE_SOURCE_DIR}/models/model_ng_gost.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_peng_robinson.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_redlich_kwong.cpp
-
   ${THERMCORE_SOURCE_DIR}/models/models_configurations.cpp
   ${THERMCORE_SOURCE_DIR}/models/models_creator.cpp
 

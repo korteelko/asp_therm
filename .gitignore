@@ -4,11 +4,9 @@ build/
 .kdev4/
 .vscode/
 .vs/
-source/flow_modeling/
-source/gui/gui_build/
-source/gui/gui.pro.user
-CMakeLists.txt.user
+
+**.swp
+
+CMakeLists.txt.user*
 CMakeSettings.json
-*.swp
-test/subroutins/CMakeLists.txt.user
-test/models/CMakeLists.txt.user
+

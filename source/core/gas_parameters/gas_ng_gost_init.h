@@ -54,13 +54,13 @@ private:
   ERROR_TYPE init_kx();
   ERROR_TYPE init_pseudocrit_vpte();
   // init methods end
-  double get_Dn(int n) const;
-  double get_Un(int n) const;
+  double get_Dn(size_t n) const;
+  double get_Un(size_t n) const;
   // calculating sigma(it is volume)
   ERROR_TYPE set_volume();
   ERROR_TYPE set_cp0r();
   double sigma_start() const;
-  double calculate_d_sigm(double sigm, double A0) const;
+  double calculate_d_sigm(double sigm) const;
   double calculate_A0(double sigm) const;
   double calculate_A1(double sigm) const;
   double calculate_A2(double sigm) const;
