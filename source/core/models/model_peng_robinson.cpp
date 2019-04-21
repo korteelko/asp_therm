@@ -121,6 +121,7 @@ model_input Peng_Robinson::set_pseudo_critic_parameters(
   }
   model_coef_a_ = result_a_coef;
   model_coef_b_ = result_b_coef;
+  return model_input{mi.gm, mi.bp, {}};
 }
 // #endif  // BY_PSEUDO_CRITIC
 

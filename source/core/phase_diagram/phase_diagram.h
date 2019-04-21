@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "gasmix_init.h"
+#include "models_errors.h"
 #include "phase_diagram_models.h"
 #include "target_sys.h"
 
@@ -12,6 +13,7 @@
 
 #include <cassert>
 #include <deque>
+#include <exception>
 #include <functional>
 #include <map>
 #include <memory>
@@ -50,13 +52,6 @@ public:
   std::deque<double> hLeft, hRigth;
 };
 
-class binodalpoints_extend {
-  binodalpoints bp_;
-
-public:
-  binodalpoints_extend(binodalpoints bp);
-};
-
 // Класс вычисляющий параметры(координаты) точек бинодали
 /// class calculate points on diagram liquid-steam-gas
 /// for more information visit:
@@ -67,17 +62,23 @@ class PhaseDiagram: boost::noncopyable {
 class PhaseDiagram {
   PhaseDiagram(const PhaseDiagram &) = delete;
   PhaseDiagram &operator=(const PhaseDiagram &) = delete;
+  PhaseDiagram(PhaseDiagram &&) = delete;
+  PhaseDiagram &operator=(PhaseDiagram &&) = delete;
 #endif  // BOOST_LIB_USED
-  typedef std::function<double(double, double, double, double)> integ_func_t;
-  typedef std::function<void(
-      std::vector<double>&, double, double, double)> init_func_t;
+public:
+  class PhaseDiagramExcept;
+
+private:
   struct uniqueMark {
     uint32_t mn;
     double   acentricfactor;
   };
-
   friend bool operator< (const PhaseDiagram::uniqueMark& lum,
       const PhaseDiagram::uniqueMark& rum);
+
+  typedef std::function<double(double, double, double, double)> integ_func_t;
+  typedef std::function<void(
+      std::vector<double>&, double, double, double)> init_func_t;
 
   // Мьютекс здесь не нужен, ввиду отсутствия каких либо потоков(нитей),
   //   для многопоточности придётся вводить как минимум ООП исключения
@@ -103,7 +104,7 @@ private:
   void calculateBinodal(std::shared_ptr<binodalpoints> &bdp,
       rg_model_t mn, double acentric);
   void checkResult(std::shared_ptr<binodalpoints> &bdp);
-  void eraseElements(std::shared_ptr<binodalpoints> &bdp, const uint32_t i);
+  void eraseElements(std::shared_ptr<binodalpoints> &bdp, const size_t i);
   void searchNegative(std::shared_ptr<binodalpoints> &bdp,
       std::deque<double> &v);
 
@@ -123,5 +124,13 @@ public:
 
 bool operator< (const PhaseDiagram::uniqueMark &lum,
     const PhaseDiagram::uniqueMark &rum);
+
+class PhaseDiagram::PhaseDiagramExcept final: public std::exception {
+  PhaseDiagramExcept(error_t err, const char *msg);
+
+  virtual ~PhaseDiagramExcept() noexcept;
+
+  virtual const char *what() const noexcept;
+};
 
 #endif  // !_CORE__PHASE_DIAGRAM__PHASE_DIAGRAM_H_

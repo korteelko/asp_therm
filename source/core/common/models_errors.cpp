@@ -3,9 +3,9 @@
 #include <string.h>
 
 static ERROR_TYPE err_tmp     = ERR_SUCCESS_T;
-char err_msg[ERR_MSG_MAX_LEN] = {0};
+static char err_msg[ERR_MSG_MAX_LEN] = {0};
 
-const char *custom_msg[] = {
+static const char *custom_msg[] = {
   "there are not any errors",
   "fileio error",
   "calculation error",
@@ -13,13 +13,13 @@ const char *custom_msg[] = {
   "init struct error"
 };
 
-const char *custom_msg_fileio[] {
+static const char *custom_msg_fileio[] {
   "fileio error ",
   "input from file error ",
   "output to file error "
 };
 
-const char *custom_msg_calculate[]= {
+static const char *custom_msg_calculate[]= {
   "calculate error ",
   "parameters error ",
   "phase diagram error ",
@@ -27,14 +27,14 @@ const char *custom_msg_calculate[]= {
   "gas mix error"
 };
 
-const char *custom_msg_string[] = {
+static const char *custom_msg_string[] = {
   "string processing error ",
   "string len error ",
   "string parsing error ",
   "passed null string "
 };
 
-const char *custom_msg_init[] = {
+static const char *custom_msg_init[] = {
   "init error ",
   "zero value init ",
   "nullptr value init "

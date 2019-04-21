@@ -1,6 +1,5 @@
 #include "phase_diagram.h"
 
-#include "models_errors.h"
 #include "models_math.h"
 
 #include <algorithm>
@@ -107,7 +106,7 @@ void PhaseDiagram::calculateBinodal(
       }
       assert((tempvec[4] >= 0.0) && (tempvec[5] >= 0.0) && (tempvec[6] >= 0.0));
       std::sort(tempvec.begin() + 4, tempvec.end());
-      if (tempvec[4] == tempvec[6]) {
+      if (is_equal(tempvec[4], tempvec[6], 0.0001)) {
         bdp->t[t_iter] = -1.0;
         break;
       }
@@ -139,8 +138,8 @@ void PhaseDiagram::calculateBinodal(
 // erase not calculated points
 void PhaseDiagram::checkResult(
     std::shared_ptr<binodalpoints> &bdp) {
-  uint32_t sizebdp = bdp->t.size();
-  for (uint32_t i = 0; i < sizebdp; ++i) {
+  size_t sizebdp = bdp->t.size();
+  for (size_t i = 0; i < sizebdp; ++i) {
     if (bdp->t[i] < -0.5) {
       eraseElements(bdp, i);
       --i;
@@ -154,7 +153,7 @@ void PhaseDiagram::checkResult(
 }
 
 void PhaseDiagram::eraseElements(
-    std::shared_ptr<binodalpoints> &bdp, const uint32_t i) {
+    std::shared_ptr<binodalpoints> &bdp, const size_t i) {
   bdp->t.erase(bdp->t.begin() + i);
   bdp->p.erase(bdp->p.begin() + i);
   bdp-> vLeft.erase(bdp->vLeft.begin() + i);
@@ -229,6 +228,7 @@ binodalpoints PhaseDiagram::GetBinodalPoints(parameters_mix &components,
 // Здесь нужно прописать как считать линию перехода для газовых смесей
   std::unique_ptr<const_parameters> cgp = 
       GasParameters_mix_dyn::GetAverageParams(components);
+  assert(0);
   return PhaseDiagram::GetBinodalPoints(cgp->V_K, cgp->P_K, cgp->T_K, 
       mn, cgp->acentricfactor);
 }
@@ -237,7 +237,7 @@ binodalpoints PhaseDiagram::GetBinodalPoints(parameters_mix &components,
 void PhaseDiagram::EraseBinodalPoints(rg_model_t mn,
     double acentric) {
 // std::lock_guard<std::mutex> lg(mtx);
-  auto iter = calculated_.find({(size_t)mn, acentric});
+  auto iter = calculated_.find({(uint32_t)mn, acentric});
   if (iter != calculated_.end())
     calculated_.erase(iter);
 }
@@ -252,3 +252,16 @@ bool operator< (const PhaseDiagram::uniqueMark &lum,
 
 binodalpoints::binodalpoints()
   : vLeft(t.size(), 0.0), vRigth(t.size(), 0.0), p(t.size(), 0.0) {}
+
+
+
+PhaseDiagram::PhaseDiagramExcept::PhaseDiagramExcept(
+    error_t err, const char *msg) {
+
+}
+
+~PhaseDiagram::PhaseDiagramExcept() noexcept {}
+
+const char *PhaseDiagram::what() const noexcept {
+  return get_error_message();
+}
