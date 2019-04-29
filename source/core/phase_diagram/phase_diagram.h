@@ -66,7 +66,7 @@ class PhaseDiagram {
   PhaseDiagram &operator=(PhaseDiagram &&) = delete;
 #endif  // BOOST_LIB_USED
 public:
-  class PhaseDiagramExcept;
+  class PhaseDiagramException;
 
 private:
   struct uniqueMark {
@@ -125,11 +125,12 @@ public:
 bool operator< (const PhaseDiagram::uniqueMark &lum,
     const PhaseDiagram::uniqueMark &rum);
 
-class PhaseDiagram::PhaseDiagramExcept final: public std::exception {
-  PhaseDiagramExcept(error_t err, const char *msg);
 
-  virtual ~PhaseDiagramExcept() noexcept;
+class PhaseDiagram::PhaseDiagramException final: public std::exception {
+public:
+  PhaseDiagramException(ERROR_TYPE err, const char *msg);
 
+  virtual ~PhaseDiagramException() noexcept;
   virtual const char *what() const noexcept;
 };
 

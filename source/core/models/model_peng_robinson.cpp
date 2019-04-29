@@ -96,7 +96,7 @@ model_input Peng_Robinson::set_pseudo_critic_parameters(
   // available only for GAS_MIX
   //   я ничего уже не понимаю (((((((((((((
   //     сделаю как в статье из университета Келдыша
-  if (!(mi.gm & GAS_MIX_MARK))
+  if (mi.gpi.const_dyn.components->size() == 1)
     return mi;
   const parameters_mix *pm_p = mi.gpi.const_dyn.components;
   double part_x = 0.0,
@@ -121,7 +121,7 @@ model_input Peng_Robinson::set_pseudo_critic_parameters(
   }
   model_coef_a_ = result_a_coef;
   model_coef_b_ = result_b_coef;
-  return model_input{mi.gm, mi.bp, {}};
+  return model_input{mi.gm, mi.bp, mi.gpi};
 }
 // #endif  // BY_PSEUDO_CRITIC
 
@@ -209,7 +209,9 @@ double Peng_Robinson::heat_capac_dif_prs_vol(const parameters new_state,
 }
 
 double Peng_Robinson::get_volume(double p, double t, const const_parameters &cp) {
+#ifdef GAS_MIX_VARIANT
   set_model_coef(cp);
+#endif  // GAS_MIX_VARIANT
   double alf = std::pow(1.0 + model_coef_k_*(1.0 -
       t / cp.T_K), 2.0);
   std::vector<double> coef {
@@ -232,7 +234,9 @@ double Peng_Robinson::get_volume(double p, double t, const const_parameters &cp)
 
 double Peng_Robinson::get_pressure(double v, double t,
     const const_parameters &cp) {
+#ifdef GAS_MIX_VARIANT
   set_model_coef(cp);
+#endif  // GAS_MIX_VARIANT
   const double a = std::pow(1.0 + model_coef_k_ * std::pow(1.0 -
       std::sqrt(t / cp.T_K), 2.0), 2.0);
   const double temp = cp.R*t / (v-model_coef_b_) -
@@ -259,7 +263,9 @@ void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
 // функция вызывается из класса GasParameters_dyn
 void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state, const const_parameters &cp) {
+#ifdef GAS_MIX_VARIANT
   set_model_coef(cp);
+#endif  // GAS_MIX_VARIANT
   double du  = internal_energy_integral(new_state, prev_state.parm, cp.T_K);
   double dcv = heat_capac_vol_integral(new_state, prev_state.parm, cp.T_K);
   double dif_c = heat_capac_dif_prs_vol(new_state,

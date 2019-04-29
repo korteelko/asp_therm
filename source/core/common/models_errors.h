@@ -54,7 +54,7 @@ void reset_error();
 
 // replace custom errormsg with *msg
 void set_error_message(const char *msg);
-void set_error_message(int err_code, const char *msg);
+void set_error_message(ERROR_TYPE err_code, const char *msg);
 // add to custom errormsg *msg
 void add_to_error_msg(const char *msg);
 char *get_error_message();

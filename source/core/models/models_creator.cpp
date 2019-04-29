@@ -27,7 +27,10 @@ static const double standart_temperature = 314.0;
 model_input ModelsCreator::set_input(rg_model_t mn, const binodalpoints &bp,
     double p, double t, const parameters_mix &mix_components) {
   GAS_MARKS gm = 0x00;
+  // assert(0 && "GAS_MIX_MARK убрать для однокомпонентной хрени");
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
+//  if (mix_components.size() > 1)
+//    gm |= GAS_MIX_MARK;
   // cd cd_{&mix_components};
   model_input &&mi = {gm, bp, {p, t, cd{ .components = &mix_components}}};
   return std::move(mi);
@@ -65,6 +68,21 @@ modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
     const std::string &gasmix_xml) {
   return ModelsCreator::GetCalculatingModel(mn, gasmix_xml,
       standart_pressure, standart_temperature);
+}
+
+modelGeneral *ModelsCreator::initModel(rg_model_t mn, binodalpoints &bp,
+    double p, double t, const parameters_mix &components) {
+  switch (mn) {
+    case rg_model_t::IDEAL_GAS:
+      return Ideal_Gas::Init(set_input(mn, bp, p, t, components));
+    case rg_model_t::REDLICH_KWONG2:
+      return Redlich_Kwong2::Init(set_input(mn, bp, p, t, components));
+    case rg_model_t::PENG_ROBINSON:
+      return Peng_Robinson::Init(set_input(mn, bp, p, t, components));
+    default:
+      set_error_message(ERR_INIT_T, "undefined calculation model");
+  }
+  return nullptr;
 }
 /*
 modelGeneral *Ideal_gas_equation::GetCalculatingModel(

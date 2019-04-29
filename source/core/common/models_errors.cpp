@@ -98,7 +98,7 @@ void set_error_message(const char *msg) {
   }
 }
 
-void set_error_message(int err_code, const char *msg) {
+void set_error_message(ERROR_TYPE err_code, const char *msg) {
   set_error_code(err_code);
   set_error_message(msg);
 }

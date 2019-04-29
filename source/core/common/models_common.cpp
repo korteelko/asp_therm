@@ -6,7 +6,7 @@
 std::string F_was_pressed() {
   return "Pay respect to:\n"
       "\t--Stack Overflow community\n"
-      "\t--Google"
+      "\t--Google\n"
       "\t--The Linux Foundation\n";
 }
 

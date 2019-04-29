@@ -31,19 +31,20 @@ class ModelsCreator {
     // for binodal available only RK2 and PR
     rg_model_t binodal_mn = (mn == rg_model_t::PENG_ROBINSON) ?
         rg_model_t::PENG_ROBINSON : rg_model_t::REDLICH_KWONG2;
-    binodalpoints bp = pd.GetBinodalPoints(*prs_mix, binodal_mn);
-    switch (mn) {
-      case rg_model_t::IDEAL_GAS:
-        return Ideal_Gas::Init(set_input(mn, bp, p, t, *prs_mix));
-      case rg_model_t::REDLICH_KWONG2:
-        return Redlich_Kwong2::Init(set_input(mn, bp, p, t, *prs_mix));
-      case rg_model_t::PENG_ROBINSON:
-        return Peng_Robinson::Init(set_input(mn, bp, p, t, *prs_mix));
-      default:
-        set_error_message(ERR_INIT_T, "undefined calculation model");
+    try {
+      binodalpoints bp = pd.GetBinodalPoints(*prs_mix, binodal_mn);
+      return initModel(mn, bp, p, t, *prs_mix);
+    } catch (PhaseDiagram::PhaseDiagramException &) {
+      return nullptr;
+    } catch (...) {
+      assert(0 && "check error message and and err_code");
+      return nullptr;
     }
     return nullptr;
   }
+
+  static modelGeneral *initModel(rg_model_t mn, binodalpoints &bp,
+      double p, double t, const parameters_mix &components);
 
 public:
   static modelGeneral *GetCalculatingModel(rg_model_t mn,

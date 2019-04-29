@@ -228,7 +228,15 @@ binodalpoints PhaseDiagram::GetBinodalPoints(parameters_mix &components,
 // Здесь нужно прописать как считать линию перехода для газовых смесей
   std::unique_ptr<const_parameters> cgp = 
       GasParameters_mix_dyn::GetAverageParams(components);
-  assert(0);
+  if (cgp == nullptr)
+    throw PhaseDiagramException(ERR_GAS_MIX | ERR_INIT_T,
+#ifdef _DEBUG
+      "PhaseDiagram::GetBinodalPoints cannot get average"
+      " parameters of gasmix!"
+#else
+      "Cannot get average parameters of gasmix"
+#endif  // _DEBUG
+      );
   return PhaseDiagram::GetBinodalPoints(cgp->V_K, cgp->P_K, cgp->T_K, 
       mn, cgp->acentricfactor);
 }
@@ -255,13 +263,17 @@ binodalpoints::binodalpoints()
 
 
 
-PhaseDiagram::PhaseDiagramExcept::PhaseDiagramExcept(
-    error_t err, const char *msg) {
-
+PhaseDiagram::PhaseDiagramException::PhaseDiagramException(
+    ERROR_TYPE err, const char *msg) {
+  if (msg == nullptr) {
+    set_error_code(err);
+    return;
+  }
+  set_error_message(err, msg);
 }
 
-~PhaseDiagram::PhaseDiagramExcept() noexcept {}
+PhaseDiagram::PhaseDiagramException::~PhaseDiagramException() noexcept {}
 
-const char *PhaseDiagram::what() const noexcept {
+const char *PhaseDiagram::PhaseDiagramException::what() const noexcept {
   return get_error_message();
 }

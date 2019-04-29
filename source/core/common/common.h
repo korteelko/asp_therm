@@ -5,7 +5,7 @@
 
 // separate calculation of parameters of mix 
 //   просто интересно
-#define GAS_MIX_VARIANT
+// #define GAS_MIX_VARIANT  // -- total incorrect
 #define BY_PSEUDO_CRITIC
 
 #define MODEL_IDEAL_GAS       0x01

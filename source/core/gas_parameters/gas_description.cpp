@@ -7,7 +7,8 @@ static gas_t valid_gases[] = {
   GAS_TYPE_UNDEFINED,
   GAS_TYPE_METHANE,
   GAS_TYPE_ETHANE,
-  GAS_TYPE_PROPANE 
+  GAS_TYPE_PROPANE,
+  GAS_TYPE_MIX
 }; 
 
 bool is_valid_gas(gas_t gas_name) {

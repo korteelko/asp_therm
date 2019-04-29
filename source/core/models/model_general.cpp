@@ -51,7 +51,7 @@ state_phase modelGeneral::set_state_phase(
         state_phase::LIQ_STEAM : state_phase::GAS);
   }
   iter = bp_.p.size() - iter - 1;
-  assert(iter < 0);
+  assert(iter >= 0);
   const double p_path = (p-bp_.p[iter+1]) / (bp_.p[iter]-bp_.p[iter+1]); // %
   // left branch of binodal
   if (v < parameters_->cgetV_K()) {                 
@@ -114,6 +114,11 @@ bool modelGeneral::set_gasparameters(const gas_params_input &gpi,
 // static 
 bool modelGeneral::check_input(const model_input &mi) {
   bool is_valid = true;
+  if ((mi.gm & GAS_MIX_MARK) && (mi.gm & GAS_NG_GOST_MARK)) {
+    set_error_message(ERR_INIT_T,
+        "options GAS_MIX_MARK and GAS_NG_GOST_MARK not compatible");
+    return false;
+  }
   if (mi.gm & GAS_MIX_MARK) {
     is_valid = !mi.gpi.const_dyn.components->empty();
     if (is_valid) {

@@ -186,7 +186,7 @@ public:
     return gas_root_node_->GetName();
   }
   
-  error_t GetValueByPath(const std::vector<std::string> &xml_path,
+  ERROR_TYPE GetValueByPath(const std::vector<std::string> &xml_path,
       std::string *outstr) const {
     const gasxml_node<xml_node_t> *tmp_gas_node = gas_root_node_.get();
     for (const auto &x : xml_path) {

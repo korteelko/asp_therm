@@ -19,9 +19,10 @@ struct model_conf {
   const char *const ml_name;
 };
 
+/*
 model_conf set_model(rg_model_t ml_type, MODEL_MARKS ml_name);
 model_conf set_model(const std::string &filename);
 bool is_pseudocritic_set(const model_conf &ml_conf);
 bool is_mark_set(const model_conf &ml_conf, MODEL_MARKS mark);
-
+*/
 #endif  // !_CORE__MODELS__MODELS_CONFIGURATIONS_H_
