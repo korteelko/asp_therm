@@ -39,7 +39,7 @@ protected:
 public:
   static Redlich_Kwong2 *Init(const model_input &mi);
 
-  void DynamicflowAccept(class DerivateFunctor &df);
+  void DynamicflowAccept(class DerivateFunctor &df) override;
   bool IsValid() const override;
   double InitVolume(double p, double t,
       const const_parameters &cp) override;

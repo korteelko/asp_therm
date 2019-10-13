@@ -79,6 +79,8 @@ modelGeneral *ModelsCreator::initModel(rg_model_t mn, binodalpoints &bp,
       return Redlich_Kwong2::Init(set_input(mn, bp, p, t, components));
     case rg_model_t::PENG_ROBINSON:
       return Peng_Robinson::Init(set_input(mn, bp, p, t, components));
+    case rg_model_t::NG_GOST:
+      return nullptr;
     default:
       set_error_message(ERR_INIT_T, "undefined calculation model");
   }

@@ -51,7 +51,8 @@ const_parameters *const_parameters::Init(gas_t gas_name,
     double vk, double pk, double tk, double mol, double af) {
   bool correct_input = is_above0(vk, pk, tk, mol, af);
   if (!correct_input) {
-    set_error_message(ERR_INIT_T, "const_parameters values are lower then 0.0");
+    set_error_message(ERR_INIT_T,
+        "const_parameters values are lower then 0.0");
     return nullptr;
   }
   correct_input = is_valid_gas(gas_name);
@@ -69,7 +70,6 @@ const_parameters::const_parameters(const const_parameters &cgp)
     molecularmass(cgp.molecularmass), R(cgp.R),
     acentricfactor(cgp.acentricfactor) {}
 
-// check data functions
 bool is_valid_cgp(const const_parameters &cgp) {
   if (!is_above0(cgp.acentricfactor, cgp.molecularmass,
       cgp.P_K, cgp.R, cgp.T_K, cgp.V_K)) {
@@ -88,5 +88,4 @@ bool is_valid_dgp(const dyn_parameters &dgp) {
   return true;
 }
 
-// gas_input union
 cd::~cd() {}

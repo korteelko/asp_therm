@@ -30,13 +30,22 @@ NG_Gost *NG_Gost::Init(const model_input &mi) {
   return new NG_Gost(mi);
 }
 
-void NG_Gost::DynamicflowAccept(class DerivateFunctor &df) {}
+void NG_Gost::DynamicflowAccept(class DerivateFunctor &df) {
+  return df.getFunctor(*this);
+}
 
 void NG_Gost::update_dyn_params(dyn_parameters &prev_state,
-    const parameters new_state) {}
+    const parameters new_state) {
+  (void)prev_state;
+  (void)new_state;
+}
 
 void NG_Gost::update_dyn_params(dyn_parameters &prev_state,
-    const parameters new_state, const const_parameters &cp) {}
+    const parameters new_state, const const_parameters &cp) {
+  (void)prev_state;
+  (void)new_state;
+  (void)cp;
+}
 
 bool NG_Gost::IsValid() const {
   assert(0);

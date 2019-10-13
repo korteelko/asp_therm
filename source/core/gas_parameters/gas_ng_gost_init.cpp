@@ -18,6 +18,7 @@ struct max_valid_limits_t {
   double min,
          max;
 };
+/* GOST 30319.3-2015, table2, page 11 */
 std::map<gas_t, max_valid_limits_t> mix_valid_molar =
     std::map<gas_t, max_valid_limits_t> {
   {GAS_TYPE_METHANE, {0.7, 0.99999}},
@@ -34,7 +35,8 @@ std::map<gas_t, max_valid_limits_t> mix_valid_molar =
   {GAS_TYPE_UNDEFINED, {0.0, 0.0015}}
 };
 
-bool is_valid_limits(std::map<const gas_t, max_valid_limits_t>::const_iterator limit_it,
+bool is_valid_limits(
+    std::map<const gas_t, max_valid_limits_t>::const_iterator limit_it,
     double part) {
   if (limit_it->second.min < part && limit_it->second.max > part)
     return true;
