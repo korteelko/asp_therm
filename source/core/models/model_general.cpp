@@ -13,7 +13,7 @@
 #endif  // _DEBUG
 
 
-modelGeneral::modelGeneral(GAS_MARKS gm, binodalpoints *bp)
+modelGeneral::modelGeneral(gas_marks_t gm, binodalpoints *bp)
   : parameters_(nullptr), gm_(gm), bp_(bp) {}
 
 modelGeneral::~modelGeneral() {}

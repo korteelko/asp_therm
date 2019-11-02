@@ -23,7 +23,7 @@
 #define GAS_NG_GOST_MARK      0x00000200
 #define MARK_MASK_SHIFT       8
 
-typedef uint32_t GAS_MARKS;
+typedef uint32_t gas_marks_t;
 typedef uint32_t MODEL_MARKS;
 
 enum class rg_model_t : uint32_t {
