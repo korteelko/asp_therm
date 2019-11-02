@@ -4,6 +4,10 @@
 
 #include "gas_by_file.h"
 #include "gasmix_by_file.h"
+#include "model_ideal_gas.h"
+#include "model_ng_gost.h"
+#include "model_peng_robinson.h"
+#include "model_redlich_kwong.h"
 
 // #include "dynamic_modeling.h"
 // #include "models_output.h"
@@ -20,28 +24,28 @@
 
 #include <assert.h>
 
-// move to header with const declar
-static const double standart_pressure    = 100000.0;
-static const double standart_temperature = 314.0;
+// statndart conds
+static parameters standard_conds = {0, 100000.0, 314.0};
 
-model_input ModelsCreator::set_input(rg_model_t mn, const binodalpoints &bp,
+model_input ModelsCreator::set_input(rg_model_t mn, binodalpoints *bp,
     double p, double t, const parameters_mix &mix_components) {
-  GAS_MARKS gm = 0x00;
+  gas_marks_t gm = 0x00;
   // assert(0 && "GAS_MIX_MARK убрать для однокомпонентной хрени");
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
 //  if (mix_components.size() > 1)
 //    gm |= GAS_MIX_MARK;
   // cd cd_{&mix_components};
-  model_input &&mi = {gm, bp, {p, t, cd{ .components = &mix_components}}};
+  model_input &&mi = {gm, bp, {p, t,
+      const_dyn_union{ .components = &mix_components}}};
   return std::move(mi);
 }
 
-model_input ModelsCreator::set_input(rg_model_t mn, const binodalpoints &bp,
+model_input ModelsCreator::set_input(rg_model_t mn, binodalpoints *bp,
     double p, double t, const ng_gost_mix &mix_components) {
-  GAS_MARKS gm = 0x00;
+  gas_marks_t gm = 0x00;
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_NG_GOST_MARK;
-  model_input &&mi = {gm, bp, {p, t, NULL}};
-  mi.gpi.const_dyn.ng_gost_components = &mix_components;
+  model_input &&mi = {gm, bp, {p, t,
+      const_dyn_union{ .ng_gost_components = &mix_components}}};
   return std::move(mi);
 }
 
@@ -54,7 +58,7 @@ modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
 modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
     std::vector<gasmix_file> components) {
   return ModelsCreator::GetCalculatingModel(mn, components,
-      standart_pressure, standart_temperature);
+      standard_conds.pressure, standard_conds.temperature);
 }
 
 modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
@@ -67,23 +71,25 @@ modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
 modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
     const std::string &gasmix_xml) {
   return ModelsCreator::GetCalculatingModel(mn, gasmix_xml,
-      standart_pressure, standart_temperature);
+      standard_conds.pressure, standard_conds.temperature);
 }
 
-modelGeneral *ModelsCreator::initModel(rg_model_t mn, binodalpoints &bp,
-    double p, double t, const parameters_mix &components) {
+modelGeneral *ModelsCreator::initModel(rg_model_t mn, binodalpoints *bp,
+    // double p, double t, const parameters_mix &components) {
+    double p, double t, const_dyn_union cdu) {
   switch (mn) {
     case rg_model_t::IDEAL_GAS:
-      return Ideal_Gas::Init(set_input(mn, bp, p, t, components));
+      return Ideal_Gas::Init(set_input(mn, bp, p, t, *cdu.components));
     case rg_model_t::REDLICH_KWONG2:
-      return Redlich_Kwong2::Init(set_input(mn, bp, p, t, components));
+      return Redlich_Kwong2::Init(set_input(mn, bp, p, t, *cdu.components));
     case rg_model_t::PENG_ROBINSON:
-      return Peng_Robinson::Init(set_input(mn, bp, p, t, components));
+      return Peng_Robinson::Init(set_input(mn, bp, p, t, *cdu.components));
     case rg_model_t::NG_GOST:
-      return nullptr;
-    default:
-      set_error_message(ERR_INIT_T, "undefined calculation model");
+      return NG_Gost::Init(set_input(mn, bp, p, t, *cdu.ng_gost_components));
   }
+  if (!ModelsCreator::error_)
+     ModelsCreator::error_ = set_error_message(ERR_INIT_T,
+     "undefined calculation model in modelCreator");
   return nullptr;
 }
 /*

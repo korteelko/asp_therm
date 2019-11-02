@@ -15,10 +15,10 @@
   #include <unistd.h>
 //#endif  // _NIX
 
-const std::string xml_path = "/../../asp_therm/data/gases/";
-const std::string xml_methane = "methane.xml";
-const std::string xml_gasmix = "gasmix_inp_example.xml";
-char cwd[512] = {0};
+static const std::string xml_path = "/../../asp_therm/data/gases/";
+static const std::string xml_methane = "methane.xml";
+static const std::string xml_gasmix = "gasmix_inp_example.xml";
+static char cwd[512] = {0};
 
 int test_component_init() {
   std::string methane_path = xml_path + xml_methane;
@@ -61,7 +61,7 @@ int test_components_init() {
 }
 
 int run_tests_xml() {
-  if (!getcwd(cwd, (sizeof(cwd)))) {
+  if (!getcwd(cwd, sizeof(cwd))) {
     std::cerr << "cann't get current dir";
     return 2;
   }

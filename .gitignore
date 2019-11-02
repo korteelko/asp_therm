@@ -5,7 +5,8 @@ build/
 .vscode/
 .vs/
 
-**.swp
+/**/*.swp
+/**/*.autosave
 
 CMakeLists.txt.user*
 CMakeSettings.json

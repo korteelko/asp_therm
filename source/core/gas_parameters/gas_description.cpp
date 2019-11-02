@@ -88,4 +88,4 @@ bool is_valid_dgp(const dyn_parameters &dgp) {
   return true;
 }
 
-cd::~cd() {}
+const_dyn_union::~const_dyn_union() {}

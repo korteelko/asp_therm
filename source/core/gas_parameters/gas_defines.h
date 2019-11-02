@@ -44,7 +44,9 @@ enum class state_phase : uint32_t {
   SCF = 0,
   LIQUID,
   LIQ_STEAM,
-  GAS
+  GAS,
+  /* if binodal parameters isn't set */
+  NOT_SET = 0xff
 };
 static const std::array<std::string, 4> stateToString {
   "SCF", "LIQUID", "LIQ_STEAM", "GAS"

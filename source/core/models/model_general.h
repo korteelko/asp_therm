@@ -34,8 +34,8 @@ public:
 };
 
 struct model_input {
-  GAS_MARKS gm;
-  const binodalpoints &bp;
+  gas_marks_t gm;
+  binodalpoints *bp;
   gas_params_input gpi;
 };
 
@@ -43,13 +43,14 @@ class modelGeneral {
   modelGeneral(const modelGeneral &) = delete;
   modelGeneral &operator=(const modelGeneral &) = delete;
 protected:
-  std::unique_ptr<GasParameters> parameters_;
+  error_t error_;
   rg_model_t model_conf_;
-  GAS_MARKS gm_;
-  binodalpoints bp_;
+  gas_marks_t gm_;
+  std::unique_ptr<GasParameters> parameters_;
+  std::unique_ptr<binodalpoints> bp_;
 
 protected:
-  modelGeneral(GAS_MARKS gm, binodalpoints bp);
+  modelGeneral(gas_marks_t gm, binodalpoints *bp);
 
   double vapor_part(int32_t index);
   state_phase set_state_phase(double v, double p, double t);

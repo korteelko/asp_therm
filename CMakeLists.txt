@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.5)
-add_compile_options(-std=c++11 -Wall)
+cmake_minimum_required(VERSION 3.7)
+add_compile_options(-std=c++17 -Wall)
 
 set(PROJECT_NAME asp_therm)
 project(${PROJECT_NAME})

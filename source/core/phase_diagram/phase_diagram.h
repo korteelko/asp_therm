@@ -83,15 +83,21 @@ private:
   // Мьютекс здесь не нужен, ввиду отсутствия каких либо потоков(нитей),
   //   для многопоточности придётся вводить как минимум ООП исключения
   // std::mutex mtx;
+  error_t error_;
+
+  /* calculated points storage */
   std::map<uniqueMark, std::shared_ptr<binodalpoints>> calculated_;
-  std::vector<integ_func_t> line_integrate_f_ = 
+
+  /* storage of function pointers() */
+  std::vector<rg_model_t> functions_indexes_ =
+      std::vector<rg_model_t> {
+          rg_model_t::REDLICH_KWONG2, rg_model_t::PENG_ROBINSON};
+  std::vector<integ_func_t> line_integrate_f_ =
       std::vector<integ_func_t> {
           lineIntegrateRK2(), lineIntegratePR()};
   std::vector<init_func_t> initialize_f_ = 
-      std::vector<init_func_t> {initializeRK2(), initializePR()};
-  std::vector<rg_model_t> functions_indexes_ =
-     std::vector<rg_model_t> {rg_model_t::REDLICH_KWONG2,
-     rg_model_t::PENG_ROBINSON};
+      std::vector<init_func_t> {
+          initializeRK2(), initializePR()};
   // DEVELOP
   //   ASSERT
   // static_assert(line_integrate_f_.size() == initialize_f_,
@@ -113,10 +119,10 @@ public:
   static PhaseDiagram &GetCalculated();
   // Рассчитать или получить копию, если уже было рассчитано,
   //   для этих параметров, точек на бинодали.
-  binodalpoints GetBinodalPoints(double VK, double PK, double TK,
+  binodalpoints *GetBinodalPoints(double VK, double PK, double TK,
       rg_model_t mn, double acentric);
   // for gas_mix
-  binodalpoints GetBinodalPoints(parameters_mix &components,
+  binodalpoints *GetBinodalPoints(parameters_mix &components,
       rg_model_t mn);
   // just for lulz
   void EraseBinodalPoints(rg_model_t mn, double acentric);
@@ -128,7 +134,7 @@ bool operator< (const PhaseDiagram::uniqueMark &lum,
 
 class PhaseDiagram::PhaseDiagramException final: public std::exception {
 public:
-  PhaseDiagramException(ERROR_TYPE err, const char *msg);
+  PhaseDiagramException(merror_t err, const char *msg);
 
   virtual ~PhaseDiagramException() noexcept;
   virtual const char *what() const noexcept;

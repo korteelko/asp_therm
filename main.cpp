@@ -2,9 +2,10 @@
 
 #include "gas_by_file.h"
 #include "gasmix_by_file.h"
-#include "xml_reader.h"
 #include "model_redlich_kwong.h"
 #include "model_peng_robinson.h"
+#include "models_creator.h"
+#include "xml_reader.h"
 
 #include <vector>
 
@@ -35,23 +36,7 @@ const std::string xml_methane = "methane.xml";
 const std::string xml_ethane  = "ethane.xml";
 const std::string xml_propane = "propane.xml";
 
-model_input set_input(rg_model_t mn, const binodalpoints &bp,
-    double p, double t, const parameters_mix &components) {
-  GAS_MARKS gm = 0x00;
-  gm = (uint32_t)mn | ((uint32_t)bp.mn << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
-  return {gm, bp, {p, t, &components}};
-}
-
-model_input set_input(rg_model_t mn, const binodalpoints &bp,
-    double p, double t, const const_parameters &cgp,
-    const dyn_parameters &dgp) {
-  GAS_MARKS gm = 0x00;
-  gm = (uint32_t)mn | ((uint32_t)bp.mn << BINODAL_MODEL_SHIFT);
-  // cd_pair cdpair{};
-  // cd cd_{.cdp = {&cgp, &dgp}};
-  model_input mi{gm, bp, {p, t, cd{.cdp = {&cgp, &dgp}}}};
-  return mi;
-}
+const std::string xml_gasmix = "gasmix_inp_example.xml";
 
 int test_models() {
   char cwd[512] = {0};
@@ -60,6 +45,7 @@ int test_models() {
     return 1;
   }
   std::string filename = std::string(cwd) + xml_path + xml_methane;
+  /*
   std::unique_ptr<ComponentByFile> met_xml(ComponentByFile::Init(filename));
   if (met_xml == nullptr) {
     std::cerr << "Object of XmlFile wasn't created\n";
@@ -75,16 +61,19 @@ int test_models() {
     std::cerr << "dyn_parameters by xml wasn't created\n";
     return 2;
   }
-  PhaseDiagram &pd = PhaseDiagram::GetCalculated();
+  */
   // ссылочку а не объект
-  binodalpoints bp = pd.GetBinodalPoints(cp->V_K, cp->P_K, cp-> T_K,
-      rg_model_t::REDLICH_KWONG2, cp->acentricfactor);
+  // PhaseDiagram &pd = PhaseDiagram::GetCalculated();
+  // binodalpoints *bp = pd.GetBinodalPoints(cp->V_K, cp->P_K, cp-> T_K,
+  //     rg_model_t::REDLICH_KWONG2, cp->acentricfactor);
 #if defined(RK2_TEST)
   Redlich_Kwong2 *calc_mod = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
       {1.42, 100000, 275}, *cp, *dp, bp);
 #elif defined(PR_TEST)
-  Peng_Robinson *calc_mod = Peng_Robinson::Init(set_input(
-      rg_model_t::PENG_ROBINSON, bp, 100000, 275, *cp, *dp));
+  std::unique_ptr<modelGeneral> calc_mod(ModelsCreator::GetCalculatingModel(
+      rg_model_t::PENG_ROBINSON, filename));
+  // = Peng_Robinson::Init(set_input(
+  //    rg_model_t::PENG_ROBINSON, bp, 100000, 275, *cp, *dp));
 #endif  // _TEST
   std::cerr << calc_mod->ParametersString() << std::flush;
   std::cerr << "Set volume(10e6, 314)\n" << std::flush;
@@ -118,6 +107,7 @@ int test_models_mix() {
     return 1;
   }
   */
+  /*
   GasMixByFiles *gm = GasMixByFiles::Init(xml_files);
   if (!gm) {
     std::cerr << "GasMix init error" << std::flush;
@@ -130,12 +120,15 @@ int test_models_mix() {
   }
   PhaseDiagram &pd = PhaseDiagram::GetCalculated();
   binodalpoints bp = pd.GetBinodalPoints(*prs_mix, rg_model_t::PENG_ROBINSON);
+  */
 #if defined(RK2_TEST)
   Redlich_Kwong2 *calc_mod = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
       {1.42, 100000, 275}, *prs_mix, bp);
 #elif defined(PR_TEST)
-  Peng_Robinson *calc_mod = Peng_Robinson::Init(set_input(rg_model_t::PENG_ROBINSON, bp,
-      100000, 275, *prs_mix));
+  std::unique_ptr<modelGeneral> calc_mod(ModelsCreator::GetCalculatingModel(
+      rg_model_t::PENG_ROBINSON, xml_files));
+  // Peng_Robinson *calc_mod = Peng_Robinson::Init(set_input(rg_model_t::PENG_ROBINSON, bp,
+  //     100000, 275, *prs_mix));
 #endif  // _TEST
   std::cerr << calc_mod->ConstParametersString() << std::flush;
   std::cerr << modelGeneral::sParametersStringHead() << std::flush;

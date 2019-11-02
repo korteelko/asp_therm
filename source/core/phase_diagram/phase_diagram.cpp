@@ -177,22 +177,23 @@ void PhaseDiagram::searchNegative(
   }
 }
 
-PhaseDiagram::PhaseDiagram() {}
+PhaseDiagram::PhaseDiagram()
+  : error_(ERR_SUCCESS_T) {}
 
 PhaseDiagram &PhaseDiagram::GetCalculated() {
   static PhaseDiagram phd;
   return phd;
 }
 
-binodalpoints PhaseDiagram::GetBinodalPoints(double VK, double PK,
+binodalpoints *PhaseDiagram::GetBinodalPoints(double VK, double PK,
     double TK, rg_model_t mn, double acentric) {
   reset_error();
   bool isValid = is_above0(VK, PK, TK, acentric);
   if (!isValid) {
-    set_error_code(ERR_CALCULATE_T);
-    set_error_message("PhaseDiagram::getBinodalPoints get incorrect data:\n"
+    error_ = set_error_message(ERR_CALCULATE_T,
+        "PhaseDiagram::getBinodalPoints get incorrect data:\n"
         " V_K, P_K, T_K or acentric_factor <= 0.0 or is NaN");
-    return binodalpoints();
+    return nullptr;
   }
   uniqueMark um {(uint32_t)mn, acentric};
   // если для таких параметров(модель и фактор ацентричности)
@@ -208,21 +209,22 @@ binodalpoints PhaseDiagram::GetBinodalPoints(double VK, double PK,
     bdp->vRigth.push_front(1.0);
     calculated_.emplace(um, bdp);
   }
-  // найти в среди сохраненных бинодалей нужную,
+  // найти среди сохраненных бинодалей нужную,
   //   восстановить размерность и вернуть
-  binodalpoints bp((*calculated_.find(um)).second.operator *());
+  binodalpoints *bp = new binodalpoints(
+      (*calculated_.find(um)).second.operator *());
   auto f = [] (std::deque<double> &vec, double K) {
       std::transform(vec.begin(), vec.end(), vec.begin(),
           std::bind1st(std::multiplies<double>(), K));};
-  f(bp.vLeft, VK);
-  f(bp.vRigth, VK);
-  f(bp.p, PK);
-  f(bp.t, TK);
-  bp.mn = mn;
+  f(bp->vLeft, VK);
+  f(bp->vRigth, VK);
+  f(bp->p, PK);
+  f(bp->t, TK);
+  bp->mn = mn;
   return bp;
 }
 
-binodalpoints PhaseDiagram::GetBinodalPoints(parameters_mix &components,
+binodalpoints *PhaseDiagram::GetBinodalPoints(parameters_mix &components,
     rg_model_t mn) {
 // 25.01.2019
 // Здесь нужно прописать как считать линию перехода для газовых смесей
@@ -264,7 +266,7 @@ binodalpoints::binodalpoints()
 
 
 PhaseDiagram::PhaseDiagramException::PhaseDiagramException(
-    ERROR_TYPE err, const char *msg) {
+    merror_t err, const char *msg) {
   if (msg == nullptr) {
     set_error_code(err);
     return;

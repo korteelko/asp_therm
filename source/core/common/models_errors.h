@@ -3,7 +3,8 @@
 
 #include <stdint.h>
 
-#define ERROR_TYPE         uint32_t
+typedef uint32_t merror_t;
+
 #define ERR_MSG_MAX_LEN    200
 
 // error type
@@ -46,15 +47,17 @@
 
 
 // ERR_SUCCESS as default
-void set_error_code(ERROR_TYPE err);
-ERROR_TYPE get_error_code();
+void set_error_code(merror_t err);
+merror_t get_error_code();
 // set err_code to SUCCESS and
 //   forget setted error message
 void reset_error();
 
 // replace custom errormsg with *msg
-void set_error_message(const char *msg);
-void set_error_message(ERROR_TYPE err_code, const char *msg);
+[[nodiscard]]
+merror_t set_error_message(const char *msg);
+[[nodiscard]]
+merror_t set_error_message(merror_t err_code, const char *msg);
 // add to custom errormsg *msg
 void add_to_error_msg(const char *msg);
 char *get_error_message();

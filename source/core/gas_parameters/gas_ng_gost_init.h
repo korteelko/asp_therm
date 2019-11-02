@@ -23,7 +23,7 @@ struct ng_gost_params {
 
 // const_dyn_parameters init_natural_gas(const gost_ng_components &comps);
 class GasParameters_NG_Gost_dyn : public GasParameters {
-  ERROR_TYPE error_status_;
+  merror_t error_status_;
   ng_gost_mix components_;
   parameters pseudocrit_vpte_;
   ng_gost_params ng_gost_params_;
@@ -49,16 +49,16 @@ private:
   void set_G();
   void set_Bn();
   void set_Cn();
-  ERROR_TYPE set_molar_mass();
+  merror_t set_molar_mass();
   void set_p0m();
-  ERROR_TYPE init_kx();
-  ERROR_TYPE init_pseudocrit_vpte();
+  merror_t init_kx();
+  merror_t init_pseudocrit_vpte();
   // init methods end
   double get_Dn(size_t n) const;
   double get_Un(size_t n) const;
   // calculating sigma(it is volume)
-  ERROR_TYPE set_volume();
-  ERROR_TYPE set_cp0r();
+  merror_t set_volume();
+  merror_t set_cp0r();
   double sigma_start() const;
   double calculate_d_sigm(double sigm) const;
   double calculate_A0(double sigm) const;

@@ -247,7 +247,7 @@ void GasParameters_NG_Gost_dyn::set_Cn() {
   }
 }
 
-ERROR_TYPE GasParameters_NG_Gost_dyn::set_molar_mass() {
+merror_t GasParameters_NG_Gost_dyn::set_molar_mass() {
   ng_molar_mass_ = 0.0;
   const component_characteristics *xi_ch = nullptr;
   const A9_molar_mass *m_mas = nullptr;
@@ -271,7 +271,7 @@ void GasParameters_NG_Gost_dyn::set_p0m() {
 }
 
 // calculating
-ERROR_TYPE GasParameters_NG_Gost_dyn::init_kx() {
+merror_t GasParameters_NG_Gost_dyn::init_kx() {
   coef_kx_ = 0.0;
   const component_characteristics *xi_ch = nullptr;
   for (size_t i = 0; i < components_.size(); ++i) {
@@ -302,7 +302,7 @@ ERROR_TYPE GasParameters_NG_Gost_dyn::init_kx() {
   return ERR_SUCCESS_T;
 }
 
-ERROR_TYPE GasParameters_NG_Gost_dyn::init_pseudocrit_vpte() {
+merror_t GasParameters_NG_Gost_dyn::init_pseudocrit_vpte() {
   double vol = 0.0;
   double temp = 0.0;
   double press_var = 0.0;
@@ -351,7 +351,7 @@ double GasParameters_NG_Gost_dyn::get_Un(size_t n) const {
   return Cn_[n];
 }
 
-ERROR_TYPE GasParameters_NG_Gost_dyn::set_volume() {
+merror_t GasParameters_NG_Gost_dyn::set_volume() {
   double sigm = sigma_start(),
          tau = vpte_.temperature / Lt;
   double A0 = calculate_A0(sigm);
@@ -383,7 +383,7 @@ ERROR_TYPE GasParameters_NG_Gost_dyn::set_volume() {
   return ERR_SUCCESS_T;
 }
 
-ERROR_TYPE GasParameters_NG_Gost_dyn::set_cp0r() {
+merror_t GasParameters_NG_Gost_dyn::set_cp0r() {
   double cp0r = 0.0;
   double tet = 1.0 / vpte_.temperature;
   auto pow_sinh = [tet] (double C, double D) {

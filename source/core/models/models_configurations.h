@@ -11,6 +11,8 @@
 
 #define MODEL_MARK_PENG_ROBINSON__ORIGIN     0x00
 
+// #error "" FINISH IT ""
+
 struct model_conf {
   // define of model
   rg_model_t ml_type;

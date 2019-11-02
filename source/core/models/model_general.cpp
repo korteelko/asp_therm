@@ -12,14 +12,8 @@
 #  include <iostream>
 #endif  // _DEBUG
 
-//==================================================================
-// modelGeneral methods
-//==================================================================
-/* modelGeneral::modelGeneral() 
-  : parameters_(nullptr), phasediag_model_(modelName::REDLICH_KWONG2),
-    bp_(binodalpoints()) {} */
 
-modelGeneral::modelGeneral(GAS_MARKS gm, binodalpoints bp)
+modelGeneral::modelGeneral(GAS_MARKS gm, binodalpoints *bp)
   : parameters_(nullptr), gm_(gm), bp_(bp) {}
 
 modelGeneral::~modelGeneral() {}
@@ -30,17 +24,19 @@ void modelGeneral::set_parameters(double v, double p, double t) {
 
 // расчиать паросодержание
 double modelGeneral::vapor_part(int32_t index) {
-  assert(index > bp_.vLeft.size());
+  assert(index > bp_->vLeft.size());
   return 0.0;
 }
 
 int32_t modelGeneral::set_state_phasesub(double p) {
-  return (bp_.p.end() - std::find_if(bp_.p.begin() + 1, bp_.p.end(),
+  return (bp_->p.end() - std::find_if(bp_->p.begin() + 1, bp_->p.end(),
       std::bind2nd(std::less_equal<double>(), p)));
 }
 
 state_phase modelGeneral::set_state_phase(
     double v, double p, double t) {
+  if (bp_ == nullptr)
+    return state_phase::NOT_SET;
   if (t >= parameters_->cgetT_K())
     return (p >= parameters_->cgetP_K()) ? state_phase::SCF : state_phase::GAS;
   // if p on the left of binodal graph  -  liquid
@@ -50,39 +46,42 @@ state_phase modelGeneral::set_state_phase(
     return ((v <= parameters_->cgetV_K()) ?
         state_phase::LIQ_STEAM : state_phase::GAS);
   }
-  iter = bp_.p.size() - iter - 1;
+  iter = bp_->p.size() - iter - 1;
   assert(iter >= 0);
-  const double p_path = (p-bp_.p[iter+1]) / (bp_.p[iter]-bp_.p[iter+1]); // %
+  /* calculate p)path in percents */
+  const double p_path = (p - bp_->p[iter+1]) / (bp_->p[iter] - bp_->p[iter+1]);
   // left branch of binodal
   if (v < parameters_->cgetV_K()) {                 
-    const double vapprox = bp_.vLeft[iter] - (bp_.vLeft[iter+1] -
-        bp_.vLeft[iter]) * p_path;
+    const double vapprox = bp_->vLeft[iter] - (bp_->vLeft[iter+1] -
+        bp_->vLeft[iter]) * p_path;
     return ((v < vapprox) ? state_phase::LIQUID : state_phase::LIQ_STEAM);
   }
   // rigth branch of binodal
-  const double vapprox = bp_.vRigth[iter] + (bp_.vRigth[iter+1] -
-      bp_.vRigth[iter])*p_path;
+  const double vapprox = bp_->vRigth[iter] + (bp_->vRigth[iter+1] -
+      bp_->vRigth[iter])*p_path;
   return ((v > vapprox) ? state_phase::GAS : state_phase::LIQ_STEAM);
 }
 
 void modelGeneral::set_enthalpy() {
-  if (!bp_.hLeft.empty())
-    bp_.hLeft.clear();
-  for (size_t i = 0; i < bp_.vLeft.size(); ++i) {
-    SetPressure(bp_.vLeft[i], bp_.t[i]);
-    bp_.hLeft.push_back(parameters_->cgetIntEnergy() + 
-        bp_.p[i] * bp_.vLeft[i]);
+  if (bp_ == nullptr)
+    return;
+  if (!bp_->hLeft.empty())
+    bp_->hLeft.clear();
+  for (size_t i = 0; i < bp_->vLeft.size(); ++i) {
+    SetPressure(bp_->vLeft[i], bp_->t[i]);
+    bp_->hLeft.push_back(parameters_->cgetIntEnergy() +
+        bp_->p[i] * bp_->vLeft[i]);
   #ifdef _DEBUG
 //    std::cerr << "\nSET_ENTHALPY: p " << bp_.p[i] << " t " << bp_.t[i]
 //        << " v " << bp_.vLeft[i] << " h " << bp_.hLeft[i] << std::endl;
   #endif  // _DEBUG
   }
-  if (!bp_.hRigth.empty())
-    bp_.hRigth.clear();
-  for (size_t i = 0; i < bp_.vRigth.size(); ++i) {
-    SetPressure(bp_.vRigth[i], bp_.t[i]);
-    bp_.hRigth.push_back(parameters_->cgetIntEnergy() +
-        bp_.p[i] * bp_.vRigth[i]);
+  if (!bp_->hRigth.empty())
+    bp_->hRigth.clear();
+  for (size_t i = 0; i < bp_->vRigth.size(); ++i) {
+    SetPressure(bp_->vRigth[i], bp_->t[i]);
+    bp_->hRigth.push_back(parameters_->cgetIntEnergy() +
+        bp_->p[i] * bp_->vRigth[i]);
   #ifdef _DEBUG
  //   std::cerr << "\nSET_ENTHALPY: p " << bp_.p[i] << " t " << bp_.t[i]
  //       << " v " << bp_.vRigth[i] << " h " << bp_.hRigth[i] << std::endl;

@@ -94,19 +94,19 @@ typedef std::vector<ng_gost_component> ng_gost_mix;
  * wrap defines
  */
 
-union cd {
+union const_dyn_union {
   const parameters_mix *components;
   const ng_gost_mix *ng_gost_components;
   struct {
     const const_parameters *cgp;
     const dyn_parameters *dgp;
   } cdp;
-  ~cd();
+  ~const_dyn_union();
 };
 
 struct gas_params_input {
   double p, t;
-  cd const_dyn;
+  const_dyn_union const_dyn;
 };
 
 struct state_log {

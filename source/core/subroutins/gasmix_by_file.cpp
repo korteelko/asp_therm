@@ -65,7 +65,7 @@ void GasMixComponentsFile::init_components() {
     sprintf(buf, "%s%d", gasmix_component.c_str(), i+1);
     xml_path[0] = std::string(buf);
     xml_path[1] = gasmix_parameter_name;
-    ERROR_TYPE err = xml_doc_->GetValueByPath(xml_path, &gasname);
+    merror_t err = xml_doc_->GetValueByPath(xml_path, &gasname);
     if (err)
       break;
     xml_path[1] = gasmix_parameter_part;

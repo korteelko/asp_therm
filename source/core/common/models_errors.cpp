@@ -2,8 +2,8 @@
 
 #include <string.h>
 
-static ERROR_TYPE err_tmp     = ERR_SUCCESS_T;
-static char err_msg[ERR_MSG_MAX_LEN] = {0};
+static merror_t model_error = ERR_SUCCESS_T;
+static char model_error_msg[ERR_MSG_MAX_LEN] = {0};
 
 static const char *custom_msg[] = {
   "there are not any errors",
@@ -44,8 +44,8 @@ static const char *custom_msg_init[] = {
 //   приведенных выше
 // set errmessage
 static char *get_custom_err_msg() {
-  ERROR_TYPE err_type     = ERR_MASK_TYPE & err_tmp;
-  ERROR_TYPE err_concrete = ERR_MASK_SUBTYPE & err_tmp;
+  merror_t err_type     = ERR_MASK_TYPE & model_error;
+  merror_t err_concrete = ERR_MASK_SUBTYPE & model_error;
   // Прицеливаемся в ногу
   char **list_of_custom_msg = NULL;
   switch (err_type) {
@@ -71,57 +71,57 @@ static char *get_custom_err_msg() {
   return NULL;
 }
 
-void set_error_code(ERROR_TYPE err) {
-  err_tmp = err;
+void set_error_code(merror_t err) {
+  model_error = err;
 }
 
-ERROR_TYPE get_error_code() {
-  return err_tmp;
+merror_t get_error_code() {
+  return model_error;
 }
 
 void reset_error() {
-  err_tmp  = ERR_SUCCESS_T;
-  *err_msg = '\0';
+  model_error  = ERR_SUCCESS_T;
+  *model_error_msg = '\0';
 }
 
-void set_error_message(const char *msg) {
+merror_t set_error_message(const char *msg) {
   if (!msg)
-    return;
+    return model_error;
   if (strlen(msg) > ERR_MSG_MAX_LEN) {
-    strcpy(err_msg, "passed_errmsg too long. Print custom:\n  ");
+    strcpy(model_error_msg, "passed_errmsg too long. Print custom:\n  ");
     char *custom_err_msg = get_custom_err_msg();
     if (custom_err_msg != NULL)
-      strcat(err_msg, custom_err_msg);
-    return;
+      strcat(model_error_msg, custom_err_msg);
   } else {
-    strcpy(err_msg, msg);
+    strcpy(model_error_msg, msg);
   }
+  return model_error;
 }
 
-void set_error_message(ERROR_TYPE err_code, const char *msg) {
-  set_error_code(err_code);
+merror_t set_error_message(merror_t err_code, const char *msg) {
   set_error_message(msg);
+  return model_error = err_code;
 }
 
 void add_to_error_msg(const char *msg) {
   char *custom_err_msg = get_custom_err_msg();
   if (custom_err_msg != NULL)
-    strcpy(err_msg, custom_err_msg);
-  if (strlen(err_msg) + strlen(msg) >= ERR_MSG_MAX_LEN)
+    strcpy(model_error_msg, custom_err_msg);
+  if (strlen(model_error_msg) + strlen(msg) >= ERR_MSG_MAX_LEN)
     return;
-  strcat(err_msg, msg);
+  strcat(model_error_msg, msg);
 }
 
 char *get_error_message() {
-  if (*err_msg != '\0')
-    return err_msg;
+  if (*model_error_msg != '\0')
+    return model_error_msg;
   char *custom_err_msg = get_custom_err_msg();
   if (!custom_err_msg)
     return NULL;
-  if (ERR_MASK_GAS_MIX & err_tmp) {
-    strcpy(err_msg, "gasmix: ");
-    strcat(err_msg, custom_err_msg);
-    return err_msg;
+  if (ERR_MASK_GAS_MIX & model_error) {
+    strcpy(model_error_msg, "gasmix: ");
+    strcat(model_error_msg, custom_err_msg);
+    return model_error_msg;
   }
   return custom_err_msg;
 }
