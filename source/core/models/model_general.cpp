@@ -14,7 +14,7 @@
 
 
 modelGeneral::modelGeneral(gas_marks_t gm, binodalpoints *bp)
-  : parameters_(nullptr), gm_(gm), bp_(bp) {}
+  : gm_(gm), parameters_(nullptr), bp_(bp) {}
 
 modelGeneral::~modelGeneral() {}
 
@@ -111,48 +111,42 @@ bool modelGeneral::set_gasparameters(const gas_params_input &gpi,
 }
 
 // static 
-bool modelGeneral::check_input(const model_input &mi) {
-  bool is_valid = true;
-  if ((mi.gm & GAS_MIX_MARK) && (mi.gm & GAS_NG_GOST_MARK)) {
-    set_error_message(ERR_INIT_T,
-        "options GAS_MIX_MARK and GAS_NG_GOST_MARK not compatible");
-    return false;
-  }
-  if (mi.gm & GAS_MIX_MARK) {
-    is_valid = !mi.gpi.const_dyn.components->empty();
-    if (is_valid) {
+merror_t modelGeneral::check_input(const model_input &mi) {
+  merror_t err = ERR_SUCCESS_T;
+  if ((mi.gm & GAS_MIX_MARK) && (mi.gm & GAS_NG_GOST_MARK))
+    err = set_error_message(ERR_INIT_T,
+        "options GAS_MIX_MARK and GAS_NG_GOST_MARK not compatible\n");
+  if ((!err) && (mi.gm & GAS_MIX_MARK)) {
+    if (!mi.gpi.const_dyn.components->empty()) {
       // для проверки установленных доль
       double parts_sum = 0.0;
       std::for_each(mi.gpi.const_dyn.components->begin(),
           mi.gpi.const_dyn.components->end(),
           [&parts_sum] (const std::pair<const double, const_dyn_parameters> &x)
-          {parts_sum += x.first;});
+               { parts_sum += x.first; });
       if (parts_sum < (GASMIX_PERSENT_AVR - GASMIX_PERCENT_EPS) ||
           parts_sum > (GASMIX_PERSENT_AVR + GASMIX_PERCENT_EPS))
-        is_valid = false;
+        err = set_error_message(ERR_INIT_T,
+            "gasmix sum of parts != 100%\n");
     }
   }
-  if (mi.gm & GAS_NG_GOST_MARK) {
-    is_valid = !mi.gpi.const_dyn.ng_gost_components->empty();
-    if (is_valid) {
+  if ((!err) && (mi.gm & GAS_NG_GOST_MARK)) {
+    if (!mi.gpi.const_dyn.ng_gost_components->empty()) {
       // для проверки установленных доль
       double parts_sum = 0.0;
       std::for_each(mi.gpi.const_dyn.ng_gost_components->begin(),
           mi.gpi.const_dyn.ng_gost_components->end(),
           [&parts_sum] (const std::pair<gas_t, double> &x)
-          {parts_sum += x.second;});
+              { parts_sum += x.second; });
       if (parts_sum < (GASMIX_PERSENT_AVR - GASMIX_PERCENT_EPS) ||
           parts_sum > (GASMIX_PERSENT_AVR + GASMIX_PERCENT_EPS))
-        is_valid = false;
+        err = set_error_message(ERR_INIT_T,
+            "gasmix sum of parts != 100%\n");
     }
   }
-  if (is_valid)
-    is_valid = is_above0(mi.gpi.p, mi.gpi.t);
-  if (!is_valid) {
-    set_error_code(ERR_INIT_T | ERR_INIT_ZERO_ST);
-    return false;
-  }
-  return is_valid;
+  if (!(err || is_above0(mi.gpi.p, mi.gpi.t)))
+    err = set_error_code(ERR_INIT_T | ERR_INIT_ZERO_ST);
+  return err;
 }
 
 double modelGeneral::GetVolume() const {

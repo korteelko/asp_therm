@@ -88,8 +88,8 @@ int test_models() {
   std::cerr << calc_mod->ParametersString() << std::flush;
 //  std::cerr << "\n vol  " << calc_mod->GetVolume(25000000, 365.85) <<
 //      "\n pres " << calc_mod->GetPressure(0.007267, 365.85) << std::flush;
-  std::cerr << "Push any key to finish";
-  std::getchar();
+  //std::cerr << "Push any key to finish";
+  //std::getchar();
   return 0;
 }
 
@@ -146,11 +146,11 @@ int test_models_mix() {
 
 int main() {
   if (test_models()) {
-    std::cerr << "test_models()";
+    std::cerr << "test_models()" << get_error_message();
     return 1;
   }
   if (test_models_mix()) {
-    std::cerr << "test_models_mix()";
+    std::cerr << "test_models_mix()" << get_error_message();
     return 2;
   }
   return 0;

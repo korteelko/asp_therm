@@ -141,12 +141,11 @@ Peng_Robinson::Peng_Robinson(const model_input &mi)
 
 Peng_Robinson *Peng_Robinson::Init(const model_input &mi) {
   reset_error();
-  if (!check_input(mi))
+  if (check_input(mi))
     return nullptr;
   Peng_Robinson *pr = new Peng_Robinson(mi);
   if (pr)
     if (pr->parameters_ == nullptr) {
-      set_error_code(ERR_INIT_T);
       delete pr;
       pr = nullptr;
     }
@@ -217,15 +216,15 @@ double Peng_Robinson::get_volume(double p, double t, const const_parameters &cp)
   std::vector<double> coef {
       1.0,
       model_coef_b_ - cp.R*t/p,
-      (model_coef_a_*alf - 2.0f * model_coef_b_ *
-          cp.R*t)/p - 3.0f*model_coef_b_*model_coef_b_,
+      (model_coef_a_*alf - 2.0 * model_coef_b_ *
+          cp.R*t)/p - 3.0*model_coef_b_*model_coef_b_,
       std::pow(model_coef_b_, 3.0f) + (cp.R *
           t*model_coef_b_*model_coef_b_ - model_coef_a_ * alf *model_coef_b_)/p,
       0.0, 0.0, 0.0};
   CardanoMethod_HASUNIQROOT(&coef[0], &coef[4]);
 #ifdef _DEBUG
   if (!is_above0(coef[4])) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    error_ = set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
     return 0.0;
   }
 #endif
@@ -302,7 +301,7 @@ void Peng_Robinson::SetPressure(double v, double t) {
 #ifndef GAS_MIX_VARIANT
 double Peng_Robinson::GetVolume(double p, double t) const {
   if (!is_above0(p, t)) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    error_ = set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
     return 0.0;
   }
   double alf = std::pow(1.0 + model_coef_k_*(1.0 -
@@ -310,15 +309,15 @@ double Peng_Robinson::GetVolume(double p, double t) const {
   std::vector<double> coef {
       1.0,
       model_coef_b_ - parameters_->cgetR()*t/p,
-      (model_coef_a_*alf - 2.0f * model_coef_b_ *
-          parameters_->cgetR()*t)/p-3.0f*model_coef_b_*model_coef_b_,
-      std::pow(model_coef_b_, 3.0f) + (parameters_->cgetR()*
+      (model_coef_a_*alf - 2.0 * model_coef_b_ *
+          parameters_->cgetR()*t)/p-3.0*model_coef_b_*model_coef_b_,
+      std::pow(model_coef_b_, 3.0) + (parameters_->cgetR()*
           t *model_coef_b_*model_coef_b_ - model_coef_a_ * alf *model_coef_b_)/p,
       0.0, 0.0, 0.0};
   CardanoMethod_HASUNIQROOT(&coef[0], &coef[4]);
 #ifdef _DEBUG
   if (!is_above0(coef[4])) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    error_ = set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
     return 0.0;
   }
 #endif
@@ -327,7 +326,7 @@ double Peng_Robinson::GetVolume(double p, double t) const {
 
 double Peng_Robinson::GetPressure(double v, double t) const {
   if (!is_above0(v, t)) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    error_ = set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
     return 0.0;
   }
   const double a = std::pow(1.0 + model_coef_k_ * std::pow(1.0 -

@@ -38,7 +38,7 @@ const char *gases_root_dir = "../../asp_therm/data/gases/";
 #elif defined (_RELEASE)
 const char *gases_root_dir = "data/gases/";
 #else
-const char *gases_root_dir = "../../data/gases/";
+const char *gases_root_dir = "../data/gases/";
 #endif  // _DEBUG_SUBROUTINS
 
 std::string gasmix_component = "component";

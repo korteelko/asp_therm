@@ -23,7 +23,6 @@ Ideal_Gas *Ideal_Gas::Init(const model_input &mi) {
   Ideal_Gas *ig = new Ideal_Gas(mi);
   if (ig)
     if (ig->parameters_ == nullptr) {
-      set_error_code(ERR_INIT_T);
       delete ig;
       ig = nullptr;
     }
@@ -65,7 +64,7 @@ void Ideal_Gas::SetPressure(double v, double t) {
 #ifndef GAS_MIX_VARIANT
 double Ideal_Gas::GetVolume(double p, double t) const {
   if (!is_above0(p, t)) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    error_ = set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
     return 0.0;
   }
   return  t * parameters_->cgetR() / p;
@@ -73,7 +72,7 @@ double Ideal_Gas::GetVolume(double p, double t) const {
 
 double Ideal_Gas::GetPressure(double v, double t) const {
   if (!is_above0(v, t)) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    error_ = set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
     return 0.0;
   }
   return t * parameters_->cgetR() / v;

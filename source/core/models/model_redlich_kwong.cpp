@@ -21,7 +21,7 @@ void Redlich_Kwong2::set_model_coef() {
 void Redlich_Kwong2::set_model_coef(
     const const_parameters &cp) {
   model_coef_a_ = 0.42748 * std::pow(cp.R, 2.0) *
-      std::pow(cp.T_K, 2.5) / cp.P_K,
+      std::pow(cp.T_K, 2.5) / cp.P_K;
   model_coef_b_ = 0.08664 * cp.R * cp.T_K / cp.P_K;
 }
 
@@ -59,7 +59,6 @@ Redlich_Kwong2 *Redlich_Kwong2::Init(const model_input &mi) {
   Redlich_Kwong2 *rk = new Redlich_Kwong2(mi);
   if (rk)
     if (rk->parameters_ == nullptr) {
-      set_error_code(ERR_INIT_T);
       delete rk;
       rk = nullptr;
     }

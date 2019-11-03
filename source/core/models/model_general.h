@@ -43,7 +43,7 @@ class modelGeneral {
   modelGeneral(const modelGeneral &) = delete;
   modelGeneral &operator=(const modelGeneral &) = delete;
 protected:
-  merror_t error_;
+  mutable merror_t error_;
   rg_model_t model_conf_;
   gas_marks_t gm_;
   std::unique_ptr<GasParameters> parameters_;
@@ -60,7 +60,8 @@ protected:
   bool set_gasparameters(const gas_params_input &gpi,
       modelGeneral *mg);
   const GasParameters *get_gasparameters() const;
-  static bool check_input(const model_input &mi);
+
+  static merror_t check_input(const model_input &mi);
 
 public:
   /// Функции обновления динамических параметров

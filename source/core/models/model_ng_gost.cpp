@@ -63,7 +63,8 @@ void NG_Gost::SetVolume(double p, double t) {
 }
 
 void NG_Gost::SetPressure(double v, double t) {
-  set_error_message("invalid operation for this model");
+  error_ = set_error_message(
+      ERR_CALC_MODEL_ST, "invalid operation for this model");
 }
 
 #ifndef GAS_MIX_VARIANT
@@ -80,7 +81,8 @@ double NG_Gost::GetPressure(double v, double t) const {
 #else
 double NG_Gost::GetPressure(double v, double t) {
 #endif  // !GAS_MIX_VARIANT
-  set_error_message("invalid operation for gost model");
+  error_ = set_error_message(
+      ERR_CALC_MODEL_ST, "invalid operation for gost model");
   return 0.0;
 }
 

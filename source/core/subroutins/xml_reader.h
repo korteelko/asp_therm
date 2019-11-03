@@ -157,8 +157,9 @@ private:
     pugi::xml_node nx_xml_nd = xml_nd->first_child();
     node_type nt = xml_node_t::get_node_type(nx_xml_nd.name());
     if (nt == NODE_T_UNDEFINED) {
-      error_ = set_error_message(ERR_INIT_T | ERR_FILE_IN_ST,
-          "get undefined xml node while parsing");
+      std::string estr = "get undefined xml node while parsing, node name: "
+          + std::string(nx_xml_nd.name()) + "\n";
+      error_ = set_error_message(ERR_INIT_T | ERR_FILE_IN_ST, estr.c_str());
       return;
     }
     gasxml_nd->first_child = std::unique_ptr<gasxml_node<xml_node_t>>(
@@ -203,6 +204,9 @@ public:
     XMLReader<xml_node_t> *reader = new XMLReader<xml_node_t>(gas_xml_file);
     if (reader)
       if (reader->GetError() != ERR_SUCCESS_T) {
+    #ifdef _DEBUG
+        std::cerr << get_error_message();
+    #endif  // _DEBUG
         delete reader;
         reader = nullptr;
       }
