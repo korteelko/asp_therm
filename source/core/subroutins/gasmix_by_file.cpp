@@ -32,8 +32,8 @@
  */
 
 namespace {
-const int constint_64 = 64;
-#ifdef _DEBUG_SUBROUTINS
+const int32_t constint_64 = 64;
+#if defined (_DEBUG_SUBROUTINS)
 const char *gases_root_dir = "../../asp_therm/data/gases/";
 #elif defined (_RELEASE)
 const char *gases_root_dir = "data/gases/";
@@ -47,7 +47,7 @@ std::string gasmix_parameter_part = "part";
 }  // unnamed namespace
 
 GasMixComponentsFile::GasMixComponentsFile(XMLReader<gasmix_node> *xml_doc) 
-  : files_handler_(nullptr), xml_doc_(xml_doc) {
+  : xml_doc_(xml_doc), files_handler_(nullptr), error_(ERR_SUCCESS_T) {
   init_components();
 }
 
@@ -65,27 +65,26 @@ void GasMixComponentsFile::init_components() {
     sprintf(buf, "%s%d", gasmix_component.c_str(), i+1);
     xml_path[0] = std::string(buf);
     xml_path[1] = gasmix_parameter_name;
-    merror_t err = xml_doc_->GetValueByPath(xml_path, &gasname);
-    if (err)
-      break;
+    error_ = xml_doc_->GetValueByPath(xml_path, &gasname);
     xml_path[1] = gasmix_parameter_part;
-    err = xml_doc_->GetValueByPath(xml_path, &part_str);
+    error_ |= xml_doc_->GetValueByPath(xml_path, &part_str);
+    if (error_)
+      break;
     part = std::stod(part_str);
     gasmix_files_.push_back(gasmix_file(gasname, part));
   }
+  error_ = ERR_SUCCESS_T;
   for (auto &x : gasmix_files_) {
     x.filename = gases_root_dir + trim_str(x.filename) + ".xml";
     x.part /= 100.0;
   }
   if (gasmix_files_.empty()) {
-    set_error_message(ERR_FILEIO_T | ERR_FILE_IN_ST,
-        "gasmix input file is empty or broken");
-    return;
+    error_ = set_error_message(ERR_FILEIO_T | ERR_FILE_IN_ST,
+      "gasmix input file is empty or broken\n");
+  } else {
+    files_handler_ = std::unique_ptr<GasMixByFiles>(
+        GasMixByFiles::Init(gasmix_files_));
   }
-  files_handler_ = std::unique_ptr<GasMixByFiles>(
-      GasMixByFiles::Init(gasmix_files_));
-  // и т.д.
-  // update path
 }
 
 GasMixComponentsFile *GasMixComponentsFile::Init(const std::string &filename) {
@@ -114,12 +113,12 @@ GasMixByFiles *GasMixByFiles::Init(const std::vector<gasmix_file> &parts) {
 }
 
 GasMixByFiles::GasMixByFiles(const std::vector<gasmix_file> &parts)
-  : is_valid_(true), prs_mix_(nullptr) {
+  : prs_mix_(nullptr), error_(ERR_SUCCESS_T), is_valid_(true) {
   prs_mix_ = std::unique_ptr<parameters_mix>(new parameters_mix());
   for (const auto &x : parts) {
     auto cdp = init_pars(x.filename);
     if (cdp.first == nullptr) {
-      set_error_message(ERR_INIT_T, "One component of gas mix: ");
+      error_ = set_error_message(ERR_INIT_T, "One component of gas mix:\n");
       add_to_error_msg(x.filename.c_str());
       is_valid_ = false;
       break;
@@ -129,44 +128,47 @@ GasMixByFiles::GasMixByFiles(const std::vector<gasmix_file> &parts)
 }
 
 // finished
-int GasMixByFiles::check_input(const std::vector<gasmix_file> &parts) {
-  if (parts.empty()) {
-    set_error_message(ERR_INIT_T | ERR_INIT_ZERO_ST, "init mix by file empty");
-    return ERR_INIT_T;
-  }
+merror_t GasMixByFiles::check_input(const std::vector<gasmix_file> &parts) {
+  merror_t err = ERR_SUCCESS_T;
+  if (parts.empty())
+    err = set_error_message(
+        ERR_INIT_T | ERR_INIT_ZERO_ST, "init mix by file empty\n");
   // check parts > 0 and sum pf parts == 1.0
   double parts_sum = 0;
   for (const auto &x: parts) {
     if (x.part >= 0.0) {
       parts_sum += x.part;
     } else {
-      set_error_message(ERR_INIT_T | ERR_INIT_ZERO_ST,
-          "init mix by files part <=0");
-      return ERR_INIT_T;
+      err = set_error_message(
+          ERR_INIT_T | ERR_INIT_ZERO_ST, "init mix by files part <=0\n");
+      break;
     }
   }
-  if (!is_equal(parts_sum, 1.0, GASMIX_PERCENT_EPS)) {
-    set_error_message(ERR_CALCULATE_T | ERR_CALC_MIX_ST, "gasmix sum of part != 100%");
-    return ERR_INIT_T;
-  }
-  return ERR_SUCCESS_T;
+  if ((!err) && (!is_equal(parts_sum, 1.0, GASMIX_PERCENT_EPS)))
+    err = set_error_message(
+        ERR_CALCULATE_T | ERR_CALC_MIX_ST, "gasmix sum of part != 100%\n");
+  return err;
 }
 
 std::pair<std::shared_ptr<const_parameters>, std::shared_ptr<dyn_parameters>>
     GasMixByFiles::init_pars(const std::string &filename) {
   std::shared_ptr<ComponentByFile> xf(ComponentByFile::Init(filename));
+  std::pair<std::shared_ptr<const_parameters>, std::shared_ptr<dyn_parameters>>
+      ret_val{nullptr, nullptr};
   if (xf == nullptr) {
-    set_error_message(ERR_FILEIO_T | ERR_FILE_IN_ST, "gas xml init");
-    return {nullptr, nullptr};
+    error_ = set_error_message(ERR_FILEIO_T | ERR_FILE_IN_ST, "gas xml init\n");
+  } else {
+    // unique_ptrs
+    auto cp = xf->GetConstParameters();
+    auto dp = xf->GetDynParameters();
+    if ((cp == nullptr) || (dp == nullptr)) {
+      error_ = set_error_message(
+          ERR_INIT_T, "xml format and const/dyn -parameters\n");
+    } else {
+      ret_val = {cp, dp};
+    }
   }
-  // unique_ptrs
-  auto cp = xf->GetConstParameters();
-  auto dp = xf->GetDynParameters();
-  if ((cp == nullptr) || (dp == nullptr)) {
-    set_error_message(ERR_INIT_T, "xml format and const/dyn -parameters");
-    return {nullptr, nullptr};
-  }
-  return {cp, dp};
+  return ret_val;
 }
 
 std::shared_ptr<parameters_mix> GasMixByFiles::GetParameters() {

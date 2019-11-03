@@ -26,6 +26,7 @@
 
 // statndart conds
 static parameters standard_conds = {0, 100000.0, 314.0};
+merror_t ModelsCreator::error_ = ERR_SUCCESS_T;
 
 model_input ModelsCreator::set_input(rg_model_t mn, binodalpoints *bp,
     double p, double t, const parameters_mix &mix_components) {
@@ -36,7 +37,7 @@ model_input ModelsCreator::set_input(rg_model_t mn, binodalpoints *bp,
 //    gm |= GAS_MIX_MARK;
   // cd cd_{&mix_components};
   model_input &&mi = {gm, bp, {p, t,
-      const_dyn_union{ .components = &mix_components}}};
+      const_dyn_union{.components = &mix_components}}};
   return std::move(mi);
 }
 
@@ -45,7 +46,7 @@ model_input ModelsCreator::set_input(rg_model_t mn, binodalpoints *bp,
   gas_marks_t gm = 0x00;
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_NG_GOST_MARK;
   model_input &&mi = {gm, bp, {p, t,
-      const_dyn_union{ .ng_gost_components = &mix_components}}};
+      const_dyn_union{.ng_gost_components = &mix_components}}};
   return std::move(mi);
 }
 
@@ -87,7 +88,7 @@ modelGeneral *ModelsCreator::initModel(rg_model_t mn, binodalpoints *bp,
     case rg_model_t::NG_GOST:
       return NG_Gost::Init(set_input(mn, bp, p, t, *cdu.ng_gost_components));
   }
-  if (!ModelsCreator::error_)
+  if (ModelsCreator::error_ != ERR_SUCCESS_T )
      ModelsCreator::error_ = set_error_message(ERR_INIT_T,
      "undefined calculation model in modelCreator");
   return nullptr;

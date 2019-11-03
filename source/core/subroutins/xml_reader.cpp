@@ -8,6 +8,14 @@
 #include <assert.h>
 #include <stdio.h>
 
+std::array<std::string, GAS_NODE_COUNT> gas_node::node_t_list = {
+  "gas", "section", "group", "subgroup", "parameter"
+};
+
+std::array<std::string, GASMIX_NODE_COUNT> gasmix_node::node_t_list = {
+  "gasmix", "group", "parameter"
+};
+
 // gas_node
 gas_node::gas_node(node_type itype, std::string name)
   : gas_node_type(itype), name(name), value("") {}
@@ -15,63 +23,46 @@ gas_node::gas_node(node_type itype, std::string name)
 gas_node::gas_node(node_type itype, std::string name, std::string value)
   : gas_node_type(itype), name(name), value(value) {
 #ifdef _DEBUG_SUBROUTINS
-  std::cerr << "Create gas node: " << value << " #" << itype << " " << name << "\n";
+  std::cerr << "Create gas node: " << value <<
+      " #" << itype << " " << name << "\n";
 #endif  // _DEBUG
   }
 
-gas_node::gas_node(std::string type, std::string name)
-  : gas_node(type, name, "") {}
-
-gas_node::gas_node(std::string type, std::string name, std::string value)
-  : name(name), value(value) {
-  if (type == "section")
-    gas_node_type = NODE_T_SECTION;
-  else if (type == "group")
-    gas_node_type = NODE_T_GROUP;
-  else if (type == "subgroup")
-    gas_node_type = NODE_T_SUBGROUP;
-  else if (type == "parameter")
-    gas_node_type = NODE_T_PARAMETER;
-  else
-    gas_node_type = NODE_T_UNDEFINED;
-}
-
 // static
 std::string gas_node::get_root_name() {
-  return "gas";
+  return gas_node::node_t_list[NODE_T_ROOT];
 }
-  
+
+node_type gas_node::get_node_type(std::string type) {
+  for (uint32_t i = 0; i < gas_node::node_t_list.size(); ++i)
+    if (gas_node::node_t_list[i] == type)
+      return i;
+  return NODE_T_UNDEFINED;
+}
+
 /*
 gasmix_node::gasmix_node(int itype) 
   : mix_node_type(itype), value("") {}
 */
-gasmix_node::gasmix_node(node_type itype, std::string value)
-  : mix_node_type(itype), value(value) {} 
+gasmix_node::gasmix_node(node_type itype, std::string name)
+  : mix_node_type(itype), name(name) {}
 
 gasmix_node::gasmix_node(node_type itype, std::string name, std::string value)
   : mix_node_type(itype), name(name), value(value) {
 #ifdef _DEBUG_SUBROUTINS
-  std::cerr << "Create gasmix node: " << value << " #" << itype << " " << name << "\n";
-#endif
-}
-
-gasmix_node::gasmix_node(std::string type, std::string name)
-  : gasmix_node(type, name, "") {}
-
-gasmix_node::gasmix_node(std::string type, std::string name, std::string value)
-  : name(name), value(value) {
-  if (type == "group")
-    mix_node_type = NODE_T_GROUP;
-  else if (type == "parameter")
-    mix_node_type = NODE_T_PARAMETER;
-  else
-    mix_node_type = NODE_T_UNDEFINED;
-#ifdef _DEBUG_SUBROUTINS
-  std::cerr << "Create gasmix node: " << value << " " << type << " " << name << "\n";
+  std::cerr << "Create gasmix node: " << value <<
+      " #" << itype << " " << name << "\n";
 #endif
 }
 
 // static
 std::string gasmix_node::get_root_name() {
-  return "gasmix";
+  return gasmix_node::node_t_list[NODE_T_ROOT];
+}
+
+node_type gasmix_node::get_node_type(std::string type) {
+  for (uint32_t i = 0; i < gasmix_node::node_t_list.size(); ++i)
+    if (gasmix_node::node_t_list[i] == type)
+      return i;
+  return NODE_T_UNDEFINED;
 }

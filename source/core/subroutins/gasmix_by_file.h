@@ -17,9 +17,10 @@ class GasMixComponentsFile {
   GasMixComponentsFile &operator=(const GasMixComponentsFile &) = delete;
   
 private:
-  std::unique_ptr<GasMixByFiles> files_handler_;
   XMLReader<gasmix_node> *xml_doc_;
+  std::unique_ptr<GasMixByFiles> files_handler_;
   std::vector<gasmix_file> gasmix_files_;
+  merror_t error_;
 
 private:
   GasMixComponentsFile(XMLReader<gasmix_node> *xml_doc);
@@ -32,16 +33,18 @@ public:
   ~GasMixComponentsFile();
 };
 
+
 class GasMixByFiles {
   GasMixByFiles(const GasMixByFiles &) = delete;
   GasMixByFiles &operator=(const GasMixByFiles &) = delete;
 
 private:
-  bool is_valid_;
   std::shared_ptr<parameters_mix> prs_mix_;
+  merror_t error_;
+  bool is_valid_;
 
 private:
-  static int check_input(const std::vector<gasmix_file> &parts);
+  static merror_t check_input(const std::vector<gasmix_file> &parts);
   GasMixByFiles(const std::vector<gasmix_file> &parts);
   std::pair<std::shared_ptr<const_parameters>, std::shared_ptr<dyn_parameters>>
       init_pars(const std::string &filename);

@@ -43,7 +43,7 @@ class modelGeneral {
   modelGeneral(const modelGeneral &) = delete;
   modelGeneral &operator=(const modelGeneral &) = delete;
 protected:
-  error_t error_;
+  merror_t error_;
   rg_model_t model_conf_;
   gas_marks_t gm_;
   std::unique_ptr<GasParameters> parameters_;

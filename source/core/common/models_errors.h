@@ -47,7 +47,8 @@ typedef uint32_t merror_t;
 
 
 // ERR_SUCCESS as default
-void set_error_code(merror_t err);
+[[nodiscard]]
+merror_t set_error_code(merror_t err);
 merror_t get_error_code();
 // set err_code to SUCCESS and
 //   forget setted error message
@@ -55,10 +56,10 @@ void reset_error();
 
 // replace custom errormsg with *msg
 [[nodiscard]]
-merror_t set_error_message(const char *msg);
-[[nodiscard]]
 merror_t set_error_message(merror_t err_code, const char *msg);
 // add to custom errormsg *msg
+// TODO: replace 'add_to_err_msg' with function with variadic arg count:
+//   merror_t set_error_message(merror_t err_code, const char *msg, ...);
 void add_to_error_msg(const char *msg);
 char *get_error_message();
 

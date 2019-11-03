@@ -83,7 +83,7 @@ private:
   // Мьютекс здесь не нужен, ввиду отсутствия каких либо потоков(нитей),
   //   для многопоточности придётся вводить как минимум ООП исключения
   // std::mutex mtx;
-  error_t error_;
+  merror_t error_;
 
   /* calculated points storage */
   std::map<uniqueMark, std::shared_ptr<binodalpoints>> calculated_;

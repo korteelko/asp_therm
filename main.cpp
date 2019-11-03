@@ -75,6 +75,11 @@ int test_models() {
   // = Peng_Robinson::Init(set_input(
   //    rg_model_t::PENG_ROBINSON, bp, 100000, 275, *cp, *dp));
 #endif  // _TEST
+  if (calc_mod == nullptr)
+    calc_mod.reset(ModelsCreator::GetCalculatingModel(
+      rg_model_t::PENG_ROBINSON, std::string(cwd) + xml_path + xml_gasmix));
+  if (calc_mod == nullptr)
+    return 1;
   std::cerr << calc_mod->ParametersString() << std::flush;
   std::cerr << "Set volume(10e6, 314)\n" << std::flush;
   calc_mod->SetVolume(1000000, 314);

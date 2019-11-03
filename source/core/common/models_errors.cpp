@@ -6,11 +6,11 @@ static merror_t model_error = ERR_SUCCESS_T;
 static char model_error_msg[ERR_MSG_MAX_LEN] = {0};
 
 static const char *custom_msg[] = {
-  "there are not any errors",
-  "fileio error",
-  "calculation error",
-  "string processing error",
-  "init struct error"
+  "there are not any errors ",
+  "fileio error ",
+  "calculation error ",
+  "string processing error ",
+  "init struct error "
 };
 
 static const char *custom_msg_fileio[] {
@@ -24,7 +24,7 @@ static const char *custom_msg_calculate[]= {
   "parameters error ",
   "phase diagram error ",
   "model error ",
-  "gas mix error"
+  "gas mix error "
 };
 
 static const char *custom_msg_string[] = {
@@ -71,8 +71,22 @@ static char *get_custom_err_msg() {
   return NULL;
 }
 
-void set_error_code(merror_t err) {
-  model_error = err;
+static void set_error_msg(const char *msg) {
+  if (!msg)
+    return;
+  if (strlen(msg) > ERR_MSG_MAX_LEN) {
+    strcpy(model_error_msg, "passed_errmsg too long. Print custom:\n  ");
+    char *custom_err_msg = get_custom_err_msg();
+    if (custom_err_msg != NULL)
+      strcat(model_error_msg, custom_err_msg);
+  } else {
+    strcpy(model_error_msg, msg);
+  }
+}
+
+
+merror_t set_error_code(merror_t err) {
+  return model_error = err;
 }
 
 merror_t get_error_code() {
@@ -84,22 +98,9 @@ void reset_error() {
   *model_error_msg = '\0';
 }
 
-merror_t set_error_message(const char *msg) {
-  if (!msg)
-    return model_error;
-  if (strlen(msg) > ERR_MSG_MAX_LEN) {
-    strcpy(model_error_msg, "passed_errmsg too long. Print custom:\n  ");
-    char *custom_err_msg = get_custom_err_msg();
-    if (custom_err_msg != NULL)
-      strcat(model_error_msg, custom_err_msg);
-  } else {
-    strcpy(model_error_msg, msg);
-  }
-  return model_error;
-}
 
 merror_t set_error_message(merror_t err_code, const char *msg) {
-  set_error_message(msg);
+  set_error_msg(msg);
   return model_error = err_code;
 }
 
