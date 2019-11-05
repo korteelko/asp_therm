@@ -25,7 +25,8 @@
 /// propane 0.004545    4.255       369.9      44.097       ~1.13     ~1750           0.153
 
 // #define RK2_TEST
-#define PR_TEST
+// #define PR_TEST
+#define NG_GOST_TEST
 
 #ifdef _IDE_VSCODE
 const std::string xml_path = "/../asp_therm/data/gases/";
@@ -72,24 +73,24 @@ int test_models() {
 #elif defined(PR_TEST)
   std::unique_ptr<modelGeneral> calc_mod(ModelsCreator::GetCalculatingModel(
       rg_model_t::PENG_ROBINSON, filename));
-  // = Peng_Robinson::Init(set_input(
-  //    rg_model_t::PENG_ROBINSON, bp, 100000, 275, *cp, *dp));
-#endif  // _TEST
   if (calc_mod == nullptr)
     calc_mod.reset(ModelsCreator::GetCalculatingModel(
-      rg_model_t::PENG_ROBINSON, std::string(cwd) + xml_path + xml_gasmix));
+        rg_model_t::PENG_ROBINSON, std::string(cwd) + xml_path + xml_gasmix));
+#elif defined(NG_GOST_TEST)
+  std::unique_ptr<modelGeneral> calc_mod(ModelsCreator::GetCalculatingModel(
+      rg_model_t::NG_GOST, filename));
+  if (calc_mod == nullptr)
+    calc_mod.reset(ModelsCreator::GetCalculatingModel(
+        rg_model_t::NG_GOST, std::string(cwd) + xml_path + xml_gasmix));
+#endif  // _TEST
   if (calc_mod == nullptr)
     return 1;
-  std::cerr << calc_mod->ParametersString() << std::flush;
-  std::cerr << "Set volume(10e6, 314)\n" << std::flush;
-  calc_mod->SetVolume(1000000, 314);
   std::cerr << calc_mod->ConstParametersString() << std::flush;
   std::cerr << modelGeneral::sParametersStringHead() << std::flush;
   std::cerr << calc_mod->ParametersString() << std::flush;
-//  std::cerr << "\n vol  " << calc_mod->GetVolume(25000000, 365.85) <<
-//      "\n pres " << calc_mod->GetPressure(0.007267, 365.85) << std::flush;
-  //std::cerr << "Push any key to finish";
-  //std::getchar();
+  std::cerr << "Now we will set volume for p=10e6, t=314 \n" << std::flush;
+  calc_mod->SetVolume(1000000, 314);
+  std::cerr << calc_mod->ParametersString() << std::flush;
   return 0;
 }
 
@@ -132,14 +133,15 @@ int test_models_mix() {
 #elif defined(PR_TEST)
   std::unique_ptr<modelGeneral> calc_mod(ModelsCreator::GetCalculatingModel(
       rg_model_t::PENG_ROBINSON, xml_files));
-  // Peng_Robinson *calc_mod = Peng_Robinson::Init(set_input(rg_model_t::PENG_ROBINSON, bp,
-  //     100000, 275, *prs_mix));
+#elif defined(NG_GOST_TEST)
+  std::unique_ptr<modelGeneral> calc_mod(ModelsCreator::GetCalculatingModel(
+      rg_model_t::NG_GOST, xml_files));
 #endif  // _TEST
   std::cerr << calc_mod->ConstParametersString() << std::flush;
   std::cerr << modelGeneral::sParametersStringHead() << std::flush;
   std::cerr << calc_mod->ParametersString() << std::flush;
+  std::cerr << "Now we will set volume for p=10e6, t=314 \n" << std::flush;
   calc_mod->SetVolume(1000000, 314);
-  std::cerr << "Set volume(10e6, 314)\n" << std::flush;
   std::cerr << calc_mod->ParametersString() << std::flush;
   return 0;
 }
