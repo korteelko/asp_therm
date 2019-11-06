@@ -207,7 +207,8 @@ double Peng_Robinson::heat_capac_dif_prs_vol(const parameters new_state,
       pow((k*(-sqrt(Tr) + 1.0) + 1.0), 2.0) / pow((-b*b + 2.0*b*v + v*v), 2.0));
 }
 
-double Peng_Robinson::get_volume(double p, double t, const const_parameters &cp) {
+double Peng_Robinson::get_volume(
+    double p, double t, const const_parameters &cp) {
 #ifdef GAS_MIX_VARIANT
   set_model_coef(cp);
 #endif  // GAS_MIX_VARIANT

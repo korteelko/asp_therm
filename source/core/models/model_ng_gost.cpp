@@ -22,7 +22,7 @@ NG_Gost::NG_Gost(const model_input &mi)
 
 NG_Gost *NG_Gost::Init(const model_input &mi) {
   reset_error();
-  if (!check_input(mi))
+  if (check_input(mi))
     return nullptr;
   // only for gas_mix
   if (!(mi.gm & GAS_NG_GOST_MARK))
@@ -48,8 +48,12 @@ void NG_Gost::update_dyn_params(dyn_parameters &prev_state,
 }
 
 bool NG_Gost::IsValid() const {
+#if defined(_DEBUG)
+  return true;
+#else
   assert(0);
   return false;
+#endif  // _debug
 }
 
 double NG_Gost::InitVolume(double p, double t,

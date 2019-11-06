@@ -18,7 +18,7 @@ Ideal_Gas::Ideal_Gas(const model_input &mi)
 
 Ideal_Gas *Ideal_Gas::Init(const model_input &mi) {
   reset_error();
-  if (!check_input(mi))
+  if (check_input(mi))
     return nullptr;
   Ideal_Gas *ig = new Ideal_Gas(mi);
   if (ig)

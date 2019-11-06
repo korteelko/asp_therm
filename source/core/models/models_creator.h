@@ -61,5 +61,7 @@ public:
       const std::string &gasmix_xml, double p, double t);
   static modelGeneral *GetCalculatingModel(rg_model_t mn,
       const std::string &gasmix_xml);
+  static modelGeneral *GetCalculatingModel(rg_model_t mn,
+      const ng_gost_mix &ngg);
 };
 #endif  // !_CORE__MODELS__MODELS_CREATOR_H_

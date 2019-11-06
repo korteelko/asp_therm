@@ -51,7 +51,11 @@ public:
   double cgetCV()         const;
   double cgetBeta()       const;
 
-  virtual void csetParameters(double v, double p, double t, state_phase sp);
+  /** reset parameters of gas **/
+  virtual void csetParameters(double v,
+      double p, double t, state_phase sp);
+  /** get volume of gas by pressure and temperature **/
+  virtual double cCalculateVolume(double p, double t);
   virtual ~GasParameters();
 };
 

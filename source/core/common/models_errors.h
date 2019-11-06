@@ -3,7 +3,10 @@
 
 #include <stdint.h>
 
-typedef uint32_t merror_t;
+/* swap uint32 to uint64 for simple padding
+ *   merror_t ussualy first field of struct/class
+ */
+typedef uint64_t merror_t;
 
 #define ERR_MSG_MAX_LEN    200
 

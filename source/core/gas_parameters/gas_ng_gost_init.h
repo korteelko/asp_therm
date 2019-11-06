@@ -5,6 +5,7 @@
 #include "models_errors.h"
 
 #include <vector>
+// TODO: rename file --> delete postfix '_init'
 
 // размерности, константы, параметры при НФУ см.
 //   в ГОСТ 30319.1-2015 (!!! коэффициенты в третьем(30319.3) а константы в первом)
@@ -68,7 +69,8 @@ private:
 
 public:
   static GasParameters_NG_Gost_dyn *Init(gas_params_input gpi);
-  void csetParameters(double v, double p, double t, state_phase);
-}; 
+  void csetParameters(double v, double p, double t, state_phase) override;
+  double cCalculateVolume(double p, double t) override;
+};
 
 #endif  // !_CORE__GAS_PARAMETERS__GAS_NG_GOST_INIT_H_

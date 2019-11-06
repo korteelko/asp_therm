@@ -107,9 +107,14 @@ const_parameters GasParameters::cgetConstparameters() const {
   return const_params;
 }
 
-// virtual
 void GasParameters::csetParameters(double v, double p, double t,
     state_phase sp) {
   vpte_ = {v,p,t};
   sph_  = sp;
+}
+
+double GasParameters::cCalculateVolume(double p, double t) {
+  (void)p;
+  (void)t;
+  return vpte_.volume;
 }

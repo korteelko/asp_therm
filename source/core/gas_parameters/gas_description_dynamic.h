@@ -13,6 +13,7 @@ class GasParameters_dyn final: public GasParameters {
 public:
   static GasParameters_dyn *Init(gas_params_input gpi, modelGeneral *mg);
   void csetParameters(double v, double p, double t, state_phase sp) override;
+  double cCalculateVolume(double p, double t) override;
 
 private:
   parameters   prev_vpte_;

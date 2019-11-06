@@ -46,27 +46,6 @@ int test_models() {
     return 1;
   }
   std::string filename = std::string(cwd) + xml_path + xml_methane;
-  /*
-  std::unique_ptr<ComponentByFile> met_xml(ComponentByFile::Init(filename));
-  if (met_xml == nullptr) {
-    std::cerr << "Object of XmlFile wasn't created\n";
-    return 1;
-  }
-  auto cp = met_xml->GetConstParameters();
-  auto dp = met_xml->GetDynParameters();
-  if (cp == nullptr) {
-    std::cerr << "const_parameters by xml wasn't created\n";
-    return 2;
-  }
-  if (dp == nullptr) {
-    std::cerr << "dyn_parameters by xml wasn't created\n";
-    return 2;
-  }
-  */
-  // ссылочку а не объект
-  // PhaseDiagram &pd = PhaseDiagram::GetCalculated();
-  // binodalpoints *bp = pd.GetBinodalPoints(cp->V_K, cp->P_K, cp-> T_K,
-  //     rg_model_t::REDLICH_KWONG2, cp->acentricfactor);
 #if defined(RK2_TEST)
   Redlich_Kwong2 *calc_mod = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
       {1.42, 100000, 275}, *cp, *dp, bp);
@@ -77,11 +56,13 @@ int test_models() {
     calc_mod.reset(ModelsCreator::GetCalculatingModel(
         rg_model_t::PENG_ROBINSON, std::string(cwd) + xml_path + xml_gasmix));
 #elif defined(NG_GOST_TEST)
+  ng_gost_mix ngg = ng_gost_mix {
+      ng_gost_component{GAS_TYPE_METHANE, 0.935},
+      ng_gost_component{GAS_TYPE_ETHANE, 0.044},
+      ng_gost_component{GAS_TYPE_PROPANE, 0.021}
+  };
   std::unique_ptr<modelGeneral> calc_mod(ModelsCreator::GetCalculatingModel(
-      rg_model_t::NG_GOST, filename));
-  if (calc_mod == nullptr)
-    calc_mod.reset(ModelsCreator::GetCalculatingModel(
-        rg_model_t::NG_GOST, std::string(cwd) + xml_path + xml_gasmix));
+      rg_model_t::NG_GOST, ngg));
 #endif  // _TEST
   if (calc_mod == nullptr)
     return 1;
@@ -106,27 +87,6 @@ int test_models_mix() {
     gasmix_file(std::string(cwd) + xml_path + xml_ethane, 0.009),
     gasmix_file(std::string(cwd) + xml_path + xml_propane, 0.003)
   };
-  /*
-  std::unique_ptr<XmlFile> met_xml(XmlFile::Init(methane_path));
-  if (met_xml == nullptr) {
-    std::cerr << "Object of XmlFile wasn't created\n";
-    return 1;
-  }
-  */
-  /*
-  GasMixByFiles *gm = GasMixByFiles::Init(xml_files);
-  if (!gm) {
-    std::cerr << "GasMix init error" << std::flush;
-    return 1;
-  }
-  std::shared_ptr<parameters_mix> prs_mix = gm->GetParameters();
-  if (!prs_mix) {
-    std::cerr << "GasMix prs_mix error" << std::flush;
-    return 1;
-  }
-  PhaseDiagram &pd = PhaseDiagram::GetCalculated();
-  binodalpoints bp = pd.GetBinodalPoints(*prs_mix, rg_model_t::PENG_ROBINSON);
-  */
 #if defined(RK2_TEST)
   Redlich_Kwong2 *calc_mod = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
       {1.42, 100000, 275}, *prs_mix, bp);

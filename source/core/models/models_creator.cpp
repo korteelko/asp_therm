@@ -75,6 +75,12 @@ modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
       standard_conds.pressure, standard_conds.temperature);
 }
 
+modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
+    const ng_gost_mix &ngg) {
+  return initModel(mn, nullptr, standard_conds.pressure,
+      standard_conds.temperature, const_dyn_union{.ng_gost_components = &ngg});
+}
+
 modelGeneral *ModelsCreator::initModel(rg_model_t mn, binodalpoints *bp,
     // double p, double t, const parameters_mix &components) {
     double p, double t, const_dyn_union cdu) {

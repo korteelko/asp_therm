@@ -1,5 +1,6 @@
 #include "gas_ng_gost_init.h"
 
+#include "common.h"
 #include "gas_ng_gost_defines.h"
 #include "models_errors.h"
 
@@ -38,7 +39,8 @@ std::map<gas_t, max_valid_limits_t> mix_valid_molar =
 bool is_valid_limits(
     std::map<const gas_t, max_valid_limits_t>::const_iterator limit_it,
     double part) {
-  if (limit_it->second.min < part && limit_it->second.max > part)
+  if ((limit_it->second.min < (part + FLOAT_ACCURACY)) &&
+      ((limit_it->second.max + FLOAT_ACCURACY) > part))
     return true;
   return false;
 }
@@ -477,4 +479,12 @@ void GasParameters_NG_Gost_dyn::csetParameters(
   vpte_.pressure = p;
   vpte_.temperature = t;
   set_volume();
+}
+
+double GasParameters_NG_Gost_dyn::cCalculateVolume(double p, double t) {
+  parameters bpars = vpte_;
+  csetParameters(0.0, p, t, state_phase::GAS);
+  double v = vpte_.volume;
+  csetParameters(0.0, bpars.pressure, bpars.volume, state_phase::GAS);
+  return v;
 }
