@@ -74,11 +74,16 @@ modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
   return ModelsCreator::GetCalculatingModel(mn, gasmix_xml,
       standard_conds.pressure, standard_conds.temperature);
 }
+modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
+    const ng_gost_mix &ngg, double p, double t) {
+  return initModel(mn, nullptr, p,
+      t, const_dyn_union{.ng_gost_components = &ngg});
+}
 
 modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
     const ng_gost_mix &ngg) {
-  return initModel(mn, nullptr, standard_conds.pressure,
-      standard_conds.temperature, const_dyn_union{.ng_gost_components = &ngg});
+  return ModelsCreator::GetCalculatingModel(mn, ngg,
+      standard_conds.pressure, standard_conds.temperature);
 }
 
 modelGeneral *ModelsCreator::initModel(rg_model_t mn, binodalpoints *bp,

@@ -1,4 +1,4 @@
-#include "gas_ng_gost_init.h"
+#include "gas_ng_gost.h"
 
 #include "common.h"
 #include "gas_ng_gost_defines.h"
@@ -84,9 +84,9 @@ bool is_valid_limits(const ng_gost_mix &components) {
 GasParameters_NG_Gost_dyn::GasParameters_NG_Gost_dyn(
     parameters prs, const_parameters cgp, dyn_parameters dgp, 
     ng_gost_mix components)
-  : GasParameters(prs, cgp, dgp), error_status_(ERR_SUCCESS_T),
+  : GasParameters(prs, cgp, dgp), error_(ERR_SUCCESS_T),
     components_(components) {
-  if (error_status_ == init_kx())
+  if (init_kx())
     return;
   set_V();
   set_Q();
@@ -95,14 +95,14 @@ GasParameters_NG_Gost_dyn::GasParameters_NG_Gost_dyn(
   set_Bn();
   set_Cn();
   if (set_molar_mass()) {
-    set_error_message(ERR_INIT_T, "udefined component of natural gas");
-    error_status_ = ERR_INIT_T;
+    error_ = set_error_message(
+        ERR_INIT_T, "udefined component of natural gas");
     return;
   }
   set_p0m();
   if (init_pseudocrit_vpte()) {
-    set_error_message(ERR_INIT_T, "udefined component of natural gas");
-    error_status_ = ERR_INIT_T;
+    error_ = set_error_message(
+        ERR_INIT_T, "udefined component of natural gas");
     return;
   }
 }
@@ -137,7 +137,8 @@ void GasParameters_NG_Gost_dyn::set_V() {
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
     if (xi_ch == nullptr) {
-      set_error_message(ERR_INIT_T, "undefined component in gost model");
+      error_ = set_error_message(
+          ERR_INIT_T, "undefined component in gost model");
       return;
     }
     V += components_[i].second * pow(xi_ch->E, 2.5);
@@ -186,7 +187,8 @@ void GasParameters_NG_Gost_dyn::set_G() {
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
     if (xi_ch == nullptr) {
-      set_error_message(ERR_INIT_T, "undefined component in gost model");
+      error_ = set_error_message(
+          ERR_INIT_T, "undefined component in gost model");
       return;
     }
     G += components_[i].second * xi_ch->G;
@@ -279,7 +281,8 @@ merror_t GasParameters_NG_Gost_dyn::init_kx() {
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
     if (xi_ch == nullptr) {
-      set_error_message(ERR_INIT_T, "undefined component in gost model");
+      error_ = set_error_message(
+          ERR_INIT_T, "undefined component in gost model");
       return ERR_INIT_T;
     }
     coef_kx_ += components_[i].second * pow(xi_ch->K, 2.5);
@@ -340,20 +343,22 @@ merror_t GasParameters_NG_Gost_dyn::init_pseudocrit_vpte() {
 }
 
 double GasParameters_NG_Gost_dyn::get_Dn(size_t n) const {
-  if (n < 13)
+  if (n < 12)
     return Bn_[n] * pow(coef_kx_, -3.0);
-  else if (n >= 13 && n < 19)
+  else if (n >= 12 && n < 18)
     return Bn_[n] * pow(coef_kx_, -3.0) - Cn_[n];
   return 0.0;
 }
 
 double GasParameters_NG_Gost_dyn::get_Un(size_t n) const {
-  if (n < 13)
+  if (n < 12)
     return 0.0;
   return Cn_[n];
 }
 
 merror_t GasParameters_NG_Gost_dyn::set_volume() {
+  if (error_ = check_pt_limits(vpte_.pressure, vpte_.temperature))
+    return error_;
   double sigm = sigma_start(),
          tau = vpte_.temperature / Lt;
   double A0 = calculate_A0(sigm);
@@ -383,6 +388,12 @@ merror_t GasParameters_NG_Gost_dyn::set_volume() {
   ng_gost_params_.z = 1.0 + A0;
   // function end
   return ERR_SUCCESS_T;
+}
+
+merror_t GasParameters_NG_Gost_dyn::check_pt_limits(double p, double t) const {
+  /* ckeck pressure[0.1, 30.0]MPa, temperature[250,350]K */
+  return ((p >= 100000 && p <= 30000000 ) && (t >= 250 && t <= 350)) ?
+      ERR_SUCCESS_T : ERR_INIT_T;
 }
 
 merror_t GasParameters_NG_Gost_dyn::set_cp0r() {
@@ -425,6 +436,7 @@ double GasParameters_NG_Gost_dyn::calculate_d_sigm(double sigm) const {
 }
 
 //   dens is sigma, temp is tau
+/* check 07_11_19 */
 double GasParameters_NG_Gost_dyn::calculate_A0(double sigm) const {
   double A0 = 0.0;
   double tau = vpte_.temperature / Lt;
@@ -437,6 +449,7 @@ double GasParameters_NG_Gost_dyn::calculate_A0(double sigm) const {
   return A0;
 }
 
+/* check 07_11_19 */
 double GasParameters_NG_Gost_dyn::calculate_A1(double sigm) const {
   double A1 = 0.0;
   double tau = vpte_.temperature / Lt;
@@ -450,6 +463,7 @@ double GasParameters_NG_Gost_dyn::calculate_A1(double sigm) const {
   return A1;
 }
 
+/* check 07_11_19 */
 double GasParameters_NG_Gost_dyn::calculate_A2(double sigm) const {
   double A2 = 0.0;
   double tau = vpte_.temperature / Lt;
@@ -462,6 +476,7 @@ double GasParameters_NG_Gost_dyn::calculate_A2(double sigm) const {
   return A2;
 }
 
+/* check 07_11_19 */
 double GasParameters_NG_Gost_dyn::calculate_A3(double sigm) const {
   double A3 = 0.0;
   double tau = vpte_.temperature / Lt;

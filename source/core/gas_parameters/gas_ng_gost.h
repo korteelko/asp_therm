@@ -1,5 +1,5 @@
-#ifndef _CORE__GAS_PARAMETERS__GAS_NG_GOST_INIT_H_
-#define _CORE__GAS_PARAMETERS__GAS_NG_GOST_INIT_H_
+#ifndef _CORE__GAS_PARAMETERS__GAS_NG_GOST_H_
+#define _CORE__GAS_PARAMETERS__GAS_NG_GOST_H_
 
 #include "gas_description_static.h"
 #include "models_errors.h"
@@ -24,7 +24,7 @@ struct ng_gost_params {
 
 // const_dyn_parameters init_natural_gas(const gost_ng_components &comps);
 class GasParameters_NG_Gost_dyn : public GasParameters {
-  merror_t error_status_;
+  merror_t error_;
   ng_gost_mix components_;
   parameters pseudocrit_vpte_;
   ng_gost_params ng_gost_params_;
@@ -57,9 +57,11 @@ private:
   // init methods end
   double get_Dn(size_t n) const;
   double get_Un(size_t n) const;
-  // calculating sigma(it is volume)
   merror_t set_volume();
+  /* TODO: add accuracy  */
+  merror_t check_pt_limits(double p, double t) const;
   merror_t set_cp0r();
+  // calculating sigma(it is volume)
   double sigma_start() const;
   double calculate_d_sigm(double sigm) const;
   double calculate_A0(double sigm) const;
@@ -73,4 +75,4 @@ public:
   double cCalculateVolume(double p, double t) override;
 };
 
-#endif  // !_CORE__GAS_PARAMETERS__GAS_NG_GOST_INIT_H_
+#endif  // !_CORE__GAS_PARAMETERS__GAS_NG_GOST_H_

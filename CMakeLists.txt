@@ -71,7 +71,7 @@ set(
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_dynamic.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_static.cpp
-  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_ng_gost_init.cpp
+  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_ng_gost.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_ng_gost_defines.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gasmix_init.cpp
 

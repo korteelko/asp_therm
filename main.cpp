@@ -57,12 +57,19 @@ int test_models() {
         rg_model_t::PENG_ROBINSON, std::string(cwd) + xml_path + xml_gasmix));
 #elif defined(NG_GOST_TEST)
   ng_gost_mix ngg = ng_gost_mix {
-      ng_gost_component{GAS_TYPE_METHANE, 0.935},
-      ng_gost_component{GAS_TYPE_ETHANE, 0.044},
-      ng_gost_component{GAS_TYPE_PROPANE, 0.021}
+      ng_gost_component{GAS_TYPE_METHANE, 0.965},
+      ng_gost_component{GAS_TYPE_ETHANE, 0.018},
+      ng_gost_component{GAS_TYPE_PROPANE, 0.0045},
+      ng_gost_component{GAS_TYPE_N_BUTANE, 0.001},
+      ng_gost_component{GAS_TYPE_I_BUTANE, 0.001},
+      ng_gost_component{GAS_TYPE_N_PENTANE, 0.0005},
+      ng_gost_component{GAS_TYPE_I_PENTANE, 0.0003},
+      ng_gost_component{GAS_TYPE_HEXANE, 0.0003},
+      ng_gost_component{GAS_TYPE_NITROGEN, 0.003},
+      ng_gost_component{GAS_TYPE_CARBON_DIOXIDE, 0.006}
   };
   std::unique_ptr<modelGeneral> calc_mod(ModelsCreator::GetCalculatingModel(
-      rg_model_t::NG_GOST, ngg));
+      rg_model_t::NG_GOST, ngg, 100000, 250));
 #endif  // _TEST
   if (calc_mod == nullptr)
     return 1;

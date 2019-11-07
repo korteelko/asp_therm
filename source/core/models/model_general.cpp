@@ -3,7 +3,7 @@
 #include "common.h"
 #include "gas_description_dynamic.h"
 #include "gasmix_init.h"
-#include "gas_ng_gost_init.h"
+#include "gas_ng_gost.h"
 #include "models_math.h"
 #include "models_errors.h"
 
