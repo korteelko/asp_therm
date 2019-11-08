@@ -232,7 +232,7 @@ void GasParameters_NG_Gost_dyn::set_Bn() {
             pow(sqrt(xi_ch->F*xj_ch->F) + 1.0 - A3c.f, A3c.f) * pow(xi_ch->S*xj_ch->S + 1.0 - A3c.s, A3c.s) *
             pow(xi_ch->W*xj_ch->W + 1.0 - A3c.w, A3c.w);
         double Eij = assoc_coef->E * sqrt(xi_ch->E*xj_ch->E);
-        Bn_[i] += components_[i].second * components_[j].second * Bnij * pow(Eij, A3c.u) *
+        Bn_[n] += components_[i].second * components_[j].second * Bnij * pow(Eij, A3c.u) *
             pow(xi_ch->K * xj_ch->K, 1.5);
       }
     }
@@ -363,10 +363,10 @@ merror_t GasParameters_NG_Gost_dyn::set_volume() {
          tau = vpte_.temperature / Lt;
   double A0 = calculate_A0(sigm);
   double pi_calc = sigm * tau * (1.0 + A0),
-         pi = vpte_.pressure / coef_p0m_;
+         pi = 10e-6 * vpte_.pressure / coef_p0m_;
   int loop_max = 3000;
   while (--loop_max > 0) {
-    if ((pi_calc - pi) / pi < 10e-6)
+    if (abs(pi_calc - pi) / pi < 10e-6)
       break;
     sigm += calculate_d_sigm(sigm);
     A0 = calculate_A0(sigm);
@@ -379,7 +379,7 @@ merror_t GasParameters_NG_Gost_dyn::set_volume() {
   assert(0);
   // set error, break procedure
 #endif  // _DEBUG
-  vpte_.volume = 1.0 / (ng_molar_mass_ * pow(coef_kx_, -3.0) * sigm);
+  vpte_.volume = pow(coef_kx_, 3.0) / (ng_molar_mass_ * sigm);
   // separate function
   ng_gost_params_.A0 = A0;
   ng_gost_params_.A1 = calculate_A1(sigm);
@@ -398,7 +398,7 @@ merror_t GasParameters_NG_Gost_dyn::check_pt_limits(double p, double t) const {
 
 merror_t GasParameters_NG_Gost_dyn::set_cp0r() {
   double cp0r = 0.0;
-  double tet = 1.0 / vpte_.temperature;
+  double tet = Lt / vpte_.temperature;
   auto pow_sinh = [tet] (double C, double D) {
     return C * pow(D * tet / sinh(D * tet), 2.0);};
   auto pow_cosh = [tet] (double C, double D) {
@@ -424,13 +424,15 @@ merror_t GasParameters_NG_Gost_dyn::set_cp0r() {
   return ERR_SUCCESS_T;
 }
 
+/* check 07_11_19 */
 double GasParameters_NG_Gost_dyn::sigma_start() const {
-  return 1000.0 * vpte_.pressure * pow(coef_kx_, 3.0) / (R * vpte_.pressure);
+  return 10e-3 * vpte_.pressure * pow(coef_kx_, 3.0) / (R * vpte_.temperature);
 }
 
+/* check 07_11_19 */
 double GasParameters_NG_Gost_dyn::calculate_d_sigm(double sigm) const {
   double tau = vpte_.temperature / Lt,
-         pi  = vpte_.pressure / coef_p0m_,
+         pi  = 10e-6 * vpte_.pressure / coef_p0m_,
          d_sigm = (pi / tau - (1.0 + calculate_A0(sigm))*sigm) / (1.0 + calculate_A1(sigm));
   return d_sigm;
 }

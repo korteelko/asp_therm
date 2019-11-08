@@ -64,7 +64,7 @@ int test_models() {
       ng_gost_component{GAS_TYPE_I_BUTANE, 0.001},
       ng_gost_component{GAS_TYPE_N_PENTANE, 0.0005},
       ng_gost_component{GAS_TYPE_I_PENTANE, 0.0003},
-      ng_gost_component{GAS_TYPE_HEXANE, 0.0003},
+      ng_gost_component{GAS_TYPE_HEXANE, 0.0007},
       ng_gost_component{GAS_TYPE_NITROGEN, 0.003},
       ng_gost_component{GAS_TYPE_CARBON_DIOXIDE, 0.006}
   };
@@ -77,7 +77,7 @@ int test_models() {
   std::cerr << modelGeneral::sParametersStringHead() << std::flush;
   std::cerr << calc_mod->ParametersString() << std::flush;
   std::cerr << "Now we will set volume for p=10e6, t=314 \n" << std::flush;
-  calc_mod->SetVolume(1000000, 314);
+  calc_mod->SetVolume(5000000, 350);
   std::cerr << calc_mod->ParametersString() << std::flush;
   return 0;
 }
@@ -104,11 +104,13 @@ int test_models_mix() {
   std::unique_ptr<modelGeneral> calc_mod(ModelsCreator::GetCalculatingModel(
       rg_model_t::NG_GOST, xml_files));
 #endif  // _TEST
+  if (calc_mod == nullptr)
+    return 1;
   std::cerr << calc_mod->ConstParametersString() << std::flush;
   std::cerr << modelGeneral::sParametersStringHead() << std::flush;
   std::cerr << calc_mod->ParametersString() << std::flush;
   std::cerr << "Now we will set volume for p=10e6, t=314 \n" << std::flush;
-  calc_mod->SetVolume(1000000, 314);
+  calc_mod->SetVolume(5000000, 350);
   std::cerr << calc_mod->ParametersString() << std::flush;
   return 0;
 }
