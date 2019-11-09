@@ -1,6 +1,7 @@
 #ifndef _CORE__SUBROUTINS__GASMIX_BY_FILE_H_
 #define _CORE__SUBROUTINS__GASMIX_BY_FILE_H_
 
+#include "common.h"
 #include "gas_by_file.h"
 #include "gas_description.h"
 #include "gasmix_init.h"
@@ -18,17 +19,27 @@ class GasMixComponentsFile {
   
 private:
   XMLReader<gasmix_node> *xml_doc_;
+  /* maybe remove files_handler_ */
   std::unique_ptr<GasMixByFiles> files_handler_;
+  /* containers
+   * UPD: lol, we can recalculate gasmix_files_ by gost model */
   std::vector<gasmix_file> gasmix_files_;
+  ng_gost_mix gost_mix_;
+  /*  */
+  rg_model_t model_conf_;
   merror_t error_;
 
 private:
-  GasMixComponentsFile(XMLReader<gasmix_node> *xml_doc);
+  GasMixComponentsFile(rg_model_t mn, XMLReader<gasmix_node> *xml_doc);
   void init_components();
-  
+  void setup_gasmix_files();
+  void setup_gost_mix();
+
 public:
-  static GasMixComponentsFile *Init(const std::string &filename);
-  std::shared_ptr<parameters_mix> GetParameters();
+  static GasMixComponentsFile *Init(
+      rg_model_t mn, const std::string &filename);
+  std::shared_ptr<parameters_mix> GetMixParameters();
+  ng_gost_mix &GetGostMixParameters();
   
   ~GasMixComponentsFile();
 };
@@ -51,7 +62,7 @@ private:
 
 public:
   static GasMixByFiles *Init(const std::vector<gasmix_file> &parts);
-  std::shared_ptr<parameters_mix> GetParameters();
+  std::shared_ptr<parameters_mix> GetMixParameters();
 };
 
 #endif  // !_CORE__SUBROUTINS__GASMIX_BY_FILE_H_

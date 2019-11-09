@@ -26,7 +26,7 @@ private:
       gasmix_t *gm, double p, double t) {
     if (gm == nullptr)
       return nullptr;
-    std::shared_ptr<parameters_mix> prs_mix = gm->GetParameters();
+    std::shared_ptr<parameters_mix> prs_mix = gm->GetMixParameters();
     if (prs_mix == nullptr)
       return nullptr;
     PhaseDiagram &pd = PhaseDiagram::GetCalculated();

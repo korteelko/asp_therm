@@ -11,6 +11,7 @@
 #include <stdint.h>
 
 bool is_valid_gas(gas_t gas_name);
+gas_t gas_by_name(const std::string &name);
 
 /// Динамические параметры вещества, зависящие от
 ///   других его параметров
@@ -60,8 +61,8 @@ struct const_parameters {
                acentricfactor;
 
 private:
-  const_parameters(gas_t gas_name, double vk, double pk, double tk, double mol,
-      double R, double af);
+  const_parameters(gas_t gas_name, double vk, double pk, double tk,
+      double mol, double R, double af);
   const_parameters &operator= (const const_parameters &) = delete;
 
 public:
@@ -85,15 +86,22 @@ typedef std::pair<const_parameters, dyn_parameters>
 typedef std::multimap<const double, const_dyn_parameters> parameters_mix;
 
 /* mix by gost */
-/* vol_part is volume part */
+/// vol_part is volume part
 typedef double vol_part;
+/// pair <gas_t, (double) vol_part>
 typedef std::pair<gas_t, vol_part> ng_gost_component;
+/// vector of ng_gost_component(<gas_t, vol_part>)
 typedef std::vector<ng_gost_component> ng_gost_mix;
 
 /*
  * wrap defines
  */
-
+/**
+ implementation of input for gas( -
+ - .compononents - parameters_mix;  -
+ - .ng_gost_components - ng_gost_mix; -
+ - .cdp{.cgp, .dgp} - single const and dynamic  )
+*/
 union const_dyn_union {
   const parameters_mix *components;
   const ng_gost_mix *ng_gost_components;

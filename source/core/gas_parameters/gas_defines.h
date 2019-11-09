@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include <array>
 
+// max count of components of natural gas in xml files
+#define GASMIX_MAX_COUNT           32
+
 #define GAS_TYPE_MIX               0xFF
 
 #define GAS_TYPE_UNDEFINED         0x00
@@ -26,10 +29,13 @@
 #define GAS_TYPE_HEPTANE           0x11   // C7H16
 #define GAS_TYPE_OCTANE            0x12   // C8H18
 
-// +++ местами учитывается не определенный
-//   тип газа, а сумма нескольких
+/// +++ местами учитывается не определенный
+///   тип газа, а сумма нескольких
 #define GAS_TYPE_ALL_PENTANES      0x13
 #define GAS_TYPE_ALL_BUTANES       0x14
+
+/// gas constant(universal gas constant) 'R' [J/(K * mol)]
+#define GAS_CONSTANT               8.314459
 
 typedef uint32_t gas_t;
 

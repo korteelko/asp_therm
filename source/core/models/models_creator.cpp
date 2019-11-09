@@ -65,7 +65,7 @@ modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
 modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
     const std::string &gasmix_xml, double p, double t) {
   std::unique_ptr<GasMixComponentsFile> gm(
-      GasMixComponentsFile::Init(gasmix_xml));
+      GasMixComponentsFile::Init(mn, gasmix_xml));
   return getModel(mn, gm.get(), p, t);
 }
 

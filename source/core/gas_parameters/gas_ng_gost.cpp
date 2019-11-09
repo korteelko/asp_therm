@@ -12,7 +12,6 @@
 #include <math.h>
 
 namespace {
-const double R  = 8.31451;
 const double Lt = 1.0;
 // typedef std::pair<double, double> mix_valid_limits_t;
 struct max_valid_limits_t {
@@ -97,13 +96,10 @@ GasParameters_NG_Gost_dyn::GasParameters_NG_Gost_dyn(
   if (set_molar_mass()) {
     error_ = set_error_message(
         ERR_INIT_T, "udefined component of natural gas");
-    return;
-  }
-  set_p0m();
-  if (init_pseudocrit_vpte()) {
-    error_ = set_error_message(
-        ERR_INIT_T, "udefined component of natural gas");
-    return;
+  } else {
+    set_p0m();
+    error_ = (!init_pseudocrit_vpte()) ? set_volume() :
+        set_error_message(ERR_INIT_T, "udefined component of natural gas");
   }
 }
 
@@ -271,7 +267,7 @@ merror_t GasParameters_NG_Gost_dyn::set_molar_mass() {
 }
 
 void GasParameters_NG_Gost_dyn::set_p0m() {
-  coef_p0m_ = 0.001 * pow(coef_kx_, -3.0) * R * Lt;
+  coef_p0m_ = 0.001 * pow(coef_kx_, -3.0) * GAS_CONSTANT * Lt;
 }
 
 // calculating
@@ -312,22 +308,36 @@ merror_t GasParameters_NG_Gost_dyn::init_pseudocrit_vpte() {
   double temp = 0.0;
   double press_var = 0.0;
   double tmp_var = 0;
-  const component_characteristics *xi_ch = nullptr;
-  const component_characteristics *xj_ch = nullptr;
+  double Mi = 0.0,
+         Mj = 0.0;
+  const component_characteristics *x_ch = nullptr;
+  const A9_molar_mass *mm = nullptr;
   const critical_params *i_cp = nullptr;
   const critical_params *j_cp = nullptr;
   for (size_t i = 0; i < components_.size(); ++i) {
-    xi_ch = get_characteristics(components_[i].first);
-    i_cp = get_critical_params(components_[i].first);
-    if (i_cp == nullptr)
-      return ERR_INIT_T;
+    if ((x_ch = get_characteristics(components_[i].first))) {
+      Mi = x_ch->M;
+    } else {
+      if ((mm = get_molar_mass(components_[i].first)))
+        Mi = mm->M;
+      else
+        continue;
+    }
+    if (!(i_cp = get_critical_params(components_[i].first)))
+      continue;
     for (size_t j = 0; j < components_.size(); ++j) {
-      xj_ch = get_characteristics(components_[j].first);
-      j_cp = get_critical_params(components_[j].first);
-      if (j_cp == nullptr)
-        return ERR_INIT_T;
+      if ((x_ch = get_characteristics(components_[j].first))) {
+        Mj = x_ch->M;
+      } else {
+        if ((mm = get_molar_mass(components_[j].first)))
+          Mi = mm->M;
+        else
+          continue;
+      }
+      if (!(j_cp = get_critical_params(components_[j].first)))
+        continue;
       tmp_var = components_[i].second * components_[j].second * pow( 
-          pow(xi_ch->M / i_cp->density, 0.3333) + pow(xj_ch->M / j_cp->density, 0.3333), 3.0);
+          pow(Mi / i_cp->density, 0.333333) + pow(Mj / j_cp->density, 0.333333), 3.0);
       vol += tmp_var;
       temp += tmp_var * sqrt(i_cp->temperature * j_cp->temperature);
     }
@@ -336,9 +346,9 @@ merror_t GasParameters_NG_Gost_dyn::init_pseudocrit_vpte() {
   press_var *= 0.08;
   press_var = 0.291 - press_var;
   pseudocrit_vpte_.volume = 0.125 * vol;
-  pseudocrit_vpte_.temperature = 0.125 / pseudocrit_vpte_.volume;
-  pseudocrit_vpte_.pressure = 0.001 * R * pseudocrit_vpte_.temperature * 
-      press_var / pseudocrit_vpte_.volume;
+  pseudocrit_vpte_.temperature = 0.125 * temp / vol;
+  pseudocrit_vpte_.pressure = 10e3 * GAS_CONSTANT *
+      pseudocrit_vpte_.temperature * press_var / pseudocrit_vpte_.volume;
   return ERR_SUCCESS_T;
 }
 
@@ -357,7 +367,7 @@ double GasParameters_NG_Gost_dyn::get_Un(size_t n) const {
 }
 
 merror_t GasParameters_NG_Gost_dyn::set_volume() {
-  if (error_ = check_pt_limits(vpte_.pressure, vpte_.temperature))
+  if ((error_ = check_pt_limits(vpte_.pressure, vpte_.temperature)))
     return error_;
   double sigm = sigma_start(),
          tau = vpte_.temperature / Lt;
@@ -416,7 +426,7 @@ merror_t GasParameters_NG_Gost_dyn::set_cp0r() {
   // да, это неправильно и снова отдельная функция должна быть
   ng_gost_params_.k = (1.0 + ng_gost_params_.A1 + pow(1.0 + ng_gost_params_.A2, 2.0) /
       (ng_gost_params_.cp0r - 1.0 + ng_gost_params_.A3)) / ng_gost_params_.z;
-  ng_gost_params_.u = 1000 * R * vpte_.temperature * (
+  ng_gost_params_.u = 1000 * GAS_CONSTANT * vpte_.temperature * (
       1.0 + ng_gost_params_.A1 + pow(1.0 + ng_gost_params_.A2, 2.0) /
       (ng_gost_params_.cp0r - 1.0 + ng_gost_params_.A3)
       )/ ng_molar_mass_;
@@ -426,7 +436,8 @@ merror_t GasParameters_NG_Gost_dyn::set_cp0r() {
 
 /* check 07_11_19 */
 double GasParameters_NG_Gost_dyn::sigma_start() const {
-  return 10e-3 * vpte_.pressure * pow(coef_kx_, 3.0) / (R * vpte_.temperature);
+  return 10e-3 * vpte_.pressure * pow(coef_kx_, 3.0) /
+      (GAS_CONSTANT * vpte_.temperature);
 }
 
 /* check 07_11_19 */

@@ -30,7 +30,7 @@ public:
   virtual void getFunctor(class Redlich_Kwong2 &mg) = 0;
   virtual void getFunctor(class Peng_Robinson &mg) = 0;
   virtual void getFunctor(class NG_Gost &mg) = 0;
-  virtual ~DerivateFunctor() {}
+  virtual ~DerivateFunctor();
 };
 
 struct model_input {

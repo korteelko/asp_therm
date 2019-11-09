@@ -12,6 +12,7 @@
 #  include <iostream>
 #endif  // _DEBUG
 
+DerivateFunctor::~DerivateFunctor() {}
 
 modelGeneral::modelGeneral(gas_marks_t gm, binodalpoints *bp)
   : gm_(gm), parameters_(nullptr), bp_(bp) {}

@@ -69,7 +69,7 @@ int test_models() {
       ng_gost_component{GAS_TYPE_CARBON_DIOXIDE, 0.006}
   };
   std::unique_ptr<modelGeneral> calc_mod(ModelsCreator::GetCalculatingModel(
-      rg_model_t::NG_GOST, ngg, 100000, 250));
+      rg_model_t::NG_GOST, ngg, 3000000, 350));
 #endif  // _TEST
   if (calc_mod == nullptr)
     return 1;
@@ -77,7 +77,7 @@ int test_models() {
   std::cerr << modelGeneral::sParametersStringHead() << std::flush;
   std::cerr << calc_mod->ParametersString() << std::flush;
   std::cerr << "Now we will set volume for p=10e6, t=314 \n" << std::flush;
-  calc_mod->SetVolume(5000000, 350);
+  calc_mod->SetVolume(3000000, 300);
   std::cerr << calc_mod->ParametersString() << std::flush;
   return 0;
 }

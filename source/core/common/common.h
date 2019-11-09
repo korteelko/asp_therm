@@ -28,15 +28,14 @@
 // ГОСТ 30319.3-2015
 #define GAS_NG_GOST_MARK      0x00000400
 
-
 //  math defines
 #define FLOAT_ACCURACY        0.00001
 #define DOUBLE_ACCURACY       0.000000001
 
-typedef uint32_t gas_marks_t;
-typedef uint32_t MODEL_MARKS;
+typedef uint64_t gas_marks_t;
+typedef uint64_t MODEL_MARKS;
 
-enum class rg_model_t : uint32_t {
+enum class rg_model_t : uint64_t {
   IDEAL_GAS = MODEL_IDEAL_GAS,
   REDLICH_KWONG2 = MODEL_REDLICH_KWONG,
   PENG_ROBINSON = MODEL_PENG_ROBINSON,

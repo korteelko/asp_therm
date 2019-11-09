@@ -3,13 +3,52 @@
 #include "models_errors.h"
 #include "models_math.h"
 
+#include <map>
+
+
+static std::map<std::string, gas_t> gas_names =
+    std::map<std::string, gas_t> {
+  {"methane", GAS_TYPE_METHANE},
+  {"ethane", GAS_TYPE_ETHANE},
+  {"propane", GAS_TYPE_PROPANE},
+  {"hydrogen_sulfide", GAS_TYPE_HYDROGEN_SULFIDE},
+  {"hexane", GAS_TYPE_HEXANE},
+  {"nitrogen", GAS_TYPE_NITROGEN},
+  {"carbon_dioxide", GAS_TYPE_CARBON_DIOXIDE},
+  {"helium", GAS_TYPE_HELIUM},
+  {"hydrogen", GAS_TYPE_HYDROGEN},
+  {"n_butane", GAS_TYPE_N_BUTANE},
+  {"i_butane", GAS_TYPE_I_BUTANE},
+  {"n_pentane", GAS_TYPE_N_PENTANE},
+  {"i_pentane", GAS_TYPE_I_PENTANE},
+  {"oxygen", GAS_TYPE_OXYGEN},
+  {"argon", GAS_TYPE_ARGON},
+  {"heptane", GAS_TYPE_HEPTANE},
+  {"octane", GAS_TYPE_OCTANE}
+};
+
 static gas_t valid_gases[] = {
-  GAS_TYPE_UNDEFINED,
   GAS_TYPE_METHANE,
   GAS_TYPE_ETHANE,
   GAS_TYPE_PROPANE,
+  GAS_TYPE_HYDROGEN_SULFIDE,
+  GAS_TYPE_HEXANE,
+  GAS_TYPE_NITROGEN,
+  GAS_TYPE_CARBON_DIOXIDE,
+  GAS_TYPE_HELIUM,
+  GAS_TYPE_HYDROGEN,
+  GAS_TYPE_N_BUTANE,
+  GAS_TYPE_I_BUTANE,
+  GAS_TYPE_N_PENTANE,
+  GAS_TYPE_I_PENTANE,
+  GAS_TYPE_OXYGEN,
+  GAS_TYPE_ARGON,
+  GAS_TYPE_HEPTANE,
+  GAS_TYPE_OCTANE,
+
+  GAS_TYPE_UNDEFINED,
   GAS_TYPE_MIX
-}; 
+};
 
 bool is_valid_gas(gas_t gas_name) {
   size_t valid_gases_count = sizeof(valid_gases) / sizeof(*valid_gases);
@@ -18,6 +57,13 @@ bool is_valid_gas(gas_t gas_name) {
       return true;
   return false;
 }
+
+gas_t gas_by_name(const std::string &name) {
+  return (gas_names.find(name) != gas_names.end()) ?
+      gas_names[name] : GAS_TYPE_UNDEFINED;
+}
+
+
 // dyn_parameters
 dyn_parameters::dyn_parameters(double cv, double cp, double 
     int_eng, parameters pm)
@@ -50,19 +96,15 @@ const_parameters::const_parameters(gas_t gas_name, double vk, double pk,
 const_parameters *const_parameters::Init(gas_t gas_name,
     double vk, double pk, double tk, double mol, double af) {
   bool correct_input = is_above0(vk, pk, tk, mol, af);
-  if (!correct_input) {
-    set_error_message(ERR_INIT_T,
-        "const_parameters values are lower then 0.0");
-    return nullptr;
+  if (correct_input) {
+    if (is_valid_gas(gas_name))
+      return new const_parameters(
+         gas_name, vk, pk, tk, mol, 1000.0 * GAS_CONSTANT / mol, af);
+    set_error_message(ERR_INIT_T, "const_parameters: invalid gas_name");
+  } else {
+    set_error_message(ERR_INIT_T, "const_parameters: input pars < 0");
   }
-  correct_input = is_valid_gas(gas_name);
-  if (!correct_input) {
-    set_error_message(ERR_INIT_T, "const_parameters invalid gas_name");
-    return nullptr;
-  }
-  // 8314.4599 - универсальная газовая постоянная
-  double tempR = 8314.4599 / mol;
-  return new const_parameters(gas_name, vk, pk, tk, mol, tempR, af);
+  return nullptr;
 }
 
 const_parameters::const_parameters(const const_parameters &cgp) 
@@ -72,19 +114,15 @@ const_parameters::const_parameters(const const_parameters &cgp)
 
 bool is_valid_cgp(const const_parameters &cgp) {
   if (!is_above0(cgp.acentricfactor, cgp.molecularmass,
-      cgp.P_K, cgp.R, cgp.T_K, cgp.V_K)) {
-    set_error_code(ERR_INIT_T | ERR_INIT_ZERO_ST);
+      cgp.P_K, cgp.R, cgp.T_K, cgp.V_K))
     return false;
-  }
   return is_valid_gas(cgp.gas_name) ? true : false;
 }
 
 bool is_valid_dgp(const dyn_parameters &dgp) {
   if (!is_above0(dgp.heat_cap_pres, dgp.beta_kr,
-      dgp.heat_cap_vol, dgp.internal_energy)) {
-    set_error_code(ERR_INIT_T | ERR_INIT_ZERO_ST);
+      dgp.heat_cap_vol, dgp.internal_energy))
     return false;
-  }
   return true;
 }
 
