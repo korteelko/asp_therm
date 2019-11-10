@@ -4,6 +4,7 @@
 #include "models_math.h"
 
 #include <algorithm>
+#include <exception>
 #include <map>
 
 #include <assert.h>
@@ -43,7 +44,16 @@ double get_val(std::vector<std::string> &vec, const std::string &valname,
   std::string tmp_str = "";
   vec[XML_PATHLEN_SUBGROUP] = valname;
   xml_doc->GetValueByPath(vec, &tmp_str);
-  return std::stod(tmp_str);
+  double ans;
+  try {
+    ans = std::stod(tmp_str);
+  } catch (std::invalid_argument &) {
+    ans = 0.0;
+  } catch (std::out_of_range &) {
+    set_error_message(ERR_INIT_T, "xml argument out of range!");
+    ans = -1.0;
+  }
+  return ans;
 }
 }  // unnamed namespace
 

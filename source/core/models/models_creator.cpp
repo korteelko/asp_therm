@@ -31,11 +31,7 @@ merror_t ModelsCreator::error_ = ERR_SUCCESS_T;
 model_input ModelsCreator::set_input(rg_model_t mn, binodalpoints *bp,
     double p, double t, const parameters_mix &mix_components) {
   gas_marks_t gm = 0x00;
-  // assert(0 && "GAS_MIX_MARK убрать для однокомпонентной хрени");
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
-//  if (mix_components.size() > 1)
-//    gm |= GAS_MIX_MARK;
-  // cd cd_{&mix_components};
   model_input &&mi = {gm, bp, {p, t,
       const_dyn_union{.components = &mix_components}}};
   return std::move(mi);

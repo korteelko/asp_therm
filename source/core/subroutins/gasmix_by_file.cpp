@@ -58,12 +58,10 @@ GasMixComponentsFile::GasMixComponentsFile(rg_model_t mn,
 
 void GasMixComponentsFile::init_components() {
   gasmix_files_.clear();
-  gost_mix_.clear();
   char buf[constint_64] = {0};
   std::string gasname;
-  std::string part_str="";
+  std::string part_str = "";
   double part = 0.0;
-  gas_t gost_mix_component;
   std::vector<std::string> xml_path(2);
   for (int i = 0; i < GASMIX_MAX_COUNT; ++i) {
     gasname = "";
@@ -78,19 +76,10 @@ void GasMixComponentsFile::init_components() {
     if (error_)
       break;
     part = std::stod(part_str);
-    if (model_conf_ == rg_model_t::NG_GOST) {
-      gost_mix_component = gas_by_name(gasname);
-      if (gost_mix_component != GAS_TYPE_UNDEFINED)
-        gost_mix_.emplace_back(ng_gost_component{gost_mix_component, part});
-    } else {
-      gasmix_files_.emplace_back(gasmix_file(gasname, part));
-    }
+    gasmix_files_.emplace_back(gasmix_file(gasname, part));
   }
   error_ = ERR_SUCCESS_T;
-  if (model_conf_ == rg_model_t::NG_GOST)
-    setup_gost_mix();
-  else
-    setup_gasmix_files();
+  setup_gasmix_files();
 }
 
 void GasMixComponentsFile::setup_gasmix_files() {
@@ -107,13 +96,6 @@ void GasMixComponentsFile::setup_gasmix_files() {
   }
 }
 
-void GasMixComponentsFile::setup_gost_mix() {
-  for (auto &x : gost_mix_)
-    x.second /= 100.0;
-  if (gost_mix_.empty())
-    error_ = set_error_message(ERR_FILEIO_T | ERR_FILE_IN_ST,
-        "gasmix input file is empty or broken\n");
-}
 
 GasMixComponentsFile *GasMixComponentsFile::Init(
     rg_model_t mn, const std::string &filename) {
@@ -131,18 +113,9 @@ std::shared_ptr<parameters_mix> GasMixComponentsFile::GetMixParameters() {
   return params_p;
 }
  
-ng_gost_mix &GasMixComponentsFile::GetGostMixParameters() {
-  /* if model isn't GOST, try to get it) */
-  if (model_conf_ != rg_model_t::NG_GOST) {
-    if (gost_mix_.empty() && !gasmix_files_.empty()) {
-      gas_t component;
-      for (const auto &x : gasmix_files_)
-        if ((component = gas_by_name(gasname_by_path(x.filename)))
-            != GAS_TYPE_UNDEFINED)
-          gost_mix_.emplace_back(ng_gost_component{component, x.part});
-    }
-  }
-  return gost_mix_;
+std::shared_ptr<ng_gost_mix> GasMixComponentsFile::GetGostMixParameters() {
+  return (files_handler_ != nullptr) ?
+      files_handler_->GetGostMixParameters() : nullptr;
 }
 
 GasMixComponentsFile::~GasMixComponentsFile() {
@@ -160,8 +133,9 @@ GasMixByFiles *GasMixByFiles::Init(const std::vector<gasmix_file> &parts) {
 GasMixByFiles::GasMixByFiles(const std::vector<gasmix_file> &parts)
   : prs_mix_(nullptr), error_(ERR_SUCCESS_T), is_valid_(true) {
   prs_mix_ = std::unique_ptr<parameters_mix>(new parameters_mix());
+  gost_mix_ = std::unique_ptr<ng_gost_mix>(new ng_gost_mix());
   for (const auto &x : parts) {
-    auto cdp = init_pars(x.filename);
+    auto cdp = init_pars(x.part, x.filename);
     if (cdp.first == nullptr) {
       error_ = set_error_message(ERR_INIT_T, "One component of gas mix:\n");
       add_to_error_msg(x.filename.c_str());
@@ -170,6 +144,7 @@ GasMixByFiles::GasMixByFiles(const std::vector<gasmix_file> &parts)
     }
     prs_mix_->insert({x.part, {*cdp.first, *cdp.second}});
   }
+  setup_gost_mix();
 }
 
 // finished
@@ -195,11 +170,20 @@ merror_t GasMixByFiles::check_input(const std::vector<gasmix_file> &parts) {
   return err;
 }
 
+void GasMixByFiles::setup_gost_mix() {
+  for (auto &x : *gost_mix_)
+    x.second /= 100.0;
+  if (gost_mix_->empty())
+    error_ = set_error_message(ERR_FILEIO_T | ERR_FILE_IN_ST,
+        "gasmix input file is empty or broken\n");
+}
+
 std::pair<std::shared_ptr<const_parameters>, std::shared_ptr<dyn_parameters>>
-    GasMixByFiles::init_pars(const std::string &filename) {
+    GasMixByFiles::init_pars(double part, const std::string &filename) {
   std::shared_ptr<ComponentByFile> xf(ComponentByFile::Init(filename));
-  std::pair<std::shared_ptr<const_parameters>, std::shared_ptr<dyn_parameters>>
-      ret_val{nullptr, nullptr};
+  std::pair<std::shared_ptr<const_parameters>,
+      std::shared_ptr<dyn_parameters>> ret_val{nullptr, nullptr};
+  gas_t gost_mix_component;
   if (xf == nullptr) {
     error_ = set_error_message(ERR_FILEIO_T | ERR_FILE_IN_ST, "gas xml init\n");
   } else {
@@ -213,11 +197,18 @@ std::pair<std::shared_ptr<const_parameters>, std::shared_ptr<dyn_parameters>>
       ret_val = {cp, dp};
     }
   }
+  gost_mix_component = gas_by_name(gasname_by_path(filename));
+  if (gost_mix_component != GAS_TYPE_UNDEFINED)
+    gost_mix_->emplace_back(ng_gost_component{gost_mix_component, part});
   return ret_val;
 }
 
 std::shared_ptr<parameters_mix> GasMixByFiles::GetMixParameters() {
   return (is_valid_) ? prs_mix_ : nullptr;
+}
+
+std::shared_ptr<ng_gost_mix> GasMixByFiles::GetGostMixParameters() {
+  return gost_mix_;
 }
 
 /*

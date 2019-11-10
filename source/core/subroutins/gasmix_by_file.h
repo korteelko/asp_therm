@@ -24,7 +24,6 @@ private:
   /* containers
    * UPD: lol, we can recalculate gasmix_files_ by gost model */
   std::vector<gasmix_file> gasmix_files_;
-  ng_gost_mix gost_mix_;
   /*  */
   rg_model_t model_conf_;
   merror_t error_;
@@ -39,7 +38,7 @@ public:
   static GasMixComponentsFile *Init(
       rg_model_t mn, const std::string &filename);
   std::shared_ptr<parameters_mix> GetMixParameters();
-  ng_gost_mix &GetGostMixParameters();
+  std::shared_ptr<ng_gost_mix> GetGostMixParameters();
   
   ~GasMixComponentsFile();
 };
@@ -51,6 +50,7 @@ class GasMixByFiles {
 
 private:
   std::shared_ptr<parameters_mix> prs_mix_;
+  std::shared_ptr<ng_gost_mix> gost_mix_;
   merror_t error_;
   bool is_valid_;
 
@@ -58,11 +58,13 @@ private:
   static merror_t check_input(const std::vector<gasmix_file> &parts);
   GasMixByFiles(const std::vector<gasmix_file> &parts);
   std::pair<std::shared_ptr<const_parameters>, std::shared_ptr<dyn_parameters>>
-      init_pars(const std::string &filename);
+      init_pars(double part, const std::string &filename);
+  void setup_gost_mix();
 
 public:
   static GasMixByFiles *Init(const std::vector<gasmix_file> &parts);
   std::shared_ptr<parameters_mix> GetMixParameters();
+  std::shared_ptr<ng_gost_mix> GetGostMixParameters();
 };
 
 #endif  // !_CORE__SUBROUTINS__GASMIX_BY_FILE_H_
