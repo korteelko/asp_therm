@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gas name="i_butane" version="1.0">
+  <section name="parameters">
+    <!-- [v]=m3/kg [p]=MPa [t]=K -->
+    <group name="constants">
+      <subgroup name="critical_point">
+        <parameter name="volume"> 0.259 </parameter>
+        <parameter name="pressure"> 3640000 </parameter>
+        <parameter name="temperature"> 408.0 </parameter>
+        <parameter name="compress_factor"> </parameter>
+      </subgroup>
+      <subgroup name="const_parameters">
+        <parameter name="molec_mass"> 58.123 </parameter>
+        <parameter name="acentric"> 0.176 </parameter>
+      </subgroup>
+    </group>
+    <group name="dynamics">
+      <subgroup name="point">
+        <parameter name="volume"> 0.36495 </parameter>        
+        <parameter name="pressure"> 10132.5 </parameter>
+        <parameter name="temperature"> 270 </parameter>
+      </subgroup>
+      <subgroup name="capacities">
+        <parameter name="heat_cap_vol"> 81.58 </parameter>
+        <parameter name="heat_cap_pres"> 91.31 </parameter>
+      </subgroup>
+      <subgroup name="potentials">
+        <parameter name="internal_energy"> </parameter>
+      </subgroup>
+    </group>
+  </section>
+  <section name="data">
+    <group name="chemestry">
+      <subgroup name="data">
+        <parameter name="formula"> C4H10 </parameter>
+        <parameter name="image_url"> !!! </parameter>
+      </subgroup>
+    </group>
+  </section>
+</gas>
+<!-- also can get from by Table 21: "Thermophysical properties of isobutane along isobars."
+  p. 136 of "Thermophysical Properties of Isobutane from 114 to
+700 K at Pressure to 70 MPa" U.S. DEPARTMENT OF COMMERCE / National Bureau of Standards.
+NBS Technical note 1051. January 1982
+
+    <group name="dynamics">
+      <subgroup name="point">
+        <parameter name="volume"> 0.36495 </parameter>        
+        <parameter name="pressure"> 10132.5 </parameter>
+        <parameter name="temperature"> 270 </parameter>
+      </subgroup>
+      <subgroup name="capacities">
+        <parameter name="heat_cap_vol"> 81.58 </parameter>
+        <parameter name="heat_cap_pres"> 91.31 </parameter>
+      </subgroup>
+    </group>
+
+-->

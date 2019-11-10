@@ -47,8 +47,7 @@ public:
   dyn_parameters cgetDynParameters() const;
   const_parameters cgetConstparameters() const;
 
-  double cgetAdiabatic()  const;
-  double cgetCV()         const;
+  double cgetCP()         const;
   double cgetBeta()       const;
 
   /** reset parameters of gas **/

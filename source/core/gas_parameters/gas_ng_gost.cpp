@@ -62,9 +62,9 @@ bool is_valid_limits(const ng_gost_mix &components) {
   for (const auto &component : components) {
     const auto limits_it = mix_valid_molar.find(component.first);
     if (limits_it == mix_valid_molar.cend()) {
-      if (component.first == GAS_TYPE_I_PENTANE || component.first == GAS_TYPE_N_PENTANE)
+      if (component.first == GAS_TYPE_ISO_PENTANE || component.first == GAS_TYPE_N_PENTANE)
         pentanes.second += component.second;
-      else if (component.first == GAS_TYPE_I_BUTANE || component.first == GAS_TYPE_N_BUTANE)
+      else if (component.first == GAS_TYPE_ISO_BUTANE || component.first == GAS_TYPE_N_BUTANE)
         butanes.second += component.second;
       else
         others.second += component.second;
@@ -114,9 +114,9 @@ GasParameters_NG_Gost_dyn *GasParameters_NG_Gost_dyn::Init(
   }
   // костыли-костылёчки
   const_parameters *cgp = const_parameters::Init(
-      GAS_TYPE_MIX, 1.0, 1.0, 1.0, 1.0, 0.1);
+      GAS_TYPE_MIX, 1.0, 1.0, 1.0, 1.0, 1.0, 0.1);
   dyn_parameters *dgp = dyn_parameters::Init(
-      1.0, 1.0, 1.0, {1.0, 1.0, 1.0});
+      DYNAMIC_SETUP_DEFAULT, 1.0, 1.0, 1.0, {1.0, 1.0, 1.0});
   if (cgp == nullptr || dgp == nullptr) {
 #ifdef _DEBUG
     assert(0);

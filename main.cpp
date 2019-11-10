@@ -61,9 +61,9 @@ int test_models() {
       ng_gost_component{GAS_TYPE_ETHANE, 0.018},
       ng_gost_component{GAS_TYPE_PROPANE, 0.0045},
       ng_gost_component{GAS_TYPE_N_BUTANE, 0.001},
-      ng_gost_component{GAS_TYPE_I_BUTANE, 0.001},
+      ng_gost_component{GAS_TYPE_ISO_BUTANE, 0.001},
       ng_gost_component{GAS_TYPE_N_PENTANE, 0.0005},
-      ng_gost_component{GAS_TYPE_I_PENTANE, 0.0003},
+      ng_gost_component{GAS_TYPE_ISO_PENTANE, 0.0003},
       ng_gost_component{GAS_TYPE_HEXANE, 0.0007},
       ng_gost_component{GAS_TYPE_NITROGEN, 0.003},
       ng_gost_component{GAS_TYPE_CARBON_DIOXIDE, 0.006}

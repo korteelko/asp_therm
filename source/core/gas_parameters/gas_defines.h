@@ -7,6 +7,7 @@
 // max count of components of natural gas in xml files
 #define GASMIX_MAX_COUNT           32
 
+typedef uint32_t gas_t;
 #define GAS_TYPE_MIX               0xFF
 
 #define GAS_TYPE_UNDEFINED         0x00
@@ -21,9 +22,9 @@
 #define GAS_TYPE_HELIUM            0x08   // He
 #define GAS_TYPE_HYDROGEN          0x09   // H2
 #define GAS_TYPE_N_BUTANE          0x0A   // C4H10
-#define GAS_TYPE_I_BUTANE          0x0B   // C4H10
+#define GAS_TYPE_ISO_BUTANE          0x0B   // C4H10
 #define GAS_TYPE_N_PENTANE         0x0C   // C5H12
-#define GAS_TYPE_I_PENTANE         0x0D   // C5H12
+#define GAS_TYPE_ISO_PENTANE         0x0D   // C5H12
 #define GAS_TYPE_OXYGEN            0x0E   // O2
 #define GAS_TYPE_ARGON             0x0F   // Ar
 #define GAS_TYPE_HEPTANE           0x11   // C7H16
@@ -37,7 +38,6 @@
 /// gas constant(universal gas constant) 'R' [J/(K * mol)]
 #define GAS_CONSTANT               8.314459
 
-typedef uint32_t gas_t;
 
 // state_phase enum || stateToString
 /// Агрегатное состояние вещества (как )
@@ -67,5 +67,23 @@ struct parameters {
           pressure,             // Pa
           temperature;          // K
 };
+
+/*
+ * dynamic
+ */
+/// setup of calculating dynamic parameters
+///   init in model creation
+typedef uint64_t dyn_setup;
+#define DYNAMIC_SETUP_MASK         0x000000FF
+#define DYNAMIC_SETUP_DEFAULT      0x00000022
+
+#define DYNAMIC_HEAT_CAP_VOL       0x00000001
+#define DYNAMIC_HEAT_CAP_PRES      0x00000002
+#define DYNAMIC_INTERNAL_ENERGY    0x00000004
+#define DYNAMIC_BETA_KR            0x00000008
+#define DYNAMIC_HERMHOLTZ          0x00000010
+#define DYNAMIC_ENTALPHY           0x00000020
+#define DYNAMIC_GIBBS              0x00000040
+#define DYNAMIC_LANDAUGRAND        0x00000080
 
 #endif  // !_CORE__GAS_PARAMETERS__GAS_DEFINES_H_

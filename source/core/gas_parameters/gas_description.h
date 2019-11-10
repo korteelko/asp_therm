@@ -13,9 +13,18 @@
 bool is_valid_gas(gas_t gas_name);
 gas_t gas_by_name(const std::string &name);
 
+inline double volume_by_compress(double p, double t, double z) {
+  return z * GAS_CONSTANT * t / p;
+}
+
+inline double compress_by_volume(double p, double t, double v) {\
+  return v *  p / (GAS_CONSTANT * t);
+}
+
 /// Динамические параметры вещества, зависящие от
 ///   других его параметров
 struct dyn_parameters {
+  dyn_setup setup;
   double heat_cap_vol,     // heat capacity for volume = const // Cv
          heat_cap_pres,    // heat capacity for pressure = const // Cp
          internal_energy,  //
@@ -28,18 +37,22 @@ struct dyn_parameters {
                            //   P.S. look dynamic_modeling*.*
 
   parameters parm;         // current parameters
+  // in future)
+  // struct therm_potentials potentials;
 
 private:
-  dyn_parameters(double cv, double cp, double int_eng, parameters pm);
+  dyn_parameters(dyn_setup setup, double cv, double cp,
+      double int_eng, parameters pm);
+  void check_setup();
 
 public:
-  static dyn_parameters *Init(double cv, double cp, double int_eng,
-      parameters pm);
+  static dyn_parameters *Init(dyn_setup setup, double cv,
+      double cp, double int_eng, parameters pm);
   void Update();
 };
 
 /* так хочется успеть сделать, но мало времени */
-struct potentials {
+struct therm_potentials {
   double  // internalenergy,
          Hermholtz_free,
          enthalpy,
@@ -56,18 +69,19 @@ struct const_parameters {
   const double V_K,              // K point parameters (critical point)
                P_K,
                T_K,
+               Z_K,
                molecularmass,
                R,                // gas constant
                acentricfactor;
 
 private:
   const_parameters(gas_t gas_name, double vk, double pk, double tk,
-      double mol, double R, double af);
+      double zk, double mol, double R, double af);
   const_parameters &operator= (const const_parameters &) = delete;
 
 public:
   static const_parameters *Init(gas_t gas_name, double vk, double pk,
-      double tk, double mol, double af);
+      double tk, double zk, double mol, double af);
   const_parameters(const const_parameters &cgp);
 };
 

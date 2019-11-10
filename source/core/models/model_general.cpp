@@ -162,16 +162,12 @@ double modelGeneral::GetTemperature() const {
   return parameters_->cgetTemperature();
 }
 
-double modelGeneral::GetCV() const {
-  return parameters_->cgetCV();
+double modelGeneral::GetCP() const {
+  return parameters_->cgetCP();
 }
 
 double modelGeneral::GetAcentric() const {
   return parameters_->cgetAcentricFactor();
-}
-
-double modelGeneral::GetAdiabatic() const {
-  return parameters_->cgetAdiabatic();
 }
 
 double modelGeneral::GetT_K() const {

@@ -7,6 +7,7 @@
         <parameter name="volume"> 0.0049 </parameter>
         <parameter name="pressure"> 4871000 </parameter>
         <parameter name="temperature"> 305.33 </parameter>
+        <parameter name="compress_factor"> </parameter>
       </subgroup>
       <subgroup name="const_parameters">
         <parameter name="molec_mass"> 30.07 </parameter>
@@ -22,8 +23,11 @@
       <subgroup name="capacities">
         <!-- cp by Wiki, cv by Mayer law -->
         <!-- http://www.peacesoftware.de/einigewerte/ethan_e.html -->
-        <parameter name="heat_cap_vol"> 1383 </parameter>
+        <parameter name="heat_cap_vol"> </parameter>
         <parameter name="heat_cap_pres"> 1670 </parameter>
+      </subgroup>
+      <subgroup name="potentials">
+        <parameter name="internal_energy"> </parameter>
       </subgroup>
     </group>
   </section>

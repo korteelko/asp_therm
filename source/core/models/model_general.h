@@ -90,8 +90,8 @@ public:
   double GetPressure() const;
   double GetTemperature() const;
   double GetAcentric() const;
-  double GetCV() const;
-  double GetAdiabatic() const;
+  double GetCP() const;
+  // double GetAdiabatic() const;  // only for ideal gas
   double GetT_K() const;
   state_phase GetState() const;
   parameters GetParametersCopy() const;

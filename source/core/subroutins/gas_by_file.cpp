@@ -10,12 +10,17 @@
 #include <string.h>
 
 // path len from section to subgroup
-#define XML_PATHLEN_SUBGROUP 3
-#define CP_PARAMETERS_COUNT  3
+//   don't touch it
+#define XML_PATHLEN_SUBGROUP   3
+#define PNT_PARAMS_COUNT       3
+#define CRIT_PNT_PARAMS_COUNT  4
 
-#define CP_VOLUME       0
-#define CP_PRESSURE     1
-#define CP_TEMPERATURE  2
+/*
+#define CP_VOLUME          0
+#define CP_PRESSURE        1
+#define CP_TEMPERATURE     2
+#define CP_COMPRESS_FACTOR 3
+*/
 
 // statndart paths
 namespace {
@@ -27,9 +32,11 @@ std::vector<std::string> dynamic_point_path {
   "parameters", "dynamics", "point"};
 std::vector<std::string> dynamic_capacities_path {
   "parameters", "dynamics", "capacities"};
+std::vector<std::string> dynamic_potentials_path {
+  "parameters", "dynamics", "potentials"};
 
-const std::string cp_names[CP_PARAMETERS_COUNT] = {
-    "volume", "pressure", "temperature"};
+const std::string point_names[CRIT_PNT_PARAMS_COUNT] = {
+    "volume", "pressure", "temperature", "compress_factor"};
 
 double get_val(std::vector<std::string> &vec, const std::string &valname,
     XMLReader<gas_node> *xml_doc) {
@@ -37,16 +44,6 @@ double get_val(std::vector<std::string> &vec, const std::string &valname,
   vec[XML_PATHLEN_SUBGROUP] = valname;
   xml_doc->GetValueByPath(vec, &tmp_str);
   return std::stod(tmp_str);
-}
-
-std::map<std::string, gas_t> gas_names = std::map<std::string, gas_t> {
-  {"methane", GAS_TYPE_METHANE},
-  {"ethane", GAS_TYPE_ETHANE},
-  {"propane", GAS_TYPE_PROPANE}
-};
-// не оч точная функция
-double get_intern_energy(double cv, double temper) {
-  return cv * temper;
 }
 }  // unnamed namespace
 
@@ -66,13 +63,13 @@ std::shared_ptr<const_parameters> ComponentByFile::GetConstParameters() {
   if (xml_doc_ == nullptr)
     return nullptr;
   // critical point parameters
-  double cp[CP_PARAMETERS_COUNT];
+  double cp[CRIT_PNT_PARAMS_COUNT];
   double mol, af;
   std::vector<std::string> tmp_vec(
     critical_point_path);
   tmp_vec.push_back("");
-  for (int i = 0; i < CP_PARAMETERS_COUNT; ++i)
-    cp[i] = get_val(tmp_vec, cp_names[i], xml_doc_);
+  for (int i = 0; i < CRIT_PNT_PARAMS_COUNT; ++i)
+    cp[i] = get_val(tmp_vec, point_names[i], xml_doc_);
   // cp[CP_PRESSURE] *= 1000000;
   // fuuuuuuuuuuuuuu
   tmp_vec[XML_PATHLEN_SUBGROUP - 1] =
@@ -81,37 +78,40 @@ std::shared_ptr<const_parameters> ComponentByFile::GetConstParameters() {
   af  = get_val(tmp_vec, "acentric", xml_doc_);
   set_gas_name();
   return std::shared_ptr<const_parameters>(const_parameters::Init(gas_name_,
-      cp[0], cp[1], cp[2], mol, af));
+      cp[0], cp[1], cp[2], cp[3], mol, af));
 }
 
 std::shared_ptr<dyn_parameters> ComponentByFile::GetDynParameters() {
   reset_error();
   if (xml_doc_ == nullptr)
     return nullptr;
-  // critical point parameters
-  double cp[CP_PARAMETERS_COUNT];
-  // heat capacities
-  double hcv, hcp;
+  // dynamic point parameters
+  double pnt[PNT_PARAMS_COUNT];
+  double hcv, hcp, int_eng;
   std::vector<std::string> tmp_vec(
     dynamic_point_path);
   tmp_vec.push_back("");
-  for (int i = 0; i < CP_PARAMETERS_COUNT; ++i)
-    cp[i] = get_val(tmp_vec, cp_names[i], xml_doc_);
-  // cp[CP_PRESSURE] *= 1000000;
-  // fuuuuuuuuuuuuuu
+  for (int i = 0; i < PNT_PARAMS_COUNT; ++i)
+    pnt[i] = get_val(tmp_vec, point_names[i], xml_doc_);
+
+  /* set calculating dynamic parameters */
+  dyn_setup ds = 0x00;
   tmp_vec[XML_PATHLEN_SUBGROUP - 1] =
       dynamic_capacities_path[XML_PATHLEN_SUBGROUP - 1];
-  hcv = get_val(tmp_vec, "heat_cap_vol", xml_doc_);
-  hcp = get_val(tmp_vec, "heat_cap_pres", xml_doc_);
+  if (is_above0(hcv = get_val(tmp_vec, "heat_cap_vol", xml_doc_)))
+    ds |= DYNAMIC_HEAT_CAP_VOL;
+  if (is_above0(hcp = get_val(tmp_vec, "heat_cap_pres", xml_doc_)))
+    ds |= DYNAMIC_HEAT_CAP_PRES;
+  tmp_vec[XML_PATHLEN_SUBGROUP - 1] =
+      dynamic_potentials_path[XML_PATHLEN_SUBGROUP - 1];
+  if (is_above0(int_eng = get_val(tmp_vec, "internal_energy", xml_doc_)))
+    ds |= DYNAMIC_INTERNAL_ENERGY;
   return std::shared_ptr<dyn_parameters>(dyn_parameters::Init(
-      hcv, hcp, get_intern_energy(hcv, cp[CP_TEMPERATURE]),
-      parameters{cp[0], cp[1], cp[2]}));
+      ds, hcv, hcp, int_eng,parameters{pnt[0], pnt[1], pnt[2]}));
 }
 
 void ComponentByFile::set_gas_name() {
-  auto x = gas_names.find(xml_doc_->GetRootName());
-  if (x != gas_names.end())
-    gas_name_ = x->second;
+  gas_name_ = gas_by_name(xml_doc_->GetRootName());
 }
 
 ComponentByFile::~ComponentByFile() {

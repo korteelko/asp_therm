@@ -61,13 +61,8 @@ double GasParameters::cgetAcentricFactor() const {
   return const_params.acentricfactor;
 }
 
-// dyn_gasparametrs fields
-double GasParameters::cgetAdiabatic() const {
-  return dyn_params_.heat_cap_pres / dyn_params_.heat_cap_vol;
-}
-
-double GasParameters::cgetCV() const {
-  return dyn_params_.heat_cap_vol;
+double GasParameters::cgetCP() const {
+  return dyn_params_.heat_cap_pres;
 }
 
 double GasParameters::cgetBeta() const {
