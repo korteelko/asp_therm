@@ -25,7 +25,7 @@
 /// propane 0.004545    4.255       369.9      44.097       ~1.13     ~1750           0.153
 
 // #define RK2_TEST
-// #define PR_TEST
+#define PR_TEST
 #define NG_GOST_TEST
 
 #ifdef _IDE_VSCODE
@@ -45,17 +45,20 @@ int test_models() {
     std::cerr << "cann't get current dir";
     return 1;
   }
-  std::string filename = std::string(cwd) + xml_path + xml_methane;
+  std::vector<std::unique_ptr<modelGeneral>> test_vec;
+  std::string filename = std::string(cwd) + xml_path + xml_gasmix;
 #if defined(RK2_TEST)
-  Redlich_Kwong2 *calc_mod = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
-      {1.42, 100000, 275}, *cp, *dp, bp);
-#elif defined(PR_TEST)
-  std::unique_ptr<modelGeneral> calc_mod(ModelsCreator::GetCalculatingModel(
-      rg_model_t::PENG_ROBINSON, filename));
-  if (calc_mod == nullptr)
-    calc_mod.reset(ModelsCreator::GetCalculatingModel(
-        rg_model_t::PENG_ROBINSON, std::string(cwd) + xml_path + xml_gasmix));
-#elif defined(NG_GOST_TEST)
+  std::unique_ptr<modelGeneral> calc_mod_rk(ModelsCreator::GetCalculatingModel(
+      rg_model_t::REDLICH_KWONG2, filename));
+  if (calc_mod_rk != nullptr)
+    test_vec.push_back(calc_mod_rk);
+#endif  // RK2_TEST
+#if defined(PR_TEST)
+  test_vec.push_back(std::unique_ptr<modelGeneral>(
+      ModelsCreator::GetCalculatingModel(rg_model_t::PENG_ROBINSON, filename,
+      3000000, 350)));
+#endif  // PR_TEST
+#if defined(NG_GOST_TEST)
   ng_gost_mix ngg = ng_gost_mix {
       ng_gost_component{GAS_TYPE_METHANE, 0.965},
       ng_gost_component{GAS_TYPE_ETHANE, 0.018},
@@ -68,17 +71,26 @@ int test_models() {
       ng_gost_component{GAS_TYPE_NITROGEN, 0.003},
       ng_gost_component{GAS_TYPE_CARBON_DIOXIDE, 0.006}
   };
-  std::unique_ptr<modelGeneral> calc_mod(ModelsCreator::GetCalculatingModel(
-      rg_model_t::NG_GOST, ngg, 3000000, 350));
-#endif  // _TEST
-  if (calc_mod == nullptr)
-    return 1;
-  std::cerr << calc_mod->ConstParametersString() << std::flush;
-  std::cerr << modelGeneral::sParametersStringHead() << std::flush;
-  std::cerr << calc_mod->ParametersString() << std::flush;
-  std::cerr << "Now we will set volume for p=10e6, t=314 \n" << std::flush;
-  calc_mod->SetVolume(3000000, 300);
-  std::cerr << calc_mod->ParametersString() << std::flush;
+  test_vec.push_back(std::unique_ptr<modelGeneral>(
+      ModelsCreator::GetCalculatingModel(rg_model_t::NG_GOST, ngg,
+      3000000, 350)));
+  test_vec.push_back(std::unique_ptr<modelGeneral>(
+      ModelsCreator::GetCalculatingModel(rg_model_t::NG_GOST, filename,
+      3000000, 350)));
+#endif  // NG_GOST_TEST
+  for (auto calc_mod = test_vec.rbegin();
+      calc_mod != test_vec.rend(); calc_mod++) {
+    if (*calc_mod == nullptr) {
+      std::cerr << "        --------------          " << std::endl;
+      continue;
+    }
+    std::cerr << (*calc_mod)->ConstParametersString() << std::flush;
+    std::cerr << modelGeneral::sParametersStringHead() << std::flush;
+    std::cerr << (*calc_mod)->ParametersString() << std::flush;
+    std::cerr << "Now we will set volume for p=30e6, t=300 \n" << std::flush;
+    (*calc_mod)->SetVolume(3000000, 300);
+    std::cerr << (*calc_mod)->ParametersString() << std::flush;
+  }
   return 0;
 }
 
@@ -88,6 +100,7 @@ int test_models_mix() {
     std::cerr << "cann't get current dir";
     return 1;
   }
+  std::vector<std::unique_ptr<modelGeneral>> test_vec;
   std::vector<gasmix_file> xml_files = std::vector<gasmix_file> {
     gasmix_file(std::string(cwd) + xml_path + xml_methane, 0.988),
     // add more (summ = 1.00)
@@ -95,23 +108,32 @@ int test_models_mix() {
     gasmix_file(std::string(cwd) + xml_path + xml_propane, 0.003)
   };
 #if defined(RK2_TEST)
-  Redlich_Kwong2 *calc_mod = Redlich_Kwong2::Init(modelName::REDLICH_KWONG2,
-      {1.42, 100000, 275}, *prs_mix, bp);
-#elif defined(PR_TEST)
-  std::unique_ptr<modelGeneral> calc_mod(ModelsCreator::GetCalculatingModel(
-      rg_model_t::PENG_ROBINSON, xml_files));
-#elif defined(NG_GOST_TEST)
-  std::unique_ptr<modelGeneral> calc_mod(ModelsCreator::GetCalculatingModel(
-      rg_model_t::NG_GOST, xml_files));
-#endif  // _TEST
-  if (calc_mod == nullptr)
-    return 1;
-  std::cerr << calc_mod->ConstParametersString() << std::flush;
-  std::cerr << modelGeneral::sParametersStringHead() << std::flush;
-  std::cerr << calc_mod->ParametersString() << std::flush;
-  std::cerr << "Now we will set volume for p=10e6, t=314 \n" << std::flush;
-  calc_mod->SetVolume(5000000, 350);
-  std::cerr << calc_mod->ParametersString() << std::flush;
+  std::unique_ptr<modelGeneral> calc_mod_rk(ModelsCreator::GetCalculatingModel(
+      rg_model_t::REDLICH_KWONG2, xml_files));
+  if (calc_mod_rk != nullptr)
+    test_vec.push_back(calc_mod_rk);
+#endif  // RK2_TEST
+#if defined(PR_TEST)
+  test_vec.push_back(std::unique_ptr<modelGeneral>(
+      ModelsCreator::GetCalculatingModel(rg_model_t::PENG_ROBINSON, xml_files)));
+#endif  // PR_TEST
+#if defined(NG_GOST_TEST)
+  test_vec.push_back(std::unique_ptr<modelGeneral>(
+      ModelsCreator::GetCalculatingModel(rg_model_t::NG_GOST, xml_files)));
+#endif  // NG_GOST_TEST
+  for (auto calc_mod = test_vec.rbegin();
+      calc_mod != test_vec.rend(); calc_mod++) {
+    if (*calc_mod == nullptr) {
+      std::cerr << "        --------------          " << std::endl;
+      continue;
+    }
+    std::cerr << (*calc_mod)->ConstParametersString() << std::flush;
+    std::cerr << modelGeneral::sParametersStringHead() << std::flush;
+    std::cerr << (*calc_mod)->ParametersString() << std::flush;
+    std::cerr << "Now we will set volume for p=10e6, t=314 \n" << std::flush;
+    (*calc_mod)->SetVolume(5000000, 350);
+    std::cerr << (*calc_mod)->ParametersString() << std::flush;
+  }
   return 0;
 }
 

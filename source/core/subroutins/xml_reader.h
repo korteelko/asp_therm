@@ -233,7 +233,7 @@ public:
           std::cerr << strnode << " --> ";
         std::cerr << "\n";
     #endif  // _DEBUG_SUBROUTINS
-        return error_ = ERR_STRING_T;
+        return error_ = XML_LAST_STRING;
       }
     }
     *outstr = tmp_gas_node->GetValue();

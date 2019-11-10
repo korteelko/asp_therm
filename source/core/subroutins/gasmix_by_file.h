@@ -59,7 +59,6 @@ private:
   GasMixByFiles(const std::vector<gasmix_file> &parts);
   std::pair<std::shared_ptr<const_parameters>, std::shared_ptr<dyn_parameters>>
       init_pars(double part, const std::string &filename);
-  void setup_gost_mix();
 
 public:
   static GasMixByFiles *Init(const std::vector<gasmix_file> &parts);

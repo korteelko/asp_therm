@@ -75,11 +75,17 @@ void GasMixComponentsFile::init_components() {
     error_ |= xml_doc_->GetValueByPath(xml_path, &part_str);
     if (error_)
       break;
-    part = std::stod(part_str);
+    try {
+      part = std::stod(part_str);
+    } catch (std::out_of_range &) {
+      error_ = set_error_code(ERR_STRING_T | ERR_STR_PARSE_ST);
+    }
     gasmix_files_.emplace_back(gasmix_file(gasname, part));
   }
-  error_ = ERR_SUCCESS_T;
-  setup_gasmix_files();
+  if (error_ == XML_LAST_STRING) {
+    error_ = ERR_SUCCESS_T;
+    setup_gasmix_files();
+  }
 }
 
 void GasMixComponentsFile::setup_gasmix_files() {
@@ -144,7 +150,6 @@ GasMixByFiles::GasMixByFiles(const std::vector<gasmix_file> &parts)
     }
     prs_mix_->insert({x.part, {*cdp.first, *cdp.second}});
   }
-  setup_gost_mix();
 }
 
 // finished
@@ -168,14 +173,6 @@ merror_t GasMixByFiles::check_input(const std::vector<gasmix_file> &parts) {
     err = set_error_message(
         ERR_CALCULATE_T | ERR_CALC_MIX_ST, "gasmix sum of part != 100%\n");
   return err;
-}
-
-void GasMixByFiles::setup_gost_mix() {
-  for (auto &x : *gost_mix_)
-    x.second /= 100.0;
-  if (gost_mix_->empty())
-    error_ = set_error_message(ERR_FILEIO_T | ERR_FILE_IN_ST,
-        "gasmix input file is empty or broken\n");
 }
 
 std::pair<std::shared_ptr<const_parameters>, std::shared_ptr<dyn_parameters>>

@@ -197,7 +197,7 @@ std::string modelGeneral::ParametersString() const {
   char str[256] = {0};
   auto prs  = parameters_->cgetParameters();
   auto dprs = parameters_->cgetDynParameters();
-  sprintf(str, "%08.2f %08.4f %08.2f %08.2f %08.2f %08.2f\n",
+  sprintf(str, "%8.2f %8.4f %8.2f %8.2f %8.2f %8.2f\n",
       prs.pressure, prs.volume, prs.temperature, dprs.heat_cap_vol,
       dprs.heat_cap_pres, dprs.internal_energy);
   return std::string(str);
