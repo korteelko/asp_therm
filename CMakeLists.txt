@@ -13,10 +13,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 # add_definitions(-DNDEBUG)
 # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
 
-if(MSVC)
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-endif()
-
 set(THERMCORE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source/core")
 
 set(THERMCORE_INCLUDES
@@ -32,24 +28,31 @@ set(OTHER_INCLUDES
 set(LIBS_DIR
     ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
-INCLUDE_DIRECTORIES(${THERMCORE_INCLUDES})
-INCLUDE_DIRECTORIES(${OTHER_INCLUDES})
+include_directories(${THERMCORE_INCLUDES})
+include_directories(${OTHER_INCLUDES})
 
-if(WIN32)
-  INCLUDE_DIRECTORIES("${OTHER_INCLUDES}/target_sys/win")
+# ????????????????????????????????????????
+# construction don't work with configuration:
+#  if(MSVC)
+#    ...
+#  elseif(UNIX)
+#    ...
+#  endif(MSVS)
+# ?????????????????????????????????????????
+if(UNIX)
+  add_definitions(-DOS_NIX)
+  include_directories("${OTHER_INCLUDES}/target_sys/_nix")
+  set(LIBS_DIR
+     ${LIBS_DIR}/_nix)
+  set(OS_TYPE NIX)
+elseif(MSVC)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS -DOS_WIN)
+  include_directories("${OTHER_INCLUDES}/target_sys/win")
   set(LIBS_DIR
      ${LIBS_DIR}/win)
 else()
-#if(LINUX)
-  INCLUDE_DIRECTORIES("${OTHER_INCLUDES}/target_sys/_nix")
-  set(LIBS_DIR
-     ${LIBS_DIR}/_nix)
-endif()
-# else()
-#  message(FATAL_ERROR "unknowing system")
-# endif()
-
-#find_package(Boost REQUIRED)
+  message(SEND_ERROR "UNDEFINED SYSTEM ${CMAKE_SYSTEM_NAME}")
+endif(UNIX)
 
 link_directories(${LIBS_DIR})
 

@@ -24,7 +24,7 @@
 /// ethane  0.004926    4.871       305.33     30.07        ~1.22     ~1750           0.089
 /// propane 0.004545    4.255       369.9      44.097       ~1.13     ~1750           0.153
 
-// #define RK2_TEST
+#define RK2_TEST
 #define PR_TEST
 #define NG_GOST_TEST
 
@@ -48,10 +48,9 @@ int test_models() {
   std::vector<std::unique_ptr<modelGeneral>> test_vec;
   std::string filename = std::string(cwd) + xml_path + xml_gasmix;
 #if defined(RK2_TEST)
-  std::unique_ptr<modelGeneral> calc_mod_rk(ModelsCreator::GetCalculatingModel(
-      rg_model_t::REDLICH_KWONG2, filename));
-  if (calc_mod_rk != nullptr)
-    test_vec.push_back(calc_mod_rk);
+  test_vec.push_back(std::unique_ptr<modelGeneral>(
+      ModelsCreator::GetCalculatingModel(rg_model_t::REDLICH_KWONG2, filename,
+      3000000, 350)));
 #endif  // RK2_TEST
 #if defined(PR_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
@@ -108,18 +107,19 @@ int test_models_mix() {
     gasmix_file(std::string(cwd) + xml_path + xml_propane, 0.003)
   };
 #if defined(RK2_TEST)
-  std::unique_ptr<modelGeneral> calc_mod_rk(ModelsCreator::GetCalculatingModel(
-      rg_model_t::REDLICH_KWONG2, xml_files));
-  if (calc_mod_rk != nullptr)
-    test_vec.push_back(calc_mod_rk);
+  test_vec.push_back(std::unique_ptr<modelGeneral>(
+      ModelsCreator::GetCalculatingModel(rg_model_t::REDLICH_KWONG2, xml_files,
+      3000000, 350)));
 #endif  // RK2_TEST
 #if defined(PR_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(rg_model_t::PENG_ROBINSON, xml_files)));
+      ModelsCreator::GetCalculatingModel(rg_model_t::PENG_ROBINSON, xml_files,
+      3000000, 350)));
 #endif  // PR_TEST
 #if defined(NG_GOST_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(rg_model_t::NG_GOST, xml_files)));
+      ModelsCreator::GetCalculatingModel(rg_model_t::NG_GOST, xml_files,
+      3000000, 350)));
 #endif  // NG_GOST_TEST
   for (auto calc_mod = test_vec.rbegin();
       calc_mod != test_vec.rend(); calc_mod++) {
@@ -130,8 +130,8 @@ int test_models_mix() {
     std::cerr << (*calc_mod)->ConstParametersString() << std::flush;
     std::cerr << modelGeneral::sParametersStringHead() << std::flush;
     std::cerr << (*calc_mod)->ParametersString() << std::flush;
-    std::cerr << "Now we will set volume for p=10e6, t=314 \n" << std::flush;
-    (*calc_mod)->SetVolume(5000000, 350);
+    std::cerr << "Now we will set volume for p=30e6, t=300 \n" << std::flush;
+    (*calc_mod)->SetVolume(3000000, 300);
     std::cerr << (*calc_mod)->ParametersString() << std::flush;
   }
   return 0;
@@ -142,6 +142,7 @@ int main() {
     std::cerr << "test_models()" << get_error_message();
     return 1;
   }
+  std::cerr << "\n\n\n" << get_error_message();
   if (test_models_mix()) {
     std::cerr << "test_models_mix()" << get_error_message();
     return 2;

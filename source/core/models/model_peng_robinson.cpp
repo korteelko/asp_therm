@@ -136,7 +136,9 @@ Peng_Robinson::Peng_Robinson(const model_input &mi)
     return;
 #endif  // BY_PSEUDO_CRITIC
   set_model_coef();
-  set_enthalpy();
+  if (parameters_->cgetDynSetup() & DYNAMIC_ENTALPHY)
+    set_enthalpy();
+  SetVolume(mi.gpi.p, mi.gpi.t);
 }
 
 Peng_Robinson *Peng_Robinson::Init(const model_input &mi) {

@@ -48,11 +48,12 @@ Redlich_Kwong2::Redlich_Kwong2(const model_input &mi)
   if (!set_gasparameters(mi.gpi, this))
     return;
   set_model_coef();
-  set_enthalpy();
+  if (parameters_->cgetDynSetup() & DYNAMIC_ENTALPHY)
+    set_enthalpy();
+  SetVolume(mi.gpi.p, mi.gpi.t);
 }
 
 Redlich_Kwong2 *Redlich_Kwong2::Init(const model_input &mi) {
-  // check const_parameters
   reset_error();
   if (check_input(mi))
     return nullptr;

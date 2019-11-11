@@ -82,6 +82,10 @@ double GasParameters::cgetTemperature() const {
   return vpte_.temperature;
 }
 
+dyn_setup GasParameters::cgetDynSetup() const {
+  return dyn_params_.setup;
+}
+
 double GasParameters::cgetIntEnergy() const {
   return dyn_params_.internal_energy;
 }

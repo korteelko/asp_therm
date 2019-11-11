@@ -32,6 +32,14 @@
 #define FLOAT_ACCURACY        0.00001
 #define DOUBLE_ACCURACY       0.000000001
 
+#if defined (OS_WIN)
+#  define PATH_SEPARATOR '\\'
+#elif defined(OS_NIX)
+#  define PATH_SEPARATOR '/'
+#else
+#  error **undef platform**
+#endif
+
 typedef uint64_t gas_marks_t;
 typedef uint64_t MODEL_MARKS;
 

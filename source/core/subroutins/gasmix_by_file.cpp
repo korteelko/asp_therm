@@ -217,5 +217,7 @@ static std::string path_by_gasname(const std::string &gasname) {
 }
 
 static std::string gasname_by_path(const std::string &path) {
-  return std::string(path.c_str() + strlen(gases_root_dir));
+  auto x = path.rfind(".xml");
+  return (x != std::string::npos) ? std::string(path.begin() +
+      path.rfind(PATH_SEPARATOR, x) + 1, path.begin() + x) : "";
 }

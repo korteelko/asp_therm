@@ -49,7 +49,7 @@ model_input ModelsCreator::set_input(rg_model_t mn, binodalpoints *bp,
 modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
     std::vector<gasmix_file> components, double p, double t) {
   std::unique_ptr<GasMixByFiles> gm(GasMixByFiles::Init(components));
-  return getModel(mn, gm.get(), p, t);
+  return (gm) ? getModel(mn, gm.get(), p, t) : nullptr;
 }
 
 modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
@@ -62,7 +62,7 @@ modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
     const std::string &gasmix_xml, double p, double t) {
   std::unique_ptr<GasMixComponentsFile> gm(
       GasMixComponentsFile::Init(mn, gasmix_xml));
-  return getModel(mn, gm.get(), p, t);
+  return (gm) ? getModel(mn, gm.get(), p, t) : nullptr;
 }
 
 modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,

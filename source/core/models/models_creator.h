@@ -24,20 +24,18 @@ private:
   template <class gasmix_t>
   static modelGeneral *getModel(rg_model_t mn,
       gasmix_t *gm, double p, double t) {
-    if (gm == nullptr)
-      return nullptr;
+    modelGeneral *model = nullptr;
     PhaseDiagram &pd = PhaseDiagram::GetCalculated();
     // for binodal available only RK2 and PR
     // todo
     rg_model_t binodal_mn = (mn == rg_model_t::PENG_ROBINSON) ?
         rg_model_t::PENG_ROBINSON : rg_model_t::REDLICH_KWONG2;
-    modelGeneral *model = nullptr;
     try {
       // if ng_gost by xml_list
       if (mn == rg_model_t::NG_GOST) {
         auto gost_mix = gm->GetGostMixParameters();
         if (!gost_mix->empty()) {
-          model = initModel(mn, NULL, p, t,
+          model = initModel(mn, nullptr, p, t,
               const_dyn_union{.ng_gost_components = gost_mix.get()});
         }
       } else {
