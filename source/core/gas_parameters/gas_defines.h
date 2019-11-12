@@ -22,9 +22,9 @@ typedef uint32_t gas_t;
 #define GAS_TYPE_HELIUM            0x08   // He
 #define GAS_TYPE_HYDROGEN          0x09   // H2
 #define GAS_TYPE_N_BUTANE          0x0A   // C4H10
-#define GAS_TYPE_ISO_BUTANE          0x0B   // C4H10
+#define GAS_TYPE_ISO_BUTANE        0x0B   // C4H10
 #define GAS_TYPE_N_PENTANE         0x0C   // C5H12
-#define GAS_TYPE_ISO_PENTANE         0x0D   // C5H12
+#define GAS_TYPE_ISO_PENTANE       0x0D   // C5H12
 #define GAS_TYPE_OXYGEN            0x0E   // O2
 #define GAS_TYPE_ARGON             0x0F   // Ar
 #define GAS_TYPE_HEPTANE           0x11   // C7H16

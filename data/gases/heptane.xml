@@ -1,0 +1,41 @@
+<!--   n-heptane    -->
+<?xml version="1.0" encoding="UTF-8"?>
+<gas name="heptane" version="1.0">
+  <section name="parameters">
+    <!-- [v]=m3/kg [p]=MPa [t]=K -->
+    <group name="constants">
+      <subgroup name="critical_point">
+        <parameter name="volume"> </parameter>
+        <parameter name="pressure"> 2770000 </parameter>
+        <parameter name="temperature"> 540.0 </parameter>
+        <parameter name="compress_factor"> 0.263 </parameter>
+      </subgroup>
+      <subgroup name="const_parameters">
+        <parameter name="molec_mass"> 100.00 </parameter>
+        <parameter name="acentric"> 0.350 </parameter>
+      </subgroup>
+    </group>
+    <group name="dynamics">
+      <subgroup name="point">
+        <parameter name="volume"> </parameter>        
+        <parameter name="pressure"> 100000 </parameter>
+        <parameter name="temperature"> 288 </parameter>
+      </subgroup>
+      <subgroup name="capacities">
+        <parameter name="heat_cap_vol"> </parameter>
+        <parameter name="heat_cap_pres"> 1650 </parameter>
+      </subgroup>
+      <subgroup name="potentials">
+        <parameter name="internal_energy"> </parameter>
+      </subgroup>
+    </group>
+  </section>
+  <section name="data">
+    <group name="chemestry">
+      <subgroup name="data">
+        <parameter name="formula"> C7H16 </parameter>
+        <parameter name="image_url"> !!! </parameter>
+      </subgroup>
+    </group>
+  </section>
+</gas>
