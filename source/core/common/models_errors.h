@@ -48,7 +48,9 @@ typedef uint64_t merror_t;
 #define ERR_INIT_ZERO_ST   0x0100
 #define ERR_INIT_NULLP_ST  0x0200
 
-// not error, but
+// info type mask
+// #define ERR_MASK_TYPE      0xf000
+// not error, but here
 #define XML_LAST_STRING    0x1000
 
 

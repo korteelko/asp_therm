@@ -68,6 +68,7 @@ set(
 # common sources
   ${THERMCORE_SOURCE_DIR}/common/models_common.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_errors.cpp
+  ${THERMCORE_SOURCE_DIR}/common/models_logging.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 
 # gas_parameters sources
