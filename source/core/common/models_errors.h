@@ -32,6 +32,7 @@ typedef uint64_t merror_t;
 // fileio errors
 #define ERR_FILE_IN_ST     0x0100
 #define ERR_FILE_OUT_ST    0x0200
+#define ERR_FILE_LOGGING   0x0300
 
 // calculate errors
 #define ERR_CALC_GAS_P_ST  0x0100
@@ -55,18 +56,18 @@ typedef uint64_t merror_t;
 
 
 // ERR_SUCCESS as default
-merror_t set_error_code(merror_t err);
+merror_t set_error_code(merror_t err_code);
 merror_t get_error_code();
 // set err_code to SUCCESS and
 //   forget setted error message
 void reset_error();
 
-// replace custom errormsg with *msg
-merror_t set_error_message(merror_t err_code, const char *msg);
-// add to custom errormsg *msg
-// TODO: replace 'add_to_err_msg' with function with variadic arg count:
-//   merror_t set_error_message(merror_t err_code, const char *msg, ...);
-void add_to_error_msg(const char *msg);
-char *get_error_message();
+/** replace custom errormsg with passed string
+      return passed to function err_code
+ */
+merror_t set_error_message(merror_t err_code,
+    const char *format, ...);
+const char *get_error_message();
+// my be 'char *get_custom_err_msg'
 
 #endif  // !_CORE__COMMON__MODELS_ERRORS_H_

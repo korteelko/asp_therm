@@ -1,9 +1,13 @@
 #include "models_errors.h"
 
+#include "models_logging.h"
+
+#include <assert.h>
+#include <stdio.h>
 #include <string.h>
 
-static merror_t model_error = ERR_SUCCESS_T;
-static char model_error_msg[ERR_MSG_MAX_LEN] = {0};
+static merror_t models_error = ERR_SUCCESS_T;
+static char models_error_msg[ERR_MSG_MAX_LEN] = {0};
 
 static const char *custom_msg[] = {
   "there are not any errors ",
@@ -17,6 +21,7 @@ static const char *custom_msg_fileio[] {
   "fileio error ",
   "input from file error ",
   "output to file error "
+  "error with logging file "
 };
 
 static const char *custom_msg_calculate[]= {
@@ -43,86 +48,76 @@ static const char *custom_msg_init[] = {
 // Установим конкретное сообщение об ошибке из
 //   приведенных выше
 // set errmessage
-static char *get_custom_err_msg() {
-  merror_t err_type     = ERR_MASK_TYPE & model_error;
-  merror_t err_concrete = ERR_MASK_SUBTYPE & model_error;
+static const char *get_custom_err_msg() {
+  merror_t err_type     = ERR_MASK_TYPE & models_error;
+  merror_t err_concrete = ERR_MASK_SUBTYPE & models_error;
   // Прицеливаемся в ногу
-  char **list_of_custom_msg = NULL;
+  const char **list_of_custom_msg = nullptr;
   switch (err_type) {
     case ERR_SUCCESS_T:
-      return (char *)custom_msg[ERR_SUCCESS_T];
+      return custom_msg[ERR_SUCCESS_T];
     case ERR_FILEIO_T:
-      list_of_custom_msg = (char **)custom_msg_fileio;
+      list_of_custom_msg = custom_msg_fileio;
       break;
     case ERR_CALCULATE_T:
-      list_of_custom_msg = (char **)custom_msg_calculate;
+      list_of_custom_msg = custom_msg_calculate;
       break;
     case ERR_STRING_T:
-      list_of_custom_msg = (char **)custom_msg_string;
+      list_of_custom_msg = custom_msg_string;
       break;
     case ERR_INIT_T:
-      list_of_custom_msg = (char **)custom_msg_init;
+      list_of_custom_msg = custom_msg_init;
       break;
     default:
       break;
   }
-  if (list_of_custom_msg != NULL)
-    return list_of_custom_msg[err_concrete];
-  return NULL;
+  return (list_of_custom_msg != nullptr) ?
+      list_of_custom_msg[err_concrete] : nullptr;
 }
 
-static void set_error_msg(const char *msg) {
-  if (!msg)
-    return;
-  if (strlen(msg) > ERR_MSG_MAX_LEN) {
-    strcpy(model_error_msg, "passed_errmsg too long. Print custom:\n  ");
-    char *custom_err_msg = get_custom_err_msg();
-    if (custom_err_msg != NULL)
-      strcat(model_error_msg, custom_err_msg);
-  } else {
-    strcpy(model_error_msg, msg);
-  }
-}
-
-
-merror_t set_error_code(merror_t err) {
-  return model_error = err;
+merror_t set_error_code(merror_t err_code) {
+  /* drop previous msg */
+  *models_error_msg = '\0';
+  Logging::Append(io_loglvl::err_logs,
+      "Error occurred! Error code: 0x%h,\nCustom err_msg:\n  %s",
+       err_code, get_custom_err_msg());
+  return models_error = err_code;
 }
 
 merror_t get_error_code() {
-  return model_error;
+  return models_error;
 }
 
 void reset_error() {
-  model_error  = ERR_SUCCESS_T;
-  *model_error_msg = '\0';
+  models_error  = ERR_SUCCESS_T;
+  *models_error_msg = '\0';
 }
 
-
-merror_t set_error_message(merror_t err_code, const char *msg) {
-  set_error_msg(msg);
-  return model_error = err_code;
+merror_t set_error_message(merror_t err_code,
+    const char *format, ...) {
+  if (!format)
+    return set_error_code(err_code);
+  memset(models_error_msg, 0, ERR_MSG_MAX_LEN);
+  va_list args;
+  va_start(args, format);
+  /* all correct, snprintf copy n-1 character,
+   *   saving last '\0' symbol */
+  snprintf(models_error_msg, ERR_MSG_MAX_LEN, format, args);
+  va_end(args);
+  Logging::Append(io_loglvl::err_logs,
+      "Error occurred! Error message:\n  %s", models_error_msg);
+  return models_error = err_code;
 }
 
-void add_to_error_msg(const char *msg) {
-  char *custom_err_msg = get_custom_err_msg();
-  if (custom_err_msg != NULL)
-    strcpy(model_error_msg, custom_err_msg);
-  if (strlen(model_error_msg) + strlen(msg) >= ERR_MSG_MAX_LEN)
-    return;
-  strcat(model_error_msg, msg);
-}
-
-char *get_error_message() {
-  if (*model_error_msg != '\0')
-    return model_error_msg;
-  char *custom_err_msg = get_custom_err_msg();
-  if (!custom_err_msg)
-    return NULL;
-  if (ERR_MASK_GAS_MIX & model_error) {
-    strcpy(model_error_msg, "gasmix: ");
-    strcat(model_error_msg, custom_err_msg);
-    return model_error_msg;
+const char *get_error_message() {
+  const char *msg_ptr = models_error_msg;
+  if (*msg_ptr == '\0') {
+    msg_ptr = get_custom_err_msg();
+    if (msg_ptr && (ERR_MASK_GAS_MIX & models_error)) {
+      strcpy(models_error_msg, "gasmix: ");
+      strcat(models_error_msg, msg_ptr);
+      msg_ptr = models_error_msg;
+    }
   }
-  return custom_err_msg;
+  return msg_ptr;
 }
