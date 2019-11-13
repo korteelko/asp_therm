@@ -1,5 +1,6 @@
 #include "phase_diagram.h"
 
+#include "models_logging.h"
 #include "models_math.h"
 
 #include <algorithm>
@@ -52,10 +53,8 @@ void PhaseDiagram::calculateBinodal(
     reset_error();
     bool has_uniq_root = CardanoMethod_HASUNIQROOT(&tempvec[0], &tempvec[4]);
     if (get_error_code() != ERR_SUCCESS_T) {
-  #ifdef _DEBUG
-      std::cerr << " for temperature index: "
-          << std::to_string(t_iter) << " Cardano method error \n";
-  #endif  // _DEBUG
+      Logging::Append(io_loglvl::debug_logs, "For temperature index: %d\n"
+          " Cardano method error(phase_diagram)", t_iter);
       bdp->t[t_iter] = -1.0;
       continue;
     }

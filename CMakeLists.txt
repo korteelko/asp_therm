@@ -8,7 +8,6 @@ project(${PROJECT_NAME})
 # debug
 add_definitions(-D_DEBUG)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-# add_definitions(-D_IDE_VSCODE)
 # release
 # add_definitions(-DNDEBUG)
 # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
@@ -44,7 +43,6 @@ if(UNIX)
   include_directories("${OTHER_INCLUDES}/target_sys/_nix")
   set(LIBS_DIR
      ${LIBS_DIR}/_nix)
-  set(OS_TYPE NIX)
 elseif(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -DOS_WIN)
   include_directories("${OTHER_INCLUDES}/target_sys/win")
@@ -59,7 +57,6 @@ link_directories(${LIBS_DIR})
 if(CMAKE_BUILD_TYPE=Release)
   link_directories(${LIBS_DIR}/release)
 else()
-  # add_definitions(-D_DEBUG)
   link_directories(${LIBS_DIR}/debug)
 endif()
 

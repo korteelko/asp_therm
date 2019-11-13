@@ -49,6 +49,8 @@ private:
   static merror_t initInstance();
 
 public:
+  /** init class with default parameters **/
+  static merror_t InitDefault();
   /** change output file, log level **/
   static merror_t ResetInstance(logging_cfg &li);
   static merror_t GetError();

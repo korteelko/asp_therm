@@ -32,7 +32,6 @@
  */
 
 namespace {
-const int32_t constint_64 = 64;
 #if defined (_DEBUG_SUBROUTINS)
 const char *gases_root_dir = "../../asp_therm/data/gases/";
 #elif defined (_RELEASE)
@@ -58,7 +57,7 @@ GasMixComponentsFile::GasMixComponentsFile(rg_model_t mn,
 
 void GasMixComponentsFile::init_components() {
   gasmix_files_.clear();
-  char buf[constint_64] = {0};
+  char buf[64] = {0};
   std::string gasname;
   std::string part_str = "";
   double part = 0.0;
@@ -66,7 +65,7 @@ void GasMixComponentsFile::init_components() {
   for (int i = 0; i < GASMIX_MAX_COUNT; ++i) {
     gasname = "";
     part = 0.0;
-    memset(buf, 0, constint_64);
+    memset(buf, 0, sizeof(buf));
     sprintf(buf, "%s%d", gasmix_component.c_str(), i+1);
     xml_path[0] = std::string(buf);
     xml_path[1] = gasmix_parameter_name;
@@ -143,8 +142,8 @@ GasMixByFiles::GasMixByFiles(const std::vector<gasmix_file> &parts)
   for (const auto &x : parts) {
     auto cdp = init_pars(x.part, x.filename);
     if (cdp.first == nullptr) {
-      error_ = set_error_message(ERR_INIT_T, "One component of gas mix:\n");
-      add_to_error_msg(x.filename.c_str());
+      error_ = set_error_message(ERR_INIT_T,
+          "One component of gas mix:\n  %s", x.filename.c_str());
       is_valid_ = false;
       break;
     }

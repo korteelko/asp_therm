@@ -1,7 +1,5 @@
 #include "xml_reader.h"
 
-#include "models_errors.h"
-
 #include <map>
 #include <type_traits>
 
@@ -23,8 +21,8 @@ gas_node::gas_node(node_type itype, std::string name)
 gas_node::gas_node(node_type itype, std::string name, std::string value)
   : gas_node_type(itype), name(name), value(value) {
 #ifdef _DEBUG_SUBROUTINS
-  std::cerr << "Create gas node: " << value <<
-      " #" << itype << " " << name << "\n";
+  Logging::Append(io_loglvl::debug_logs, "Create gasnode: %s #%d %s",
+      value, itype, name);
 #endif  // _DEBUG
   }
 
@@ -50,8 +48,8 @@ gasmix_node::gasmix_node(node_type itype, std::string name)
 gasmix_node::gasmix_node(node_type itype, std::string name, std::string value)
   : mix_node_type(itype), name(name), value(value) {
 #ifdef _DEBUG_SUBROUTINS
-  std::cerr << "Create gasmix node: " << value <<
-      " #" << itype << " " << name << "\n";
+  Logging::Append(io_loglvl::debug_logs, "Create gasmixnode: %s #%d %s",
+      value, itype, name);
 #endif
 }
 

@@ -5,10 +5,6 @@
 #include "models_errors.h"
 #include "models_math.h"
 
-#ifdef _DEBUG
-#  include <iostream>
-#endif  // _DEBUG
-
 #include <assert.h>
 
 void Redlich_Kwong2::set_model_coef() {
@@ -145,10 +141,6 @@ void Redlich_Kwong2::update_dyn_params(dyn_parameters &prev_state,
   prev_state.internal_energy += du;
   prev_state.heat_cap_vol    += dcv;
   prev_state.heat_cap_pres   = prev_state.heat_cap_vol + dif_c;
-#ifdef _DEBUG
-  std::cerr << "\nUPDATE DYN_PARAMETERS2: dcv " << dcv << " dif_c "
-      << dif_c << std::endl; 
-#endif  // _DEBUG
   prev_state.parm = new_state;
   prev_state.Update();
 }
@@ -165,10 +157,6 @@ void Redlich_Kwong2::update_dyn_params(dyn_parameters &prev_state,
   prev_state.internal_energy += du;
   prev_state.heat_cap_vol    += dcv;
   prev_state.heat_cap_pres   = prev_state.heat_cap_vol + dif_c;
-#ifdef _DEBUG
-  std::cerr << "\nUPDATE DYN_PARAMETERS: dcv " << dcv << " dif_c " 
-      << dif_c << std::endl; 
-#endif  // _DEBUG
   prev_state.parm = new_state;
   prev_state.Update();
 }

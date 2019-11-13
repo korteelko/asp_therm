@@ -43,7 +43,6 @@ state_phase modelGeneral::set_state_phase(
   // if p on the left of binodal graph  -  liquid
   int32_t iter = set_state_phasesub(p);
   if (!iter) {
-    // std::cerr << " modelGeneral: gas have too low pressure\n";
     return ((v <= parameters_->cgetV_K()) ?
         state_phase::LIQ_STEAM : state_phase::GAS);
   }
@@ -72,10 +71,6 @@ void modelGeneral::set_enthalpy() {
     SetPressure(bp_->vLeft[i], bp_->t[i]);
     bp_->hLeft.push_back(parameters_->cgetIntEnergy() +
         bp_->p[i] * bp_->vLeft[i]);
-  #ifdef _DEBUG
-//    std::cerr << "\nSET_ENTHALPY: p " << bp_.p[i] << " t " << bp_.t[i]
-//        << " v " << bp_.vLeft[i] << " h " << bp_.hLeft[i] << std::endl;
-  #endif  // _DEBUG
   }
   if (!bp_->hRigth.empty())
     bp_->hRigth.clear();
@@ -83,10 +78,6 @@ void modelGeneral::set_enthalpy() {
     SetPressure(bp_->vRigth[i], bp_->t[i]);
     bp_->hRigth.push_back(parameters_->cgetIntEnergy() +
         bp_->p[i] * bp_->vRigth[i]);
-  #ifdef _DEBUG
- //   std::cerr << "\nSET_ENTHALPY: p " << bp_.p[i] << " t " << bp_.t[i]
- //       << " v " << bp_.vRigth[i] << " h " << bp_.hRigth[i] << std::endl;
-  #endif  // _DEBUG
   }
 }
 

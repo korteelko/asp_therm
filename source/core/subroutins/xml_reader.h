@@ -2,6 +2,7 @@
 #define _CORE__SUBROUTINS__XML_READER_H_
 
 #include "models_errors.h"
+#include "models_logging.h"
 
 // pugixml library (http://pugixml.org).
 // pugixml is Copyright (C) 2006-2018 Arseny Kapoulkine.
@@ -13,10 +14,6 @@
 
 #include <stdint.h>
 #include <string.h>
-
-#ifdef _DEBUG
-#  include <iostream>
-#endif  // _DEBUG
 
 // xml_file type
 // #define GAS_COMPONENT_FILE      0
@@ -81,8 +78,8 @@ public:
         child = first_child.get();
       } else {
     #if defined (_DEBUG_SUBROUTINS)
-        std::cerr << "Search for " << name <<
-            "\n  but get " << first_child->GetName() << ", life not fair\n";
+        Logging::Append(io_loglvl::debug_logs, "Search for '%s' but get %s",
+            name, first_child->GetName());
     #endif  // _DEBUG_SUBROUTINS
         for (const auto &x : first_child->siblings)
           if (x->GetName() == name) {
@@ -204,9 +201,7 @@ public:
     XMLReader<xml_node_t> *reader = new XMLReader<xml_node_t>(gas_xml_file);
     if (reader)
       if (reader->GetError() != ERR_SUCCESS_T) {
-    #ifdef _DEBUG
-        std::cerr << get_error_message();
-    #endif  // _DEBUG
+        Logging::Append(io_loglvl::debug_logs, get_error_message());
         delete reader;
         reader = nullptr;
       }
@@ -229,9 +224,10 @@ public:
       tmp_gas_node = tmp_gas_node->search_child_by_name(x);
       if (!tmp_gas_node) {
     #if defined (_DEBUG_SUBROUTINS)
+        std::string strpath = "";
         for (const auto &strnode : xml_path)
-          std::cerr << strnode << " --> ";
-        std::cerr << "\n";
+          strpath += strnode + " --> ";
+        Logging::Append(io_loglvl::debug_logs, strpath.c_str());
     #endif  // _DEBUG_SUBROUTINS
         return error_ = XML_LAST_STRING;
       }

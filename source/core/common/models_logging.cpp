@@ -4,6 +4,7 @@
 #include <filesystem>
 
 #include <assert.h>
+#include <stdarg.h>
 #include <string.h>
 
 mlog_fostream Logging::output_;
@@ -18,6 +19,11 @@ logging_cfg Logging::li_ = {
 std::string Logging::status_msg_ = "";
 merror_t Logging::error_ = ERR_SUCCESS_T;
 bool Logging::is_aval_ = false;
+
+namespace  {
+// it's not cool remove this to new class of programm state
+merror_t definit_err = Logging::InitDefault();
+}  // namespace
 
 merror_t Logging::checkInstance() {
   // don't try call models_errors.h function
@@ -48,6 +54,7 @@ merror_t Logging::checkInstance() {
         std::filesystem::rename(
             Logging::li_.filepath, logfile_copy);
       }
+      error = ERR_SUCCESS_T;
     } else {
       error = ERR_FILEIO_T | ERR_FILE_OUT_ST;
       Logging::status_msg_ = "cannot open logging file";
@@ -86,6 +93,10 @@ merror_t Logging::initInstance() {
   return Logging::error_;
 }
 
+merror_t Logging::InitDefault() {
+  return initInstance();
+}
+
 merror_t Logging::ResetInstance(logging_cfg &li) {
   Logging::li_.loglvl = li.loglvl;
   memset(Logging::li_.filepath, 0, sizeof(Logging::li_.filepath));
@@ -122,6 +133,7 @@ void Logging::Append(const char *format, ...) {
           Logging::output_ << msg;
           if (!strrchr(msg, '\n'))
             Logging::output_.put('\n');
+          free(msg);
         }
         va_end(args);
         Logging::output_.close();
