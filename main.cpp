@@ -24,9 +24,12 @@
 /// ethane  0.004926    4.871       305.33     30.07        ~1.22     ~1750           0.089
 /// propane 0.004545    4.255       369.9      44.097       ~1.13     ~1750           0.153
 
-#define RK2_TEST
-#define PR_TEST
+// #define RK2_TEST
+// #define PR_TEST
 #define NG_GOST_TEST
+
+#define INPUT_P_T  3000000, 350
+#define NEW_PARAMS 500000, 250
 
 #ifdef _IDE_VSCODE
 const std::string xml_path = "/../asp_therm/data/gases/";
@@ -50,12 +53,12 @@ int test_models() {
 #if defined(RK2_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(rg_model_t::REDLICH_KWONG2, filename,
-      3000000, 350)));
+      INPUT_P_T)));
 #endif  // RK2_TEST
 #if defined(PR_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(rg_model_t::PENG_ROBINSON, filename,
-      3000000, 350)));
+      INPUT_P_T)));
 #endif  // PR_TEST
 #if defined(NG_GOST_TEST)
   ng_gost_mix ngg = ng_gost_mix {
@@ -72,10 +75,10 @@ int test_models() {
   };
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(rg_model_t::NG_GOST, ngg,
-      3000000, 350)));
+      INPUT_P_T)));
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(rg_model_t::NG_GOST, filename,
-      3000000, 350)));
+      INPUT_P_T)));
 #endif  // NG_GOST_TEST
   for (auto calc_mod = test_vec.rbegin();
       calc_mod != test_vec.rend(); calc_mod++) {
@@ -87,7 +90,7 @@ int test_models() {
     std::cerr << modelGeneral::sParametersStringHead() << std::flush;
     std::cerr << (*calc_mod)->ParametersString() << std::flush;
     std::cerr << "Now we will set volume for p=30e6, t=300 \n" << std::flush;
-    (*calc_mod)->SetVolume(3000000, 300);
+    (*calc_mod)->SetVolume(NEW_PARAMS);
     std::cerr << (*calc_mod)->ParametersString() << std::flush;
   }
   return 0;
@@ -109,17 +112,17 @@ int test_models_mix() {
 #if defined(RK2_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(rg_model_t::REDLICH_KWONG2, xml_files,
-      3000000, 350)));
+      INPUT_P_T)));
 #endif  // RK2_TEST
 #if defined(PR_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(rg_model_t::PENG_ROBINSON, xml_files,
-      3000000, 350)));
+      INPUT_P_T)));
 #endif  // PR_TEST
 #if defined(NG_GOST_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(rg_model_t::NG_GOST, xml_files,
-      3000000, 350)));
+      INPUT_P_T)));
 #endif  // NG_GOST_TEST
   for (auto calc_mod = test_vec.rbegin();
       calc_mod != test_vec.rend(); calc_mod++) {
@@ -130,8 +133,8 @@ int test_models_mix() {
     std::cerr << (*calc_mod)->ConstParametersString() << std::flush;
     std::cerr << modelGeneral::sParametersStringHead() << std::flush;
     std::cerr << (*calc_mod)->ParametersString() << std::flush;
-    std::cerr << "Now we will set volume for p=30e6, t=300 \n" << std::flush;
-    (*calc_mod)->SetVolume(3000000, 300);
+    std::cerr << "Now we will set new params \n" << std::flush;
+    (*calc_mod)->SetVolume(NEW_PARAMS);
     std::cerr << (*calc_mod)->ParametersString() << std::flush;
   }
   return 0;

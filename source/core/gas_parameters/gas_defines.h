@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <array>
 
+#define ISO_20765			// original of CSI gost 30319-2015
+
 // max count of components of natural gas in xml files
 #define GASMIX_MAX_COUNT           32
 
@@ -30,10 +32,18 @@ typedef uint32_t gas_t;
 #define GAS_TYPE_HEPTANE           0x11   // C7H16
 #define GAS_TYPE_OCTANE            0x12   // C8H18
 
+#ifdef ISO_20765
+#define GAS_TYPE_NONANE            0x13   // C9H20
+#define GAS_TYPE_DECANE            0x14   // C10H22
+#define GAS_TYPE_CARBON_MONOXIDE   0x15   // CO
+#define GAS_TYPE_WATER             0x16   // H2O
+#endif  // ISO_20765
+
 /// +++ местами учитывается не определенный
 ///   тип газа, а сумма нескольких
-#define GAS_TYPE_ALL_PENTANES      0x13
-#define GAS_TYPE_ALL_BUTANES       0x14
+#define GAS_TYPE_ALL_BUTANES       0xF1
+#define GAS_TYPE_ALL_PENTANES      0xF2
+#define GAS_TYPE_ALL_OTHER_ALKANES 0xF3  // OCTANE + NONANE + DECANE
 
 /// gas constant(universal gas constant) 'R' [J/(K * mol)]
 #define GAS_CONSTANT               8.314459

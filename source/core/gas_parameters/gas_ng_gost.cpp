@@ -21,10 +21,13 @@ struct max_valid_limits_t {
 /* GOST 30319.3-2015, table2, page 11 */
 std::map<gas_t, max_valid_limits_t> mix_valid_molar =
     std::map<gas_t, max_valid_limits_t> {
+#ifdef ISO_20765
+
+#endif  // ISO_20765
   {GAS_TYPE_METHANE, {0.7, 0.99999}},
   {GAS_TYPE_ETHANE,  {0.0, 0.1}},
   {GAS_TYPE_PROPANE, {0.0, 0.035}},
-  {GAS_TYPE_ALL_BUTANES,   {0.0, 0.015}},
+  {GAS_TYPE_ALL_BUTANES, {0.0, 0.015}},
   {GAS_TYPE_ALL_PENTANES, {0.0, 0.005}},
   {GAS_TYPE_HEXANE,  {0.0, 0.001}},
   {GAS_TYPE_NITROGEN, {0.0, 0.2}},
@@ -58,6 +61,7 @@ bool is_valid_limits(const ng_gost_mix &components) {
   bool is_valid = true;
   ng_gost_component butanes(GAS_TYPE_ALL_BUTANES, 0.0);
   ng_gost_component pentanes(GAS_TYPE_ALL_PENTANES, 0.0);
+  ng_gost_component other_alkanes(GAS_TYPE_ALL_OTHER_ALKANES, 0.0);
   ng_gost_component others(GAS_TYPE_UNDEFINED, 0.0);
   for (const auto &component : components) {
     const auto limits_it = mix_valid_molar.find(component.first);
@@ -66,6 +70,11 @@ bool is_valid_limits(const ng_gost_mix &components) {
         pentanes.second += component.second;
       else if (component.first == GAS_TYPE_ISO_BUTANE || component.first == GAS_TYPE_N_BUTANE)
         butanes.second += component.second;
+    #ifdef ISO_20765
+      else if (component.first == GAS_TYPE_OCTANE || component.first == GAS_TYPE_NONANE ||
+          component.first == GAS_TYPE_DECANE)
+        other_alkanes.second += component.second;
+    #endif  // ISO_20765
       else
         others.second += component.second;
       continue;
@@ -75,6 +84,9 @@ bool is_valid_limits(const ng_gost_mix &components) {
   }
   is_valid &= is_valid_limits(butanes);
   is_valid &= is_valid_limits(pentanes);
+#ifdef ISO_20765
+  is_valid &= is_valid_limits(other_alkanes);
+#endif  // ISO_20765
   is_valid &= is_valid_limits(others);
   return is_valid;
 }

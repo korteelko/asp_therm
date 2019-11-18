@@ -8,7 +8,6 @@
 struct component_characteristics {
   const gas_t gas_name;
   const double M,  // molar_mass
-               Z,  // compress_coef - для НФУ
                E,  // energy_param
                K,  // size_param
                G,  // orintation_param
@@ -45,7 +44,11 @@ struct A0_3_coef {
 
 struct A4_coef {
   const gas_t gas_name;
-  const double B,
+  const double
+  /* A1 and by ISO 20765 */
+               A1,
+               A2,
+               B,
                C,
                D,
                E,
@@ -91,11 +94,14 @@ struct A8_coef {
 };
 const A8_coef *get_A8_coefs(gas_t gas_name);
 
+#ifndef ISO_20765
 struct A9_molar_mass {
   const gas_t gas_name;
   const double M;  // molar_mass
 };
 const A9_molar_mass *get_molar_mass(gas_t gas_name);
+extern const A9_molar_mass A9_molar_masses[];
+#endif  // !ISO_20765
 
 // data
 extern const component_characteristics gases[];
@@ -107,7 +113,6 @@ extern const A6_coef A6_coefs[];
 extern const A7_coef A7_coefs[];
 extern const A8_coef A8_coefs[];
 extern const int A8_sigmas[];
-extern const A9_molar_mass A9_molar_masses[];
 
 template <class NG_COEF_T>
 const NG_COEF_T *get_coefs(const NG_COEF_T *coefs_array,
