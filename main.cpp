@@ -67,18 +67,18 @@ int test_models() {
       ng_gost_component{GAS_TYPE_PROPANE, 0.0045},
       ng_gost_component{GAS_TYPE_N_BUTANE, 0.001},
       ng_gost_component{GAS_TYPE_ISO_BUTANE, 0.001},
-      ng_gost_component{GAS_TYPE_N_PENTANE, 0.0005},
-      ng_gost_component{GAS_TYPE_ISO_PENTANE, 0.0003},
+      ng_gost_component{GAS_TYPE_N_PENTANE, 0.0003},
+      ng_gost_component{GAS_TYPE_ISO_PENTANE, 0.0005},
       ng_gost_component{GAS_TYPE_HEXANE, 0.0007},
       ng_gost_component{GAS_TYPE_NITROGEN, 0.003},
       ng_gost_component{GAS_TYPE_CARBON_DIOXIDE, 0.006}
   };
   test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(rg_model_t::NG_GOST, ngg,
-      INPUT_P_T)));
+      ModelsCreator::GetCalculatingModel(
+      rg_model_t::NG_GOST, ngg, INPUT_P_T)));
   test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(rg_model_t::NG_GOST, filename,
-      INPUT_P_T)));
+      ModelsCreator::GetCalculatingModel(
+      rg_model_t::NG_GOST, filename, INPUT_P_T)));
 #endif  // NG_GOST_TEST
   for (auto calc_mod = test_vec.rbegin();
       calc_mod != test_vec.rend(); calc_mod++) {
@@ -121,8 +121,8 @@ int test_models_mix() {
 #endif  // PR_TEST
 #if defined(NG_GOST_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(rg_model_t::NG_GOST, xml_files,
-      INPUT_P_T)));
+      ModelsCreator::GetCalculatingModel(
+      rg_model_t::NG_GOST, xml_files, INPUT_P_T)));
 #endif  // NG_GOST_TEST
   for (auto calc_mod = test_vec.rbegin();
       calc_mod != test_vec.rend(); calc_mod++) {

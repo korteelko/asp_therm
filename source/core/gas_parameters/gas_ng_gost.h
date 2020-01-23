@@ -54,10 +54,13 @@ private:
   void set_p0m();
   merror_t init_kx();
   merror_t init_pseudocrit_vpte();
+  ///  calculate default value of viscosity(mU0)
+  void set_viscosity0();
   // init methods end
   double get_Dn(size_t n) const;
   double get_Un(size_t n) const;
   merror_t set_volume();
+  void update_dynamic();
   /* TODO: add accuracy  */
   merror_t check_pt_limits(double p, double t) const;
   merror_t set_cp0r();

@@ -15,7 +15,7 @@
 DerivateFunctor::~DerivateFunctor() {}
 
 modelGeneral::modelGeneral(gas_marks_t gm, binodalpoints *bp)
-  : gm_(gm), parameters_(nullptr), bp_(bp) {}
+  : error_(ERR_SUCCESS_T), gm_(gm), parameters_(nullptr), bp_(bp) {}
 
 modelGeneral::~modelGeneral() {}
 
@@ -86,13 +86,15 @@ const GasParameters *modelGeneral::get_gasparameters() const {
   return parameters_.get();
 }
 
+/// set general struct of gas parameters.
+///   return: "true" for success;
+///           "false" for error;
 bool modelGeneral::set_gasparameters(const gas_params_input &gpi,
     modelGeneral *mg) {
   if (gm_ & GAS_NG_GOST_MARK) {
     parameters_ = std::unique_ptr<GasParameters>(
         GasParameters_NG_Gost_dyn::Init(gpi));
-  }
-  else if (gm_ & GAS_MIX_MARK) {
+  } else if (gm_ & GAS_MIX_MARK) {
     parameters_ = std::unique_ptr<GasParameters>(
         GasParameters_mix_dyn::Init(gpi, mg));
   } else {
@@ -184,25 +186,29 @@ state_log modelGeneral::GetStateLog() const {
       stateToString[(uint32_t)parameters_->cgetState()]};
 }
 
+merror_t modelGeneral::GetError() const {
+  return error_;
+}
+
 std::string modelGeneral::ParametersString() const {
   char str[256] = {0};
   auto prs  = parameters_->cgetParameters();
   auto dprs = parameters_->cgetDynParameters();
-  sprintf(str, "%8.2f %8.4f %8.2f %8.2f %8.2f %8.2f\n",
-      prs.pressure, prs.volume, prs.temperature, dprs.heat_cap_vol,
-      dprs.heat_cap_pres, dprs.internal_energy);
+  sprintf(str, "%12.1f %8.4f %8.2f %8.2f %8.2f %8.2f %8.2f\n",
+      prs.pressure, prs.volume, 1.0 / prs.volume, prs.temperature,
+      dprs.heat_cap_vol, dprs.heat_cap_pres, dprs.internal_energy);
   return std::string(str);
 }
 
 std::string modelGeneral::ConstParametersString() const {
   char str[256] = {0};
   const_parameters &cprs = parameters_->const_params;
-  sprintf(str, "  Critical pnt: p=%8.2f; v=%8.4f; t=%8.2f\n"
+  sprintf(str, "  Critical pnt: p=%12.1f; v=%8.4f; t=%8.2f\n"
       "  Others: mol_m=%6.3f R=%8.3f ac_f=%6.4f\n", cprs.P_K, cprs.V_K,
       cprs.T_K, cprs.molecularmass, cprs.R, cprs.acentricfactor);
   return std::string(str);
 }
 
 std::string modelGeneral::sParametersStringHead() {
-  return "pressure volume   temperat cv       cp       u\n";
+  return "   pressure    volume   density  temperat   cv       cp       u\n";
 }

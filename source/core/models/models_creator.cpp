@@ -85,20 +85,29 @@ modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
 modelGeneral *ModelsCreator::initModel(rg_model_t mn, binodalpoints *bp,
     // double p, double t, const parameters_mix &components) {
     double p, double t, const_dyn_union cdu) {
+  modelGeneral *mg = nullptr;
   switch (mn) {
     case rg_model_t::IDEAL_GAS:
-      return Ideal_Gas::Init(set_input(mn, bp, p, t, *cdu.components));
+      mg = Ideal_Gas::Init(set_input(mn, bp, p, t, *cdu.components));
+      break;
     case rg_model_t::REDLICH_KWONG2:
-      return Redlich_Kwong2::Init(set_input(mn, bp, p, t, *cdu.components));
+      mg = Redlich_Kwong2::Init(set_input(mn, bp, p, t, *cdu.components));
+      break;
     case rg_model_t::PENG_ROBINSON:
-      return Peng_Robinson::Init(set_input(mn, bp, p, t, *cdu.components));
+      mg = Peng_Robinson::Init(set_input(mn, bp, p, t, *cdu.components));
+      break;
     case rg_model_t::NG_GOST:
-      return NG_Gost::Init(set_input(mn, bp, p, t, *cdu.ng_gost_components));
+      mg = NG_Gost::Init(set_input(mn, bp, p, t, *cdu.ng_gost_components));
+      break;
   }
   if (ModelsCreator::error_ != ERR_SUCCESS_T )
      ModelsCreator::error_ = set_error_message(ERR_INIT_T,
-     "undefined calculation model in modelCreator");
-  return nullptr;
+         "undefined calculation model in modelCreator");
+  if (mg->GetError()) {
+    delete mg;
+    mg = nullptr;
+  }
+  return mg;
 }
 /*
 modelGeneral *Ideal_gas_equation::GetCalculatingModel(

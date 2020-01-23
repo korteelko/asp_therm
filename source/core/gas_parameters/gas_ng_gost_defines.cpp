@@ -1,5 +1,8 @@
 #include "gas_ng_gost_defines.h"
 
+#include "common.h"
+#include "gas_defines.h"
+
 #include <stdint.h>
 
 #define GET_ARRAY_SIZE(M) (sizeof(M) / sizeof(M[0]))
@@ -264,9 +267,9 @@ const critical_params A5_critical_params[] = {
   {GAS_TYPE_METHANE,       190.564, 162.66, 0.064294},
   {GAS_TYPE_ETHANE,        305.320, 206.58, 0.109580},
   {GAS_TYPE_PROPANE,       369.825, 220.49, 0.184260},
-  {GAS_TYPE_ISO_BUTANE,      407.850, 224.36, 0.161570},
+  {GAS_TYPE_ISO_BUTANE,    407.850, 224.36, 0.161570},
   {GAS_TYPE_N_BUTANE,      425.160, 227.85, 0.213400},
-  {GAS_TYPE_ISO_PENTANE,     460.390, 236.00, 0.261960},
+  {GAS_TYPE_ISO_PENTANE,   460.390, 236.00, 0.261960},
   {GAS_TYPE_N_PENTANE,     469.650, 232.00, 0.295560},
   {GAS_TYPE_HEXANE,        507.850, 233.60, 0.299650},
   {GAS_TYPE_NITROGEN,      126.200, 313.10, 0.013592},

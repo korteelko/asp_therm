@@ -3,6 +3,7 @@
 #include "common.h"
 #include "gas_ng_gost_defines.h"
 #include "models_errors.h"
+#include "models_logging.h"
 
 #include <array>
 #include <functional>
@@ -21,14 +22,14 @@ struct max_valid_limits_t {
 /* GOST 30319.3-2015, table2, page 11 */
 std::map<gas_t, max_valid_limits_t> mix_valid_molar =
     std::map<gas_t, max_valid_limits_t> {
-#ifdef ISO_20765
-
-#endif  // ISO_20765
   {GAS_TYPE_METHANE, {0.7, 0.99999}},
   {GAS_TYPE_ETHANE,  {0.0, 0.1}},
   {GAS_TYPE_PROPANE, {0.0, 0.035}},
   {GAS_TYPE_ALL_BUTANES, {0.0, 0.015}},
   {GAS_TYPE_ALL_PENTANES, {0.0, 0.005}},
+#ifdef ISO_20765
+  {GAS_TYPE_ALL_OTHER_ALKANES, {0.0, 0.0005}},
+#endif  // ISO_20765
   {GAS_TYPE_HEXANE,  {0.0, 0.001}},
   {GAS_TYPE_NITROGEN, {0.0, 0.2}},
   {GAS_TYPE_CARBON_DIOXIDE, {0.0, 0.2}},
@@ -61,7 +62,9 @@ bool is_valid_limits(const ng_gost_mix &components) {
   bool is_valid = true;
   ng_gost_component butanes(GAS_TYPE_ALL_BUTANES, 0.0);
   ng_gost_component pentanes(GAS_TYPE_ALL_PENTANES, 0.0);
+#ifdef ISO_20765
   ng_gost_component other_alkanes(GAS_TYPE_ALL_OTHER_ALKANES, 0.0);
+#endif  // ISO_20765
   ng_gost_component others(GAS_TYPE_UNDEFINED, 0.0);
   for (const auto &component : components) {
     const auto limits_it = mix_valid_molar.find(component.first);
@@ -110,8 +113,12 @@ GasParameters_NG_Gost_dyn::GasParameters_NG_Gost_dyn(
         ERR_INIT_T, "udefined component of natural gas");
   } else {
     set_p0m();
-    error_ = (!init_pseudocrit_vpte()) ? set_volume() :
-        set_error_message(ERR_INIT_T, "udefined component of natural gas");
+    if (!(error_ = set_cp0r())) {
+      error_ = (!init_pseudocrit_vpte()) ? set_volume() :
+          set_error_message(ERR_INIT_T, "undefined component of natural gas\n");
+    } else {
+      set_error_message(ERR_INIT_T, "set_cp0r for natural gas model\n");
+    }
   }
 }
 
@@ -122,6 +129,8 @@ GasParameters_NG_Gost_dyn *GasParameters_NG_Gost_dyn::Init(
     return nullptr;
   }
   if (!is_valid_limits(*gpi.const_dyn.ng_gost_components)) {
+    set_error_message(ERR_INIT_T | ERR_GAS_MIX,
+        "natural gas model init error:\n components limits check fail\n");
     return nullptr;
   }
   // костыли-костылёчки
@@ -254,25 +263,20 @@ void GasParameters_NG_Gost_dyn::set_Cn() {
   Cn_.assign(n_max, 0.0);
   for (size_t n = 0; n < n_max; ++n) {
     const A0_3_coef &A3c = A0_3_coefs[n];
-    Cn_[n] = pow(coef_G_ +1.0 - A3c.g, A3c.g) * pow(coef_Q_ * coef_Q_  + 1.0 - A3c.q, A3c.q) *
-        pow(coef_F_ + 1.0 - A3c.f, A3c.f) * pow(coef_V_, A3c.u);
+    Cn_[n] = pow(coef_G_ +1.0 - A3c.g, A3c.g) * pow(coef_Q_ * coef_Q_  + 1.0 -
+        A3c.q, A3c.q) * pow(coef_F_ + 1.0 - A3c.f, A3c.f) * pow(coef_V_, A3c.u);
   }
 }
 
 merror_t GasParameters_NG_Gost_dyn::set_molar_mass() {
   ng_molar_mass_ = 0.0;
   const component_characteristics *xi_ch = nullptr;
-  const A9_molar_mass *m_mas = nullptr;
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
     if (xi_ch != nullptr) {
       ng_molar_mass_ += components_[i].second * xi_ch->M;
     } else {
-      m_mas = get_molar_mass(components_[i].first);
-      if (m_mas != nullptr)
-        ng_molar_mass_ += components_[i].second * xi_ch->M;
-      else
-        return ERR_INIT_T;
+      return ERR_INIT_T;
     }
   }
   return ERR_SUCCESS_T;
@@ -323,17 +327,15 @@ merror_t GasParameters_NG_Gost_dyn::init_pseudocrit_vpte() {
   double Mi = 0.0,
          Mj = 0.0;
   const component_characteristics *x_ch = nullptr;
-  const A9_molar_mass *mm = nullptr;
   const critical_params *i_cp = nullptr;
   const critical_params *j_cp = nullptr;
   for (size_t i = 0; i < components_.size(); ++i) {
     if ((x_ch = get_characteristics(components_[i].first))) {
       Mi = x_ch->M;
     } else {
-      if ((mm = get_molar_mass(components_[i].first)))
-        Mi = mm->M;
-      else
-        continue;
+      Logging::Append("init pseudocritic by gost model\n"
+          "  undefined component: #%d", components_[i].first);
+      continue;
     }
     if (!(i_cp = get_critical_params(components_[i].first)))
       continue;
@@ -341,10 +343,9 @@ merror_t GasParameters_NG_Gost_dyn::init_pseudocrit_vpte() {
       if ((x_ch = get_characteristics(components_[j].first))) {
         Mj = x_ch->M;
       } else {
-        if ((mm = get_molar_mass(components_[j].first)))
-          Mi = mm->M;
-        else
-          continue;
+        Logging::Append("init pseudocritic by gost model\n"
+            "  undefined component: #%d", components_[j].first);
+        continue;
       }
       if (!(j_cp = get_critical_params(components_[j].first)))
         continue;
@@ -362,6 +363,18 @@ merror_t GasParameters_NG_Gost_dyn::init_pseudocrit_vpte() {
   pseudocrit_vpte_.pressure = 10e3 * GAS_CONSTANT *
       pseudocrit_vpte_.temperature * press_var / pseudocrit_vpte_.volume;
   return ERR_SUCCESS_T;
+}
+
+void GasParameters_NG_Gost_dyn::set_viscosity0() {
+  double mui = 0.0;
+  const A6_coef *coef = nullptr;
+  for (auto x : components_) {
+    coef = get_A6_coefs(x.first);
+    mui = 0.0;
+    for (int k = 0; k < 4; ++k)
+      mui += coef->k0 * pow(vpte_.temperature / 100.0, k);
+  }
+  assert(0);
 }
 
 double GasParameters_NG_Gost_dyn::get_Dn(size_t n) const {
@@ -408,8 +421,19 @@ merror_t GasParameters_NG_Gost_dyn::set_volume() {
   ng_gost_params_.A2 = calculate_A2(sigm);
   ng_gost_params_.A3 = calculate_A3(sigm);
   ng_gost_params_.z = 1.0 + A0;
+  update_dynamic();
   // function end
   return ERR_SUCCESS_T;
+}
+
+void GasParameters_NG_Gost_dyn::update_dynamic() {
+  auto t = 1.0 + ng_gost_params_.A1 + std::pow(1.0 + ng_gost_params_.A2, 2.0) /
+      (ng_gost_params_.cp0r - 1.0 + ng_gost_params_.A3);
+  ng_gost_params_.k = t / ng_gost_params_.z;
+  ng_gost_params_.u = sqrt(1000 * t * GAS_CONSTANT *
+      vpte_.temperature / ng_molar_mass_);
+
+  assert(0);
 }
 
 merror_t GasParameters_NG_Gost_dyn::check_pt_limits(double p, double t) const {
@@ -426,23 +450,20 @@ merror_t GasParameters_NG_Gost_dyn::set_cp0r() {
   auto pow_cosh = [tet] (double C, double D) {
     return C * pow(D * tet / cosh(D * tet), 2.0);};
   const A4_coef *cp_coefs = nullptr;
+  const component_characteristics *x_ch = nullptr;
   for (size_t i = 0; i < components_.size(); ++i) {
     cp_coefs = get_A4_coefs(components_[i].first);
+    x_ch = get_characteristics(components_[i].first);
     if (cp_coefs == nullptr)
       return ERR_INIT_T;
     cp0r += components_[i].second * (cp_coefs->B + pow_sinh(cp_coefs->C, cp_coefs->D) +
         pow_cosh(cp_coefs->E, cp_coefs->F) + pow_sinh(cp_coefs->G, cp_coefs->H) + 
-        pow_cosh(cp_coefs->I, cp_coefs->J));
+        pow_cosh(cp_coefs->I, cp_coefs->J))  // ; // by Annex B of ISO 20765
+        / GAS_CONSTANT * x_ch->M;
   }
   ng_gost_params_.cp0r = cp0r;
   // да, это неправильно и снова отдельная функция должна быть
-  ng_gost_params_.k = (1.0 + ng_gost_params_.A1 + pow(1.0 + ng_gost_params_.A2, 2.0) /
-      (ng_gost_params_.cp0r - 1.0 + ng_gost_params_.A3)) / ng_gost_params_.z;
-  ng_gost_params_.u = 1000 * GAS_CONSTANT * vpte_.temperature * (
-      1.0 + ng_gost_params_.A1 + pow(1.0 + ng_gost_params_.A2, 2.0) /
-      (ng_gost_params_.cp0r - 1.0 + ng_gost_params_.A3)
-      )/ ng_molar_mass_;
-  ng_gost_params_.u = sqrt(ng_gost_params_.u);
+  update_dynamic();
   return ERR_SUCCESS_T;
 }
 

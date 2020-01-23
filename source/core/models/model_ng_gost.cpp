@@ -16,8 +16,14 @@
 
 NG_Gost::NG_Gost(const model_input &mi) 
   : modelGeneral(mi.gm, mi.bp) {
-  if (!set_gasparameters(mi.gpi, this))
-    return;
+  if (!set_gasparameters(mi.gpi, this)) {
+    if (!get_error_code()) {
+      error_ = set_error_message(ERR_GAS_MIX | ERR_INIT_T,
+          "error occurred while init gost model");
+    } else {
+      error_ = get_error_code();
+    }
+  }
 }
 
 NG_Gost *NG_Gost::Init(const model_input &mi) {
@@ -58,6 +64,9 @@ bool NG_Gost::IsValid() const {
 
 double NG_Gost::InitVolume(double p, double t,
     const const_parameters &cp) {
+  (void)p;
+  (void)t;
+  (void)cp;
   assert(0);
   return 0.0;
 }
@@ -67,6 +76,8 @@ void NG_Gost::SetVolume(double p, double t) {
 }
 
 void NG_Gost::SetPressure(double v, double t) {
+  (void)v;
+  (void)t;
   error_ = set_error_message(
       ERR_CALC_MODEL_ST, "invalid operation for this model");
 }
@@ -82,6 +93,8 @@ double NG_Gost::GetVolume(double p, double t) {
 
 #ifndef GAS_MIX_VARIANT
 double NG_Gost::GetPressure(double v, double t) const {
+  (void)v;
+  (void)t;
 #else
 double NG_Gost::GetPressure(double v, double t) {
 #endif  // !GAS_MIX_VARIANT

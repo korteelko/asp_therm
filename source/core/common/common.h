@@ -9,6 +9,15 @@
 /* TODO: remove this define */
 #define BY_PSEUDO_CRITIC
 
+// original of CSI gost 30319-2015
+#define ISO_20765
+#if defined(ISO_20765)
+// natural gas may contain components
+//   that can be associated with one of GAS_TYPE...
+//   look ISO 20765 E.1
+#  define ASSIGNMENT_TRACE_COMPONENTS
+#endif  // ISO_20765
+
 #define MODEL_MASK            0x0000000F
 #define BINODAL_MODEL_MASK    0x000000F0
 /* TODO: realize this with functions */
@@ -32,7 +41,7 @@
 #define FLOAT_ACCURACY        0.00001
 #define DOUBLE_ACCURACY       0.000000001
 
-#if defined (OS_WIN)
+#if defined(OS_WIN)
 #  define PATH_SEPARATOR '\\'
 #elif defined(OS_NIX)
 #  define PATH_SEPARATOR '/'
