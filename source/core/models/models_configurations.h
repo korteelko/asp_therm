@@ -6,9 +6,7 @@
 #include <string>
 
 #define MODEL_MARK_GENERAL__PSEUDOCRITIC     0x01
-
 #define MODEL_MARK_REDLICH_KWONG__ORIGIN     0x00
-
 #define MODEL_MARK_PENG_ROBINSON__ORIGIN     0x00
 
 // #error "" FINISH IT ""
@@ -21,6 +19,8 @@ struct model_conf {
   const char *const ml_name;
 };
 
+class ProgramState {};
+class ProgramConfiguration {};
 /*
 model_conf set_model(rg_model_t ml_type, MODEL_MARKS ml_name);
 model_conf set_model(const std::string &filename);

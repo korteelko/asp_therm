@@ -24,7 +24,6 @@ private:
   /* containers
    * UPD: lol, we can recalculate gasmix_files_ by gost model */
   std::vector<gasmix_file> gasmix_files_;
-  /*  */
   rg_model_t model_conf_;
   merror_t error_;
 

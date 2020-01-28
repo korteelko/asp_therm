@@ -1,14 +1,7 @@
-#include "models_common.h"
+#include "common.h"
 
 #include <algorithm>
 #include <cctype>
-
-std::string F_was_pressed() {
-  return "Pay respect to:\n"
-      "\t--Stack Overflow community\n"
-      "\t--Google\n"
-      "\t--The Linux Foundation\n";
-}
 
 std::string trim_str(const std::string &str) {
   if (str.empty())

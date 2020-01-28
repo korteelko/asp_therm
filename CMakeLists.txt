@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.7)
 add_compile_options(-std=c++17 -Wall)
 
+# TODO:
+#   CHECK WINDOWS BUILDING
+
 set(PROJECT_NAME asp_therm)
 project(${PROJECT_NAME})
 
@@ -24,8 +27,7 @@ set(THERMCORE_INCLUDES
 
 set(OTHER_INCLUDES
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(LIBS_DIR
-    ${CMAKE_CURRENT_SOURCE_DIR}/libs)
+set(LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
 include_directories(${THERMCORE_INCLUDES})
 include_directories(${OTHER_INCLUDES})
@@ -41,13 +43,11 @@ include_directories(${OTHER_INCLUDES})
 if(UNIX)
   add_definitions(-DOS_NIX)
   include_directories("${OTHER_INCLUDES}/target_sys/_nix")
-  set(LIBS_DIR
-     ${LIBS_DIR}/_nix)
+  set(LIBS_DIR ${LIBS_DIR}/_nix)
 elseif(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -DOS_WIN)
   include_directories("${OTHER_INCLUDES}/target_sys/win")
-  set(LIBS_DIR
-     ${LIBS_DIR}/win)
+  set(LIBS_DIR ${LIBS_DIR}/win)
 else()
   message(SEND_ERROR "UNDEFINED SYSTEM ${CMAKE_SYSTEM_NAME}")
 endif(UNIX)
@@ -62,8 +62,9 @@ endif()
 
 set(
   MODELS_SRC
+
 # common sources
-  ${THERMCORE_SOURCE_DIR}/common/models_common.cpp
+  ${THERMCORE_SOURCE_DIR}/common/common.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_errors.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_logging.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp

@@ -1,6 +1,8 @@
 #ifndef _CORE__COMMON__COMMON_H_
 #define _CORE__COMMON__COMMON_H_
 
+#include <string>
+
 #include <stdint.h>
 
 // separate calculation of parameters of mix 
@@ -10,6 +12,7 @@
 #define BY_PSEUDO_CRITIC
 
 // original of CSI gost 30319-2015
+/* TODO: remove to config file */
 #define ISO_20765
 #if defined(ISO_20765)
 // natural gas may contain components
@@ -58,5 +61,10 @@ enum class rg_model_t : uint64_t {
   PENG_ROBINSON = MODEL_PENG_ROBINSON,
   NG_GOST = MODEL_NG_GOST
 };
+
+/**
+  * \brief Обрезать пробелы с обоих концов
+  */
+std::string trim_str(const std::string &str);
 
 #endif  // !_CORE__COMMON__COMMON_H_

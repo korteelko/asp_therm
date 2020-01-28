@@ -25,7 +25,7 @@ typedef uint32_t node_type;
 #define NODE_T_ROOT         0
 #define NODE_T_UNDEFINED    0xff
 
-// class for initializing gas component by file
+/// class for initializing gas component by file
 class gas_node {
   static std::array<std::string, GAS_NODE_COUNT> node_t_list;
 
@@ -41,7 +41,7 @@ public:
   static node_type get_node_type(std::string type);
 };
 
-// class for initializing gasmix by file
+/// class for initializing gasmix by file
 class gasmix_node {
   static std::array<std::string, GASMIX_NODE_COUNT> node_t_list;
 
@@ -108,7 +108,6 @@ public:
   }
 };
 
-// template <class gasxml_node>
 template <class xml_node_t>
 class XMLReader {
   merror_t error_;
@@ -135,9 +134,11 @@ private:
     tree_traversal(xml_root_node_.get(), gas_root_node_.get());
   }
 
-// xml_nd - temp node of xml document
-// gas_nd - corresponding node of gas_tree(class XMLReader)
-  // template <class gasxml_node>
+/**
+  * \brief Обход ноды дерева
+  * \param xml_nd - нода xml файла в реализации pugixml
+  * \param gasxml_nd - соответствующая нода в gas_tree(class XMLReader)
+  */
   void tree_traversal(pugi::xml_node *xml_nd,
       gasxml_node<xml_node_t> *gasxml_nd) {
     if (strncmp(xml_nd->name(), "parameter", strlen("parameter")) != 0) {
@@ -147,8 +148,11 @@ private:
     }
   }
   
-  // обход вглубь
-  // void init_subnode(pugi::xml_node *xml_nd, gasmix_node *gasmix_nd);
+/**
+  * \brief Инициализация внутренней ноды
+  * \param xml_nd - нода xml файла в реализации pugixml
+  * \param gasxml_nd - соответствующая нода в gas_tree(class XMLReader)
+  */
   void init_subnode(pugi::xml_node *xml_nd,
       gasxml_node<xml_node_t> *gasxml_nd) {
     pugi::xml_node nx_xml_nd = xml_nd->first_child();
@@ -175,7 +179,11 @@ private:
     }
   }
   
-  // template <class gasxml_node>
+/**
+  * \brief Инициализация внешней ноды(листа)
+  * \param xml_nd - нода xml файла в реализации pugixml
+  * \param gasxml_nd - соответствующая нода в gas_tree(class XMLReader)
+  */
   void init_parameters(pugi::xml_node *&xml_nd,
       gasxml_node<xml_node_t> *gasxml_nd) {
     gasxml_nd->SetValue(xml_nd->text().as_string());

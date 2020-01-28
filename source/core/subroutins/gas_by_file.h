@@ -10,10 +10,7 @@
 #include <vector>
 
 /*
- * IMPORTANT TODO
- *   -- SWITCH NAME OF THIS UNIT TO "READ_GAS_CONFIG_FILE.[H, CPP]"
- *         (also switch name of class)
- *   -- CREATE SEPARATE FILE TO READ GAS_MIX_INIT 
+ * taks maybe add json format
  */
 
 class ComponentByFile {
