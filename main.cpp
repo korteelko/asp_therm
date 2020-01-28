@@ -40,7 +40,7 @@ const std::string xml_methane = "methane.xml";
 const std::string xml_ethane  = "ethane.xml";
 const std::string xml_propane = "propane.xml";
 
-const std::string xml_gasmix = "gasmix_inp_example.xml";
+const std::string xml_gasmix = "../gasmix_inp_example.xml";
 
 int test_models() {
   char cwd[512] = {0};

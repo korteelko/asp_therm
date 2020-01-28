@@ -9,7 +9,7 @@ struct model_name {
 //  what VS say to this???
 model_name model_names[] = {
   {MODEL_IDEAL_GAS, "ideal gas"},
-  {MODEL_REDLICH_KWONG, "redlich kwong"},
-  {MODEL_PENG_ROBINSON, "peng robinson"},
+  {MODEL_REDLICH_KWONG, "redlich-kwong"},
+  {MODEL_PENG_ROBINSON, "peng-robinson"},
   {MODEL_NG_GOST, "GOST 30319-2015"}
 };
