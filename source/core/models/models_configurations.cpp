@@ -1,5 +1,6 @@
 #include "models_configurations.h"
 
+/*
 struct model_name {
   const int id;
   const char *const name;
@@ -13,3 +14,6 @@ model_name model_names[] = {
   {MODEL_PENG_ROBINSON, "peng-robinson"},
   {MODEL_NG_GOST, "GOST 30319-2015"}
 };
+*/
+
+ProgramState &ProgramState::Instance() {}

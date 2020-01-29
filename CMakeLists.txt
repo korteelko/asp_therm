@@ -82,6 +82,7 @@ set(
   ${THERMCORE_SOURCE_DIR}/phase_diagram/phase_diagram_models.cpp
 
 # subroutins sources
+  # ${THERMCORE_SOURCE_DIR}/subroutins/db_connection.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/gas_by_file.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/gasmix_by_file.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/xml_reader.cpp

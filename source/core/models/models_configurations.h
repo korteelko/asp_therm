@@ -2,17 +2,13 @@
 #define _CORE__MODELS__MODELS_CONFIGURATIONS_H_
 
 #include "common.h"
+#include "db_connection.h"
 #include "models_errors.h"
+#include "models_logging.h"
 
 #include <memory>
 #include <string>
 #include <vector>
-
-// #define MODEL_MARK_GENERAL__PSEUDOCRITIC     0x01
-// #define MODEL_MARK_REDLICH_KWONG__ORIGIN     0x00
-// #define MODEL_MARK_PENG_ROBINSON__ORIGIN     0x00
-
-// #error "" FINISH IT ""
 
 
 /* CONFIGURATION PARAMETERS (XML or JSON)
@@ -25,17 +21,25 @@
  *   VERSION_MINOR : INT
  * }
  *
+ * DATABASE {
+ *   CLIENT : STRING
+ *   NAME : STRING
+ *   USERNAME : STRING
+ *   PASSWORD : STRING
+ *   HOST : STRING
+ *   PORT : STRING
+ * }
+ *
  * PARAMETERS:
  * - DEBUG_MODE : BOOL
  * - PSEUDOCRITIC : BOOL
  * - ENABLE_ISO_20765 : BOOL
  * - LOG_LEVEL : INT
  * - MODELS : MODELS_STR[]
- * - GASMIX_COMPONETNTS_FILE : STRING
  * - DB_PATH : STRING
 */
 
-/// структура идентификации модели
+/// структура идентификации модели(уравнения реального газа)
 struct model_str {
   /// define of model
   rg_model_t ml_type;
@@ -48,10 +52,15 @@ struct model_str {
   int32_t vers_minor;
 };
 
-struct model_configuration {
-  // usually models have few implementation
-  MODEL_MARKS ml_marks;
-  const char *const ml_name;
+struct models_configuration {
+  /** \brief выводить отладочную информацию */
+  bool is_debug_mode;
+  /** \brief пересчитывать модели по псевдокритическим параметрам */
+  bool by_pseudocritic;
+  /** \brief использовать 'ISO 20665' поверх 'ГОСТ 30319-3' */
+  bool enable_iso_20765;
+  /** \brief уровень логирования */
+  io_loglvl log_level;
 };
 
 
@@ -61,31 +70,47 @@ class ProgramState {
   class ProgramConfiguration {
   public:
     ProgramConfiguration();
-    ProgramConfiguration(const std::string &config_file);
+
+    merror_t ResetConfigFile(const std::string &config_file);
 
   private:
+    /** \brief Установить значения по умолчанию
+      * для возможных параметров */
     void setDefault();
+    /** \brief Считать и инициализировать конфигурацию
+      * коннекта к базе данных */
+    db_parameters initDatabaseConfig();
+    /** \brief Считать и инициализировать конфигурацию модели */
+    model_str initModelStr();
 
-  private:
-    merror_t error_;
-    std::string config_file_;
-    std::vector<model_str> models_;
+  public:
+    merror_t error;
+    std::string config_file;
+    /** \brief Параметры коннекта к БД */
+    db_parameters parameters;
+    /** \brief Набор конфигураций уравнений состояния реального газа */
+    std::vector<model_str> models;
+    bool is_initialized;
   };
 
 public:
+  /** \brief синглетончик инст */
   static ProgramState &Instance();
-  merror_t ResetConfiguration(const std::string &config_file);
-  merror_t SetGasmixFile(const std::string &config_file);
 
-  model_configuration GetConfiguration() const;
+  /** \brief Загрузить или перезагрузить конфигурацию программы */
+  merror_t ResetConfigFile(const std::string &config_file);
+  /** \brief Загрузить или перезагрузить параметры газовой смеси */
+  merror_t ResetGasmixFile(const std::string &gasmix_file);
+
+  /** \brief Проверить ProgramConfiguration */
+  bool IsInitialized() const;
+  merror_t GetError() const;
+  const models_configuration GetConfiguration() const;
 
 private:
+  merror_t error_;
   std::unique_ptr<ProgramConfiguration> program_config_;
+  std::string gasmix_file;
 };
-/*
-model_conf set_model(rg_model_t ml_type, MODEL_MARKS ml_name);
-model_conf set_model(const std::string &filename);
-bool is_pseudocritic_set(const model_conf &ml_conf);
-bool is_mark_set(const model_conf &ml_conf, MODEL_MARKS mark);
-*/
+
 #endif  // !_CORE__MODELS__MODELS_CONFIGURATIONS_H_
