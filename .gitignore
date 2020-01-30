@@ -1,4 +1,4 @@
-doc/
+docs/
 libs/
 build/
 .kdev4/
@@ -9,5 +9,7 @@ build/
 /**/*.autosave
 
 CMakeLists.txt.user*
+
+configuration.json
 CMakeSettings.json
 

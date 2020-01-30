@@ -33,12 +33,12 @@
 #define MODEL_NG_GOST         0x00000004
 
 
-//#define MARK_MASK             0x0000FF00
-//#define GAS_MIX_MARK          0x00000100
-//#define PSEUDO_CRITIC_MARK    0x00000200
-//#define BINASSOC_COEFS_MARK   0x00000300
+#define MARK_MASK             0x0000FF00
+#define GAS_MIX_MARK          0x00000100
+#define PSEUDO_CRITIC_MARK    0x00000200
+#define BINASSOC_COEFS_MARK   0x00000300
 // ГОСТ 30319.3-2015
-//#define GAS_NG_GOST_MARK      0x00000400
+#define GAS_NG_GOST_MARK      0x00000400
 
 //  math defines
 #define FLOAT_ACCURACY        0.00001

@@ -21,8 +21,9 @@
  *   VERSION_MINOR : INT
  * }
  *
- * DATABASE {
+ * DATABASE_CONFIGURATION {
  *   CLIENT : STRING
+ *   // DB_PATH : STRING
  *   NAME : STRING
  *   USERNAME : STRING
  *   PASSWORD : STRING
@@ -30,13 +31,13 @@
  *   PORT : STRING
  * }
  *
- * PARAMETERS:
+ * PROGRAM_CONFIGURATION:
  * - DEBUG_MODE : BOOL
  * - PSEUDOCRITIC : BOOL
- * - ENABLE_ISO_20765 : BOOL
+ * - INCLUDE_ISO_20765 : BOOL
  * - LOG_LEVEL : INT
- * - MODELS : MODELS_STR[]
- * - DB_PATH : STRING
+ * - DATABASE : DATABASE_CONFIGURATION
+ * // - MODELS : MODELS_STR[] - move to calculation.json
 */
 
 /// структура идентификации модели(уравнения реального газа)

@@ -16,4 +16,7 @@ model_name model_names[] = {
 };
 */
 
-ProgramState &ProgramState::Instance() {}
+ProgramState &ProgramState::Instance() {
+  static ProgramState state;
+  return state;
+}

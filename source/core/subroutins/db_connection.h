@@ -10,6 +10,7 @@
 #include "models_errors.h"
 
 #include <string>
+#include <vector>
 
 #include <stdint.h>
 
@@ -42,6 +43,7 @@ public:
 public:
   static DBConnection &Instance();
   /** \brief Попробовать законектится к БД */
+  static const std::vector<std::string> &GetJSONKeys();
   static bool ResetConnect(const db_parameters &parameters);
   static bool IsConnected();
 

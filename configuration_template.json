@@ -1,0 +1,14 @@
+{
+  "debug_mode": true,
+  "pseudocritical": true,
+  "include_iso_20765": true,
+  "log_level": "debug",
+  "database": {
+    "client": "redis",
+    "name": "asp_therm_db",
+    "username": "",
+    "pasword": "",
+    "host": "",
+    "port": ""
+  }
+}

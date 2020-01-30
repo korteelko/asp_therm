@@ -1,6 +1,6 @@
 #include "gasmix_by_file.h"
 
-#include "models_common.h"
+#include "common.h"
 #include "models_errors.h"
 #include "models_math.h"
 
