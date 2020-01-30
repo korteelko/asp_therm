@@ -1,12 +1,15 @@
 docs/
-libs/
 build/
+lib/win/
+lib/_nix/
+
 .kdev4/
 .vscode/
 .vs/
 
 /**/*.swp
 /**/*.autosave
+/**/*.*.backup
 
 CMakeLists.txt.user*
 

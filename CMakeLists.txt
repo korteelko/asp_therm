@@ -3,6 +3,7 @@ add_compile_options(-std=c++17 -Wall)
 
 # TODO:
 #   CHECK WINDOWS BUILDING
+#   add MIT License
 
 set(PROJECT_NAME asp_therm)
 project(${PROJECT_NAME})
@@ -17,21 +18,15 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 
 set(THERMCORE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source/core")
 
-set(THERMCORE_INCLUDES
-    "${THERMCORE_SOURCE_DIR}/common"
-    "${THERMCORE_SOURCE_DIR}/gas_parameters"
-    "${THERMCORE_SOURCE_DIR}/models"
-    "${THERMCORE_SOURCE_DIR}/phase_diagram"
-    "${THERMCORE_SOURCE_DIR}/subroutins"
-)
+# LIBS_DIR - для моих библиотек
+set(LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+# MODULES_DIR - для сторонних библиотек.
+#   yes, same ( ͡° ͜ʖ ͡°)
+set(MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
-set(OTHER_INCLUDES
-    ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
-include_directories(${THERMCORE_INCLUDES})
-include_directories(${OTHER_INCLUDES})
 
+# platform configurations
 # ????????????????????????????????????????
 # construction don't work with configuration:
 #  if(MSVC)
@@ -42,18 +37,35 @@ include_directories(${OTHER_INCLUDES})
 # ?????????????????????????????????????????
 if(UNIX)
   add_definitions(-DOS_NIX)
-  include_directories("${OTHER_INCLUDES}/target_sys/_nix")
+  include_directories("include/target_sys/_nix")
   set(LIBS_DIR ${LIBS_DIR}/_nix)
 elseif(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -DOS_WIN)
-  include_directories("${OTHER_INCLUDES}/target_sys/win")
+  include_directories("include/target_sys/win")
   set(LIBS_DIR ${LIBS_DIR}/win)
 else()
   message(SEND_ERROR "UNDEFINED SYSTEM ${CMAKE_SYSTEM_NAME}")
 endif(UNIX)
 
-link_directories(${LIBS_DIR})
 
+# maybe split in separate asp_therm_modules.cmake ???
+# modules
+#   pugixml
+set(PUGIXML_DIR "${MODULES_DIR}/pugixml")
+add_subdirectory(${PUGIXML_DIR})
+include_directories(${PUGIXML_DIR}/src)
+
+
+set(THERMCORE_INCLUDES
+    "${THERMCORE_SOURCE_DIR}/common"
+    "${THERMCORE_SOURCE_DIR}/gas_parameters"
+    "${THERMCORE_SOURCE_DIR}/models"
+    "${THERMCORE_SOURCE_DIR}/phase_diagram"
+    "${THERMCORE_SOURCE_DIR}/subroutins"
+)
+include_directories(${THERMCORE_INCLUDES})
+
+# lmodels.lib
 if(CMAKE_BUILD_TYPE=Release)
   link_directories(${LIBS_DIR}/release)
 else()
