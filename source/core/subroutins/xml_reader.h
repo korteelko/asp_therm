@@ -141,10 +141,10 @@ private:
   */
   void tree_traversal(pugi::xml_node *xml_nd,
       gasxml_node<xml_node_t> *gasxml_nd) {
-    if (strncmp(xml_nd->name(), "parameter", strlen("parameter")) != 0) {
+    if (!is_leafnode(xml_nd->name())) {
       init_subnode(xml_nd, gasxml_nd);
     } else {
-      init_parameters(xml_nd, gasxml_nd);
+      init_leafnode(xml_nd, gasxml_nd);
     }
   }
   
@@ -184,11 +184,19 @@ private:
   * \param xml_nd - нода xml файла в реализации pugixml
   * \param gasxml_nd - соответствующая нода в gas_tree(class XMLReader)
   */
-  void init_parameters(pugi::xml_node *&xml_nd,
+  void init_leafnode(pugi::xml_node *&xml_nd,
       gasxml_node<xml_node_t> *gasxml_nd) {
     gasxml_nd->SetValue(xml_nd->text().as_string());
     gasxml_nd->SetName(xml_nd->attribute("name").value());
     gasxml_nd->first_child = nullptr;
+  }
+
+/**
+  * \brief Проверить является ли нода листом
+  * \param - имя pugi ноды
+  */
+  inline bool is_leafnode(const char *node_name) {
+    return (strncmp(node_name, "parameter", strlen("parameter")) == 0);
   }
 
 public:
