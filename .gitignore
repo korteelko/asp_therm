@@ -1,7 +1,6 @@
 docs/
 build/
-lib/win/
-lib/_nix/
+lib/atherm/
 
 .kdev4/
 .vscode/

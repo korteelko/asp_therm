@@ -6,25 +6,33 @@ add_compile_options(-std=c++17 -Wall)
 #   add MIT License
 
 set(PROJECT_NAME asp_therm)
+set(RESULT_LIB atherm)
 project(${PROJECT_NAME})
 
 # set cmake options:
 # debug
 add_definitions(-D_DEBUG)
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 # release
 # add_definitions(-DNDEBUG)
+# set(CMAKE_BUILD_TYPE "Release")
 # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
 
 set(THERMCORE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source/core")
 
 # LIBS_DIR - для моих библиотек
-set(LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+set(LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/${RESULT_LIB})
 # MODULES_DIR - для сторонних библиотек.
 #   yes, same ( ͡° ͜ʖ ͡°)
 set(MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
-
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(LIBS_DIR "${LIBS_DIR}/debug")
+endif()
+link_directories(${LIBS_DIR})
+message(STATUS "asp_therm build info:\n\t\tBUILD_TYPE:${CMAKE_BUILD_TYPE}")
+message(STATUS "asp_therm build info:\n\t\tLIBS_DIR:${LIBS_DIR}")
 
 # platform configurations
 # ????????????????????????????????????????
@@ -38,11 +46,9 @@ set(MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 if(UNIX)
   add_definitions(-DOS_NIX)
   include_directories("include/target_sys/_nix")
-  set(LIBS_DIR ${LIBS_DIR}/_nix)
 elseif(MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS -DOS_WIN)
   include_directories("include/target_sys/win")
-  set(LIBS_DIR ${LIBS_DIR}/win)
 else()
   message(SEND_ERROR "UNDEFINED SYSTEM ${CMAKE_SYSTEM_NAME}")
 endif(UNIX)
@@ -55,6 +61,11 @@ set(PUGIXML_DIR "${MODULES_DIR}/pugixml")
 add_subdirectory(${PUGIXML_DIR})
 include_directories(${PUGIXML_DIR}/src)
 
+#   rapidjson
+set(RAPIDJSON_DIR "${MODULES_DIR}/rapidjson")
+add_subdirectory(${RAPIDJSON_DIR})
+include_directories(${RAPIDJSON_DIR}/include)
+
 
 set(THERMCORE_INCLUDES
     "${THERMCORE_SOURCE_DIR}/common"
@@ -64,13 +75,6 @@ set(THERMCORE_INCLUDES
     "${THERMCORE_SOURCE_DIR}/subroutins"
 )
 include_directories(${THERMCORE_INCLUDES})
-
-# lmodels.lib
-if(CMAKE_BUILD_TYPE=Release)
-  link_directories(${LIBS_DIR}/release)
-else()
-  link_directories(${LIBS_DIR}/debug)
-endif()
 
 set(
   MODELS_SRC
@@ -94,7 +98,7 @@ set(
   ${THERMCORE_SOURCE_DIR}/phase_diagram/phase_diagram_models.cpp
 
 # subroutins sources
-  # ${THERMCORE_SOURCE_DIR}/subroutins/db_connection.cpp
+  ${THERMCORE_SOURCE_DIR}/subroutins/db_connection.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/gas_by_file.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/gasmix_by_file.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/xml_reader.cpp
@@ -113,17 +117,29 @@ set(
 )
 
 # output for static libraries
-add_library(lmodels STATIC ${MODELS_SRC})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${LIBS_DIR}/debug)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${LIBS_DIR}/release)
+add_library(${RESULT_LIB} STATIC ${MODELS_SRC})
+set_target_properties(${RESULT_LIB} PROPERTIES
+    LIBRARY_OUTPUT_DIRECTORY ${LIBS_DIR}
+    ARCHIVE_OUTPUT_DIRECTORY ${LIBS_DIR}
+)
 
-set_target_properties(lmodels PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${LIBS_DIR}/debug)
+foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
+    set_target_properties(${RESULT_LIB}
+        PROPERTIES LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${LIBS_DIR}
+        PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${LIBS_DIR}
+    )
+endforeach()
 
 add_executable(${PROJECT_NAME} ${MODELS_SRC} main.cpp)
 target_link_libraries(${PROJECT_NAME}
-  # lmodels
-    # pugixml site:
-    #   http://pugixml.org
+  # ${RESULT_LIB}
+  # pugixml site:
+  #   http://pugixml.org
   pugixml
+
+  # pqxx site:
+  #   http://pqxx.org/development/libpqxx/
+  pqxx
+  pq
 )
