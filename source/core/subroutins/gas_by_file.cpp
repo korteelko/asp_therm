@@ -40,7 +40,7 @@ const std::string point_names[CRIT_PNT_PARAMS_COUNT] = {
     "volume", "pressure", "temperature", "compress_factor"};
 
 double get_val(std::vector<std::string> &vec, const std::string &valname,
-    XMLReader<gas_node> *xml_doc) {
+    const XMLReader<gas_node> *xml_doc) {
   std::string tmp_str = "";
   vec[XML_PATHLEN_SUBGROUP] = valname;
   xml_doc->GetValueByPath(vec, &tmp_str);
@@ -79,13 +79,13 @@ std::shared_ptr<const_parameters> ComponentByFile::GetConstParameters() {
     critical_point_path);
   tmp_vec.push_back("");
   for (int i = 0; i < CRIT_PNT_PARAMS_COUNT; ++i)
-    cp[i] = get_val(tmp_vec, point_names[i], xml_doc_);
+    cp[i] = get_val(tmp_vec, point_names[i], xml_doc_.get());
   // cp[CP_PRESSURE] *= 1000000;
   // fuuuuuuuuuuuuuu
   tmp_vec[XML_PATHLEN_SUBGROUP - 1] =
       const_parameters_path[XML_PATHLEN_SUBGROUP - 1];
-  mol = get_val(tmp_vec, "molec_mass", xml_doc_);
-  af  = get_val(tmp_vec, "acentric", xml_doc_);
+  mol = get_val(tmp_vec, "molec_mass", xml_doc_.get());
+  af  = get_val(tmp_vec, "acentric", xml_doc_.get());
   set_gas_name();
   return std::shared_ptr<const_parameters>(const_parameters::Init(gas_name_,
       cp[0], cp[1], cp[2], cp[3], mol, af));
@@ -102,19 +102,19 @@ std::shared_ptr<dyn_parameters> ComponentByFile::GetDynParameters() {
     dynamic_point_path);
   tmp_vec.push_back("");
   for (int i = 0; i < PNT_PARAMS_COUNT; ++i)
-    pnt[i] = get_val(tmp_vec, point_names[i], xml_doc_);
+    pnt[i] = get_val(tmp_vec, point_names[i], xml_doc_.get());
 
   /* set calculating dynamic parameters */
   dyn_setup ds = 0x00;
   tmp_vec[XML_PATHLEN_SUBGROUP - 1] =
       dynamic_capacities_path[XML_PATHLEN_SUBGROUP - 1];
-  if (is_above0(hcv = get_val(tmp_vec, "heat_cap_vol", xml_doc_)))
+  if (is_above0(hcv = get_val(tmp_vec, "heat_cap_vol", xml_doc_.get())))
     ds |= DYNAMIC_HEAT_CAP_VOL;
-  if (is_above0(hcp = get_val(tmp_vec, "heat_cap_pres", xml_doc_)))
+  if (is_above0(hcp = get_val(tmp_vec, "heat_cap_pres", xml_doc_.get())))
     ds |= DYNAMIC_HEAT_CAP_PRES;
   tmp_vec[XML_PATHLEN_SUBGROUP - 1] =
       dynamic_potentials_path[XML_PATHLEN_SUBGROUP - 1];
-  if (is_above0(int_eng = get_val(tmp_vec, "internal_energy", xml_doc_)))
+  if (is_above0(int_eng = get_val(tmp_vec, "internal_energy", xml_doc_.get())))
     ds |= DYNAMIC_INTERNAL_ENERGY;
   return std::shared_ptr<dyn_parameters>(dyn_parameters::Init(
       ds, hcv, hcp, int_eng,parameters{pnt[0], pnt[1], pnt[2]}));
@@ -122,9 +122,4 @@ std::shared_ptr<dyn_parameters> ComponentByFile::GetDynParameters() {
 
 void ComponentByFile::set_gas_name() {
   gas_name_ = gas_by_name(xml_doc_->GetRootName());
-}
-
-ComponentByFile::~ComponentByFile() {
-  if (xml_doc_ != nullptr)
-    delete xml_doc_;
 }

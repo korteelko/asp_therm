@@ -11,11 +11,11 @@
 #include <assert.h>
 #include <string.h>
 
-gasmix_file::gasmix_file(const std::string filename, const double part) 
-  : filename(filename), part(part) {}
+gasmix_file::gasmix_file(const std::string &name, const std::string &path,
+    const double part): name(name), path(path), part(part) {}
 
 bool operator< (const gasmix_file &lg, const gasmix_file &rg) {
-  return strcmp(lg.filename.c_str(), rg.filename.c_str()) <= 0;
+  return strcmp(lg.name.c_str(), rg.name.c_str()) <= 0;
 }
 
 // implicit functions

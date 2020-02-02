@@ -24,18 +24,14 @@
 /// ethane  0.004926    4.871       305.33     30.07        ~1.22     ~1750           0.089
 /// propane 0.004545    4.255       369.9      44.097       ~1.13     ~1750           0.153
 
-// #define RK2_TEST
-// #define PR_TEST
-#define NG_GOST_TEST
+#define RK2_TEST
+#define PR_TEST
+// #define NG_GOST_TEST
 
 #define INPUT_P_T  3000000, 350
 #define NEW_PARAMS 500000, 250
 
-#ifdef _IDE_VSCODE
-const std::string xml_path = "/../asp_therm/data/gases/";
-#else
 const std::string xml_path = "/../../asp_therm/data/gases/";
-#endif  // IDE_VSCODE
 const std::string xml_methane = "methane.xml";
 const std::string xml_ethane  = "ethane.xml";
 const std::string xml_propane = "propane.xml";
@@ -104,10 +100,10 @@ int test_models_mix() {
   }
   std::vector<std::unique_ptr<modelGeneral>> test_vec;
   std::vector<gasmix_file> xml_files = std::vector<gasmix_file> {
-    gasmix_file(std::string(cwd) + xml_path + xml_methane, 0.988),
+    gasmix_file("metane", std::string(cwd) + xml_path + xml_methane, 0.988),
     // add more (summ = 1.00)
-    gasmix_file(std::string(cwd) + xml_path + xml_ethane, 0.009),
-    gasmix_file(std::string(cwd) + xml_path + xml_propane, 0.003)
+    gasmix_file("ethane", std::string(cwd) + xml_path + xml_ethane, 0.009),
+    gasmix_file("propane", std::string(cwd) + xml_path + xml_propane, 0.003)
   };
 #if defined(RK2_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(

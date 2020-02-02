@@ -1,6 +1,7 @@
 #ifndef _CORE__SUBROUTINS__XML_READER_H_
 #define _CORE__SUBROUTINS__XML_READER_H_
 
+#include "file_structs.h"
 #include "models_errors.h"
 #include "models_logging.h"
 
@@ -15,47 +16,6 @@
 #include <stdint.h>
 #include <string.h>
 
-// xml_file type
-// #define GAS_COMPONENT_FILE      0
-// #define GASMIX_FILE             1
-
-typedef uint32_t node_type;
-#define GAS_NODE_COUNT      5
-#define GASMIX_NODE_COUNT   3
-#define NODE_T_ROOT         0
-#define NODE_T_UNDEFINED    0xff
-
-/// class for initializing gas component by file
-class gas_node {
-  static std::array<std::string, GAS_NODE_COUNT> node_t_list;
-
-public:
-  node_type gas_node_type;
-  std::string name,
-              value;
-              
-  gas_node(node_type itype, std::string name);
-  gas_node(node_type itype, std::string name, std::string value);
-  
-  static std::string get_root_name();
-  static node_type get_node_type(std::string type);
-};
-
-/// class for initializing gasmix by file
-class gasmix_node {
-  static std::array<std::string, GASMIX_NODE_COUNT> node_t_list;
-
-public:
-  node_type mix_node_type;
-  std::string name,
-              value;
-  
-  gasmix_node(node_type itype, std::string name);
-  gasmix_node(node_type itype, std::string name, std::string value);
-  
-  static std::string get_root_name();
-  static node_type get_node_type(std::string type);
-};
 
 template <class xml_node_t>
 class gasxml_node {
@@ -141,7 +101,7 @@ private:
   */
   void tree_traversal(pugi::xml_node *xml_nd,
       gasxml_node<xml_node_t> *gasxml_nd) {
-    if (!is_leafnode(xml_nd->name())) {
+    if (!is_leafnode(xml_nd)) {
       init_subnode(xml_nd, gasxml_nd);
     } else {
       init_leafnode(xml_nd, gasxml_nd);
@@ -195,8 +155,8 @@ private:
   * \brief Проверить является ли нода листом
   * \param - имя pugi ноды
   */
-  inline bool is_leafnode(const char *node_name) {
-    return (strncmp(node_name, "parameter", strlen("parameter")) == 0);
+  bool is_leafnode(pugi::xml_node *xml_nd /*const char *node_name*/) {
+    return (strncmp(xml_nd->name(), "parameter", strlen("parameter")) == 0);
   }
 
 public:
@@ -224,16 +184,20 @@ public:
     return reader;
   }
 
-  merror_t GetError() {
+  std::string GetFileName() const {
+    return gas_xml_file_;
+  }
+
+  merror_t GetError() const {
     return error_;
   }
 
-  std::string GetRootName() {
+  std::string GetRootName() const {
     return gas_root_node_->GetName();
   }
   
   merror_t GetValueByPath(const std::vector<std::string> &xml_path,
-      std::string *outstr) {
+      std::string *outstr) const {
     const gasxml_node<xml_node_t> *tmp_gas_node = gas_root_node_.get();
     for (const auto &x : xml_path) {
       // check ypuself and sublings
@@ -245,7 +209,7 @@ public:
           strpath += strnode + " --> ";
         Logging::Append(io_loglvl::debug_logs, strpath.c_str());
     #endif  // _DEBUG_SUBROUTINS
-        return error_ = XML_LAST_STRING;
+        return XML_LAST_STRING;
       }
     }
     *outstr = tmp_gas_node->GetValue();

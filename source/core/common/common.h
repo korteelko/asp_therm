@@ -44,6 +44,10 @@
 #define FLOAT_ACCURACY        0.00001
 #define DOUBLE_ACCURACY       0.000000001
 
+// logging defines
+#define DEFAULT_LOGLVL        0x01
+#define DEBUG_LOGLVL          0x0f
+
 #if defined(OS_WIN)
 #  define PATH_SEPARATOR '\\'
 #elif defined(OS_NIX)
@@ -61,9 +65,22 @@ enum class rg_model_t : uint64_t {
   NG_GOST = MODEL_NG_GOST
 };
 
-/**
-  * \brief Обрезать пробелы с обоих концов
-  */
+typedef enum {
+  no_log     = 0,              /* no messages     */
+  err_logs   = DEFAULT_LOGLVL, /* only errors     */
+  warn_logs,                   /* warning, errors */
+  debug_logs = DEBUG_LOGLVL    /* all mesages, default for debug */
+} io_loglvl;
+
+
+/** \brief Обрезать пробелы с обоих концов */
 std::string trim_str(const std::string &str);
+
+/** \brief Проверить что объект файловой системы(файл, директория, соккет,
+  *   линк, character_dev) существует */
+bool is_exist(const std::string &path);
+
+/** \brief Вернуть путь к директории содержащей файл */
+std::string dir_by_path(const std::string &path);
 
 #endif  // !_CORE__COMMON__COMMON_H_

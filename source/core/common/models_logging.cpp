@@ -108,6 +108,10 @@ merror_t Logging::GetError() {
   return Logging::error_;
 }
 
+io_loglvl Logging::GetLogLevel() {
+  return Logging::li_.loglvl;
+}
+
 void Logging::ClearLogfile() {
   Logging::output_.open(Logging::li_.filepath, std::fstream::out);
   if (Logging::output_.is_open()) {

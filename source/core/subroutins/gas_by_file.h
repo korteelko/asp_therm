@@ -19,14 +19,13 @@ public:
   static ComponentByFile *Init(const std::string &filename);
   std::shared_ptr<const_parameters> GetConstParameters();
   std::shared_ptr<dyn_parameters> GetDynParameters();
-  ~ComponentByFile();
 
 private:
   ComponentByFile(XMLReader<gas_node> *xml_doc);
   void set_gas_name();
 
 private:
-  XMLReader<gas_node> *xml_doc_;
+  std::unique_ptr<XMLReader<gas_node>> xml_doc_;
   gas_t gas_name_;
 };
 

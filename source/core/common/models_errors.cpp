@@ -49,9 +49,9 @@ static const char *custom_msg_init[] = {
 // Установим конкретное сообщение об ошибке из
 //   приведенных выше
 // set errmessage
-static const char *get_custom_err_msg() {
-  merror_t err_type     = ERR_MASK_TYPE & models_error;
-  merror_t err_concrete = ERR_MASK_SUBTYPE & models_error;
+static const char *get_custom_err_msg(merror_t error) {
+  merror_t err_type     = ERR_MASK_TYPE & error;
+  merror_t err_concrete = ERR_MASK_SUBTYPE & error;
   // Прицеливаемся в ногу
   const char **list_of_custom_msg = nullptr;
   switch (err_type) {
@@ -74,6 +74,10 @@ static const char *get_custom_err_msg() {
   }
   return (list_of_custom_msg != nullptr) ?
       list_of_custom_msg[err_concrete] : nullptr;
+}
+
+static const char *get_custom_err_msg() {
+  return get_custom_err_msg(models_error);
 }
 
 merror_t set_error_code(merror_t err_code) {
@@ -121,4 +125,55 @@ const char *get_error_message() {
     }
   }
   return msg_ptr;
+}
+
+ErrorWrap::ErrorWrap()
+  : ErrorWrap(ERR_SUCCESS_T, "") {}
+
+ErrorWrap::ErrorWrap(merror_t error)
+  : ErrorWrap(error, "") {}
+
+ErrorWrap::ErrorWrap(merror_t error, const std::string &msg)
+  : error_(error), msg_(msg), is_logged_(false) {}
+
+merror_t ErrorWrap::SetError(merror_t error) {
+  return error_ = error;
+}
+
+merror_t ErrorWrap::SetError(merror_t error, const std::string &msg) {
+  msg_ = msg;
+  return error_ = error;
+}
+
+void ErrorWrap::ChangeMessage(const std::string &new_msg) {
+  msg_ = new_msg;
+}
+
+void ErrorWrap::LogIt(io_loglvl lvl) {
+  if (error_ != ERR_SUCCESS_T && !is_logged_) {
+    if (!msg_.empty()) {
+      Logging::Append(lvl, "Error occurred.\n  err_msg:%s\n  code:0x%h",
+          msg_.c_str(), error_);
+    } else {
+      Logging::Append(lvl, "Error occurred.\n  custom err_msg:%s\n  code:0x%h",
+          get_custom_err_msg(), error_);
+    }
+    is_logged_ = true;
+  }
+}
+
+void ErrorWrap::LogIt() {
+  LogIt(Logging::GetLogLevel());
+}
+
+merror_t ErrorWrap::GetErrorCode() const {
+  return error_;
+}
+
+std::string ErrorWrap::GetMessage() const {
+  return msg_;
+}
+
+bool ErrorWrap::IsLogged() const {
+  return is_logged_;
 }

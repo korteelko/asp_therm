@@ -1,6 +1,10 @@
 #ifndef _CORE__COMMON__MODELS_ERRORS_H_
 #define _CORE__COMMON__MODELS_ERRORS_H_
 
+#include "common.h"
+
+#include <string>
+
 #include <stdint.h>
 
 /* swap uint32 to uint64 for simple padding
@@ -55,6 +59,7 @@ typedef uint64_t merror_t;
 #define XML_LAST_STRING    0x1000
 
 
+/// ГЛОБАЛЬНАЯ ОШИБКА, ЧТОБЫ ПОЛОЖИТЬ ПРОГРАММУ
 // ERR_SUCCESS as default
 merror_t set_error_code(merror_t err_code);
 merror_t get_error_code();
@@ -69,5 +74,37 @@ merror_t set_error_message(merror_t err_code,
     const char *format, ...);
 const char *get_error_message();
 // my be 'char *get_custom_err_msg'
+
+
+/** \brief класс, в котором инкапсулирована ошибка(код, сообщение,
+  *   логирована ли, выведелена ли и т.п.) */
+class ErrorWrap {
+public:
+  ErrorWrap();
+  ErrorWrap(merror_t error);
+  ErrorWrap(merror_t error, const std::string &msg);
+  /** \brief установить(хранить) код ошибки 'error'
+    * \param error код ошибки
+    * \param(optional) msg сопроводительное сообщение */
+   merror_t SetError(merror_t error);
+   merror_t SetError(merror_t error, const std::string &msg);
+  /** \brief заменить сообщение об ошибке 'msg_' на 'new_msg'
+    * \param new_msg новое сообщение(инфо) об ошибке */
+  void ChangeMessage(const std::string &new_msg);
+  /** \brief залогировать текущее состояние(если есть ошибка)
+    *   устанавить 'is_logged_' в true
+    * \param lvl(optional) особый лог левел для данного сообщения */
+  void LogIt();
+  void LogIt(io_loglvl lvl);
+
+  merror_t GetErrorCode() const;
+  std::string GetMessage() const;
+  bool IsLogged() const;
+
+private:
+  merror_t error_;
+  std::string msg_;
+  bool is_logged_;
+};
 
 #endif  // !_CORE__COMMON__MODELS_ERRORS_H_

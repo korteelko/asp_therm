@@ -13,13 +13,16 @@
 #define GASMIX_PERCENT_EPS  0.02
 
 struct gasmix_file {
-  std::string filename;
+  std::string name;
+  std::string path;
   double part;
 
 public:
-  gasmix_file(const std::string filename, const double part);
+  gasmix_file(const std::string &name,
+      const std::string &path, const double part);
 };
 
+/* TODO: Проверить использование. Реализация - осттавляет вопросы */
 bool operator< (const gasmix_file &lg, const gasmix_file &rg);
 
 class GasParameters_mix : public GasParameters {

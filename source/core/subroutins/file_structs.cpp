@@ -13,6 +13,34 @@ std::array<std::string, GASMIX_NODE_COUNT> gasmix_node::node_t_list = {
   "gasmix", "group", "parameter"
 };
 
+std::array<std::string, CONFIG_NODE_COUNT> config_node::node_t_list = {
+  "program_config", "group", "parameter"
+};
+
+// config_node
+config_node::config_node(node_type itype, std::string name)
+  : config_node_type(itype), name(name), value("") {}
+
+config_node::config_node(node_type itype, std::string name, std::string value)
+  : config_node_type(itype), name(name), value(value) {
+#ifdef _DEBUG_SUBROUTINS
+  Logging::Append(io_loglvl::debug_logs, "Create confignode: %s #%d %s",
+      value.c_str(), itype, name.c_str());
+#endif  // _DEBUG
+  }
+
+// static
+std::string config_node::get_root_name() {
+  return config_node::node_t_list[NODE_T_ROOT];
+}
+
+node_type config_node::get_node_type(std::string type) {
+  for (uint32_t i = 0; i < config_node::node_t_list.size(); ++i)
+    if (config_node::node_t_list[i] == type)
+      return i;
+  return NODE_T_UNDEFINED;
+}
+
 // gas_node
 gas_node::gas_node(node_type itype, std::string name)
   : gas_node_type(itype), name(name), value("") {}

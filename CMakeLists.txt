@@ -19,30 +19,9 @@ set(CMAKE_BUILD_TYPE Debug)
 # set(CMAKE_BUILD_TYPE "Release")
 # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
 
-set(THERMCORE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/source/core")
+set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+set(THERMCORE_SOURCE_DIR "${ASP_THERM_ROOT}/source/core")
 
-# LIBS_DIR - для моих библиотек
-set(LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/${RESULT_LIB})
-# MODULES_DIR - для сторонних библиотек.
-#   yes, same ( ͡° ͜ʖ ͡°)
-set(MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib)
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(LIBS_DIR "${LIBS_DIR}/debug")
-endif()
-link_directories(${LIBS_DIR})
-message(STATUS "asp_therm build info:\n\t\tBUILD_TYPE:${CMAKE_BUILD_TYPE}")
-message(STATUS "asp_therm build info:\n\t\tLIBS_DIR:${LIBS_DIR}")
-
-# platform configurations
-# ????????????????????????????????????????
-# construction don't work with configuration:
-#  if(MSVC)
-#    ...
-#  elseif(UNIX)
-#    ...
-#  endif(MSVS)
-# ?????????????????????????????????????????
 if(UNIX)
   add_definitions(-DOS_NIX)
   include_directories("include/target_sys/_nix")
@@ -52,6 +31,16 @@ elseif(MSVC)
 else()
   message(SEND_ERROR "UNDEFINED SYSTEM ${CMAKE_SYSTEM_NAME}")
 endif(UNIX)
+
+# LIBS_DIR - для моих библиотек
+set(LIBS_DIR ${ASP_THERM_ROOT}/lib/${RESULT_LIB})
+# MODULES_DIR - для сторонних библиотек.
+set(MODULES_DIR ${ASP_THERM_ROOT}/lib)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(LIBS_DIR "${LIBS_DIR}/debug")
+endif()
+link_directories(${LIBS_DIR})
 
 
 # maybe split in separate asp_therm_modules.cmake ???
@@ -66,13 +55,17 @@ set(RAPIDJSON_DIR "${MODULES_DIR}/rapidjson")
 add_subdirectory(${RAPIDJSON_DIR})
 include_directories(${RAPIDJSON_DIR}/include)
 
+message(STATUS "asp_therm build info:")
+message(STATUS "\t\tBUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+message(STATUS "\t\tLIBS_DIR: ${LIBS_DIR}")
+message(STATUS "\t\tSystem info: ${CMAKE_SYSTEM_NAME}")
 
 set(THERMCORE_INCLUDES
-    "${THERMCORE_SOURCE_DIR}/common"
-    "${THERMCORE_SOURCE_DIR}/gas_parameters"
-    "${THERMCORE_SOURCE_DIR}/models"
-    "${THERMCORE_SOURCE_DIR}/phase_diagram"
-    "${THERMCORE_SOURCE_DIR}/subroutins"
+  "${THERMCORE_SOURCE_DIR}/common"
+  "${THERMCORE_SOURCE_DIR}/gas_parameters"
+  "${THERMCORE_SOURCE_DIR}/models"
+  "${THERMCORE_SOURCE_DIR}/phase_diagram"
+  "${THERMCORE_SOURCE_DIR}/subroutins"
 )
 include_directories(${THERMCORE_INCLUDES})
 
@@ -98,10 +91,11 @@ set(
   ${THERMCORE_SOURCE_DIR}/phase_diagram/phase_diagram_models.cpp
 
 # subroutins sources
+  ${THERMCORE_SOURCE_DIR}/subroutins/configuration_by_file.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/db_connection.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/gas_by_file.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/gasmix_by_file.cpp
-  ${THERMCORE_SOURCE_DIR}/subroutins/xml_reader.cpp
+  ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
 
 # models sources
   ${THERMCORE_SOURCE_DIR}/models/model_general.cpp
@@ -124,11 +118,11 @@ set_target_properties(${RESULT_LIB} PROPERTIES
 )
 
 foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
-    set_target_properties(${RESULT_LIB}
-        PROPERTIES LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${LIBS_DIR}
-        PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${LIBS_DIR}
-    )
+  string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
+  set_target_properties(${RESULT_LIB}
+    PROPERTIES LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${LIBS_DIR}
+    PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${LIBS_DIR}
+  )
 endforeach()
 
 add_executable(${PROJECT_NAME} ${MODELS_SRC} main.cpp)
