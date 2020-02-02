@@ -1,13 +1,16 @@
-docs/
 build/
+docs/
 lib/atherm/
 
-.kdev4/
-.vscode/
-.vs/
+soft/*
+!soft/gas2json.py
 
-/**/*.swp
+.kdev4/
+.vs/
+.vscode/
+
 /**/*.autosave
+/**/*.swp
 /**/*.*.backup
 
 CMakeLists.txt.user*
