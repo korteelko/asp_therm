@@ -1,12 +1,6 @@
 #ifndef _CORE__SUBROUTINS__DB_CONNECTION_H_
 #define _CORE__SUBROUTINS__DB_CONNECTION_H_
 
-/*
- * redis cpp-api repository:
- *   https://github.com/cpp-redis/cpp_redis
- * Такс, работу с REDIS буду вести в отдельной ветке
-*/
-
 #include "models_errors.h"
 
 #include <string>
@@ -14,11 +8,10 @@
 
 #include <stdint.h>
 
-/** \brief клиент БД
-  * \note хочется попробовать REDIS */
+/** \brief клиент БД */
 enum class db_client: uint32_t {
   NOONE = 0,
-  REDIS = 1
+  POSTGRESQL = 1
 };
 
 /** \brief структура содержит параметры коннектинга */

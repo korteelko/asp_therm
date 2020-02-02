@@ -1,0 +1,52 @@
+{
+    "@gas_name": 
+    {
+        "parameters": 
+        {
+            "constants": 
+            {
+                "critical_point":
+                {
+                    "volume": " ",
+                    "pressure": " ",
+                    "temperature": " ",
+                    "compress_factor": " "
+                },
+                "const_parameters":
+                {
+                    "molec_mass": " ",
+                    "acentric": " "
+                }
+            },
+            "dynamics": 
+            {
+                "point": 
+                {
+                    "volume": " ",
+                    "pressure": " ",
+                    "temperature": " "
+                },
+                "capacities":
+                {
+                    "heat_cap_vol": " ",
+                    "heat_cap_pres": " "
+                },
+                "potentials":
+                {
+                    "internal_energy": " "
+                }
+            }
+        },
+        "data": 
+        {
+            "chemestry": 
+            {
+                "data": 
+                {
+                    "formula": " ",
+                    "image_url": " "
+                }
+            }
+        }
+    }
+}

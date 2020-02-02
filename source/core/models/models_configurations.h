@@ -64,36 +64,21 @@ struct models_configuration {
   io_loglvl log_level;
 };
 
+/* TODO - добавить ошибки отсутствия параметра, неправильного значения,
+     добавить шаблоны соответствия полей структуры со строковыми значениями,
+     сделать тоже самое для возможных значений */
+/** \brief измениить в 'mc' параметр, соответствующий 'param_str',
+  *   значение параметра соответствует переданному в строке 'param_value'
+  * \param param_str наименование поля в 'mc'
+  * \param param_value значение параметра */
+merror_t SetConfigurationParameter(models_configuration &mc,
+    const std::string &param_str, const std::string &param_value) {
+  отсюдова;
+}
+
 
 /// singleton of state
 class ProgramState {
-  /// конфигурация расчёта
-  class ProgramConfiguration {
-  public:
-    ProgramConfiguration();
-
-    merror_t ResetConfigFile(const std::string &config_file);
-
-  private:
-    /** \brief Установить значения по умолчанию
-      * для возможных параметров */
-    void setDefault();
-    /** \brief Считать и инициализировать конфигурацию
-      * коннекта к базе данных */
-    db_parameters initDatabaseConfig();
-    /** \brief Считать и инициализировать конфигурацию модели */
-    model_str initModelStr();
-
-  public:
-    merror_t error;
-    std::string config_file;
-    /** \brief Параметры коннекта к БД */
-    db_parameters parameters;
-    /** \brief Набор конфигураций уравнений состояния реального газа */
-    std::vector<model_str> models;
-    bool is_initialized;
-  };
-
 public:
   /** \brief синглетончик инст */
   static ProgramState &Instance();
@@ -109,8 +94,41 @@ public:
   const models_configuration GetConfiguration() const;
 
 private:
+  ProgramState();
+
+private:
+  /// конфигурация расчёта
+  class ProgramConfiguration {
+  public:
+    ProgramConfiguration(const std::string &config_file);
+
+    merror_t ResetConfigFile(const std::string &config_file);
+
+  private:
+    /** \brief Установить значения по умолчанию
+      * для возможных параметров */
+    void setDefault();
+    /** \brief Считать и инициализировать конфигурацию
+      * коннекта к базе данных */
+    db_parameters initDatabaseConfig();
+    /** \brief Считать и инициализировать конфигурацию модели */
+    model_str initModelStr();
+
+  public:
+    merror_t error;
+    /** \brief Текущий файл конфигурации */
+    std::string config_file;
+    /** \brief Параметры коннекта к БД */
+    db_parameters parameters;
+    /** \brief Набор конфигураций уравнений состояния реального газа */
+    std::vector<model_str> models;
+    bool is_initialized;
+  };
+
+private:
   merror_t error_;
   std::unique_ptr<ProgramConfiguration> program_config_;
+  // м.б. сразу объект хранить???
   std::string gasmix_file;
 };
 
