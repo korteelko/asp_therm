@@ -1,11 +1,12 @@
 #ifndef _CORE__SUBROUTINS__FILE_STRUCTS_H_
 #define _CORE__SUBROUTINS__FILE_STRUCTS_H_
 
-#include " common.h"
+#include "common.h"
 #include "db_connection.h"
 #include "models_errors.h"
 
 #include <array>
+#include <map>
 #include <string>
 
 #include <stdint.h>
@@ -66,30 +67,47 @@ public:
   static node_type get_node_type(std::string type);
 };
 
+template <class T>
+merror_t set_by_map(const std::map<const std::string, T> &m,
+    const std::string &v, T &a) {
+  merror_t error = ERR_STRTPL_VALWRONG;
+  auto map_it = m.find(v);
+  if (map_it != m.end()) {
+    error = ERR_SUCCESS_T;
+    a = map_it->second;
+  }
+  return error;
+}
+
 /* PARSE TEMPLATE VALUES
  *   TODO: дописать на основе документации */
 /** \brief проверить соответствие 'val' допустимым значениям
   *   шаблона для bool : "true" или "false"
   * \param val текстовый шаблон значения
   * \param ans out bool параметр значения */
+[[nodiscard]]
 merror_t set_bool(const std::string &val, bool &ans);
 /** \brief проверить соответствие 'val' допустимым значениям
   *   шаблона для db_client: "none", "postgresql"
   * \param val текстовый шаблон значения
   * \param ans out db_client параметр значения */
-//merror_t set_db_client(const std::string &val, db_client &ans);
+[[nodiscard]]
+merror_t set_db_client(const std::string &val, db_client &ans);
 /** \brief проверить соответствие 'val' допустимым значениям double
   * \param val текстовый шаблон значения
   * \param ans out double параметр значения */
+// [[nodiscard]]
 //merror_t set_double(const std::string &val, double &ans);
 /** \brief проверить соответствие 'val' допустимым значениям int
   * \param val текстовый шаблон значения
   * \param ans out int параметр значения */
+// [[nodiscard]]
 //merror_t set_int(const std::string &val, int &ans);
 /** \brief проверить соответствие 'val' допустимым значениям
   *   шаблона для io_loglvl: "debug",
   * \param val текстовый шаблон значения
   * \param ans out bool параметр значения */
-//merror_t set_loglvl(const std::string &val, io_loglvl &ans);
+[[nodiscard]]
+merror_t set_loglvl(const std::string &val, io_loglvl &ans);
 
 #endif  // !_CORE__SUBROUTINS__FILE_STRUCTS_H_

@@ -88,7 +88,7 @@ public:
 
   /** \brief Проверить ProgramConfiguration */
   bool IsInitialized() const;
-  merror_t GetError() const;
+  merror_t GetErrorCode() const;
   const models_configuration GetConfiguration() const;
 
 private:
@@ -124,7 +124,7 @@ private:
   };
 
 private:
-  merror_t error_;
+  ErrorWrap error_;
   std::unique_ptr<ProgramConfiguration> program_config_;
   // м.б. сразу объект хранить???
   std::string gasmix_file;

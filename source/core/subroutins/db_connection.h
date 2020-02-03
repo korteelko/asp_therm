@@ -16,6 +16,7 @@ enum class db_client: uint32_t {
 
 /** \brief структура содержит параметры коннектинга */
 struct db_parameters {
+public:
   /** \brief тип клиента */
   db_client supplier;
   /** \brief параметры подключения базы данных
@@ -25,6 +26,9 @@ struct db_parameters {
               password,
               host,
               port;
+
+public:
+  db_parameters();
 };
 
 /** \brief класс взаимодействия с БД */

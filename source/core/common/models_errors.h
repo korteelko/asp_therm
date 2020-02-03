@@ -62,11 +62,11 @@ typedef uint64_t merror_t;
 
 // string templates error
 /** пустой текстовый шаблон */
-#define ERR_STRTPL_TPLNULL  0x0100
+#define ERR_STRTPL_TPLNULL  (0x0100 | ERR_STRTPL_T)
 /** неизвестный текстовый шаблон */
-#define ERR_STRTPL_TPLUNDEF 0x0200
+#define ERR_STRTPL_TPLUNDEF (0x0200 | ERR_STRTPL_T)
 /** недопустимое значение текстового шаблона */
-#define ERR_STRTPL_VALWRONG 0x0300
+#define ERR_STRTPL_VALWRONG (0x0300 | ERR_STRTPL_T)
 
 // info type mask
 // #define ERR_MASK_TYPE      0xf000

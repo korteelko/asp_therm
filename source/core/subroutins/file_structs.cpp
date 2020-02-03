@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 std::array<std::string, GAS_NODE_COUNT> gas_node::node_t_list = {
   "gas", "section", "group", "subgroup", "parameter"
@@ -91,6 +92,39 @@ node_type gasmix_node::get_node_type(std::string type) {
 
 
 /* PARSE TEMPLATE VALUES */
-merror_t set_bool(const std::string &val, bool &ans) {
+/* data */
+static std::map<const std::string, io_loglvl> map_loglvl_tpls =
+    std::map<const std::string, io_loglvl> {
+  {STRTPL_LOG_LEVEL_NO_LOGS, io_loglvl::no_log},
+  {STRTPL_LOG_LEVEL_ERR, io_loglvl::err_logs},
+  {STRTPL_LOG_LEVEL_WARN, io_loglvl::warn_logs},
+  {STRTPL_LOG_LEVEL_DEBUG, io_loglvl::debug_logs},
+};
+static std::map<const std::string, db_client> map_dbclient_tpls =
+    std::map<const std::string, db_client> {
+  {STRTPL_DB_CLIENT_NOONE, db_client::NOONE},
+  {STRTPL_DB_CLIENT_POSTGRESQL, db_client::POSTGRESQL},
+};
 
+/* functions */
+merror_t set_bool(const std::string &val, bool &ans) {
+  merror_t error = ERR_SUCCESS_T;
+  if (strcmp(val.c_str(), STRTPL_BOOL_TRUE) != 0) {
+    if (strcmp(val.c_str(), STRTPL_BOOL_FALSE) != 0) {
+      error = ERR_STRTPL_VALWRONG;
+    } else {
+      ans = false;
+    }
+  } else {
+    ans = true;
+  }
+  return error;
+}
+
+merror_t set_db_client(const std::string &val, db_client &ans) {
+  return set_by_map(map_dbclient_tpls, val, ans);
+}
+
+merror_t set_loglvl(const std::string &val, io_loglvl &ans) {
+  return set_by_map(map_loglvl_tpls, val, ans);
 }

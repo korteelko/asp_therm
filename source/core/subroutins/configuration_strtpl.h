@@ -7,15 +7,34 @@
      Если другие файлы тоже буду парситься програмно, или потребуется
        состояние скипать в текстовое... интересная идея для дампов состояния */
 
+/* TEMPLATES */
 /* параметры конфигурации */
-#define STRTPL_CONFIG__DEBUG_MODE "debug_mode"
-сюда
+#define STRTPL_CONFIG_DEBUG_MODE "debug_mode"
+#define STRTPL_CONFIG_PSEUDOCRITICAL "pseudocritical"
+#define STRTPL_CONFIG_INCLUDE_ISO_20765 "include_iso_20765"
+#define STRTPL_CONFIG_LOG_LEVEL "log_level"
 
-/* values */
+/* параметры конфигурации базы данных */
+#define STRTPL_CONFIG_BD_CLIENT "client"
+#define STRTPL_CONFIG_BD_NAME "name"
+#define STRTPL_CONFIG_BD_USERNAME "username"
+#define STRTPL_CONFIG_BD_PASSWORD "password"
+#define STRTPL_CONFIG_BD_HOST "host"
+#define STRTPL_CONFIG_BD_PORT "port"
+
+/* VALUES */
 /* bool */
 #define STRTPL_BOOL_TRUE "true"
 #define STRTPL_BOOL_FALSE "false"
 
-/*  */
+/* log_level */
+#define STRTPL_LOG_LEVEL_NO_LOGS "no_logs"
+#define STRTPL_LOG_LEVEL_ERR "err"
+#define STRTPL_LOG_LEVEL_WARN "warn"
+#define STRTPL_LOG_LEVEL_DEBUG "debug"
+
+/* clients */
+#define STRTPL_DB_CLIENT_NOONE "noone"
+#define STRTPL_DB_CLIENT_POSTGRESQL "postgresql"
 
 #endif  // !_CORE__SUBROUTINS__CONFIGURATION_STRTPL_H_
