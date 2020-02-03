@@ -1,5 +1,6 @@
 #include "file_structs.h"
 
+#include "configuration_strtpl.h"
 #include "models_logging.h"
 
 #include <assert.h>
@@ -86,4 +87,10 @@ node_type gasmix_node::get_node_type(std::string type) {
     if (gasmix_node::node_t_list[i] == type)
       return i;
   return NODE_T_UNDEFINED;
+}
+
+
+/* PARSE TEMPLATE VALUES */
+merror_t set_bool(const std::string &val, bool &ans) {
+
 }

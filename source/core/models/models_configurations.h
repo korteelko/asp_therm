@@ -54,6 +54,7 @@ struct model_str {
 };
 
 struct models_configuration {
+public:
   /** \brief выводить отладочную информацию */
   bool is_debug_mode;
   /** \brief пересчитывать модели по псевдокритическим параметрам */
@@ -62,19 +63,16 @@ struct models_configuration {
   bool enable_iso_20765;
   /** \brief уровень логирования */
   io_loglvl log_level;
+
+public:
+  /** \brief изменить параметр(поле), соответствующий 'param_str',
+    *   значение параметра соответствует переданному в строке 'param_value'
+    * \param param_str текстовый шаблон поля
+    * \param param_value значение параметра */
+  merror_t SetConfigurationParameter(
+      const std::string &param_strtpl, const std::string &param_value);
 };
 
-/* TODO - добавить ошибки отсутствия параметра, неправильного значения,
-     добавить шаблоны соответствия полей структуры со строковыми значениями,
-     сделать тоже самое для возможных значений */
-/** \brief измениить в 'mc' параметр, соответствующий 'param_str',
-  *   значение параметра соответствует переданному в строке 'param_value'
-  * \param param_str наименование поля в 'mc'
-  * \param param_value значение параметра */
-merror_t SetConfigurationParameter(models_configuration &mc,
-    const std::string &param_str, const std::string &param_value) {
-  отсюдова;
-}
 
 
 /// singleton of state

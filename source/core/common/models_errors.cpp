@@ -10,12 +10,14 @@
 static merror_t models_error = ERR_SUCCESS_T;
 static char models_error_msg[ERR_MSG_MAX_LEN] = {0};
 
+// ес, онгличанин ( ͡° ͜ʖ ͡°)
 static const char *custom_msg[] = {
   "there are not any errors ",
   "fileio error ",
   "calculation error ",
   "string processing error ",
-  "init struct error "
+  "init struct error ",
+  "string template error "
 };
 
 static const char *custom_msg_fileio[] {
@@ -46,6 +48,12 @@ static const char *custom_msg_init[] = {
   "nullptr value init "
 };
 
+static const char *custom_msg_strtpl[] = {
+  "init error ",
+  "zero value init ",
+  "nullptr value init "
+};
+
 // Установим конкретное сообщение об ошибке из
 //   приведенных выше
 // set errmessage
@@ -68,6 +76,9 @@ static const char *get_custom_err_msg(merror_t error) {
       break;
     case ERR_INIT_T:
       list_of_custom_msg = custom_msg_init;
+      break;
+    case ERR_STRTPL_T:
+      list_of_custom_msg = custom_msg_strtpl;
       break;
     default:
       break;
@@ -156,7 +167,7 @@ void ErrorWrap::LogIt(io_loglvl lvl) {
           msg_.c_str(), error_);
     } else {
       Logging::Append(lvl, "Error occurred.\n  custom err_msg:%s\n  code:0x%h",
-          get_custom_err_msg(), error_);
+          get_custom_err_msg(error_), error_);
     }
     is_logged_ = true;
   }

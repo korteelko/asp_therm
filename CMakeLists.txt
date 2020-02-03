@@ -1,13 +1,15 @@
 cmake_minimum_required(VERSION 3.7)
-add_compile_options(-std=c++17 -Wall)
-
-# TODO:
-#   CHECK WINDOWS BUILDING
-#   add MIT License
 
 set(PROJECT_NAME asp_therm)
 set(RESULT_LIB atherm)
 project(${PROJECT_NAME})
+# TODO:
+#   CHECK WINDOWS BUILDING
+#   add MIT License
+
+add_compile_options(-Wall)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # set cmake options:
 # debug
@@ -55,10 +57,10 @@ set(RAPIDJSON_DIR "${MODULES_DIR}/rapidjson")
 add_subdirectory(${RAPIDJSON_DIR})
 include_directories(${RAPIDJSON_DIR}/include)
 
-message(STATUS "asp_therm build info:")
+message(STATUS "asp_therm cmake build info:")
+message(STATUS "\t\tSystem info: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "\t\tBUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message(STATUS "\t\tLIBS_DIR: ${LIBS_DIR}")
-message(STATUS "\t\tSystem info: ${CMAKE_SYSTEM_NAME}")
 
 set(THERMCORE_INCLUDES
   "${THERMCORE_SOURCE_DIR}/common"
@@ -128,6 +130,7 @@ endforeach()
 add_executable(${PROJECT_NAME} ${MODELS_SRC} main.cpp)
 target_link_libraries(${PROJECT_NAME}
   # ${RESULT_LIB}
+  stdc++fs
   # pugixml site:
   #   http://pugixml.org
   pugixml

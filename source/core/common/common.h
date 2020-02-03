@@ -75,11 +75,9 @@ typedef enum {
 
 /** \brief Обрезать пробелы с обоих концов */
 std::string trim_str(const std::string &str);
-
 /** \brief Проверить что объект файловой системы(файл, директория, соккет,
   *   линк, character_dev) существует */
 bool is_exist(const std::string &path);
-
 /** \brief Вернуть путь к директории содержащей файл */
 std::string dir_by_path(const std::string &path);
 

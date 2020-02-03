@@ -1,12 +1,14 @@
 #include "models_configurations.h"
 
+#include <functional>
+#include <map>
+
 #include <assert.h>
 /*
 struct model_name {
   const int id;
   const char *const name;
 };
-
 // warning 
 //  what VS say to this???
 model_name model_names[] = {
@@ -16,14 +18,26 @@ model_name model_names[] = {
   {MODEL_NG_GOST, "GOST 30319-2015"}
 };
 */
-/*
 
+namespace update_configuration_functional {
+  merror_t update_debug_mode(models_configuration *mc,
+      const std::string &val) {
+    merror_t error = ERR_INIT_ZERO_ST;
+    if (mc) {
+      сюда
+    }
+    return error;
+  }
 
-private:
-  merror_t error_;
-  std::unique_ptr<ProgramConfiguration> program_config_;
-  std::string gasmix_file;
-*/
+  typedef std::function<merror_t(models_configuration *,
+      const std::string &value)> update_models_config_f;
+  std::map<const std::string, update_models_config_f> map_models_config_f;
+}  // anonymous namespace
+
+merror_t models_configuration::SetConfigurationParameter(
+    const std::string &param_str, const std::string &param_value) {
+  assert(0);
+}
 
 ProgramState &ProgramState::Instance() {
   static ProgramState state;
