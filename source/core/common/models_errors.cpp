@@ -39,7 +39,8 @@ static const char *custom_msg_string[] = {
   "string processing error ",
   "string len error ",
   "string parsing error ",
-  "passed null string "
+  "passed null string ",
+  "convert to int "
 };
 
 static const char *custom_msg_init[] = {

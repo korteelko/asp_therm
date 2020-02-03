@@ -1,3 +1,5 @@
+// this is template file, rename it to "configuration.json"
+//   and set your parameters
 {
   "debug_mode": true,
   "pseudocritical": true,
@@ -7,7 +9,7 @@
     "client": "redis",
     "name": "asp_therm_db",
     "username": "",
-    "pasword": "",
+    "password": "",
     "host": "",
     "port": ""
   }

@@ -69,8 +69,8 @@ public:
     *   значение параметра соответствует переданному в строке 'param_value'
     * \param param_str текстовый шаблон поля
     * \param param_value значение параметра */
-  merror_t SetConfigurationParameter(
-      const std::string &param_strtpl, const std::string &param_value);
+  merror_t SetConfigurationParameter(const std::string &param_strtpl,
+      const std::string &param_value);
 };
 
 

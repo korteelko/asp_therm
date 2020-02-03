@@ -20,10 +20,11 @@ public:
 
 private:
   ConfigurationByFile(XMLReader<config_node> *xml_doc);
-  void init_parameters();
-  void init_dbparameters();
+  merror_t init_parameters();
+  merror_t init_dbparameters();
 
 private:
+  ErrorWrap error_;
   std::unique_ptr<XMLReader<config_node>> xml_doc_;
   models_configuration config_;
   db_parameters db_params_;

@@ -86,28 +86,28 @@ merror_t set_by_map(const std::map<const std::string, T> &m,
   * \param val текстовый шаблон значения
   * \param ans out bool параметр значения */
 [[nodiscard]]
-merror_t set_bool(const std::string &val, bool &ans);
+merror_t set_bool(const std::string &val, bool *ans);
 /** \brief проверить соответствие 'val' допустимым значениям
   *   шаблона для db_client: "none", "postgresql"
   * \param val текстовый шаблон значения
   * \param ans out db_client параметр значения */
 [[nodiscard]]
-merror_t set_db_client(const std::string &val, db_client &ans);
+merror_t set_db_client(const std::string &val, db_client *ans);
 /** \brief проверить соответствие 'val' допустимым значениям double
   * \param val текстовый шаблон значения
   * \param ans out double параметр значения */
 // [[nodiscard]]
-//merror_t set_double(const std::string &val, double &ans);
+// merror_t set_double(const std::string &val, double *ans);
 /** \brief проверить соответствие 'val' допустимым значениям int
   * \param val текстовый шаблон значения
   * \param ans out int параметр значения */
-// [[nodiscard]]
-//merror_t set_int(const std::string &val, int &ans);
+[[nodiscard]]
+merror_t set_int(const std::string &val, int *ans);
 /** \brief проверить соответствие 'val' допустимым значениям
   *   шаблона для io_loglvl: "debug",
   * \param val текстовый шаблон значения
   * \param ans out bool параметр значения */
 [[nodiscard]]
-merror_t set_loglvl(const std::string &val, io_loglvl &ans);
+merror_t set_loglvl(const std::string &val, io_loglvl *ans);
 
 #endif  // !_CORE__SUBROUTINS__FILE_STRUCTS_H_

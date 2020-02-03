@@ -23,39 +23,39 @@ model_name model_names[] = {
 */
 
 namespace update_configuration_functional {
-  typedef std::function<merror_t(models_configuration *,
-      const std::string &value)> update_models_config_f;
+typedef std::function<merror_t(models_configuration *,
+    const std::string &value)> update_models_config_f;
 
-  merror_t update_debug_mode(models_configuration *mc,
-      const std::string &val) {
-    return (mc) ? set_bool(val, mc->is_debug_mode) : ERR_INIT_ZERO_ST;
-  }
-  merror_t update_pseudocritical(models_configuration *mc,
-       const std::string &val) {
-    return (mc) ? set_bool(val, mc->by_pseudocritic) : ERR_INIT_ZERO_ST;
-  }
-  merror_t update_enable_iso_20765(models_configuration *mc,
-       const std::string &val) {
-    return (mc) ? set_bool(val, mc->enable_iso_20765) : ERR_INIT_ZERO_ST;
-  }
-  merror_t update_log_level(models_configuration *mc,
-       const std::string &val) {
-    return (mc) ? set_loglvl(val, mc->log_level) : ERR_INIT_ZERO_ST;
-  }
+merror_t update_debug_mode(models_configuration *mc,
+    const std::string &val) {
+  return (mc) ? set_bool(val, &mc->is_debug_mode) : ERR_INIT_ZERO_ST;
+}
+merror_t update_pseudocritical(models_configuration *mc,
+     const std::string &val) {
+  return (mc) ? set_bool(val, &mc->by_pseudocritic) : ERR_INIT_ZERO_ST;
+}
+merror_t update_enable_iso_20765(models_configuration *mc,
+     const std::string &val) {
+  return (mc) ? set_bool(val, &mc->enable_iso_20765) : ERR_INIT_ZERO_ST;
+}
+merror_t update_log_level(models_configuration *mc,
+     const std::string &val) {
+  return (mc) ? set_loglvl(val, &mc->log_level) : ERR_INIT_ZERO_ST;
+}
 
-  struct config_setup_fuctions {
-    /** \brief функция обновляющая параметр */
-    update_models_config_f update;
-    // /** \brief функция возвращающая строковые значения */
-    // get_strtpl get_str_tpl;
-  };
-  static std::map<const std::string, config_setup_fuctions> map_config_fuctions =
-      std::map<const std::string, config_setup_fuctions> {
-    {STRTPL_CONFIG_DEBUG_MODE, {update_debug_mode}},
-    {STRTPL_CONFIG_PSEUDOCRITICAL, {update_pseudocritical}},
-    {STRTPL_CONFIG_INCLUDE_ISO_20765, {update_enable_iso_20765}},
-    {STRTPL_CONFIG_LOG_LEVEL, {update_log_level}}
-  };
+struct config_setup_fuctions {
+  /** \brief функция обновляющая параметр */
+  update_models_config_f update;
+  // /** \brief функция возвращающая строковые значения */
+  // get_strtpl get_str_tpl;
+};
+static std::map<const std::string, config_setup_fuctions> map_config_fuctions =
+    std::map<const std::string, config_setup_fuctions> {
+  {STRTPL_CONFIG_DEBUG_MODE, {update_debug_mode}},
+  {STRTPL_CONFIG_PSEUDOCRITICAL, {update_pseudocritical}},
+  {STRTPL_CONFIG_INCLUDE_ISO_20765, {update_enable_iso_20765}},
+  {STRTPL_CONFIG_LOG_LEVEL, {update_log_level}}
+};
 }  // update_configuration_functional namespace
 
 namespace ns_ucf = update_configuration_functional;

@@ -24,11 +24,14 @@ public:
   std::string name,
               username,
               password,
-              host,
-              port;
+              host;
+  int port;
 
 public:
   db_parameters();
+
+  merror_t SetConfigurationParameter(const std::string &param_strtpl,
+      const std::string &param_value);
 };
 
 /** \brief класс взаимодействия с БД */

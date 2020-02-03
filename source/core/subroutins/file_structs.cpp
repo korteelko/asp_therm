@@ -29,7 +29,7 @@ config_node::config_node(node_type itype, std::string name, std::string value)
   Logging::Append(io_loglvl::debug_logs, "Create confignode: %s #%d %s",
       value.c_str(), itype, name.c_str());
 #endif  // _DEBUG
-  }
+}
 
 // static
 std::string config_node::get_root_name() {
@@ -53,7 +53,7 @@ gas_node::gas_node(node_type itype, std::string name, std::string value)
   Logging::Append(io_loglvl::debug_logs, "Create gasnode: %s #%d %s",
       value.c_str(), itype, name.c_str());
 #endif  // _DEBUG
-  }
+}
 
 // static
 std::string gas_node::get_root_name() {
@@ -107,24 +107,43 @@ static std::map<const std::string, db_client> map_dbclient_tpls =
 };
 
 /* functions */
-merror_t set_bool(const std::string &val, bool &ans) {
+merror_t set_bool(const std::string &val, bool *ans) {
   merror_t error = ERR_SUCCESS_T;
   if (strcmp(val.c_str(), STRTPL_BOOL_TRUE) != 0) {
     if (strcmp(val.c_str(), STRTPL_BOOL_FALSE) != 0) {
       error = ERR_STRTPL_VALWRONG;
     } else {
-      ans = false;
+      *ans = false;
     }
   } else {
-    ans = true;
+    *ans = true;
   }
   return error;
 }
 
-merror_t set_db_client(const std::string &val, db_client &ans) {
-  return set_by_map(map_dbclient_tpls, val, ans);
+merror_t set_db_client(const std::string &val, db_client *ans) {
+  return set_by_map(map_dbclient_tpls, val, *ans);
 }
 
-merror_t set_loglvl(const std::string &val, io_loglvl &ans) {
-  return set_by_map(map_loglvl_tpls, val, ans);
+/*
+merror_t set_double(const std::string &val, double *ans) {
+  assert(0);
+}
+*/
+
+merror_t set_int(const std::string &val, int *ans) {
+  merror_t error = ERR_SUCCESS_T;
+  /* TODO: separate merrors for different exceptions */
+  try {
+    *ans = std::stoi(val);
+  } catch (std::invalid_argument &) {
+    error = ERR_STRING_T | ERR_STR_TOINT_ST;
+  } catch (std::out_of_range &) {
+    error = ERR_STRING_T | ERR_STR_TOINT_ST;
+  }
+  return error;
+}
+
+merror_t set_loglvl(const std::string &val, io_loglvl *ans) {
+  return set_by_map(map_loglvl_tpls, val, *ans);
 }

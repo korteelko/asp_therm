@@ -1,3 +1,5 @@
+<!-- this is template file, rename it to "configuration.xml"
+  and set your parameters -->>
 <?xml version="1.0" encoding="UTF-8"?>
 <program_config name="debug">
   <parameter name="debug_mode"> true </parameter>

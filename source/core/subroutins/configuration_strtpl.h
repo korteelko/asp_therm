@@ -13,14 +13,15 @@
 #define STRTPL_CONFIG_PSEUDOCRITICAL "pseudocritical"
 #define STRTPL_CONFIG_INCLUDE_ISO_20765 "include_iso_20765"
 #define STRTPL_CONFIG_LOG_LEVEL "log_level"
+#define STRTPL_CONFIG_DATABASE "database"
 
 /* параметры конфигурации базы данных */
-#define STRTPL_CONFIG_BD_CLIENT "client"
-#define STRTPL_CONFIG_BD_NAME "name"
-#define STRTPL_CONFIG_BD_USERNAME "username"
-#define STRTPL_CONFIG_BD_PASSWORD "password"
-#define STRTPL_CONFIG_BD_HOST "host"
-#define STRTPL_CONFIG_BD_PORT "port"
+#define STRTPL_CONFIG_DB_CLIENT "client"
+#define STRTPL_CONFIG_DB_NAME "name"
+#define STRTPL_CONFIG_DB_USERNAME "username"
+#define STRTPL_CONFIG_DB_PASSWORD "password"
+#define STRTPL_CONFIG_DB_HOST "host"
+#define STRTPL_CONFIG_DB_PORT "port"
 
 /* VALUES */
 /* bool */

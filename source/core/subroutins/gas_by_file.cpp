@@ -55,7 +55,7 @@ double get_val(std::vector<std::string> &vec, const std::string &valname,
   }
   return ans;
 }
-}  // unnamed namespace
+}  // anonymous namespace
 
 // XmlFile
 ComponentByFile::ComponentByFile(XMLReader<gas_node> *xml_doc)
@@ -87,8 +87,8 @@ std::shared_ptr<const_parameters> ComponentByFile::GetConstParameters() {
   mol = get_val(tmp_vec, "molec_mass", xml_doc_.get());
   af  = get_val(tmp_vec, "acentric", xml_doc_.get());
   set_gas_name();
-  return std::shared_ptr<const_parameters>(const_parameters::Init(gas_name_,
-      cp[0], cp[1], cp[2], cp[3], mol, af));
+  return std::shared_ptr<const_parameters>(const_parameters::Init(
+      gas_name_, cp[0], cp[1], cp[2], cp[3], mol, af));
 }
 
 std::shared_ptr<dyn_parameters> ComponentByFile::GetDynParameters() {

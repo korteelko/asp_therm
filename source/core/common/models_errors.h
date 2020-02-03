@@ -55,6 +55,7 @@ typedef uint64_t merror_t;
 #define ERR_STR_MAX_LEN_ST  0x0100
 #define ERR_STR_PARSE_ST    0x0200
 #define ERR_STR_NULL_ST     0x0300
+#define ERR_STR_TOINT_ST    0x0400
 
 // init errors
 #define ERR_INIT_ZERO_ST    (0x0100 | ERR_INIT_T)
@@ -115,6 +116,9 @@ public:
   merror_t GetErrorCode() const;
   std::string GetMessage() const;
   bool IsLogged() const;
+
+  /* DEVELOP: такая перегрузка может стать причиной ментального бо-бо */
+  ErrorWrap &operator= (merror_t) = delete;
 
 private:
   merror_t error_;
