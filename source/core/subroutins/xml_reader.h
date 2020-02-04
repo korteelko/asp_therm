@@ -1,6 +1,7 @@
 #ifndef _CORE__SUBROUTINS__XML_READER_H_
 #define _CORE__SUBROUTINS__XML_READER_H_
 
+#include "common.h"
 #include "file_structs.h"
 #include "models_errors.h"
 #include "models_logging.h"
@@ -70,7 +71,7 @@ public:
 
 template <class xml_node_t>
 class XMLReader {
-  merror_t error_;
+  ErrorWrap error_;
   std::string gas_xml_file_;
   std::unique_ptr<gasxml_node<xml_node_t>> gas_root_node_;
   pugi::xml_document xml_doc_;
@@ -116,7 +117,7 @@ private:
     if (nt == NODE_T_UNDEFINED) {
       std::string estr = "get undefined xml node while parsing, node name: "
           + std::string(nx_xml_nd.name()) + "\n";
-      error_ = set_error_message(ERR_INIT_T | ERR_FILE_IN_ST, estr.c_str());
+      error_.SetError(ERR_FILE_IN_ST, estr);
       return;
     }
     gasxml_nd->first_child = std::unique_ptr<gasxml_node<xml_node_t>>(
@@ -154,25 +155,25 @@ private:
 public:
   static XMLReader<xml_node_t> *Init(std::string gas_xml_file) {
     merror_t err = ERR_SUCCESS_T;
+    XMLReader<xml_node_t> *reader = nullptr;
     if (gas_xml_file.empty())
-      err = set_error_code(ERR_INIT_T | ERR_INIT_NULLP_ST);
+      err = set_error_code(ERR_INIT_NULLP_ST);
     if (err == ERR_SUCCESS_T) {
-      // check file exist
-      FILE *f = fopen(gas_xml_file.c_str(), "r");
-      if (!f)
-        err = set_error_message(ERR_FILEIO_T | ERR_FILE_IN_ST, std::string(
+      if (!is_exist(gas_xml_file)) {
+        err = set_error_message(ERR_FILE_IN_ST, std::string(
             std::string("cannot open file: ") + gas_xml_file).c_str());
-      else
-        fclose(f);
-    }
-    reset_error();
-    XMLReader<xml_node_t> *reader = new XMLReader<xml_node_t>(gas_xml_file);
-    if (reader)
-      if (reader->GetError() != ERR_SUCCESS_T) {
-        Logging::Append(io_loglvl::debug_logs, get_error_message());
-        delete reader;
-        reader = nullptr;
+      } else {
+        reset_error();
+        reader = new XMLReader<xml_node_t>(gas_xml_file);
+        if (reader) {
+          if (reader->GetError() != ERR_SUCCESS_T) {
+            Logging::Append(io_loglvl::debug_logs, get_error_message());
+            delete reader;
+            reader = nullptr;
+          }
+        }
       }
+    }
     return reader;
   }
 
@@ -181,7 +182,7 @@ public:
   }
 
   merror_t GetError() const {
-    return error_;
+    return error_.GetErrorCode();
   }
 
   std::string GetRootName() const {

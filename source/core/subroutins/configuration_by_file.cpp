@@ -46,7 +46,7 @@ merror_t ConfigurationByFile::init_parameters() {
       error = init_dbparameters();
     } else {
       xml_doc_->GetValueByPath(xml_path, &tmp_str);
-      error = config_.SetConfigurationParameter(param, tmp_str);
+      error = configuration_.SetConfigurationParameter(param, tmp_str);
     }
     if (error)
       break;
@@ -67,7 +67,7 @@ merror_t ConfigurationByFile::init_dbparameters() {
   for (const auto &param : config_database) {
     xml_path[1] = param;
     xml_doc_->GetValueByPath(xml_path, &tmp_str);
-    error = config_.SetConfigurationParameter(param, tmp_str);
+    error = configuration_.SetConfigurationParameter(param, tmp_str);
     if (error)
       break;
   }
@@ -80,9 +80,13 @@ merror_t ConfigurationByFile::init_dbparameters() {
 }
 
 models_configuration ConfigurationByFile::GetConfiguration() const {
-  return config_;
+  return configuration_;
 }
 
 db_parameters ConfigurationByFile::GetDBConfiguration() const {
-  return db_params_;
+  return db_parameters_;
+}
+
+const ErrorWrap &ConfigurationByFile::GetErrorWrap() const {
+  return error_;
 }

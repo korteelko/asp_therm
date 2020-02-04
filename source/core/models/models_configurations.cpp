@@ -1,5 +1,6 @@
 #include "models_configurations.h"
 
+#include "configuration_by_file.h"
 #include "configuration_strtpl.h"
 #include "file_structs.h"
 
@@ -14,6 +15,8 @@ struct model_name {
 };
 // warning 
 //  what VS say to this???
+
+// TODO: remove to "configuration_strtpl.h"
 model_name model_names[] = {
   {MODEL_IDEAL_GAS, "ideal gas"},
   {MODEL_REDLICH_KWONG, "redlich-kwong"},
@@ -81,7 +84,16 @@ ProgramState::ProgramState()
 
 merror_t ProgramState::ResetConfigFile(
     const std::string &config_file) {
-  assert(0);
+  program_config_ = std::unique_ptr<ProgramConfiguration>(
+      new ProgramConfiguration(config_file));
+  if (program_config_) {
+    if (program_config_->error.GetErrorCode()) {
+      error_.SetError(program_config_->error.GetErrorCode(),
+          "Ошибка инициализации конфига программы");
+      error_.LogIt();
+    }
+  }
+  return error_.GetErrorCode();
 }
 
 merror_t ProgramState::ResetGasmixFile(
@@ -90,7 +102,7 @@ merror_t ProgramState::ResetGasmixFile(
 }
 
 bool ProgramState::IsInitialized() const {
-  assert(0);
+  return (program_config_) ? program_config_->is_initialized : false;
 }
 
 merror_t ProgramState::GetErrorCode() const {
@@ -98,10 +110,71 @@ merror_t ProgramState::GetErrorCode() const {
 }
 
 const models_configuration ProgramState::GetConfiguration() const {
-  assert(0);
+  return (program_config_) ?
+      program_config_->configuration : models_configuration();
 }
 
 
-ProgramState::ProgramConfiguration::ProgramConfiguration(
+/* ProgramState::ProgramConfiguration */
+using PSConfiguration = ProgramState::ProgramConfiguration;
+
+PSConfiguration::ProgramConfiguration()
+  : error(ERR_SUCCESS_T), config_filename(""), is_initialized(false) {
+  setDefault();
+}
+
+PSConfiguration::ProgramConfiguration(
     const std::string &config_file)
-  : error(ERR_SUCCESS_T), config_file(config_file), is_initialized(false) {}
+  : error(ERR_SUCCESS_T), config_filename(config_file), is_initialized(false) {
+  ResetConfigFile(config_file);
+}
+
+merror_t PSConfiguration::ResetConfigFile(
+    const std::string &new_config_filename) {
+  config_filename = new_config_filename;
+  is_initialized = false;
+  config_by_file = std::unique_ptr<ConfigurationByFile>(
+      ConfigurationByFile::Init(config_filename));
+  if (config_by_file) {
+    if (config_by_file->GetErrorWrap().GetErrorCode()) {
+      error.SetError(ERR_INIT_T,
+          "Ошибка инициализации конфигурации программы");
+      error.LogIt();
+    } else {
+      initProgramConfig();
+      is_initialized = true;
+    }
+  } else {
+    error.SetError(ERR_FILE_IN_ST,
+        "Ошибка чтения файла конфигурации программы");
+    error.LogIt();
+  }
+  return error.GetErrorCode();
+}
+
+void PSConfiguration::setDefault() {
+  /* конфигурация программы */
+  configuration.is_debug_mode = true;
+  configuration.by_pseudocritic = true;
+  configuration.enable_iso_20765 = true;
+  configuration.log_level = io_loglvl::debug_logs;
+  /* конфигурация программы */
+  db_parameters_conf.supplier = db_client::NOONE;
+  db_parameters_conf.name = "";
+  db_parameters_conf.username = "";
+  db_parameters_conf.password = "";
+  db_parameters_conf.host = "127.0.0.1";
+  db_parameters_conf.port = 8811;
+}
+
+void PSConfiguration::initProgramConfig() {
+  configuration = config_by_file->GetConfiguration();
+}
+
+void PSConfiguration::initDatabaseConfig() {
+  db_parameters_conf = config_by_file->GetDBConfiguration();
+}
+
+model_str PSConfiguration::initModelStr() {
+  assert(0);
+}

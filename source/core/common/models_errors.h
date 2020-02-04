@@ -41,21 +41,21 @@ typedef uint64_t merror_t;
 // error subtype
 #define ERR_MASK_SUBTYPE    0x0f00
 // fileio errors
-#define ERR_FILE_IN_ST      0x0100
-#define ERR_FILE_OUT_ST     0x0200
-#define ERR_FILE_LOGGING    0x0300
+#define ERR_FILE_IN_ST      (0x0100 | ERR_FILEIO_T)
+#define ERR_FILE_OUT_ST     (0x0200 | ERR_FILEIO_T)
+#define ERR_FILE_LOGGING    (0x0300 | ERR_FILEIO_T)
 
 // calculate errors
-#define ERR_CALC_GAS_P_ST   0x0100
-#define ERR_CALC_PHASE_ST   0x0200
-#define ERR_CALC_MODEL_ST   0x0300
-#define ERR_CALC_MIX_ST     0x0400
+#define ERR_CALC_GAS_P_ST   (0x0100 | ERR_CALCULATE_T)
+#define ERR_CALC_PHASE_ST   (0x0200 | ERR_CALCULATE_T)
+#define ERR_CALC_MODEL_ST   (0x0300 | ERR_CALCULATE_T)
+#define ERR_CALC_MIX_ST     (0x0400 | ERR_CALCULATE_T)
 
 // string errors
-#define ERR_STR_MAX_LEN_ST  0x0100
-#define ERR_STR_PARSE_ST    0x0200
-#define ERR_STR_NULL_ST     0x0300
-#define ERR_STR_TOINT_ST    0x0400
+#define ERR_STR_MAX_LEN_ST  (0x0100 | ERR_STRING_T)
+#define ERR_STR_PARSE_ST    (0x0200 | ERR_STRING_T)
+#define ERR_STR_NULL_ST     (0x0300 | ERR_STRING_T)
+#define ERR_STR_TOINT_ST    (0x0400 | ERR_STRING_T)
 
 // init errors
 #define ERR_INIT_ZERO_ST    (0x0100 | ERR_INIT_T)

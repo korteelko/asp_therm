@@ -4,6 +4,7 @@
 #include "gasmix_by_file.h"
 #include "model_redlich_kwong.h"
 #include "model_peng_robinson.h"
+#include "models_configurations.h"
 #include "models_creator.h"
 #include "xml_reader.h"
 
@@ -37,6 +38,21 @@ const std::string xml_ethane  = "ethane.xml";
 const std::string xml_propane = "propane.xml";
 
 const std::string xml_gasmix = "../gasmix_inp_example.xml";
+const std::string xml_configuration = "../../configuration.xml";
+
+int test_program_configuration() {
+  char cwd[512] = {0};
+  if (!getcwd(cwd, (sizeof(cwd)))) {
+    std::cerr << "cann't get current dir";
+    return 1;
+  }
+  std::cerr << "test_program_configuration start\n";
+  ProgramState &ps = ProgramState::Instance();
+  ps.ResetConfigFile(std::string(cwd) + xml_path + xml_configuration);
+  if (get_error_code())
+    std::cerr << get_error_message() << std::endl;
+  return ps.GetErrorCode();
+}
 
 int test_models() {
   char cwd[512] = {0};
@@ -146,5 +162,6 @@ int main() {
     std::cerr << "test_models_mix()" << get_error_message();
     return 2;
   }
+  std::cerr << "test_program_configuration()" << test_program_configuration();
   return 0;
 }

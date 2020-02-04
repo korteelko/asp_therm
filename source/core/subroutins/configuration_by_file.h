@@ -15,8 +15,10 @@ class ConfigurationByFile {
 
 public:
   static ConfigurationByFile *Init(const std::string &filename);
+
   models_configuration GetConfiguration() const;
   db_parameters GetDBConfiguration() const;
+  const ErrorWrap &GetErrorWrap() const;
 
 private:
   ConfigurationByFile(XMLReader<config_node> *xml_doc);
@@ -26,8 +28,8 @@ private:
 private:
   ErrorWrap error_;
   std::unique_ptr<XMLReader<config_node>> xml_doc_;
-  models_configuration config_;
-  db_parameters db_params_;
+  models_configuration configuration_;
+  db_parameters db_parameters_;
 };
 
 #endif  // !_CORE__SUBROUTINS__CONFIGURATION_BY_FILE_H_

@@ -40,6 +40,9 @@
  * // - MODELS : MODELS_STR[] - move to calculation.json
 */
 
+class ConfigurationByFile;
+
+
 /// структура идентификации модели(уравнения реального газа)
 struct model_str {
   /// define of model
@@ -74,7 +77,6 @@ public:
 };
 
 
-
 /// singleton of state
 class ProgramState {
 public:
@@ -91,37 +93,12 @@ public:
   merror_t GetErrorCode() const;
   const models_configuration GetConfiguration() const;
 
+public:
+  /// конфигурация расчёта
+  class ProgramConfiguration;
+
 private:
   ProgramState();
-
-private:
-  /// конфигурация расчёта
-  class ProgramConfiguration {
-  public:
-    ProgramConfiguration(const std::string &config_file);
-
-    merror_t ResetConfigFile(const std::string &config_file);
-
-  private:
-    /** \brief Установить значения по умолчанию
-      * для возможных параметров */
-    void setDefault();
-    /** \brief Считать и инициализировать конфигурацию
-      * коннекта к базе данных */
-    db_parameters initDatabaseConfig();
-    /** \brief Считать и инициализировать конфигурацию модели */
-    model_str initModelStr();
-
-  public:
-    merror_t error;
-    /** \brief Текущий файл конфигурации */
-    std::string config_file;
-    /** \brief Параметры коннекта к БД */
-    db_parameters parameters;
-    /** \brief Набор конфигураций уравнений состояния реального газа */
-    std::vector<model_str> models;
-    bool is_initialized;
-  };
 
 private:
   ErrorWrap error_;
@@ -130,4 +107,42 @@ private:
   std::string gasmix_file;
 };
 
+/// внктренний(nested) класс конфигурации
+///   в классе состояния программы
+class ProgramState::ProgramConfiguration {
+public:
+  ProgramConfiguration();
+  ProgramConfiguration(const std::string &config_filename);
+
+  merror_t ResetConfigFile(const std::string &new_config_filename);
+
+private:
+  /** \brief Установить значения по умолчанию
+    *   для возможных параметров */
+  void setDefault();
+  /** \brief Считать и инициализировать конфигурацию программы */
+  void initProgramConfig();
+  /** \brief Считать и инициализировать конфигурацию
+    *   коннекта к базе данных */
+  void initDatabaseConfig();
+  /** \brief Считать и инициализировать конфигурацию модели */
+  model_str initModelStr();
+
+public:
+  ErrorWrap error;
+  /** \brief Текущий файл конфигурации */
+  std::string config_filename;
+  /** \brief Конфигурация программы */
+  models_configuration configuration;
+  /** \brief Параметры коннекта к БД */
+  db_parameters db_parameters_conf;
+  /** \brief Набор конфигураций уравнений состояния реального газа */
+  std::vector<model_str> models;
+  /** \brief По-сути - декоратор над объектом чтения xml(или других форматов)
+    *   файлов для конфигурации программы */
+  std::unique_ptr<ConfigurationByFile> config_by_file;
+  /** \brief чтение файла завершилось успешной загрузкой
+    *   конфигуции программы */
+  bool is_initialized;
+};
 #endif  // !_CORE__MODELS__MODELS_CONFIGURATIONS_H_
