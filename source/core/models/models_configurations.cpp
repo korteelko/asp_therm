@@ -74,6 +74,10 @@ merror_t models_configuration::SetConfigurationParameter(
   return error;
 }
 
+ models_configuration::models_configuration()
+   : is_debug_mode(true), by_pseudocritic(true),
+   enable_iso_20765(true), log_level(io_loglvl::debug_logs) {}
+
 ProgramState &ProgramState::Instance() {
   static ProgramState state;
   return state;
@@ -114,7 +118,6 @@ const models_configuration ProgramState::GetConfiguration() const {
       program_config_->configuration : models_configuration();
 }
 
-
 /* ProgramState::ProgramConfiguration */
 using PSConfiguration = ProgramState::ProgramConfiguration;
 
@@ -142,6 +145,7 @@ merror_t PSConfiguration::ResetConfigFile(
       error.LogIt();
     } else {
       initProgramConfig();
+      initDatabaseConfig();
       is_initialized = true;
     }
   } else {
@@ -154,17 +158,9 @@ merror_t PSConfiguration::ResetConfigFile(
 
 void PSConfiguration::setDefault() {
   /* конфигурация программы */
-  configuration.is_debug_mode = true;
-  configuration.by_pseudocritic = true;
-  configuration.enable_iso_20765 = true;
-  configuration.log_level = io_loglvl::debug_logs;
-  /* конфигурация программы */
-  db_parameters_conf.supplier = db_client::NOONE;
-  db_parameters_conf.name = "";
-  db_parameters_conf.username = "";
-  db_parameters_conf.password = "";
-  db_parameters_conf.host = "127.0.0.1";
-  db_parameters_conf.port = 8811;
+  configuration = models_configuration();
+  /* конфигурация базы данных */
+  db_parameters_conf = db_parameters();
 }
 
 void PSConfiguration::initProgramConfig() {

@@ -70,3 +70,32 @@ merror_t db_parameters::SetConfigurationParameter(
 
 db_parameters::db_parameters()
   : supplier(db_client::NOONE) {}
+
+
+/* DBConnection */
+ErrorWrap DBConnection::error_;
+db_parameters DBConnection::parameters_;
+bool DBConnection::is_connected_ = false;
+
+DBConnection &DBConnection::Instance() {
+  static DBConnection db;
+  return db;
+}
+
+bool DBConnection::ResetConnect(const db_parameters &parameters) {
+  assert(0);
+  return DBConnection::is_connected_;
+}
+
+bool DBConnection::IsConnected() {return DBConnection::is_connected_;}
+
+merror_t DBConnection::GetErrorCode() {}
+std::string DBConnection::GetErrorMessage() {
+  return error_.GetMessage();
+}
+
+DBConnection::DBConnection() {}
+
+
+/* DBConnection::DBConnectionInstance */
+DBConnectionIns::DBConnectionInstance() {}

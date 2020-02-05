@@ -34,30 +34,36 @@ public:
       const std::string &param_value);
 };
 
+/* TODO: add multithread and guards
+ *   UPD: see gitlab issues */
 /** \brief класс взаимодействия с БД */
 class DBConnection {
 public:
   // struct TransactionBody {};
-  class DBConnectionInstance {};
+  class DBConnectionInstance;
 
 public:
   static DBConnection &Instance();
   /** \brief Попробовать законектится к БД */
-  static const std::vector<std::string> &GetJSONKeys();
+  // static const std::vector<std::string> &GetJSONKeys();
   static bool ResetConnect(const db_parameters &parameters);
   static bool IsConnected();
 
-  static merror_t GetError();
+  static merror_t GetErrorCode();
   static std::string GetErrorMessage();
 
 private:
   DBConnection();
 
 private:
-  static merror_t error_;
-  static std::string error_msg_;
+  static ErrorWrap error_;
   static db_parameters parameters_;
   static bool is_connected_;
 };
+
+class DBConnection::DBConnectionInstance {
+  DBConnectionInstance();
+};
+using DBConnectionIns = DBConnection::DBConnectionInstance;
 
 #endif  // _CORE__SUBROUTINS__DB_CONNECTION_H_

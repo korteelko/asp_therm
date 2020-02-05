@@ -68,6 +68,7 @@ public:
   io_loglvl log_level;
 
 public:
+  models_configuration();
   /** \brief изменить параметр(поле), соответствующий 'param_str',
     *   значение параметра соответствует переданному в строке 'param_value'
     * \param param_str текстовый шаблон поля
