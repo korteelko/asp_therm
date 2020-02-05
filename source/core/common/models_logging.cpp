@@ -5,6 +5,7 @@
 
 #include <assert.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 
 mlog_fostream Logging::output_;
@@ -93,6 +94,22 @@ merror_t Logging::initInstance() {
   return Logging::error_;
 }
 
+void Logging::append(const char *msg) {
+  Logging::output_.open(Logging::li_.filepath,
+      std::fstream::out | std::fstream::app);
+  if (Logging::output_.is_open()) {
+    if (msg) {
+      Logging::output_ << msg;
+      if (!strrchr(msg, '\n'))
+        Logging::output_.put('\n');
+    }
+    Logging::output_.close();
+  } else {
+    Logging::is_aval_ = false;
+    Logging::error_ = ERR_FILEIO_T | ERR_FILE_LOGGING;
+  }
+}
+
 merror_t Logging::InitDefault() {
   return initInstance();
 }
@@ -123,39 +140,15 @@ void Logging::ClearLogfile() {
   return;
 }
 
-void Logging::Append(const char *format, ...) {
-  if (Logging::is_aval_) {
-    if (format && (Logging::li_.loglvl != io_loglvl::no_log)) {
-      Logging::output_.open(Logging::li_.filepath,
-          std::fstream::out | std::fstream::app);
-      if (Logging::output_.is_open()) {
-        va_list args;
-        va_start(args, format);
-        char *msg = nullptr;
-        asprintf(&msg, format, args);
-        if (msg) {
-          Logging::output_ << msg;
-          if (!strrchr(msg, '\n'))
-            Logging::output_.put('\n');
-          free(msg);
-        }
-        va_end(args);
-        Logging::output_.close();
-      } else {
-        Logging::is_aval_ = false;
-        Logging::error_ = ERR_FILEIO_T | ERR_FILE_LOGGING;
-      }
-    }
-  }
+void Logging::Append(const std::string &msg) {
+  if (Logging::is_aval_)
+    if (!msg.empty() && (Logging::li_.loglvl != io_loglvl::no_log))
+      Logging::append(msg.c_str());
 }
 
-void Logging::Append(io_loglvl lvl, const char *format, ...) {
-  if (Logging::is_aval_) {
-    if (lvl <= Logging::li_.loglvl) {
-      va_list args;
-      va_start(args, format);
-      Logging::Append(format, args);
-      va_end(args);
-    }
-  }
+void Logging::Append(io_loglvl lvl, const std::string &msg) {
+  if (Logging::is_aval_)
+    if (lvl <= Logging::li_.loglvl)
+      if (!msg.empty() && (Logging::li_.loglvl != io_loglvl::no_log))
+        Logging::append(msg.c_str());
 }

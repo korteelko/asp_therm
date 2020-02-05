@@ -53,8 +53,8 @@ void PhaseDiagram::calculateBinodal(
     reset_error();
     bool has_uniq_root = CardanoMethod_HASUNIQROOT(&tempvec[0], &tempvec[4]);
     if (get_error_code() != ERR_SUCCESS_T) {
-      Logging::Append(io_loglvl::debug_logs, "For temperature index: %d\n"
-          " Cardano method error(phase_diagram)", t_iter);
+      Logging::Append(io_loglvl::debug_logs, "For temperature index: " +
+          std::to_string(t_iter) + "\nCardano method error(phase_diagram)");
       bdp->t[t_iter] = -1.0;
       continue;
     }

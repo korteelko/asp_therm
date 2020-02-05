@@ -95,9 +95,9 @@ static const char *get_custom_err_msg() {
 merror_t set_error_code(merror_t err_code) {
   /* drop previous msg */
   *models_error_msg = '\0';
-  Logging::Append(io_loglvl::err_logs,
-      "Error occurred! Error code: 0x%h,\nCustom err_msg:\n  %s",
-       err_code, get_custom_err_msg());
+  Logging::Append(io_loglvl::err_logs, "Error occurred.\n  custom err_msg:" +
+      std::string(get_custom_err_msg(err_code)) +
+      "\n  code:0x" + hex2str(err_code));
   return models_error = err_code;
 }
 
@@ -122,7 +122,7 @@ merror_t set_error_message(merror_t err_code,
   snprintf(models_error_msg, ERR_MSG_MAX_LEN, format, args);
   va_end(args);
   Logging::Append(io_loglvl::err_logs,
-      "Error occurred! Error message:\n  %s", models_error_msg);
+      "Error occurred! Error message:\n\t" + std::string(models_error_msg));
   return models_error = err_code;
 }
 
@@ -164,11 +164,12 @@ void ErrorWrap::ChangeMessage(const std::string &new_msg) {
 void ErrorWrap::LogIt(io_loglvl lvl) {
   if (error_ != ERR_SUCCESS_T && !is_logged_) {
     if (!msg_.empty()) {
-      Logging::Append(lvl, "Error occurred.\n  err_msg:%s\n  code:0x%h",
-          msg_.c_str(), error_);
+      Logging::Append(lvl, "Error occurred.\n  err_msg:" + msg_ +
+          "\n  code:0x" + hex2str(error_));
     } else {
-      Logging::Append(lvl, "Error occurred.\n  custom err_msg:%s\n  code:0x%h",
-          get_custom_err_msg(error_), error_);
+      Logging::Append(lvl, "Error occurred.\n  custom err_msg:" +
+          std::string(get_custom_err_msg(error_)) +
+          "\n  code:0x" + hex2str(error_));
     }
     is_logged_ = true;
   }

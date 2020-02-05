@@ -1,8 +1,8 @@
 #ifndef _CORE__COMMON__MODELS_LOGGING_H_
 #define _CORE__COMMON__MODELS_LOGGING_H_
 
-#include "models_errors.h"
 #include "common.h"
+#include "models_errors.h"
 
 #include <fstream>
 
@@ -40,6 +40,8 @@ private:
   static merror_t checkInstance();
   /** \brief check instance and set variables */
   static merror_t initInstance();
+  /** \brief append log */
+  static void append(const char *msg);
 
 public:
   /** \brief init class with default parameters **/
@@ -52,11 +54,13 @@ public:
   static void ClearLogfile();
   /** \brief append logfile with passed message
     *  if loglevel of instance != io_loglvl::no_log */
-  static void Append(const char *format, ...);
+  // static void Append(const char *format, ...);
+  static void Append(const std::string &msg);
   /** \brief append logfile with passed message
     * if loglevel of instance correspond to 'lvl'
     * else ignore */
-  static void Append(io_loglvl lvl, const char *format, ...);
+  // static void Append(io_loglvl lvl, const char *format, ...);
+  static void Append(io_loglvl lvl, const std::string &msg);
 };
 
 #endif  // !_CORE__COMMON__MODELS_LOGGING_H_

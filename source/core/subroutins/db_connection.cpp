@@ -59,7 +59,6 @@ namespace ns_ucf = update_configuration_functional;
 
 merror_t db_parameters::SetConfigurationParameter(
     const std::string &param_strtpl, const std::string &param_value) {
-  assert(0);
   if (param_strtpl.empty())
     return ERR_STRTPL_TPLNULL;
   merror_t error = ERR_STRTPL_TPLUNDEF;

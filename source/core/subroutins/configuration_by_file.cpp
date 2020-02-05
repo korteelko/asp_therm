@@ -53,7 +53,7 @@ merror_t ConfigurationByFile::init_parameters() {
   }
   if (error) {
     error_.SetError(error,
-        "Ошибка обработки параметра файла конфигурации: " + xml_path[0]);
+        "Error during configfile reading: " + xml_path[0]);
     error_.LogIt();
   }
   return error;
@@ -67,7 +67,7 @@ merror_t ConfigurationByFile::init_dbparameters() {
   for (const auto &param : config_database) {
     xml_path[1] = param;
     xml_doc_->GetValueByPath(xml_path, &tmp_str);
-    error = configuration_.SetConfigurationParameter(param, tmp_str);
+    error = db_parameters_.SetConfigurationParameter(param, tmp_str);
     if (error)
       break;
   }

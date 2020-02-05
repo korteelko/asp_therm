@@ -334,7 +334,7 @@ merror_t GasParameters_NG_Gost_dyn::init_pseudocrit_vpte() {
       Mi = x_ch->M;
     } else {
       Logging::Append("init pseudocritic by gost model\n"
-          "  undefined component: #%d", components_[i].first);
+          "  undefined component: #" + std::to_string(components_[i].first));
       continue;
     }
     if (!(i_cp = get_critical_params(components_[i].first)))
@@ -344,7 +344,7 @@ merror_t GasParameters_NG_Gost_dyn::init_pseudocrit_vpte() {
         Mj = x_ch->M;
       } else {
         Logging::Append("init pseudocritic by gost model\n"
-            "  undefined component: #%d", components_[j].first);
+            "  undefined component: #" + std::to_string(components_[j].first));
         continue;
       }
       if (!(j_cp = get_critical_params(components_[j].first)))

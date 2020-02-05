@@ -26,8 +26,8 @@ config_node::config_node(node_type itype, std::string name)
 config_node::config_node(node_type itype, std::string name, std::string value)
   : config_node_type(itype), name(name), value(value) {
 #ifdef _DEBUG_SUBROUTINS
-  Logging::Append(io_loglvl::debug_logs, "Create confignode: %s #%d %s",
-      value.c_str(), itype, name.c_str());
+  Logging::Append(io_loglvl::debug_logs, "Create confignode: " + value +
+      " #" + std::to_string(itype) + name);
 #endif  // _DEBUG
 }
 
@@ -50,8 +50,8 @@ gas_node::gas_node(node_type itype, std::string name)
 gas_node::gas_node(node_type itype, std::string name, std::string value)
   : gas_node_type(itype), name(name), value(value) {
 #ifdef _DEBUG_SUBROUTINS
-  Logging::Append(io_loglvl::debug_logs, "Create gasnode: %s #%d %s",
-      value.c_str(), itype, name.c_str());
+  Logging::Append(io_loglvl::debug_logs, "Create confignode: " + value +
+      " #" + std::to_string(itype) + name);
 #endif  // _DEBUG
 }
 
@@ -73,9 +73,9 @@ gasmix_node::gasmix_node(node_type itype, std::string name)
 gasmix_node::gasmix_node(node_type itype, std::string name, std::string value)
   : mix_node_type(itype), name(name), value(value) {
 #ifdef _DEBUG_SUBROUTINS
-  Logging::Append(io_loglvl::debug_logs, "Create gasmixnode: %s #%d %s",
-      value.c_str(), itype, name.c_str());
-#endif
+  Logging::Append(io_loglvl::debug_logs, "Create confignode: " + value +
+      " #" + std::to_string(itype) + name);
+#endif  // _DEBUG
 }
 
 // static
@@ -108,9 +108,10 @@ static std::map<const std::string, db_client> map_dbclient_tpls =
 
 /* functions */
 merror_t set_bool(const std::string &val, bool *ans) {
+  std::string trimed_val = trim_str(val);
   merror_t error = ERR_SUCCESS_T;
-  if (strcmp(val.c_str(), STRTPL_BOOL_TRUE) != 0) {
-    if (strcmp(val.c_str(), STRTPL_BOOL_FALSE) != 0) {
+  if (strcmp(trimed_val.c_str(), STRTPL_BOOL_TRUE) != 0) {
+    if (strcmp(trimed_val.c_str(), STRTPL_BOOL_FALSE) != 0) {
       error = ERR_STRTPL_VALWRONG;
     } else {
       *ans = false;
@@ -137,9 +138,13 @@ merror_t set_int(const std::string &val, int *ans) {
   try {
     *ans = std::stoi(val);
   } catch (std::invalid_argument &) {
-    error = ERR_STRING_T | ERR_STR_TOINT_ST;
+    error = ERR_STR_TOINT_ST;
+    Logging::Append(io_loglvl::debug_logs, "Ошибка при конвертации"
+        "строки к целочисленному типу: invalid_argument");
   } catch (std::out_of_range &) {
-    error = ERR_STRING_T | ERR_STR_TOINT_ST;
+    error = ERR_STR_TOINT_ST;
+    Logging::Append(io_loglvl::debug_logs, "Ошибка при конвертации"
+        "строки к целочисленному типу: out_of_range");
   }
   return error;
 }

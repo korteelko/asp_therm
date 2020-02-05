@@ -71,7 +71,7 @@ template <class T>
 merror_t set_by_map(const std::map<const std::string, T> &m,
     const std::string &v, T &a) {
   merror_t error = ERR_STRTPL_VALWRONG;
-  auto map_it = m.find(v);
+  auto map_it = m.find(trim_str(v));
   if (map_it != m.end()) {
     error = ERR_SUCCESS_T;
     a = map_it->second;

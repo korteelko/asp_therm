@@ -39,8 +39,8 @@ public:
         child = first_child.get();
       } else {
     #if defined (_DEBUG_SUBROUTINS)
-        Logging::Append(io_loglvl::debug_logs, "Search for '%s' but get %s",
-            name, first_child->GetName());
+        Logging::Append(io_loglvl::debug_logs, "Search for " + name +
+            " but get %s" + first_child->GetName());
     #endif  // _DEBUG_SUBROUTINS
         for (const auto &x : first_child->siblings)
           if (x->GetName() == name) {
@@ -200,7 +200,7 @@ public:
         std::string strpath = "";
         for (const auto &strnode : xml_path)
           strpath += strnode + " --> ";
-        Logging::Append(io_loglvl::debug_logs, strpath.c_str());
+        Logging::Append(io_loglvl::debug_logs, strpath);
     #endif  // _DEBUG_SUBROUTINS
         return XML_LAST_STRING;
       }
