@@ -48,6 +48,11 @@
 #define DEFAULT_LOGLVL        0x01
 #define DEBUG_LOGLVL          0x0f
 
+typedef uint64_t mstatus_t;
+#define STATUS_DEFAULT      0x00000001
+#define STATUS_OK           0x00000002
+#define STATUS_HAVE_ERROR   0x00000003
+
 #if defined(OS_WIN)
 #  define PATH_SEPARATOR '\\'
 #elif defined(OS_NIX)

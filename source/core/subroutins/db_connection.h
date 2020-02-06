@@ -1,17 +1,23 @@
 #ifndef _CORE__SUBROUTINS__DB_CONNECTION_H_
 #define _CORE__SUBROUTINS__DB_CONNECTION_H_
 
+#include "common.h"
+#include "db_query.h"
 #include "models_errors.h"
 
 #include <string>
 #include <vector>
 
-#include <stdint.h>
-
 /** \brief клиент БД */
 enum class db_client: uint32_t {
   NOONE = 0,
   POSTGRESQL = 1
+};
+
+/** \brief перечисление типов используемых таблиц */
+enum class db_table {
+  table_model_info = 0,
+  table_state_log = 1
 };
 
 /** \brief структура содержит параметры коннектинга */
@@ -34,36 +40,48 @@ public:
       const std::string &param_value);
 };
 
-/* TODO: add multithread and guards
- *   UPD: see gitlab issues */
-/** \brief класс взаимодействия с БД */
+struct state_log;
+
+/** \brief абстрактный класс подключения к БД */
 class DBConnection {
 public:
-  // struct TransactionBody {};
-  class DBConnectionInstance;
+  virtual merror_t InitConnection(const db_parameters &parameters) = 0;
+  virtual void Commit() = 0;
 
-public:
-  static DBConnection &Instance();
-  /** \brief Попробовать законектится к БД */
-  // static const std::vector<std::string> &GetJSONKeys();
-  static bool ResetConnect(const db_parameters &parameters);
-  static bool IsConnected();
+  virtual void CreateTable(db_table t) = 0;
+  virtual void InsertStateLog(const state_log &sl) = 0;
+  virtual void UpdateStateLog(const state_log &sl) = 0;
+  // virtual void DeleteStateLog(const state_log &sl) = 0;
 
-  static merror_t GetErrorCode();
-  static std::string GetErrorMessage();
+  virtual ~DBConnection();
 
-private:
+protected:
   DBConnection();
 
+protected:
+  ErrorWrap error_;
+  mstatus_t status_;
+  db_parameters parameters_;
+  query_ptr_container queries_;
+};
+
+/** \brief реализация DBConnection для postgre */
+class DBConnectionPostgre final: public DBConnection {
+public:
+  DBConnectionPostgre();
+  merror_t InitConnection(const db_parameters &parameters) override;
+  void Commit() override;
+
+  void CreateTable(db_table t) override;
+  void InsertStateLog(const state_log &sl) override;
+  void UpdateStateLog(const state_log &sl) override;
+  // void DeleteStateLog(const state_log &sl) override;
+  // std::vector<state_log> SelectStateLog() override;
+
+  ~DBConnectionPostgre() override;
+
 private:
-  static ErrorWrap error_;
-  static db_parameters parameters_;
-  static bool is_connected_;
+  std::string setupConnectionString();
 };
 
-class DBConnection::DBConnectionInstance {
-  DBConnectionInstance();
-};
-using DBConnectionIns = DBConnection::DBConnectionInstance;
-
-#endif  // _CORE__SUBROUTINS__DB_CONNECTION_H_
+#endif  // !_CORE__SUBROUTINS__DB_CONNECTION_H_

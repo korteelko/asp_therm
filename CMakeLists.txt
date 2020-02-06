@@ -95,6 +95,8 @@ set(
 # subroutins sources
   ${THERMCORE_SOURCE_DIR}/subroutins/configuration_by_file.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/db_connection.cpp
+  ${THERMCORE_SOURCE_DIR}/subroutins/db_connection_manager.cpp
+  ${THERMCORE_SOURCE_DIR}/subroutins/db_query.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/gas_by_file.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/gasmix_by_file.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp

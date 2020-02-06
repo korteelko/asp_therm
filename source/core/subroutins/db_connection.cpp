@@ -1,15 +1,14 @@
 #include "db_connection.h"
 
 #include "configuration_strtpl.h"
+#include "db_query.h"
 #include "file_structs.h"
-#include "models_errors.h"
-
-#include <pqxx/pqxx>
 
 #include <functional>
 #include <map>
 
 #include <assert.h>
+
 
 namespace update_configuration_functional {
 typedef std::function<merror_t(db_parameters *,
@@ -68,34 +67,48 @@ merror_t db_parameters::SetConfigurationParameter(
   return error;
 }
 
-db_parameters::db_parameters()
-  : supplier(db_client::NOONE) {}
-
-
 /* DBConnection */
-ErrorWrap DBConnection::error_;
-db_parameters DBConnection::parameters_;
-bool DBConnection::is_connected_ = false;
+DBConnection::DBConnection()
+  : status_(STATUS_DEFAULT) {}
 
-DBConnection &DBConnection::Instance() {
-  static DBConnection db;
-  return db;
+DBConnectionPostgre::DBConnectionPostgre() {}
+
+merror_t DBConnectionPostgre::InitConnection(
+    const db_parameters &parameters) {
+  parameters_ = parameters;
+  merror_t err = ERR_DB_CONNECTION;
+  status_ = STATUS_DEFAULT;
+  try {
+    auto query = DBQueryInitConnection(setupConnectionString());
+    assert(0);
+
+    status_ = STATUS_OK;
+  } catch (const std::exception &e) {
+    error_.SetError(ERR_DB_CONNECTION, e.what());
+    error_.LogIt();
+    status_ = STATUS_HAVE_ERROR;
+  }
+  return err;
 }
 
-bool DBConnection::ResetConnect(const db_parameters &parameters) {
+void DBConnectionPostgre::Commit() {
   assert(0);
-  return DBConnection::is_connected_;
 }
 
-bool DBConnection::IsConnected() {return DBConnection::is_connected_;}
-
-merror_t DBConnection::GetErrorCode() {}
-std::string DBConnection::GetErrorMessage() {
-  return error_.GetMessage();
+void DBConnectionPostgre::CreateTable(db_table t) {
+  assert(0);
 }
 
-DBConnection::DBConnection() {}
+void DBConnectionPostgre::InsertStateLog(
+    const state_log &sl) {
+  assert(0);
+}
 
+void DBConnectionPostgre::UpdateStateLog(
+    const state_log &sl) {
+  assert(0);
+}
 
-/* DBConnection::DBConnectionInstance */
-DBConnectionIns::DBConnectionInstance() {}
+std::string DBConnectionPostgre::setupConnectionString() {
+
+}

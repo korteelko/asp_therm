@@ -67,6 +67,15 @@ public:
   static node_type get_node_type(std::string type);
 };
 
+/** \brief искать в переданной в аргументах мапе
+  *   ключ 'v', если он там записать его по адресу 
+  *   переданного параметра 'a' 
+  * \param v ключ из xml(или другого) файла, может
+  *   содержать пробелы
+  * \param a out переменная по адресу расположения
+  *   которой запишется результат поиска
+  * \return ERR_SUCCESS_T если ключ найден
+  *         ERR_STRTPL_VALWRONG иначе */
 template <class T>
 merror_t set_by_map(const std::map<const std::string, T> &m,
     const std::string &v, T &a) {
@@ -80,7 +89,8 @@ merror_t set_by_map(const std::map<const std::string, T> &m,
 }
 
 /* PARSE TEMPLATE VALUES
- *   TODO: дописать на основе документации */
+ *   TODO: дописать на основе документации 
+ *   UPD: остался то только double*/
 /** \brief проверить соответствие 'val' допустимым значениям
   *   шаблона для bool : "true" или "false"
   * \param val текстовый шаблон значения

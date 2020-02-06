@@ -50,9 +50,15 @@ static const char *custom_msg_init[] = {
 };
 
 static const char *custom_msg_strtpl[] = {
-  "init error ",
-  "zero value init ",
-  "nullptr value init "
+  "string template error ",
+  "empty string template ",
+  "undefined string template ",
+  "wrong string template value "
+};
+
+static const char *custom_msg_database[] = {
+  "database error ",
+  "database connection error "
 };
 
 // Установим конкретное сообщение об ошибке из
@@ -80,6 +86,9 @@ static const char *get_custom_err_msg(merror_t error) {
       break;
     case ERR_STRTPL_T:
       list_of_custom_msg = custom_msg_strtpl;
+      break;
+    case ERR_DATABASE_T:
+      list_of_custom_msg = custom_msg_database;
       break;
     default:
       break;
@@ -138,6 +147,9 @@ const char *get_error_message() {
   }
   return msg_ptr;
 }
+
+
+/* ErrorWrap */
 
 ErrorWrap::ErrorWrap()
   : ErrorWrap(ERR_SUCCESS_T, "") {}

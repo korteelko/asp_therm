@@ -29,6 +29,8 @@ typedef uint64_t merror_t;
 /** ошибка работы со стоковыми шаблонами.
   *   строковые шаблоны - текстовые значения в xml и json файлах */
 #define ERR_STRTPL_T        0x0005
+/** ошибка работы с базой данных */
+#define ERR_DATABASE_T      0x0006
 
 // type gas / gas_mix
 #define ERR_MASK_GAS_MIX    0x00f0
@@ -69,10 +71,15 @@ typedef uint64_t merror_t;
 /** недопустимое значение текстового шаблона */
 #define ERR_STRTPL_VALWRONG (0x0300 | ERR_STRTPL_T)
 
+// database connection
+/** ошибка подключения к базе данных */
+#define ERR_DB_CONNECTION   (0x0100 | ERR_DATABASE_T)
+
 // info type mask
 // #define ERR_MASK_TYPE      0xf000
 // not error, but here
-#define XML_LAST_STRING    0x1000
+// TODO: переделать это - и функцию это использующую эту
+#define XML_LAST_STRING     0x1000
 
 
 /// ГЛОБАЛЬНАЯ ОШИБКА, ЧТОБЫ ПОЛОЖИТЬ ПРОГРАММУ
