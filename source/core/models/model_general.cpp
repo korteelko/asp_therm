@@ -179,7 +179,7 @@ const_parameters modelGeneral::GetConstParameters() const {
   return parameters_->cgetConstparameters();
 }
 
-state_log modelGeneral::GetStateLog() const {
+calculation_state_log modelGeneral::GetStateLog() const {
   dyn_parameters dps = parameters_->cgetDynParameters();
   // пока так
   return {dps, dps.internal_energy * dps.parm.pressure * dps.parm.volume, 

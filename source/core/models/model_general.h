@@ -96,7 +96,7 @@ public:
   state_phase GetState() const;
   parameters GetParametersCopy() const;
   const_parameters GetConstParameters() const;
-  state_log GetStateLog() const;
+  calculation_state_log GetStateLog() const;
   merror_t GetError() const;
 
 // maybe another class

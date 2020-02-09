@@ -6,6 +6,7 @@
   "include_iso_20765": true,
   "log_level": "debug",
   "database": {
+    "dry_run": "true",
     "client": "redis",
     "name": "asp_therm_db",
     "username": "",

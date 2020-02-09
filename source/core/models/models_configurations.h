@@ -6,6 +6,7 @@
 #include "models_errors.h"
 #include "models_logging.h"
 
+#include <ctime>
 #include <memory>
 #include <string>
 #include <vector>
@@ -44,6 +45,8 @@ class ConfigurationByFile;
 
 
 /// структура идентификации модели(уравнения реального газа)
+///   параметры прописываются в классе параметров модели
+///   методом GetModelStr
 struct model_str {
   /// define of model
   rg_model_t ml_type;
@@ -77,6 +80,17 @@ public:
       const std::string &param_value);
 };
 
+/** строка для добавления в БД */
+struct model_info {
+  model_str short_info;
+  models_configuration setup_info;
+};
+
+/* сейчас посто заглушка */
+struct calculation_info {
+  // я хз чё тут надо, но вроде как инпут прописать
+  time_t time;
+};
 
 /// singleton of state
 class ProgramState {

@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <map>
+#include <sstream>
 
 #include <assert.h>
 
@@ -14,6 +15,9 @@ namespace update_configuration_functional {
 typedef std::function<merror_t(db_parameters *,
     const std::string &value)> update_dbconfig_f;
 
+merror_t update_db_dry_run(db_parameters *dbp, const std::string &val) {
+  return (dbp) ? set_bool(val, &dbp->is_dry_run) : ERR_INIT_ZERO_ST;
+}
 merror_t update_db_client(db_parameters *dbp, const std::string &val) {
   return (dbp) ? set_db_client(val, &dbp->supplier) : ERR_INIT_ZERO_ST;
 }
@@ -37,14 +41,16 @@ merror_t update_db_port(db_parameters *dbp, const std::string &val) {
   return (dbp) ? set_int(val, &dbp->port) : ERR_INIT_ZERO_ST;
 }
 
-struct dbconfig_setup_fuctions {
+struct dbconfig_fuctions {
   /** \brief функция обновляющая параметр */
   update_dbconfig_f update;
   // /** \brief функция возвращающая строковые значения */
   // get_strtpl get_str_tpl;
 };
-static std::map<const std::string, dbconfig_setup_fuctions> map_dbconfig_fuctions =
-    std::map<const std::string, dbconfig_setup_fuctions> {
+
+static std::map<const std::string, dbconfig_fuctions> map_dbconfig_fuctions =
+    std::map<const std::string, dbconfig_fuctions> {
+  {STRTPL_CONFIG_DB_DRY_RUN, {update_db_dry_run}},
   {STRTPL_CONFIG_DB_CLIENT, {update_db_client}},
   {STRTPL_CONFIG_DB_NAME, {update_db_name}},
   {STRTPL_CONFIG_DB_USERNAME, {update_db_username}},
@@ -53,6 +59,48 @@ static std::map<const std::string, dbconfig_setup_fuctions> map_dbconfig_fuction
   {STRTPL_CONFIG_DB_PORT, {update_db_port}}
 };
 }  // update_configuration_functional namespace
+
+std::string get_table_name(db_table dt) {
+  std::string name = "";
+  switch (dt) {
+    case db_table::table_model_info:
+      name = "model_info";
+      break;
+    case db_table::table_calculation_info:
+      name = "calculation_info";
+      break;
+    case db_table::table_calculation_state_log:
+      name = "calculation_state_log";
+      break;
+    default:
+      assert(0 && "нужно добавить больше типов таблиц");
+  }
+  return name;
+}
+
+db_variable::db_variable(std::string fname, db_type type,
+    db_variable_flags flags, int len)
+  : fname(fname), type(type), flags(flags), len(len) {}
+
+
+std::vector<create_table_variant> table_model_info() {
+  std::vector<create_table_variant> vars;
+  assert(0);
+  return vars;
+}
+
+std::vector<create_table_variant> table_calculation_info() {
+  std::vector<create_table_variant> vars;
+  assert(0);
+  return vars;
+}
+
+std::vector<create_table_variant> table_calculation_state_log() {
+  std::vector<create_table_variant> vars;
+  assert(0);
+  return vars;
+}
+
 
 namespace ns_ucf = update_configuration_functional;
 
@@ -71,44 +119,12 @@ merror_t db_parameters::SetConfigurationParameter(
 DBConnection::DBConnection()
   : status_(STATUS_DEFAULT) {}
 
-DBConnectionPostgre::DBConnectionPostgre() {}
+DBConnection::~DBConnection() {}
 
-merror_t DBConnectionPostgre::InitConnection(
-    const db_parameters &parameters) {
-  parameters_ = parameters;
-  merror_t err = ERR_DB_CONNECTION;
-  status_ = STATUS_DEFAULT;
-  try {
-    auto query = DBQueryInitConnection(setupConnectionString());
-    assert(0);
-
-    status_ = STATUS_OK;
-  } catch (const std::exception &e) {
-    error_.SetError(ERR_DB_CONNECTION, e.what());
-    error_.LogIt();
-    status_ = STATUS_HAVE_ERROR;
-  }
-  return err;
+mstatus_t DBConnection::GetStatus() const {
+  return status_;
 }
 
-void DBConnectionPostgre::Commit() {
-  assert(0);
-}
-
-void DBConnectionPostgre::CreateTable(db_table t) {
-  assert(0);
-}
-
-void DBConnectionPostgre::InsertStateLog(
-    const state_log &sl) {
-  assert(0);
-}
-
-void DBConnectionPostgre::UpdateStateLog(
-    const state_log &sl) {
-  assert(0);
-}
-
-std::string DBConnectionPostgre::setupConnectionString() {
-
+merror_t DBConnection::GetErrorCode() const {
+  return error_.GetErrorCode();
 }

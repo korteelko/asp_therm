@@ -7,6 +7,7 @@
   <parameter name="include_iso_20765"> true </parameter>
   <parameter name="log_level"> debug </parameter>
   <group name="database"> 
+    <parameter name="dry_run"> true </parameter>
     <parameter name="client"> postgresql </parameter>
     <parameter name="name"> asp_therm_db </parameter>
     <parameter name="username"> </parameter>

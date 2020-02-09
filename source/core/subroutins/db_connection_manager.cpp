@@ -1,7 +1,5 @@
 #include "db_connection_manager.h"
 
-#include <pqxx/pqxx>
-
 #include <assert.h>
 
 

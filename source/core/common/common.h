@@ -51,7 +51,8 @@
 typedef uint64_t mstatus_t;
 #define STATUS_DEFAULT      0x00000001
 #define STATUS_OK           0x00000002
-#define STATUS_HAVE_ERROR   0x00000003
+#define STATUS_NOT          0x00000003
+#define STATUS_HAVE_ERROR   0x00000004
 
 #if defined(OS_WIN)
 #  define PATH_SEPARATOR '\\'

@@ -16,6 +16,7 @@
 #define STRTPL_CONFIG_DATABASE "database"
 
 /* параметры конфигурации базы данных */
+#define STRTPL_CONFIG_DB_DRY_RUN "dry_run"
 #define STRTPL_CONFIG_DB_CLIENT "client"
 #define STRTPL_CONFIG_DB_NAME "name"
 #define STRTPL_CONFIG_DB_USERNAME "username"

@@ -18,38 +18,90 @@ class DBConnection;
   *  потом понятнее будет как лучше */
 class DBQuery {
 public:
-  DBQuery();
-  void SetDB(DBConnection *db_ptr);
+  inline void SetDB(DBConnection *db_ptr) {
+    db_ptr_ = db_ptr;
+  }
+  inline std::string GetQueryBody() const {
+    return query_body_;
+  }
 
-  virtual void Execute() = 0;
+  virtual mstatus_t Execute() = 0;
   virtual void unExecute() = 0;
   virtual ~DBQuery();
 
 protected:
+  DBQuery(DBConnection *db_ptr, const std::string &query);
+  DBQuery(const std::string &query);
+  DBQuery();
+
+protected:
   std::string query_body_;
+  mstatus_t status_;
   DBConnection *db_ptr_;
 };
-typedef std::vector<std::unique_ptr<DBQuery>> query_ptr_container;
+typedef std::vector<std::unique_ptr<DBQuery>> QueryContainer;
 
-class DBQueryInitConnection: public DBQuery {
+class DBQueryCheckConnection: public DBQuery {
 public:
-  DBQueryInitConnection(const std::string &query);
-  void Execute();
-  void unExecute();
+  DBQueryCheckConnection(const std::string &query);
+  DBQueryCheckConnection(
+      DBConnection *db_ptr, const std::string &query);
+  mstatus_t Execute() override;
+  void unExecute() override;
+};
+
+class DBQueryIsTableExist: public DBQuery {
+public:
+  DBQueryIsTableExist(const std::string &query);
+  DBQueryIsTableExist(
+      DBConnection *db_ptr, const std::string &query);
+  mstatus_t Execute() override;
+  void unExecute() override;
 };
 
 class DBQueryCreateTable: public DBQuery {
 public:
   DBQueryCreateTable(const std::string &query);
-  void Execute();
-  void unExecute();
+  DBQueryCreateTable(
+      DBConnection *db_ptr, const std::string &query);
+  mstatus_t Execute() override;
+  void unExecute() override;
 };
 
-class DBQueryInsertStateLog: public DBQuery {
+class DBQueryUpdateTable: public DBQuery {
 public:
-  DBQueryInsertStateLog(const std::string &query);
-  void Execute();
-  void unExecute();
+  DBQueryUpdateTable(const std::string &query);
+  DBQueryUpdateTable(
+      DBConnection *db_ptr, const std::string &query);
+  mstatus_t Execute() override;
+  void unExecute() override;
+};
+
+class DBQueryInsertModelInfo: public DBQuery {
+public:
+  DBQueryInsertModelInfo(const std::string &query);
+  DBQueryInsertModelInfo(
+      DBConnection *db_ptr, const std::string &query);
+  mstatus_t Execute() override;
+  void unExecute() override;
+};
+
+class DBQueryInsertCalculationInfo: public DBQuery {
+public:
+  DBQueryInsertCalculationInfo(const std::string &query);
+  DBQueryInsertCalculationInfo(
+      DBConnection *db_ptr, const std::string &query);
+  mstatus_t Execute() override;
+  void unExecute() override;
+};
+
+class DBQueryInsertCalculationStateLog: public DBQuery {
+public:
+  DBQueryInsertCalculationStateLog(const std::string &query);
+  DBQueryInsertCalculationStateLog(
+      DBConnection *db_ptr, const std::string &query);
+  mstatus_t Execute() override;
+  void unExecute() override;
 };
 
 #endif  // !_CORE__SUBROUTINS__DB_QUERY_H_
