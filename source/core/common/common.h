@@ -49,10 +49,14 @@
 #define DEBUG_LOGLVL          0x0f
 
 typedef uint64_t mstatus_t;
+/** статус при инициализации */
 #define STATUS_DEFAULT      0x00000001
-#define STATUS_OK           0x00000002
-#define STATUS_NOT          0x00000003
-#define STATUS_HAVE_ERROR   0x00000004
+/** как и STATUS_DEFAULT, но для дебажной
+  *   dry_run опции */
+#define STATUS_DRY_RUN      0x00000002
+#define STATUS_OK           0x00000003
+#define STATUS_NOT          0x00000004
+#define STATUS_HAVE_ERROR   0x00000005
 
 #if defined(OS_WIN)
 #  define PATH_SEPARATOR '\\'

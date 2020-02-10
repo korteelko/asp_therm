@@ -59,6 +59,7 @@ static const char *custom_msg_strtpl[] = {
 static const char *custom_msg_database[] = {
   "database error ",
   "database connection error "
+  "database variable error "
 };
 
 // Установим конкретное сообщение об ошибке из

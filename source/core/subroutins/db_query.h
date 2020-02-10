@@ -1,6 +1,7 @@
 #ifndef _CORE__SUBROUTINS__DB_QUERY_H_
 #define _CORE__SUBROUTINS__DB_QUERY_H_
 
+#include "db_defines.h"
 #include "gas_description.h"
 #include "models_errors.h"
 
@@ -21,43 +22,52 @@ public:
   inline void SetDB(DBConnection *db_ptr) {
     db_ptr_ = db_ptr;
   }
-  inline std::string GetQueryBody() const {
-    return query_body_;
-  }
 
   virtual mstatus_t Execute() = 0;
   virtual void unExecute() = 0;
   virtual ~DBQuery();
 
 protected:
-  DBQuery(DBConnection *db_ptr, const std::string &query);
-  DBQuery(const std::string &query);
+  DBQuery(DBConnection *db_ptr);
   DBQuery();
 
 protected:
-  std::string query_body_;
+  // std::string query_body_;
   mstatus_t status_;
   DBConnection *db_ptr_;
+  bool is_performed_;
 };
 typedef std::vector<std::unique_ptr<DBQuery>> QueryContainer;
 
-class DBQueryCheckConnection: public DBQuery {
+class DBQuerySetupConnection: public DBQuery {
 public:
-  DBQueryCheckConnection(const std::string &query);
-  DBQueryCheckConnection(
-      DBConnection *db_ptr, const std::string &query);
+  DBQuerySetupConnection();
+  DBQuerySetupConnection(DBConnection *db_ptr);
+  mstatus_t Execute() override;
+  void unExecute() override;
+};
+
+class DBQueryCloseConnection: public DBQuery {
+public:
+  DBQueryCloseConnection();
+  DBQueryCloseConnection(DBConnection *db_ptr);
   mstatus_t Execute() override;
   void unExecute() override;
 };
 
 class DBQueryIsTableExist: public DBQuery {
 public:
-  DBQueryIsTableExist(const std::string &query);
-  DBQueryIsTableExist(
-      DBConnection *db_ptr, const std::string &query);
+  DBQueryIsTableExist(db_table dt);
+  DBQueryIsTableExist(DBConnection *db_ptr, db_table dt);
   mstatus_t Execute() override;
   void unExecute() override;
+
+private:
+  db_table table_;
+  bool is_exists_;
 };
+
+
 
 class DBQueryCreateTable: public DBQuery {
 public:

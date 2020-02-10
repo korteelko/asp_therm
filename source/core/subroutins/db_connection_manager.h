@@ -9,6 +9,46 @@
 
 #include <stdint.h>
 
+
+/** \brief класс инкапсулирующий конечную
+  *   высокоуровневую операцию с БД */
+class Transaction {
+public:
+  class TransactionInfo;
+
+public:
+  Transaction(DBConnection *connection);
+  // хм, прикольно
+  // Transaction (std::mutex &owner_mutex);
+  void AddQuery(std::unique_ptr<DBQuery> &&query);
+  mstatus_t ExecuteQueries();
+  mstatus_t CancelTransaction();
+
+  ErrorWrap GetError() const;
+  mstatus_t GetResult() const;
+  TransactionInfo GetInfo() const;
+
+private:
+  ErrorWrap error_;
+  mstatus_t status_;
+  DBConnection *connection_;
+  QueryContainer queries_;
+};
+
+class Transaction::TransactionInfo {
+  friend class Transaction;
+// date and time +
+// info
+public:
+  std::string GetInfo();
+
+private:
+  TransactionInfo();
+
+private:
+  std::string info_;
+};
+
 /* TODO: add multithread and guards
  *   UPD: see gitlab issues */
 /** \brief класс взаимодействия с БД */
@@ -19,25 +59,36 @@ public:
 
 public:
   static DBConnectionManager &Instance();
-  /** \brief Попробовать законектится к БД */
-  // static const std::vector<std::string> &GetJSONKeys();
-  static bool ResetConnect(const db_parameters &parameters);
-  static bool IsConnected();
 
-  static merror_t GetErrorCode();
-  static std::string GetErrorMessage();
+  // API DB
+  mstatus_t CheckConnection();
+  // static const std::vector<std::string> &GetJSONKeys();
+  /** \brief Попробовать законектится к БД */
+  mstatus_t ResetConnectionParameters(const db_parameters &parameters);
+
+
+
+
+  merror_t GetErrorCode();
+  std::string GetErrorMessage();
 
 private:
   DBConnectionManager();
+  void initDBConnection();
 
 private:
-  static ErrorWrap error_;
-  static db_parameters parameters_;
-  static bool is_connected_;
+  ErrorWrap error_;
+  mstatus_t status_;
+  db_parameters parameters_;
+  std::unique_ptr<DBConnection> db_connection_;
 };
 
+/* TODO: static or no??? check modelsCreator */
 class DBConnectionManager::DBConnectionCreator {
+public:
   DBConnectionCreator();
+
+  DBConnection *InitDBConnection(const db_parameters &parameters);
 };
 using DBConnectionIns = DBConnectionManager::DBConnectionCreator;
 

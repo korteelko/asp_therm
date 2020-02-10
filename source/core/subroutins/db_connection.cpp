@@ -82,6 +82,15 @@ db_variable::db_variable(std::string fname, db_type type,
     db_variable_flags flags, int len)
   : fname(fname), type(type), flags(flags), len(len) {}
 
+ErrorWrap db_variable::CheckYourself() const {
+  ErrorWrap ew;
+  if (fname.empty()) {
+    ew.SetError(ERR_DB_VARIABLE,
+        "Имя столбца таблицы базы данных не задано");
+  }
+  return ew;
+}
+
 
 std::vector<create_table_variant> table_model_info() {
   std::vector<create_table_variant> vars;
@@ -116,8 +125,8 @@ merror_t db_parameters::SetConfigurationParameter(
 }
 
 /* DBConnection */
-DBConnection::DBConnection()
-  : status_(STATUS_DEFAULT) {}
+DBConnection::DBConnection(const db_parameters &parameters)
+  : status_(STATUS_DEFAULT), parameters_(parameters) {}
 
 DBConnection::~DBConnection() {}
 

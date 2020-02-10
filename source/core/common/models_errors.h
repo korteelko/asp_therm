@@ -74,6 +74,7 @@ typedef uint64_t merror_t;
 // database connection
 /** ошибка подключения к базе данных */
 #define ERR_DB_CONNECTION   (0x0100 | ERR_DATABASE_T)
+#define ERR_DB_VARIABLE     (0x0200 | ERR_DATABASE_T)
 
 // info type mask
 // #define ERR_MASK_TYPE      0xf000

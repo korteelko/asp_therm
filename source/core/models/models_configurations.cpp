@@ -109,6 +109,11 @@ bool ProgramState::IsInitialized() const {
   return (program_config_) ? program_config_->is_initialized : false;
 }
 
+bool ProgramState::IsDebugMode() const {
+  return (program_config_) ?
+      program_config_->configuration.is_debug_mode : true;
+}
+
 merror_t ProgramState::GetErrorCode() const {
   return error_.GetErrorCode();
 }

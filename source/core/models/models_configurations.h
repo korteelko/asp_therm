@@ -105,6 +105,7 @@ public:
 
   /** \brief Проверить ProgramConfiguration */
   bool IsInitialized() const;
+  bool IsDebugMode() const;
   merror_t GetErrorCode() const;
   const models_configuration GetConfiguration() const;
 
