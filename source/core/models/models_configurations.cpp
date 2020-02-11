@@ -123,6 +123,11 @@ const models_configuration ProgramState::GetConfiguration() const {
       program_config_->configuration : models_configuration();
 }
 
+const db_parameters ProgramState::GetDatabaseConfiguration() const {
+  return (program_config_) ?
+      program_config_->db_parameters_conf: db_parameters();
+}
+
 /* ProgramState::ProgramConfiguration */
 using PSConfiguration = ProgramState::ProgramConfiguration;
 

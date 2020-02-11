@@ -13,18 +13,6 @@
 #include <assert.h>
 
 
-std::string get_table_name(db_table dt);
-
-/* если запрос как набор типизированных строк
- *   то необходимо определить строки неформата.
- *   например запрос "создать таблицу" может содержать
- *   комплексный первичный ключ, прописываемый в отд. строке */
-enum class db_query_str {
-  query_str_variable = 0,
-  query_str_complex_pk,
-  query_str_complex_fk
-};
-
 /** \brief структура описывающая столбец таблицы БД.
   *   собственно, описание валидно и для знчения в этом столбце,
   *   так что можно чекать формат/неформат  */
@@ -162,6 +150,8 @@ public:
 
   merror_t SetConfigurationParameter(const std::string &param_strtpl,
       const std::string &param_value);
+
+  std::string GetInfo() const;
 };
 
 

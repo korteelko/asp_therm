@@ -22,6 +22,9 @@ public:
   inline void SetDB(DBConnection *db_ptr) {
     db_ptr_ = db_ptr;
   }
+  inline bool IsPerformed() const {
+    return is_performed_;
+  }
 
   virtual mstatus_t Execute() = 0;
   virtual void unExecute() = 0;
@@ -37,7 +40,8 @@ protected:
   DBConnection *db_ptr_;
   bool is_performed_;
 };
-typedef std::vector<std::unique_ptr<DBQuery>> QueryContainer;
+typedef std::shared_ptr<DBQuery> QuerySmartPtr;
+typedef std::vector<QuerySmartPtr> QueryContainer;
 
 class DBQuerySetupConnection: public DBQuery {
 public:
@@ -57,14 +61,15 @@ public:
 
 class DBQueryIsTableExist: public DBQuery {
 public:
-  DBQueryIsTableExist(db_table dt);
-  DBQueryIsTableExist(DBConnection *db_ptr, db_table dt);
+  DBQueryIsTableExist(db_table dt, bool &is_exists);
+  DBQueryIsTableExist(DBConnection *db_ptr,
+      db_table dt, bool &is_exists);
   mstatus_t Execute() override;
   void unExecute() override;
 
 private:
   db_table table_;
-  bool is_exists_;
+  bool &is_exists_;
 };
 
 

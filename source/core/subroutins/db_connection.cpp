@@ -60,24 +60,6 @@ static std::map<const std::string, dbconfig_fuctions> map_dbconfig_fuctions =
 };
 }  // update_configuration_functional namespace
 
-std::string get_table_name(db_table dt) {
-  std::string name = "";
-  switch (dt) {
-    case db_table::table_model_info:
-      name = "model_info";
-      break;
-    case db_table::table_calculation_info:
-      name = "calculation_info";
-      break;
-    case db_table::table_calculation_state_log:
-      name = "calculation_state_log";
-      break;
-    default:
-      assert(0 && "нужно добавить больше типов таблиц");
-  }
-  return name;
-}
-
 db_variable::db_variable(std::string fname, db_type type,
     db_variable_flags flags, int len)
   : fname(fname), type(type), flags(flags), len(len) {}
@@ -111,6 +93,9 @@ std::vector<create_table_variant> table_calculation_state_log() {
 }
 
 
+db_parameters::db_parameters()
+  : is_dry_run(true), supplier(db_client::NOONE) {}
+
 namespace ns_ucf = update_configuration_functional;
 
 merror_t db_parameters::SetConfigurationParameter(
@@ -122,6 +107,15 @@ merror_t db_parameters::SetConfigurationParameter(
   if (it_map != ns_ucf::map_dbconfig_fuctions.end())
     error = it_map->second.update(this, param_value);
   return error;
+}
+
+std::string db_parameters::GetInfo() const {
+  std::string info = "Параметры базы данных:\n";
+  if (is_dry_run)
+    return info += "dummy connection\n";
+  return info + db_client_to_string(supplier) + "\n\tname: " + name +
+      "\n\tusername: " + username +
+      "\n\thost: " + host + ":" + std::to_string(port) + "\n";
 }
 
 /* DBConnection */

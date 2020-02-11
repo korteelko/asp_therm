@@ -108,6 +108,7 @@ public:
   bool IsDebugMode() const;
   merror_t GetErrorCode() const;
   const models_configuration GetConfiguration() const;
+  const db_parameters GetDatabaseConfiguration() const;
 
 public:
   /// конфигурация расчёта

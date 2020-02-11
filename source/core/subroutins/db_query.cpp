@@ -47,12 +47,12 @@ mstatus_t DBQueryCloseConnection::Execute() {
 // может снова коннектиться
 void DBQueryCloseConnection::unExecute() {}
 
-DBQueryIsTableExist::DBQueryIsTableExist(db_table dt)
-  : DBQueryIsTableExist(nullptr, dt) {}
+DBQueryIsTableExist::DBQueryIsTableExist(db_table dt, bool &is_exists)
+  : DBQueryIsTableExist(nullptr, dt, is_exists) {}
 
 DBQueryIsTableExist::DBQueryIsTableExist(
-    DBConnection *db_ptr, db_table dt)
-  : DBQuery(db_ptr), table_(dt) {}
+    DBConnection *db_ptr, db_table dt, bool &is_exists)
+  : DBQuery(db_ptr), table_(dt), is_exists_(is_exists) {}
 
 mstatus_t DBQueryIsTableExist::Execute() {
   if (db_ptr_ && status_ == STATUS_DEFAULT)

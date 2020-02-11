@@ -1,5 +1,6 @@
 #include "target_sys.h"
 
+#include "db_connection_manager.h"
 #include "gas_by_file.h"
 #include "gasmix_by_file.h"
 #include "model_redlich_kwong.h"
@@ -51,6 +52,22 @@ int test_program_configuration() {
   ps.ResetConfigFile(std::string(cwd) + xml_path + xml_configuration);
   if (get_error_code())
     std::cerr << get_error_message() << std::endl;
+  merror_t e = ps.GetErrorCode();
+  if (e) {
+    std::cerr << "program state bida " << e;
+    return e;
+  }
+  // db_parameters p = ps.GetDatabaseConfiguration();
+  DBConnectionManager &dbm = DBConnectionManager::Instance();
+  dbm.ResetConnectionParameters(
+      ps.GetDatabaseConfiguration());
+  auto st = dbm.CheckConnection();
+  if (st == STATUS_HAVE_ERROR) {
+    std::cerr << "ebobo bida";
+    return 1;
+  }
+  std::cerr << " table model info exists: " <<
+      dbm.IsTableExist(db_table::table_model_info);
   return ps.GetErrorCode();
 }
 

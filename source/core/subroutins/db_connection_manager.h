@@ -20,7 +20,7 @@ public:
   Transaction(DBConnection *connection);
   // хм, прикольно
   // Transaction (std::mutex &owner_mutex);
-  void AddQuery(std::unique_ptr<DBQuery> &&query);
+  void AddQuery(QuerySmartPtr &&query);
   mstatus_t ExecuteQueries();
   mstatus_t CancelTransaction();
 
@@ -64,17 +64,20 @@ public:
   mstatus_t CheckConnection();
   // static const std::vector<std::string> &GetJSONKeys();
   /** \brief Попробовать законектится к БД */
-  mstatus_t ResetConnectionParameters(const db_parameters &parameters);
-
+  mstatus_t ResetConnectionParameters(
+      const db_parameters &parameters);
+  bool IsTableExist(db_table dt);
 
 
 
   merror_t GetErrorCode();
+  mstatus_t GetStatus();
   std::string GetErrorMessage();
 
 private:
   DBConnectionManager();
   void initDBConnection();
+  void tryExecuteTransaction(Transaction &tr);
 
 private:
   ErrorWrap error_;

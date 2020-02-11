@@ -93,10 +93,12 @@ set(
   ${THERMCORE_SOURCE_DIR}/phase_diagram/phase_diagram_models.cpp
 
 # subroutins sources
+# TODO: remove db_* sources in separate directory/subdirectory
   ${THERMCORE_SOURCE_DIR}/subroutins/configuration_by_file.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/db_connection.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/db_connection_postgre.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/db_connection_manager.cpp
+  ${THERMCORE_SOURCE_DIR}/subroutins/db_defines.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/db_query.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/gas_by_file.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/gasmix_by_file.cpp
