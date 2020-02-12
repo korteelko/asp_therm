@@ -23,6 +23,7 @@ set(CMAKE_BUILD_TYPE Debug)
 
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(THERMCORE_SOURCE_DIR "${ASP_THERM_ROOT}/source/core")
+set(THERMDB_SOURCE_DIR "${ASP_THERM_ROOT}/source/database")
 
 if(UNIX)
   add_definitions(-DOS_NIX)
@@ -69,7 +70,7 @@ set(THERMCORE_INCLUDES
   "${THERMCORE_SOURCE_DIR}/phase_diagram"
   "${THERMCORE_SOURCE_DIR}/subroutins"
 )
-include_directories(${THERMCORE_INCLUDES})
+include_directories(${THERMCORE_INCLUDES} ${THERMDB_SOURCE_DIR})
 
 set(
   MODELS_SRC
@@ -93,13 +94,7 @@ set(
   ${THERMCORE_SOURCE_DIR}/phase_diagram/phase_diagram_models.cpp
 
 # subroutins sources
-# TODO: remove db_* sources in separate directory/subdirectory
   ${THERMCORE_SOURCE_DIR}/subroutins/configuration_by_file.cpp
-  ${THERMCORE_SOURCE_DIR}/subroutins/db_connection.cpp
-  ${THERMCORE_SOURCE_DIR}/subroutins/db_connection_postgre.cpp
-  ${THERMCORE_SOURCE_DIR}/subroutins/db_connection_manager.cpp
-  ${THERMCORE_SOURCE_DIR}/subroutins/db_defines.cpp
-  ${THERMCORE_SOURCE_DIR}/subroutins/db_query.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/gas_by_file.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/gasmix_by_file.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
@@ -112,6 +107,12 @@ set(
   ${THERMCORE_SOURCE_DIR}/models/model_redlich_kwong.cpp
   ${THERMCORE_SOURCE_DIR}/models/models_configurations.cpp
   ${THERMCORE_SOURCE_DIR}/models/models_creator.cpp
+
+  ${THERMDB_SOURCE_DIR}/db_connection.cpp
+  ${THERMDB_SOURCE_DIR}/db_connection_postgre.cpp
+  ${THERMDB_SOURCE_DIR}/db_connection_manager.cpp
+  ${THERMDB_SOURCE_DIR}/db_defines.cpp
+  ${THERMDB_SOURCE_DIR}/db_query.cpp
 
 # plot sources
 # maybe OpenGL libs
