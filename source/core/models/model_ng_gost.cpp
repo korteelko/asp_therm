@@ -15,13 +15,13 @@
 #endif  // _DEBUG
 
 NG_Gost::NG_Gost(const model_input &mi) 
-  : modelGeneral(mi.gm, mi.bp) {
+  : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
   if (!set_gasparameters(mi.gpi, this)) {
     if (!get_error_code()) {
-      error_ = set_error_message(ERR_GAS_MIX | ERR_INIT_T,
+      error_.SetError(ERR_GAS_MIX | ERR_INIT_T,
           "error occurred while init gost model");
     } else {
-      error_ = get_error_code();
+      error_.SetError(get_error_code());
     }
   }
 }
@@ -42,15 +42,12 @@ void NG_Gost::DynamicflowAccept(class DerivateFunctor &df) {
 
 void NG_Gost::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state) {
-  (void)prev_state;
-  (void)new_state;
+  (void)prev_state; (void)new_state;
 }
 
 void NG_Gost::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state, const const_parameters &cp) {
-  (void)prev_state;
-  (void)new_state;
-  (void)cp;
+  (void)prev_state; (void)new_state; (void)cp;
 }
 
 bool NG_Gost::IsValid() const {
@@ -64,9 +61,7 @@ bool NG_Gost::IsValid() const {
 
 double NG_Gost::InitVolume(double p, double t,
     const const_parameters &cp) {
-  (void)p;
-  (void)t;
-  (void)cp;
+  (void)p; (void)t; (void)cp;
   assert(0);
   return 0.0;
 }
@@ -76,30 +71,18 @@ void NG_Gost::SetVolume(double p, double t) {
 }
 
 void NG_Gost::SetPressure(double v, double t) {
-  (void)v;
-  (void)t;
-  error_ = set_error_message(
-      ERR_CALC_MODEL_ST, "invalid operation for this model");
+  (void)v; (void)t;
+  error_.SetError(ERR_CALC_MODEL_ST, "invalid operation for this model");
 }
 
-#ifndef GAS_MIX_VARIANT
-double NG_Gost::GetVolume(double p, double t) const {
-#else
 double NG_Gost::GetVolume(double p, double t) {
-#endif  // !GAS_MIX_VARIANT
   parameters_->csetParameters(0.0, p, t, state_phase::GAS);
   return parameters_->cgetVolume();
 }
 
-#ifndef GAS_MIX_VARIANT
-double NG_Gost::GetPressure(double v, double t) const {
-  (void)v;
-  (void)t;
-#else
 double NG_Gost::GetPressure(double v, double t) {
-#endif  // !GAS_MIX_VARIANT
-  error_ = set_error_message(
-      ERR_CALC_MODEL_ST, "invalid operation for gost model");
+  (void) v; (void) t;
+  error_.SetError(ERR_CALC_MODEL_ST, "invalid operation for gost model");
   return 0.0;
 }
 

@@ -22,12 +22,14 @@ mstatus_t Transaction::ExecuteQueries() {
   if (status_ == STATUS_DEFAULT) {
     for (auto &query: queries_) {
       status_ = query->Execute();
+      // если статус после выполнения не удовлетворителен -
+      //   откатим все изменения, залоггируем ошибку
       if (status_ != STATUS_OK && status_ != STATUS_DRY_RUN) {
-        for (QueryContainer::reverse_iterator ri = queries_.rbegin(); ri != queries_.rend(); ++ri ) {
-          if ((*ri)->IsPerformed()) {
+        query->LogError();
+        for (QueryContainer::reverse_iterator ri = queries_.rbegin(); ri != queries_.rend(); ++ri )
+          if ((*ri)->IsPerformed())
+            // dev может и им статус поменять?
             (*ri)->unExecute();
-          }
-        }
         return status_;
       }
     }
@@ -66,6 +68,7 @@ mstatus_t DBConnectionManager::ResetConnectionParameters(
     const db_parameters &parameters) {
   parameters_ = parameters;
   status_ = STATUS_DEFAULT;
+  error_.Reset();
   return CheckConnection();
 }
 
@@ -122,6 +125,9 @@ void DBConnectionManager::tryExecuteTransaction(Transaction &tr) {
     error_.LogIt();
     status_ = STATUS_HAVE_ERROR;
   }
+  if (db_connection_)
+    if (db_connection_->IsOpen())
+      db_connection_->CloseConnection();
 }
 
 /* DBConnection::DBConnectionInstance */

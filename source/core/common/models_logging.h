@@ -61,6 +61,9 @@ public:
     * else ignore */
   // static void Append(io_loglvl lvl, const char *format, ...);
   static void Append(io_loglvl lvl, const std::string &msg);
+  // TODO: how about:
+  // static void Append(ErrorWrap err, const std::string &msg);
+
 };
 
 #endif  // !_CORE__COMMON__MODELS_LOGGING_H_

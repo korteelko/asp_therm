@@ -19,12 +19,10 @@ class DBConnection;
   *  потом понятнее будет как лучше */
 class DBQuery {
 public:
-  inline void SetDB(DBConnection *db_ptr) {
-    db_ptr_ = db_ptr;
-  }
-  inline bool IsPerformed() const {
-    return is_performed_;
-  }
+  void SetDB(DBConnection *db_ptr);
+  bool IsPerformed() const;
+
+  void LogError();
 
   virtual mstatus_t Execute() = 0;
   virtual void unExecute() = 0;

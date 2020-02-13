@@ -8,6 +8,7 @@
 #include "model_ng_gost.h"
 #include "model_peng_robinson.h"
 #include "model_redlich_kwong.h"
+#include "models_configurations.h"
 
 // #include "dynamic_modeling.h"
 // #include "models_output.h"
@@ -24,16 +25,19 @@
 
 #include <assert.h>
 
-// statndart conds
+// statndard conds
 static parameters standard_conds = {0, 100000.0, 314.0};
 merror_t ModelsCreator::error_ = ERR_SUCCESS_T;
 
+/* TODO:
+ *   добавить такую же функцию в класс ProgramState */
 model_input ModelsCreator::set_input(rg_model_t mn, binodalpoints *bp,
     double p, double t, const parameters_mix &mix_components) {
   gas_marks_t gm = 0x00;
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
-  model_input &&mi = {gm, bp, {p, t,
-      const_dyn_union{.components = &mix_components}}};
+  model_input &&mi = model_input(gm, bp, {p, t,
+      const_dyn_union{.components = &mix_components}},
+      ProgramState::Instance().GetCalcConfiguration());
   return std::move(mi);
 }
 
@@ -41,8 +45,9 @@ model_input ModelsCreator::set_input(rg_model_t mn, binodalpoints *bp,
     double p, double t, const ng_gost_mix &mix_components) {
   gas_marks_t gm = 0x00;
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_NG_GOST_MARK;
-  model_input &&mi = {gm, bp, {p, t,
-      const_dyn_union{.ng_gost_components = &mix_components}}};
+  model_input &&mi = model_input(gm, bp, {p, t,
+      const_dyn_union{.ng_gost_components = &mix_components}},
+      ProgramState::Instance().GetCalcConfiguration());
   return std::move(mi);
 }
 
@@ -103,7 +108,7 @@ modelGeneral *ModelsCreator::initModel(rg_model_t mn, binodalpoints *bp,
   if (ModelsCreator::error_ != ERR_SUCCESS_T )
      ModelsCreator::error_ = set_error_message(ERR_INIT_T,
          "undefined calculation model in modelCreator");
-  if (mg->GetError()) {
+  if (mg->GetErrorCode()) {
     delete mg;
     mg = nullptr;
   }

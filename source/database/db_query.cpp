@@ -10,6 +10,19 @@ DBQuery::DBQuery()
 
 DBQuery::~DBQuery() {}
 
+void DBQuery::SetDB(DBConnection *db_ptr) {
+  db_ptr_ = db_ptr;
+}
+
+bool DBQuery::IsPerformed() const {
+  return is_performed_;
+}
+
+void DBQuery::LogError() {
+  if (db_ptr_)
+    db_ptr_->LogError();
+}
+
 DBQuerySetupConnection::DBQuerySetupConnection()
   : DBQuery() {}
 

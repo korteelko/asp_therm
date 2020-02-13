@@ -100,6 +100,7 @@ const char *get_error_message();
 // my be 'char *get_custom_err_msg'
 
 
+/* TODO: rename to ModelError */
 /** \brief класс, в котором инкапсулирована ошибка(код, сообщение,
   *   логирована ли, выведелена ли и т.п.) */
 class ErrorWrap {
@@ -116,8 +117,10 @@ public:
     * \param new_msg новое сообщение(инфо) об ошибке */
   void ChangeMessage(const std::string &new_msg);
   /** \brief залогировать текущее состояние(если есть ошибка)
-    *   устанавить 'is_logged_' в true
-    * \param lvl(optional) особый лог левел для данного сообщения */
+    *   установить 'is_logged_' в true
+    * \param lvl(optional) особый логлевел для данного сообщения
+    * \note здесь и везде Log* методы не константные,
+    *   т.к. в них отслеживается состояние */
   void LogIt();
   void LogIt(io_loglvl lvl);
 
@@ -125,12 +128,22 @@ public:
   std::string GetMessage() const;
   bool IsLogged() const;
 
+  /** \brief скинуть все параметры объекта ErrorWrap в значения по умолчанию:
+    *   error_ to ERR_SUCCESS_T
+    *   msg_ to ""
+    *   is_logged_ to false */
+  void Reset();
+
   /* DEVELOP: такая перегрузка может стать причиной ментального бо-бо */
   ErrorWrap &operator= (merror_t) = delete;
 
 private:
+  /** \brief код ошибки(см дефайны выше) */
   merror_t error_;
+  /** \brief сообщение к ошибке */
   std::string msg_;
+  /** \brief переменная отслеживающая выводилось ли уже
+    *   информация об этой ошибке */
   bool is_logged_;
 };
 

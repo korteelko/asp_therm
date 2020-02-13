@@ -7,6 +7,8 @@
 #include "xml_reader.h"
 
 class ModelsCreator {
+/* TODO:
+ *   заменить тип на ErrorWrap */
   static merror_t error_;
   // for multithread
   // std::mutex_t

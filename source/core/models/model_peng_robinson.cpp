@@ -3,6 +3,7 @@
 #include "common.h"
 #include "gas_description_dynamic.h"
 #include "models_errors.h"
+#include "models_errors.h"
 #include "models_math.h"
 
 #ifdef _DEBUG
@@ -90,7 +91,6 @@ void Peng_Robinson::set_model_coef(
       0.26992 * std::pow(cp.acentricfactor, 2.0);
 }
 
-// #ifdef BY_PSEUDO_CRITIC
 model_input Peng_Robinson::set_pseudo_critic_parameters(
     const model_input &mi) {
   // available only for GAS_MIX
@@ -121,20 +121,19 @@ model_input Peng_Robinson::set_pseudo_critic_parameters(
   }
   model_coef_a_ = result_a_coef;
   model_coef_b_ = result_b_coef;
-  return model_input{mi.gm, mi.bp, mi.gpi};
+  return model_input(mi.gm, mi.bp, mi.gpi, mi.calc_config);
 }
-// #endif  // BY_PSEUDO_CRITIC
 
 Peng_Robinson::Peng_Robinson(const model_input &mi)
-  : modelGeneral(mi.gm, mi.bp) {
-#ifdef BY_PSEUDO_CRITIC
-  auto mi_pc = set_pseudo_critic_parameters(mi);
-  if (!set_gasparameters(mi_pc.gpi, this))
-    return;
-#else
-  if (!set_gasparameters(mi.gpi, this))
-    return;
-#endif  // BY_PSEUDO_CRITIC
+  : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
+  if (calc_config_.ByPseudocritic()) {
+    auto mi_pc = set_pseudo_critic_parameters(mi);
+    if (!set_gasparameters(mi_pc.gpi, this))
+      return;
+  } else {
+    if (!set_gasparameters(mi.gpi, this))
+      return;
+  }
   set_model_coef();
   if (parameters_->cgetDynSetup() & DYNAMIC_ENTALPHY)
     set_enthalpy();
@@ -214,8 +213,7 @@ double Peng_Robinson::get_volume(
 #ifdef GAS_MIX_VARIANT
   set_model_coef(cp);
 #endif  // GAS_MIX_VARIANT
-  double alf = std::pow(1.0 + model_coef_k_*(1.0 -
-      t / cp.T_K), 2.0);
+  double alf = std::pow(1.0 + model_coef_k_*(1.0 - t / cp.T_K), 2.0);
   std::vector<double> coef {
       1.0,
       model_coef_b_ - cp.R*t/p,
@@ -227,7 +225,7 @@ double Peng_Robinson::get_volume(
   CardanoMethod_HASUNIQROOT(&coef[0], &coef[4]);
 #ifdef _DEBUG
   if (!is_above0(coef[4])) {
-    error_ = set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    error_.SetError(ERR_CALC_MODEL_ST);
     return 0.0;
   }
 #endif
@@ -265,9 +263,6 @@ void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
 // функция вызывается из класса GasParameters_dyn
 void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state, const const_parameters &cp) {
-#ifdef GAS_MIX_VARIANT
-  set_model_coef(cp);
-#endif  // GAS_MIX_VARIANT
   double du  = internal_energy_integral(new_state, prev_state.parm, cp.T_K);
   double dcv = heat_capac_vol_integral(new_state, prev_state.parm, cp.T_K);
   double dif_c = heat_capac_dif_prs_vol(new_state,
@@ -301,10 +296,9 @@ void Peng_Robinson::SetPressure(double v, double t) {
   set_parameters(v, GetPressure(v, t), t);
 }
 
-#ifndef GAS_MIX_VARIANT
-double Peng_Robinson::GetVolume(double p, double t) const {
+double Peng_Robinson::GetVolume(double p, double t) {
   if (!is_above0(p, t)) {
-    error_ = set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    error_.SetError(ERR_CALC_MODEL_ST);
     return 0.0;
   }
   double alf = std::pow(1.0 + model_coef_k_*(1.0 -
@@ -320,16 +314,16 @@ double Peng_Robinson::GetVolume(double p, double t) const {
   CardanoMethod_HASUNIQROOT(&coef[0], &coef[4]);
 #ifdef _DEBUG
   if (!is_above0(coef[4])) {
-    error_ = set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    error_.SetError(ERR_CALC_MODEL_ST);
     return 0.0;
   }
 #endif
   return coef[4];
 }
 
-double Peng_Robinson::GetPressure(double v, double t) const {
+double Peng_Robinson::GetPressure(double v, double t) {
   if (!is_above0(v, t)) {
-    error_ = set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    error_.SetError(ERR_CALC_MODEL_ST);
     return 0.0;
   }
   const double a = std::pow(1.0 + model_coef_k_ * std::pow(1.0 -
@@ -339,45 +333,6 @@ double Peng_Robinson::GetPressure(double v, double t) const {
           (v*v+2.0*model_coef_b_*v -model_coef_b_*model_coef_b_);
   return temp;
 }
-#else 
-double Peng_Robinson::GetVolume(double p, double t) {
-  if (!is_above0(p, t)) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
-    return 0.0;
-  }
-  GasParameters_mix_dyn *gpar = 
-      dynamic_cast<GasParameters_mix_dyn *>(parameters_.get());
-  if (gpar != nullptr) {
-    const parameters_mix &cpm = gpar->GetComponents();
-    double volume = 0.0;
-    for (auto &x : cpm)
-      volume += x.first * get_volume(p, t, x.second.first);
-    return volume;
-  } else {
-    return get_volume(p, t, parameters_->const_params);
-  }
-  return 0.0;
-}
-
-double Peng_Robinson::GetPressure(double v, double t) {
-  if (!is_above0(v, t)) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
-    return 0.0;
-  }
-  GasParameters_mix_dyn *gpar =
-      dynamic_cast<GasParameters_mix_dyn *>(parameters_.get());
-  if (gpar != nullptr) {
-    const parameters_mix &cpm = gpar->GetComponents();
-    double pressure = 0.0;
-    for (auto &x : cpm)
-      pressure += x.first * get_pressure(v, t, x.second.first);
-    return pressure;
-  } else {
-    return get_pressure(v, t, parameters_->const_params);
-  }
-  return 0.0;
-}
-#endif  // !GAS_MIX_VARIANT
 
 double Peng_Robinson::GetCoefficient_a() const {
   return model_coef_a_;

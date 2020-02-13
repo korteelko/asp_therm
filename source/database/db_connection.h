@@ -199,6 +199,9 @@ public:
 
   mstatus_t GetStatus() const;
   merror_t GetErrorCode() const;
+  bool IsOpen() const;
+  /** \brief залогировать ошибку */
+  void LogError();
 
 protected:
   DBConnection(const db_parameters &parameters);
@@ -207,8 +210,7 @@ protected:
   ErrorWrap error_;
   mstatus_t status_;
   db_parameters parameters_;
-  /** \brief контайнер запросов для сложных запросов */
-  // Transaction *active_transaction_;
+  bool is_connected_;
 };
 
 #endif  // !_CORE__SUBROUTINS__DB_CONNECTION_H_

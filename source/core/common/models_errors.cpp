@@ -203,3 +203,9 @@ std::string ErrorWrap::GetMessage() const {
 bool ErrorWrap::IsLogged() const {
   return is_logged_;
 }
+
+void ErrorWrap::Reset() {
+  error_ = ERR_SUCCESS_T;
+  msg_ = "";
+  is_logged_ = false;
+}

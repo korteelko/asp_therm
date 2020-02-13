@@ -26,12 +26,7 @@ public:
       const const_parameters &cp) override;
   void SetVolume(double p, double t) override;
   void SetPressure(double v, double t) override;
-#ifndef GAS_MIX_VARIANT
-  double GetVolume(double p, double t) const override;
-  double GetPressure(double v, double t) const override;
-#else
   double GetVolume(double p, double t) override;
   double GetPressure(double v, double t) override;
-#endif  // !GAS_MIX_VARIANT
 };
 #endif  // !_CORE__MODELS__MODEL_NG_GOST_H_

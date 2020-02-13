@@ -10,7 +10,7 @@
 #include <memory>
 
 Ideal_Gas::Ideal_Gas(const model_input &mi)
-  : modelGeneral(mi.gm, mi.bp) {
+  : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
   if (!set_gasparameters(mi.gpi, this))
     return;
   set_enthalpy();
@@ -61,38 +61,18 @@ void Ideal_Gas::SetPressure(double v, double t) {
   set_parameters(v, GetPressure(v, t), t);
 }
 
-#ifndef GAS_MIX_VARIANT
-double Ideal_Gas::GetVolume(double p, double t) const {
-  if (!is_above0(p, t)) {
-    error_ = set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
-    return 0.0;
-  }
-  return  t * parameters_->cgetR() / p;
-}
-
-double Ideal_Gas::GetPressure(double v, double t) const {
-  if (!is_above0(v, t)) {
-    error_ = set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
-    return 0.0;
-  }
-  return t * parameters_->cgetR() / v;
-}
-#else
 double Ideal_Gas::GetVolume(double p, double t) {
-  assert(0 && "Ideal Gas");
   if (!is_above0(p, t)) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    error_.SetError(ERR_CALC_MODEL_ST);
     return 0.0;
   }
   return  t * parameters_->cgetR() / p;
 }
 
 double Ideal_Gas::GetPressure(double v, double t) {
-  assert(0 && "Ideal Gas");
   if (!is_above0(v, t)) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    error_.SetError(ERR_CALC_MODEL_ST);
     return 0.0;
   }
   return t * parameters_->cgetR() / v;
 }
-#endif  // !GAS_MIX_VARIANT

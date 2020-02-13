@@ -7,6 +7,7 @@
 #include "gas_description.h"
 #include "gas_description_static.h"
 #include "gasmix_init.h"
+#include "models_configurations.h"
 #include "phase_diagram.h"
 
 #ifdef BOOST_LIB_USED
@@ -37,20 +38,26 @@ struct model_input {
   gas_marks_t gm;
   binodalpoints *bp;
   gas_params_input gpi;
+  calculation_configuration calc_config;
+
+  model_input(gas_marks_t gm, binodalpoints *bp,
+      gas_params_input gpi, calculation_configuration calc_config);
 };
 
 class modelGeneral {
   modelGeneral(const modelGeneral &) = delete;
   modelGeneral &operator=(const modelGeneral &) = delete;
 protected:
-  mutable merror_t error_;
+  ErrorWrap error_;
   rg_model_t model_conf_;
+  calculation_configuration calc_config_;
   gas_marks_t gm_;
   std::unique_ptr<GasParameters> parameters_;
   std::unique_ptr<binodalpoints> bp_;
 
 protected:
-  modelGeneral(gas_marks_t gm, binodalpoints *bp);
+  modelGeneral(calculation_configuration calc_config,
+      gas_marks_t gm, binodalpoints *bp);
 
   double vapor_part(int32_t index);
   state_phase set_state_phase(double v, double p, double t);
@@ -78,13 +85,8 @@ public:
       const const_parameters &cp) = 0;
   virtual void SetVolume(double p, double t) = 0;
   virtual void SetPressure(double v, double t) = 0;
-#ifndef GAS_MIX_VARIANT
-  virtual double GetVolume(double p, double t) const = 0;
-  virtual double GetPressure(double v, double t) const = 0;
-#else
   virtual double GetVolume(double p, double t) = 0;
   virtual double GetPressure(double v, double t) = 0;
-#endif  // !GAS_MIX_VARIANT
 
   double GetVolume() const;
   double GetPressure() const;
@@ -97,7 +99,7 @@ public:
   parameters GetParametersCopy() const;
   const_parameters GetConstParameters() const;
   calculation_state_log GetStateLog() const;
-  merror_t GetError() const;
+  merror_t GetErrorCode() const;
 
 // maybe another class
   std::string ParametersString() const;

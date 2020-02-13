@@ -13,6 +13,10 @@
 
 #include <assert.h>
 
+/* примеры использования можно посмотреть на github, в репке Jeroen Vermeulen:
+     https://github.com/jtv/libpqxx */
+
+
 namespace postgresql_impl {
 static std::map<db_type, std::string> str_db_types =
     std::map<db_type, std::string>{
@@ -113,6 +117,7 @@ mstatus_t DBConnectionPostgre::SetupConnection() {
       if (pconnect_) {
         if (pconnect_->is_open()) {
           status_ = STATUS_OK;
+          is_connected_ = true;
           if (ProgramState::Instance().IsDebugMode())
             Logging::Append(io_loglvl::debug_logs, "Подключение к БД "
                 + parameters_.name);
@@ -141,6 +146,7 @@ mstatus_t DBConnectionPostgre::SetupConnection() {
 void DBConnectionPostgre::CloseConnection() {
   if (pconnect_) {
     pconnect_->disconnect();
+    is_connected_ = false;
     if (ProgramState::Instance().IsDebugMode())
       Logging::Append(io_loglvl::debug_logs, "Закрытие соединения c БД "
           + parameters_.name);
@@ -148,22 +154,25 @@ void DBConnectionPostgre::CloseConnection() {
 }
 
 mstatus_t DBConnectionPostgre::IsTableExists(db_table t, bool *is_exists) {
-  if (status_ != STATUS_HAVE_ERROR && pconnect_) {
+  if (is_connected_ && pconnect_) {
     std::stringstream select_ss;
     select_ss << "SELECT to_regclass('public." <<
         get_table_name(t) << "');" ;
     if (status_ != STATUS_DRY_RUN && pconnect_->is_open()) {
       try {
-        pqxx::nontransaction nt(*pconnect_);
-        pqxx::result qres(nt.exec(select_ss.str()));
-        if (qres.begin() != qres.end()) {
+        pqxx::work tr(*pconnect_);
+        pqxx::result trres(tr.exec(select_ss.str()));
+        // в примерах коммитят после запроса
+        tr.commit();
+
+        if (!trres.empty()) {
           *is_exists = true;
           // неплохо бы залогировать результат
           // for example:
           //   std::cout << qres.begin()[0].as<std::string>() << std::endl;
           if (ProgramState::Instance().IsDebugMode())
             Logging::Append(io_loglvl::debug_logs, "Ответ на запрос БД:"
-                + select_ss.str() + "\n\t" + qres.begin()[0].as<std::string>());
+                + select_ss.str() + "\n\t" + trres.begin()[0].as<std::string>());
         } else {
           *is_exists = false;
         }
@@ -174,7 +183,7 @@ mstatus_t DBConnectionPostgre::IsTableExists(db_table t, bool *is_exists) {
         status_ = STATUS_HAVE_ERROR;
       }
     } else {
-      Logging::Append(io_loglvl::debug_logs, select_ss.str());
+      Logging::Append(io_loglvl::debug_logs, "dry_run:\n" + select_ss.str());
     }
   }
   return status_;

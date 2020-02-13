@@ -21,26 +21,8 @@ void Redlich_Kwong2::set_model_coef(
   model_coef_b_ = 0.08664 * cp.R * cp.T_K / cp.P_K;
 }
 
-/*
-model_input Redlich_Kwong2::set_pseudo_critic_parameters(
-    const model_input &mi) {
-  if (!(mi.gm & GAS_MIX_MARK))
-    return mi;
-  // original by Brusilobski (4.15) page 134 
-  const parameters_mix *pm_p = mi.gpi.const_dyn.components;
-  double result_a_coef = 0.0;
-  double result_b_coef = 0.0;
-  for (const auto &x : *pm_p)
-    set_model_coef(x.second.first);
-  model_coef_a_ = result_a_coef;
-  model_coef_b_ = result_b_coef;
-  return mi;
-}
-*/
-// #endif  // BY_PSEUDO_CRITIC
-
 Redlich_Kwong2::Redlich_Kwong2(const model_input &mi)
-  : modelGeneral(mi.gm, mi.bp) {
+  : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
   if (!set_gasparameters(mi.gpi, this))
     return;
   set_model_coef();
@@ -63,8 +45,8 @@ Redlich_Kwong2 *Redlich_Kwong2::Init(const model_input &mi) {
  }
 
 //  расчёт смотри в ежедневнике
-double Redlich_Kwong2::internal_energy_integral(const parameters new_state,
-    const parameters old_state) {
+double Redlich_Kwong2::internal_energy_integral(
+    const parameters new_state, const parameters old_state) {
   double ans = 3.0 * model_coef_a_ *
       log((new_state.volume * (old_state.volume + model_coef_b_) /
           (old_state.volume * (new_state.volume + model_coef_b_)))) /
@@ -73,8 +55,8 @@ double Redlich_Kwong2::internal_energy_integral(const parameters new_state,
 }
 
 //   return cv - cv0
-double Redlich_Kwong2::heat_capac_vol_integral(const parameters new_state,
-    const parameters old_state) {
+double Redlich_Kwong2::heat_capac_vol_integral(
+    const parameters new_state, const parameters old_state) {
   double ans = - 3.0 * model_coef_a_ *
       log((new_state.volume * (old_state.volume + model_coef_b_)) /
           (old_state.volume * (new_state.volume + model_coef_b_))) /
@@ -84,8 +66,8 @@ double Redlich_Kwong2::heat_capac_vol_integral(const parameters new_state,
 
 // return cp - cv
 //   исправлено 22_09_2018
-double Redlich_Kwong2::heat_capac_dif_prs_vol(const parameters new_state,
-    double R) {
+double Redlich_Kwong2::heat_capac_dif_prs_vol(
+    const parameters new_state, double R) {
   double T = new_state.temperature,
          V = new_state.volume,
          a = model_coef_a_,
@@ -113,7 +95,7 @@ double Redlich_Kwong2::get_volume(double p, double t,
   CardanoMethod_HASUNIQROOT(&coef[0], &coef[4]);
 #ifdef _DEBUG
   if (!is_above0(coef[4])) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    set_error_code(ERR_CALC_MODEL_ST);
     return 0.0;
   }
 #endif  // _DEBUG
@@ -185,10 +167,9 @@ void Redlich_Kwong2::SetPressure(double v, double t) {
   set_parameters(v, GetPressure(v, t), t);
 }
 
-#ifndef GAS_MIX_VARIANT
-double Redlich_Kwong2::GetVolume(double p, double t) const {
+double Redlich_Kwong2::GetVolume(double p, double t) {
   if (!is_above0(p, t)) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    set_error_code(ERR_CALC_MODEL_ST);
     return 0.0;
   }
   std::vector<double> coef {
@@ -205,62 +186,22 @@ double Redlich_Kwong2::GetVolume(double p, double t) const {
   CardanoMethod_HASUNIQROOT(&coef[0], &coef[4]);
 #ifdef _DEBUG
   if (!is_above0(coef[4])) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    set_error_code(ERR_CALC_MODEL_ST);
     return 0.0;
   }
 #endif  // _DEBUG
   return coef[4];
 }
 
-double Redlich_Kwong2::GetPressure(double v, double t) const {
+double Redlich_Kwong2::GetPressure(double v, double t) {
   if (!is_above0(v, t)) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
+    set_error_code(ERR_CALC_MODEL_ST);
     return 0.0;
   }
   const double temp = parameters_->cgetR() * t / (v - model_coef_b_) -
       model_coef_a_ / (std::sqrt(t)* v *(v + model_coef_b_));
   return temp;
 }
-#else  // calculate as mix
-double Redlich_Kwong2::GetVolume(double p, double t) {
-  if (!is_above0(p, t)) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
-    return 0.0;
-  }
-  GasParameters_mix_dyn *gpar = 
-      dynamic_cast<GasParameters_mix_dyn *>(parameters_.get());
-  if (gpar != nullptr) {
-    const parameters_mix &cpm = gpar->GetComponents();
-    double volume = 0.0;
-    for (auto &x : cpm) {
-      volume += x.first * get_volume(p, t, x.second.first);
-    }
-    return volume;
-  } else {
-    return get_volume(p, t, parameters_->const_params);
-  }
-  return 0.0;
-}
-
-double Redlich_Kwong2::GetPressure(double v, double t) {
-  if (!is_above0(v, t)) {
-    set_error_code(ERR_CALCULATE_T | ERR_CALC_MODEL_ST);
-    return 0.0;
-  }
-  GasParameters_mix_dyn *gpar = 
-      dynamic_cast<GasParameters_mix_dyn *>(parameters_.get());
-  if (gpar != nullptr) {
-    const parameters_mix &cpm = gpar->GetComponents();
-    double pressure = 0.0;
-    for (auto &x : cpm)
-      pressure += x.first * get_pressure(v, t, x.second.first);
-    return pressure;
-  } else {
-    return get_pressure(v, t, parameters_->const_params);
-  }
-  return 0.0;
-}
-#endif  // !GAS_MIX_VARIANT
 
 double Redlich_Kwong2::GetCoefficient_a() const {
   return model_coef_a_;

@@ -31,15 +31,18 @@ typedef std::function<merror_t(models_configuration *,
 
 merror_t update_debug_mode(models_configuration *mc,
     const std::string &val) {
-  return (mc) ? set_bool(val, &mc->is_debug_mode) : ERR_INIT_ZERO_ST;
+  return (mc) ?
+      set_bool(val, &mc->calc_cfg.is_debug_mode) : ERR_INIT_ZERO_ST;
 }
 merror_t update_pseudocritical(models_configuration *mc,
      const std::string &val) {
-  return (mc) ? set_bool(val, &mc->by_pseudocritic) : ERR_INIT_ZERO_ST;
+  return (mc) ?
+      set_bool(val, &mc->calc_cfg.by_pseudocritic) : ERR_INIT_ZERO_ST;
 }
 merror_t update_enable_iso_20765(models_configuration *mc,
      const std::string &val) {
-  return (mc) ? set_bool(val, &mc->enable_iso_20765) : ERR_INIT_ZERO_ST;
+  return (mc) ?
+      set_bool(val, &mc->calc_cfg.enable_iso_20765) : ERR_INIT_ZERO_ST;
 }
 merror_t update_log_level(models_configuration *mc,
      const std::string &val) {
@@ -63,6 +66,22 @@ static std::map<const std::string, config_setup_fuctions> map_config_fuctions =
 
 namespace ns_ucf = update_configuration_functional;
 
+calculation_configuration::calculation_configuration()
+  : is_debug_mode(true), by_pseudocritic(true),
+   enable_iso_20765(true) {}
+
+bool calculation_configuration::IsDebug() const {
+  return is_debug_mode;
+}
+
+bool calculation_configuration::ByPseudocritic() const {
+  return by_pseudocritic;
+}
+
+bool calculation_configuration::EnableISO20765() const {
+  return enable_iso_20765;
+}
+
 merror_t models_configuration::SetConfigurationParameter(
     const std::string &param_strtpl, const std::string &param_value) {
   if (param_strtpl.empty())
@@ -74,9 +93,9 @@ merror_t models_configuration::SetConfigurationParameter(
   return error;
 }
 
- models_configuration::models_configuration()
-   : is_debug_mode(true), by_pseudocritic(true),
-   enable_iso_20765(true), log_level(io_loglvl::debug_logs) {}
+models_configuration::models_configuration()
+  : calc_cfg(calculation_configuration()),
+    log_level(io_loglvl::debug_logs) {}
 
 ProgramState &ProgramState::Instance() {
   static ProgramState state;
@@ -111,7 +130,7 @@ bool ProgramState::IsInitialized() const {
 
 bool ProgramState::IsDebugMode() const {
   return (program_config_) ?
-      program_config_->configuration.is_debug_mode : true;
+      program_config_->configuration.calc_cfg.is_debug_mode : true;
 }
 
 merror_t ProgramState::GetErrorCode() const {
@@ -123,9 +142,14 @@ const models_configuration ProgramState::GetConfiguration() const {
       program_config_->configuration : models_configuration();
 }
 
+const calculation_configuration ProgramState::GetCalcConfiguration() const {
+  return (program_config_) ?
+      program_config_->configuration.calc_cfg : calculation_configuration();
+}
+
 const db_parameters ProgramState::GetDatabaseConfiguration() const {
   return (program_config_) ?
-      program_config_->db_parameters_conf: db_parameters();
+      program_config_->db_parameters_conf : db_parameters();
 }
 
 /* ProgramState::ProgramConfiguration */

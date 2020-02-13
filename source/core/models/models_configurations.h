@@ -59,14 +59,32 @@ struct model_str {
   int32_t vers_minor;
 };
 
-struct models_configuration {
-public:
+/* сейчас посто заглушка */
+struct calculation_info {
+  // я хз чё тут надо, но вроде как инпут прописать
+  time_t time;
+};
+
+struct calculation_configuration {
   /** \brief выводить отладочную информацию */
   bool is_debug_mode;
   /** \brief пересчитывать модели по псевдокритическим параметрам */
   bool by_pseudocritic;
   /** \brief использовать 'ISO 20665' поверх 'ГОСТ 30319-3' */
   bool enable_iso_20765;
+
+public:
+  calculation_configuration();
+
+  bool IsDebug() const;
+  bool ByPseudocritic() const;
+  bool EnableISO20765() const;
+};
+
+/** \brief конфигурация моделей реального газа */
+struct models_configuration {
+public:
+  calculation_configuration calc_cfg;
   /** \brief уровень логирования */
   io_loglvl log_level;
 
@@ -86,12 +104,6 @@ struct model_info {
   models_configuration setup_info;
 };
 
-/* сейчас посто заглушка */
-struct calculation_info {
-  // я хз чё тут надо, но вроде как инпут прописать
-  time_t time;
-};
-
 /// singleton of state
 class ProgramState {
 public:
@@ -108,6 +120,7 @@ public:
   bool IsDebugMode() const;
   merror_t GetErrorCode() const;
   const models_configuration GetConfiguration() const;
+  const calculation_configuration GetCalcConfiguration() const;
   const db_parameters GetDatabaseConfiguration() const;
 
 public:

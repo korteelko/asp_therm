@@ -14,8 +14,13 @@
 
 DerivateFunctor::~DerivateFunctor() {}
 
-modelGeneral::modelGeneral(gas_marks_t gm, binodalpoints *bp)
-  : error_(ERR_SUCCESS_T), gm_(gm), parameters_(nullptr), bp_(bp) {}
+model_input::model_input(gas_marks_t gm, binodalpoints *bp,
+    gas_params_input gpi, calculation_configuration calc_config)
+  : gm(gm), bp(bp), gpi(gpi), calc_config(calc_config) {}
+
+modelGeneral::modelGeneral(calculation_configuration calc_config,
+    gas_marks_t gm, binodalpoints *bp)
+  :  calc_config_(calc_config), gm_(gm), parameters_(nullptr), bp_(bp) {}
 
 modelGeneral::~modelGeneral() {}
 
@@ -81,14 +86,13 @@ void modelGeneral::set_enthalpy() {
   }
 }
 
+/// return NULL or pointer to GasParameters
 const GasParameters *modelGeneral::get_gasparameters() const {
-  // return NULL or pointer to GasParameters
   return parameters_.get();
 }
 
-/// set general struct of gas parameters.
-///   return: "true" for success;
-///           "false" for error;
+/** \brief set general struct of gas parameters.
+  * \return: 'true' for success, 'false' for error; */
 bool modelGeneral::set_gasparameters(const gas_params_input &gpi,
     modelGeneral *mg) {
   if (gm_ & GAS_NG_GOST_MARK) {
@@ -186,8 +190,8 @@ calculation_state_log modelGeneral::GetStateLog() const {
       stateToString[(uint32_t)parameters_->cgetState()]};
 }
 
-merror_t modelGeneral::GetError() const {
-  return error_;
+merror_t modelGeneral::GetErrorCode() const {
+  return error_.GetErrorCode();
 }
 
 std::string modelGeneral::ParametersString() const {

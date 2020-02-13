@@ -120,7 +120,8 @@ std::string db_parameters::GetInfo() const {
 
 /* DBConnection */
 DBConnection::DBConnection(const db_parameters &parameters)
-  : status_(STATUS_DEFAULT), parameters_(parameters) {}
+  : status_(STATUS_DEFAULT), parameters_(parameters),
+    is_connected_(false) {}
 
 DBConnection::~DBConnection() {}
 
@@ -130,4 +131,12 @@ mstatus_t DBConnection::GetStatus() const {
 
 merror_t DBConnection::GetErrorCode() const {
   return error_.GetErrorCode();
+}
+
+bool DBConnection::IsOpen() const {
+  return is_connected_;
+}
+
+void DBConnection::LogError() {
+  error_.LogIt();
 }
