@@ -9,7 +9,7 @@
 class ModelsCreator {
 /* TODO:
  *   заменить тип на ErrorWrap */
-  static merror_t error_;
+  static ErrorWrap error_;
   // for multithread
   // std::mutex_t
 

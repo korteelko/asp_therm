@@ -6,6 +6,8 @@
 
 #include <assert.h>
 
+ErrorWrap GasParameters::init_error;
+
 // protected constructors
 GasParameters::GasParameters(double v, double p, double t,
     const const_parameters cgp, dyn_parameters dgp)

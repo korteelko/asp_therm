@@ -3,7 +3,7 @@
 
 #include "db_defines.h"
 #include "gas_description.h"
-#include "models_errors.h"
+#include "ErrorWrap.h"
 
 #include <memory>
 #include <string>

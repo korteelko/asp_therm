@@ -4,7 +4,7 @@
 #include "gas_description.h"
 #include "gas_description_dynamic.h"
 #include "gasmix_init.h"
-#include "models_errors.h"
+#include "ErrorWrap.h"
 #include "models_math.h"
 
 #include <map>
@@ -16,18 +16,10 @@
 
 NG_Gost::NG_Gost(const model_input &mi) 
   : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
-  if (!set_gasparameters(mi.gpi, this)) {
-    if (!get_error_code()) {
-      error_.SetError(ERR_GAS_MIX | ERR_INIT_T,
-          "error occurred while init gost model");
-    } else {
-      error_.SetError(get_error_code());
-    }
-  }
+  set_gasparameters(mi.gpi, this);
 }
 
 NG_Gost *NG_Gost::Init(const model_input &mi) {
-  reset_error();
   if (check_input(mi))
     return nullptr;
   // only for gas_mix

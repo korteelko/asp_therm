@@ -2,7 +2,7 @@
 #define _CORE__COMMON__MODELS_LOGGING_H_
 
 #include "common.h"
-#include "models_errors.h"
+#include "ErrorWrap.h"
 
 #include <fstream>
 
@@ -32,7 +32,7 @@ class Logging {
   static mlog_fostream output_;
   static logging_cfg li_;
   static std::string status_msg_;
-  static merror_t error_;
+  static ErrorWrap error_;
   static bool is_aval_;
 
 private:
@@ -48,8 +48,9 @@ public:
   static merror_t InitDefault();
   /** \brief change output file, log level **/
   static merror_t ResetInstance(logging_cfg &li);
-  static merror_t GetError();
+  static merror_t GetErrorCode();
   static io_loglvl GetLogLevel();
+  static std::string GetStatusMessage();
   /** \brief force clear logfile */
   static void ClearLogfile();
   /** \brief append logfile with passed message
@@ -61,6 +62,15 @@ public:
     * else ignore */
   // static void Append(io_loglvl lvl, const char *format, ...);
   static void Append(io_loglvl lvl, const std::string &msg);
+  /** \brief append logfile with passed 'msg'
+    *   io_loglvl = err_logs */
+  static void Append(merror_t error_code, const std::string &msg);
+  /** \brief append logfile with passed 'msg' */
+  static void Append(io_loglvl lvl, merror_t error_code,
+      const std::string &msg);
+  /** \brief append logfile with passed stringstream 'sstr' */
+  static void Append(const std::stringstream &sstr);
+  static void Append(io_loglvl lvl, const std::stringstream &sstr);
   // TODO: how about:
   // static void Append(ErrorWrap err, const std::string &msg);
 

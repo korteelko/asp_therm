@@ -2,8 +2,8 @@
 
 #include "common.h"
 #include "gas_ng_gost_defines.h"
-#include "models_errors.h"
-#include "models_logging.h"
+#include "ErrorWrap.h"
+#include "Logging.h"
 
 #include <array>
 #include <functional>
@@ -11,6 +11,8 @@
 
 #include <assert.h>
 #include <math.h>
+
+// ErrorWrap GasParameters_NG_Gost_dyn::init_error;
 
 namespace {
 const double Lt = 1.0;
@@ -98,8 +100,9 @@ bool is_valid_limits(const ng_gost_mix &components) {
 GasParameters_NG_Gost_dyn::GasParameters_NG_Gost_dyn(
     parameters prs, const_parameters cgp, dyn_parameters dgp, 
     ng_gost_mix components)
-  : GasParameters(prs, cgp, dgp), error_(ERR_SUCCESS_T),
+  : GasParameters(prs, cgp, dgp), error_(ERROR_SUCCESS_T),
     components_(components) {
+  merror_t error;
   if (init_kx())
     return;
   set_V();
@@ -109,15 +112,14 @@ GasParameters_NG_Gost_dyn::GasParameters_NG_Gost_dyn(
   set_Bn();
   set_Cn();
   if (set_molar_mass()) {
-    error_ = set_error_message(
-        ERR_INIT_T, "udefined component of natural gas");
+    error_.SetError(ERR_INIT_T, "udefined component of natural gas");
   } else {
     set_p0m();
-    if (!(error_ = set_cp0r())) {
-      error_ = (!init_pseudocrit_vpte()) ? set_volume() :
-          set_error_message(ERR_INIT_T, "undefined component of natural gas\n");
+    if (!(error = set_cp0r())) {
+      error = (!init_pseudocrit_vpte()) ? set_volume() :
+          error_.SetError(ERR_INIT_T, "undefined component of natural gas\n");
     } else {
-      set_error_message(ERR_INIT_T, "set_cp0r for natural gas model\n");
+      error_.SetError(ERR_INIT_T, "set_cp0r for natural gas model\n");
     }
   }
 }
@@ -125,11 +127,12 @@ GasParameters_NG_Gost_dyn::GasParameters_NG_Gost_dyn(
 GasParameters_NG_Gost_dyn *GasParameters_NG_Gost_dyn::Init(
     gas_params_input gpi) {
   if (gpi.const_dyn.ng_gost_components->empty()) {
-    set_error_code(ERR_INIT_T | ERR_INIT_NULLP_ST | ERR_GAS_MIX);
+    GasParameters::init_error.SetError(
+        ERR_INIT_T | ERR_INIT_NULLP_ST | ERR_GAS_MIX);
     return nullptr;
   }
   if (!is_valid_limits(*gpi.const_dyn.ng_gost_components)) {
-    set_error_message(ERR_INIT_T | ERR_GAS_MIX,
+    GasParameters_NG_Gost_dyn::init_error.SetError(ERR_INIT_T | ERR_GAS_MIX,
         "natural gas model init error:\n components limits check fail\n");
     return nullptr;
   }
@@ -154,8 +157,7 @@ void GasParameters_NG_Gost_dyn::set_V() {
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
     if (xi_ch == nullptr) {
-      error_ = set_error_message(
-          ERR_INIT_T, "undefined component in gost model");
+      error_.SetError(ERR_INIT_T, "undefined component in gost model");
       return;
     }
     V += components_[i].second * pow(xi_ch->E, 2.5);
@@ -204,8 +206,7 @@ void GasParameters_NG_Gost_dyn::set_G() {
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
     if (xi_ch == nullptr) {
-      error_ = set_error_message(
-          ERR_INIT_T, "undefined component in gost model");
+      error_.SetError(ERR_INIT_T, "undefined component in gost model");
       return;
     }
     G += components_[i].second * xi_ch->G;
@@ -279,7 +280,7 @@ merror_t GasParameters_NG_Gost_dyn::set_molar_mass() {
       return ERR_INIT_T;
     }
   }
-  return ERR_SUCCESS_T;
+  return ERROR_SUCCESS_T;
 }
 
 void GasParameters_NG_Gost_dyn::set_p0m() {
@@ -292,11 +293,8 @@ merror_t GasParameters_NG_Gost_dyn::init_kx() {
   const component_characteristics *xi_ch = nullptr;
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
-    if (xi_ch == nullptr) {
-      error_ = set_error_message(
-          ERR_INIT_T, "undefined component in gost model");
-      return ERR_INIT_T;
-    }
+    if (xi_ch == nullptr)
+      return error_.SetError(ERR_INIT_T, "undefined component in gost model");
     coef_kx_ += components_[i].second * pow(xi_ch->K, 2.5);
   }
   coef_kx_ *= coef_kx_;
@@ -316,7 +314,7 @@ merror_t GasParameters_NG_Gost_dyn::init_kx() {
   associate_Kx_part *= 2.0;
   coef_kx_ += associate_Kx_part;
   coef_kx_ = pow(coef_kx_, 0.2);
-  return ERR_SUCCESS_T;
+  return ERROR_SUCCESS_T;
 }
 
 merror_t GasParameters_NG_Gost_dyn::init_pseudocrit_vpte() {
@@ -362,7 +360,7 @@ merror_t GasParameters_NG_Gost_dyn::init_pseudocrit_vpte() {
   pseudocrit_vpte_.temperature = 0.125 * temp / vol;
   pseudocrit_vpte_.pressure = 10e3 * GAS_CONSTANT *
       pseudocrit_vpte_.temperature * press_var / pseudocrit_vpte_.volume;
-  return ERR_SUCCESS_T;
+  return ERROR_SUCCESS_T;
 }
 
 void GasParameters_NG_Gost_dyn::set_viscosity0() {
@@ -392,8 +390,8 @@ double GasParameters_NG_Gost_dyn::get_Un(size_t n) const {
 }
 
 merror_t GasParameters_NG_Gost_dyn::set_volume() {
-  if ((error_ = check_pt_limits(vpte_.pressure, vpte_.temperature)))
-    return error_;
+  if (check_pt_limits(vpte_.pressure, vpte_.temperature))
+    return error_.GetErrorCode();
   double sigm = sigma_start(),
          tau = vpte_.temperature / Lt;
   double A0 = calculate_A0(sigm);
@@ -423,7 +421,7 @@ merror_t GasParameters_NG_Gost_dyn::set_volume() {
   ng_gost_params_.z = 1.0 + A0;
   update_dynamic();
   // function end
-  return ERR_SUCCESS_T;
+  return ERROR_SUCCESS_T;
 }
 
 void GasParameters_NG_Gost_dyn::update_dynamic() {
@@ -436,10 +434,10 @@ void GasParameters_NG_Gost_dyn::update_dynamic() {
   assert(0);
 }
 
-merror_t GasParameters_NG_Gost_dyn::check_pt_limits(double p, double t) const {
+merror_t GasParameters_NG_Gost_dyn::check_pt_limits(double p, double t) {
   /* ckeck pressure[0.1, 30.0]MPa, temperature[250,350]K */
   return ((p >= 100000 && p <= 30000000 ) && (t >= 250 && t <= 350)) ?
-      ERR_SUCCESS_T : ERR_INIT_T;
+      ERROR_SUCCESS_T : error_.SetError(ERR_INIT_T, "check ng_gost limits");
 }
 
 merror_t GasParameters_NG_Gost_dyn::set_cp0r() {
@@ -464,7 +462,7 @@ merror_t GasParameters_NG_Gost_dyn::set_cp0r() {
   ng_gost_params_.cp0r = cp0r;
   // да, это неправильно и снова отдельная функция должна быть
   update_dynamic();
-  return ERR_SUCCESS_T;
+  return ERROR_SUCCESS_T;
 }
 
 /* check 07_11_19 */

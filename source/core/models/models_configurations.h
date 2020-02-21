@@ -3,8 +3,8 @@
 
 #include "common.h"
 #include "db_connection.h"
-#include "models_errors.h"
-#include "models_logging.h"
+#include "ErrorWrap.h"
+#include "Logging.h"
 
 #include <ctime>
 #include <memory>

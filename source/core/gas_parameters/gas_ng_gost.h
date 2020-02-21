@@ -2,7 +2,7 @@
 #define _CORE__GAS_PARAMETERS__GAS_NG_GOST_H_
 
 #include "gas_description_static.h"
-#include "models_errors.h"
+#include "ErrorWrap.h"
 
 #include <vector>
 // TODO: rename file --> delete postfix '_init'
@@ -24,7 +24,8 @@ struct ng_gost_params {
 
 // const_dyn_parameters init_natural_gas(const gost_ng_components &comps);
 class GasParameters_NG_Gost_dyn : public GasParameters {
-  merror_t error_;
+private:
+  ErrorWrap error_;
   ng_gost_mix components_;
   parameters pseudocrit_vpte_;
   ng_gost_params ng_gost_params_;
@@ -62,7 +63,7 @@ private:
   merror_t set_volume();
   void update_dynamic();
   /* TODO: add accuracy  */
-  merror_t check_pt_limits(double p, double t) const;
+  merror_t check_pt_limits(double p, double t);
   merror_t set_cp0r();
   // calculating sigma(it is volume)
   double sigma_start() const;

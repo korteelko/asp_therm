@@ -1,6 +1,6 @@
 #include "gas_by_file.h"
 
-#include "models_errors.h"
+#include "ErrorWrap.h"
 #include "models_math.h"
 
 #include <algorithm>
@@ -50,7 +50,6 @@ double get_val(std::vector<std::string> &vec, const std::string &valname,
   } catch (std::invalid_argument &) {
     ans = 0.0;
   } catch (std::out_of_range &) {
-    set_error_message(ERR_INIT_T, "xml argument out of range!");
     ans = -1.0;
   }
   return ans;
@@ -69,7 +68,6 @@ ComponentByFile *ComponentByFile::Init(const std::string &filename) {
 }
 
 std::shared_ptr<const_parameters> ComponentByFile::GetConstParameters() {
-  reset_error();
   if (xml_doc_ == nullptr)
     return nullptr;
   // critical point parameters
@@ -92,7 +90,6 @@ std::shared_ptr<const_parameters> ComponentByFile::GetConstParameters() {
 }
 
 std::shared_ptr<dyn_parameters> ComponentByFile::GetDynParameters() {
-  reset_error();
   if (xml_doc_ == nullptr)
     return nullptr;
   // dynamic point parameters

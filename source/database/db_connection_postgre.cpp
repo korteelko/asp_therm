@@ -4,7 +4,7 @@
 #include "db_query.h"
 #include "file_structs.h"
 #include "models_configurations.h"
-#include "models_logging.h"
+#include "Logging.h"
 
 #include <pqxx/pqxx>
 

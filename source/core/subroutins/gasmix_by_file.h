@@ -56,6 +56,9 @@ private:
   std::pair<std::shared_ptr<const_parameters>, std::shared_ptr<dyn_parameters>>
       init_pars(double part, const std::string &filename);
 
+public:
+  static ErrorWrap init_error;
+
 private:
   std::shared_ptr<parameters_mix> prs_mix_;
   std::shared_ptr<ng_gost_mix> gost_mix_;

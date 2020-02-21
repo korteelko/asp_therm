@@ -1,7 +1,7 @@
 #include "file_structs.h"
 
 #include "configuration_strtpl.h"
-#include "models_logging.h"
+#include "Logging.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -109,7 +109,7 @@ static std::map<const std::string, db_client> map_dbclient_tpls =
 /* functions */
 merror_t set_bool(const std::string &val, bool *ans) {
   std::string trimed_val = trim_str(val);
-  merror_t error = ERR_SUCCESS_T;
+  merror_t error = ERROR_SUCCESS_T;
   if (strcmp(trimed_val.c_str(), STRTPL_BOOL_TRUE) != 0) {
     if (strcmp(trimed_val.c_str(), STRTPL_BOOL_FALSE) != 0) {
       error = ERR_STRTPL_VALWRONG;
@@ -133,7 +133,7 @@ merror_t set_double(const std::string &val, double *ans) {
 */
 
 merror_t set_int(const std::string &val, int *ans) {
-  merror_t error = ERR_SUCCESS_T;
+  merror_t error = ERROR_SUCCESS_T;
   /* TODO: separate merrors for different exceptions */
   try {
     *ans = std::stoi(val);

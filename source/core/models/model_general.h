@@ -47,6 +47,9 @@ struct model_input {
 class modelGeneral {
   modelGeneral(const modelGeneral &) = delete;
   modelGeneral &operator=(const modelGeneral &) = delete;
+public:
+  static ErrorWrap init_error;
+
 protected:
   ErrorWrap error_;
   rg_model_t model_conf_;
@@ -64,7 +67,7 @@ protected:
   int32_t set_state_phasesub(double p);
   void set_parameters(double v, double p, double t);
   void set_enthalpy();
-  bool set_gasparameters(const gas_params_input &gpi,
+  void set_gasparameters(const gas_params_input &gpi,
       modelGeneral *mg);
   const GasParameters *get_gasparameters() const;
 

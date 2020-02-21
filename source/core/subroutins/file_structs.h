@@ -3,7 +3,7 @@
 
 #include "common.h"
 #include "db_connection.h"
-#include "models_errors.h"
+#include "ErrorWrap.h"
 
 #include <array>
 #include <map>
@@ -82,7 +82,7 @@ merror_t set_by_map(const std::map<const std::string, T> &m,
   merror_t error = ERR_STRTPL_VALWRONG;
   auto map_it = m.find(trim_str(v));
   if (map_it != m.end()) {
-    error = ERR_SUCCESS_T;
+    error = ERROR_SUCCESS_T;
     a = map_it->second;
   }
   return error;

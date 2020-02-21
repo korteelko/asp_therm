@@ -1,7 +1,7 @@
 #include "gasmix_init.h"
 
 #include "common.h"
-#include "models_errors.h"
+#include "ErrorWrap.h"
 #include "model_general.h"
 
 #include <algorithm>
@@ -54,10 +54,10 @@ GasParameters_mix_dyn::GasParameters_mix_dyn(parameters prs,
 GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
     gas_params_input gpi, modelGeneral *mg) {
   GasParameters_mix_dyn *mix = nullptr;
-  merror_t err = ERR_SUCCESS_T;
-  reset_error();
+  merror_t err = ERROR_SUCCESS_T;
   if (gpi.const_dyn.components->empty() || mg == nullptr)
-    err = set_error_code(ERR_INIT_T | ERR_INIT_NULLP_ST | ERR_GAS_MIX);
+    err = init_error.SetError(
+        ERR_INIT_T | ERR_INIT_NULLP_ST | ERR_GAS_MIX);
   std::unique_ptr<const_parameters> tmp_cgp = nullptr;
   std::unique_ptr<dyn_parameters> tmp_dgp = nullptr;
   dyn_setup setup = DYNAMIC_SETUP_MASK;
@@ -69,7 +69,8 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
         const_parameters::Init(GAS_TYPE_MIX, avr_vals[0], avr_vals[1],
         avr_vals[2], avr_vals[3], avr_vals[4], avr_vals[5]));
     if (tmp_cgp == nullptr) {
-      err = set_error_code(ERR_INIT_T | ERR_GAS_MIX | ERR_CALC_GAS_P_ST);
+      err = init_error.SetError(
+          ERR_INIT_T | ERR_GAS_MIX | ERR_CALC_GAS_P_ST);
     } else {
       double volume = 0.0;
       for (const auto &x : *gpi.const_dyn.components)
@@ -95,13 +96,13 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
     mix = new GasParameters_mix_dyn({0.0, gpi.p, gpi.t}, *tmp_cgp, *tmp_dgp,
         *gpi.const_dyn.components, mg);
   else
-    err = set_error_code(ERR_INIT_T | ERR_CALC_GAS_P_ST | ERR_GAS_MIX);
+    err = init_error.SetError(
+        ERR_INIT_T | ERR_CALC_GAS_P_ST | ERR_GAS_MIX);
   return mix;
 }
 
 std::unique_ptr<const_parameters> GasParameters_mix_dyn::GetAverageParams(
     parameters_mix &components) {
-  reset_error();
   std::unique_ptr<const_parameters> tmp_cgp = nullptr;
   if (!components.empty()) {
     std::array<double, 6> avr_vals = get_average_params(components);
@@ -109,9 +110,11 @@ std::unique_ptr<const_parameters> GasParameters_mix_dyn::GetAverageParams(
     if (!(tmp_cgp = std::unique_ptr<const_parameters>(
         const_parameters::Init(GAS_TYPE_MIX, avr_vals[0], avr_vals[1],
         avr_vals[2], avr_vals[3], avr_vals[4], avr_vals[5]))))
-      set_error_code(ERR_INIT_T | ERR_GAS_MIX | ERR_CALC_GAS_P_ST);
+      init_error.SetError(ERR_INIT_T | ERR_GAS_MIX | ERR_CALC_GAS_P_ST,
+          "Расчёт средних параметров для газовой смеси");
   } else {
-    set_error_code(ERR_INIT_T | ERR_INIT_NULLP_ST | ERR_GAS_MIX);
+    init_error.SetError(ERR_INIT_T | ERR_INIT_NULLP_ST | ERR_GAS_MIX,
+        "Инициализация газовой смеси компонентов нет");
   }
   return tmp_cgp;
 }

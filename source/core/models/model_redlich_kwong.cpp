@@ -2,7 +2,7 @@
 
 #include "common.h"
 #include "gas_description_dynamic.h"
-#include "models_errors.h"
+#include "ErrorWrap.h"
 #include "models_math.h"
 
 #include <assert.h>
@@ -23,16 +23,16 @@ void Redlich_Kwong2::set_model_coef(
 
 Redlich_Kwong2::Redlich_Kwong2(const model_input &mi)
   : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
-  if (!set_gasparameters(mi.gpi, this))
-    return;
-  set_model_coef();
-  if (parameters_->cgetDynSetup() & DYNAMIC_ENTALPHY)
-    set_enthalpy();
-  SetVolume(mi.gpi.p, mi.gpi.t);
+  set_gasparameters(mi.gpi, this);
+  if (error_.GetErrorCode()) {
+    set_model_coef();
+    if (parameters_->cgetDynSetup() & DYNAMIC_ENTALPHY)
+      set_enthalpy();
+    SetVolume(mi.gpi.p, mi.gpi.t);
+  }
 }
 
 Redlich_Kwong2 *Redlich_Kwong2::Init(const model_input &mi) {
-  reset_error();
   if (check_input(mi))
     return nullptr;
   Redlich_Kwong2 *rk = new Redlich_Kwong2(mi);
@@ -92,10 +92,12 @@ double Redlich_Kwong2::get_volume(double p, double t,
   // Следующая функция заведомо получает валидные
   //   данные,  соответственно должна что-то вернуть
   //   Не будем перегружать код лишними проверками
-  CardanoMethod_HASUNIQROOT(&coef[0], &coef[4]);
+  int roots_count;
+  CardanoMethod_roots_count(&coef[0], &coef[4], &roots_count);
 #ifdef _DEBUG
   if (!is_above0(coef[4])) {
-    set_error_code(ERR_CALC_MODEL_ST);
+    error_.SetError(ERR_CALC_MODEL_ST);
+    error_.LogIt();
     return 0.0;
   }
 #endif  // _DEBUG
@@ -169,7 +171,7 @@ void Redlich_Kwong2::SetPressure(double v, double t) {
 
 double Redlich_Kwong2::GetVolume(double p, double t) {
   if (!is_above0(p, t)) {
-    set_error_code(ERR_CALC_MODEL_ST);
+    error_.SetError(ERR_CALC_MODEL_ST);
     return 0.0;
   }
   std::vector<double> coef {
@@ -183,10 +185,12 @@ double Redlich_Kwong2::GetVolume(double p, double t) {
   // Следующая функция заведомо получает валидные
   //   данные,  соответственно должна что-то вернуть
   //   Не будем перегружать код лишними проверками
-  CardanoMethod_HASUNIQROOT(&coef[0], &coef[4]);
+  int roots_count;
+  CardanoMethod_roots_count(&coef[0], &coef[4], &roots_count);
 #ifdef _DEBUG
   if (!is_above0(coef[4])) {
-    set_error_code(ERR_CALC_MODEL_ST);
+    error_.SetError(ERR_CALC_MODEL_ST);
+    error_.LogIt();
     return 0.0;
   }
 #endif  // _DEBUG
@@ -195,7 +199,7 @@ double Redlich_Kwong2::GetVolume(double p, double t) {
 
 double Redlich_Kwong2::GetPressure(double v, double t) {
   if (!is_above0(v, t)) {
-    set_error_code(ERR_CALC_MODEL_ST);
+    error_.SetError(ERR_CALC_MODEL_ST);
     return 0.0;
   }
   const double temp = parameters_->cgetR() * t / (v - model_coef_b_) -

@@ -1,7 +1,7 @@
 #ifndef _GUI__PROGRAM_DATA_H_
 #define _GUI__PROGRAM_DATA_H_
 
-#include "models_errors.h"
+#include "ErrorWrap.h"
 
 #include <string>
 #include <vector>

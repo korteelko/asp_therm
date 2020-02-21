@@ -2,9 +2,9 @@
 #define _CORE__SUBROUTINS__XML_READER_H_
 
 #include "common.h"
+#include "ErrorWrap.h"
 #include "file_structs.h"
-#include "models_errors.h"
-#include "models_logging.h"
+#include "Logging.h"
 
 // pugixml library (http://pugixml.org).
 // pugixml is Copyright (C) 2006-2018 Arseny Kapoulkine.
@@ -80,7 +80,7 @@ class XMLReader {
 
 private:
   XMLReader(std::string gas_xml_file)
-    : error_(ERR_SUCCESS_T), gas_xml_file_(gas_xml_file),
+    : error_(ERROR_SUCCESS_T), gas_xml_file_(gas_xml_file),
       gas_root_node_(nullptr) {
     xml_parse_result_ = std::unique_ptr<pugi::xml_parse_result>(
         new pugi::xml_parse_result());  
@@ -154,20 +154,22 @@ private:
 
 public:
   static XMLReader<xml_node_t> *Init(std::string gas_xml_file) {
-    merror_t err = ERR_SUCCESS_T;
+    merror_t err = ERROR_SUCCESS_T;
     XMLReader<xml_node_t> *reader = nullptr;
-    if (gas_xml_file.empty())
-      err = set_error_code(ERR_INIT_NULLP_ST);
-    if (err == ERR_SUCCESS_T) {
+    if (gas_xml_file.empty()) {
+      err = ERR_INIT_NULLP_ST;
+      Logging::Append(err, "имя xml-файла пусто");
+    }
+    if (err == ERROR_SUCCESS_T) {
       if (!is_exist(gas_xml_file)) {
-        err = set_error_message(ERR_FILE_IN_ST, std::string(
+        err = ERR_FILE_IN_ST;
+        Logging::Append(err, std::string(
             std::string("cannot open file: ") + gas_xml_file).c_str());
       } else {
-        reset_error();
         reader = new XMLReader<xml_node_t>(gas_xml_file);
         if (reader) {
-          if (reader->GetError() != ERR_SUCCESS_T) {
-            Logging::Append(io_loglvl::debug_logs, get_error_message());
+          if (reader->GetErrorCode() != ERROR_SUCCESS_T) {
+            Logging::Append(io_loglvl::debug_logs, reader->GetErrorMessage());
             delete reader;
             reader = nullptr;
           }
@@ -181,8 +183,12 @@ public:
     return gas_xml_file_;
   }
 
-  merror_t GetError() const {
+  merror_t GetErrorCode() const {
     return error_.GetErrorCode();
+  }
+
+  std::string GetErrorMessage() const {
+    return error_.GetMessage();
   }
 
   std::string GetRootName() const {
@@ -206,7 +212,7 @@ public:
       }
     }
     *outstr = tmp_gas_node->GetValue();
-    return ERR_SUCCESS_T;
+    return ERROR_SUCCESS_T;
   } 
 };
 #endif  // !_CORE__SUBROUTINS__XML_READER_H_

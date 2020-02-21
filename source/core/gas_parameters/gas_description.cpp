@@ -1,10 +1,11 @@
 #include "gas_description.h"
 
-#include "models_errors.h"
+#include "ErrorWrap.h"
 #include "models_math.h"
 
 #include <map>
 
+ErrorWrap const_parameters::init_error;
 
 static std::map<std::string, gas_t> gas_names =
     std::map<std::string, gas_t> {
@@ -120,9 +121,11 @@ const_parameters *const_parameters::Init(gas_t gas_name, double vk,
     if (is_valid_gas(gas_name))
       return new const_parameters(gas_name, vk, pk, tk, zk,
           mol, 1000.0 * GAS_CONSTANT / mol, af);
-    set_error_message(ERR_INIT_T, "const_parameters: invalid gas_name");
+    const_parameters::init_error.SetError(
+        ERR_INIT_T, "const_parameters: invalid gas_name");
   } else {
-    set_error_message(ERR_INIT_T, "const_parameters: input pars < 0");
+    const_parameters::init_error.SetError(
+        ERR_INIT_T, "const_parameters: input pars < 0");
   }
   return nullptr;
 }

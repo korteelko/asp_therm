@@ -3,7 +3,7 @@
 #include "common.h"
 #include "gasmix_init.h"
 #include "gas_description_dynamic.h"
-#include "models_errors.h"
+#include "ErrorWrap.h"
 #include "models_math.h"
 
 #include <cmath>
@@ -11,13 +11,12 @@
 
 Ideal_Gas::Ideal_Gas(const model_input &mi)
   : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
-  if (!set_gasparameters(mi.gpi, this))
-    return;
-  set_enthalpy();
+  set_gasparameters(mi.gpi, this);
+  if (!error_.GetErrorCode())
+    set_enthalpy();
 }
 
 Ideal_Gas *Ideal_Gas::Init(const model_input &mi) {
-  reset_error();
   if (check_input(mi))
     return nullptr;
   Ideal_Gas *ig = new Ideal_Gas(mi);

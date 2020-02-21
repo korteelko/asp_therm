@@ -23,19 +23,19 @@ merror_t update_db_client(db_parameters *dbp, const std::string &val) {
 }
 merror_t update_db_name(db_parameters *dbp, const std::string &val) {
   dbp->name = val;
-  return ERR_SUCCESS_T;
+  return ERROR_SUCCESS_T;
 }
 merror_t update_db_username(db_parameters *dbp, const std::string &val) {
   dbp->username = val;
-  return ERR_SUCCESS_T;
+  return ERROR_SUCCESS_T;
 }
 merror_t update_db_password(db_parameters *dbp, const std::string &val) {
   dbp->password = val;
-  return ERR_SUCCESS_T;
+  return ERROR_SUCCESS_T;
 }
 merror_t update_db_host(db_parameters *dbp, const std::string &val) {
   dbp->host = val;
-  return ERR_SUCCESS_T;
+  return ERROR_SUCCESS_T;
 }
 merror_t update_db_port(db_parameters *dbp, const std::string &val) {
   return (dbp) ? set_int(val, &dbp->port) : ERR_INIT_ZERO_ST;

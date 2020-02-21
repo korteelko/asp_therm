@@ -1,6 +1,7 @@
 #ifndef _CORE__GAS_PARAMETERS__GAS_DESCRIPTION_H_
 #define _CORE__GAS_PARAMETERS__GAS_DESCRIPTION_H_
 
+#include "ErrorWrap.h"
 #include "gas_defines.h"
 
 #include <map>
@@ -65,6 +66,8 @@ struct therm_potentials {
 /// параметры газа, зависящие от его физической природы и
 ///   не изменяющиеся при изменении его состояния
 struct const_parameters {
+  static ErrorWrap init_error;
+
   const gas_t gas_name;
   const double V_K,              // K point parameters (critical point)
                P_K,

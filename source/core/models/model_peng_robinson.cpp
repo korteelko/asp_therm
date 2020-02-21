@@ -2,8 +2,8 @@
 
 #include "common.h"
 #include "gas_description_dynamic.h"
-#include "models_errors.h"
-#include "models_errors.h"
+#include "ErrorWrap.h"
+#include "ErrorWrap.h"
 #include "models_math.h"
 
 #ifdef _DEBUG
@@ -128,20 +128,19 @@ Peng_Robinson::Peng_Robinson(const model_input &mi)
   : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
   if (calc_config_.ByPseudocritic()) {
     auto mi_pc = set_pseudo_critic_parameters(mi);
-    if (!set_gasparameters(mi_pc.gpi, this))
-      return;
+    set_gasparameters(mi_pc.gpi, this);
   } else {
-    if (!set_gasparameters(mi.gpi, this))
-      return;
+    set_gasparameters(mi.gpi, this);
   }
-  set_model_coef();
-  if (parameters_->cgetDynSetup() & DYNAMIC_ENTALPHY)
-    set_enthalpy();
-  SetVolume(mi.gpi.p, mi.gpi.t);
+  if (!error_.GetErrorCode()) {
+    set_model_coef();
+    if (parameters_->cgetDynSetup() & DYNAMIC_ENTALPHY)
+      set_enthalpy();
+    SetVolume(mi.gpi.p, mi.gpi.t);
+  }
 }
 
 Peng_Robinson *Peng_Robinson::Init(const model_input &mi) {
-  reset_error();
   if (check_input(mi))
     return nullptr;
   Peng_Robinson *pr = new Peng_Robinson(mi);
@@ -222,10 +221,12 @@ double Peng_Robinson::get_volume(
       std::pow(model_coef_b_, 3.0f) + (cp.R *
           t*model_coef_b_*model_coef_b_ - model_coef_a_ * alf *model_coef_b_)/p,
       0.0, 0.0, 0.0};
-  CardanoMethod_HASUNIQROOT(&coef[0], &coef[4]);
+  int roots_count;
+  CardanoMethod_roots_count(&coef[0], &coef[4], &roots_count);
 #ifdef _DEBUG
   if (!is_above0(coef[4])) {
     error_.SetError(ERR_CALC_MODEL_ST);
+    error_.LogIt(io_loglvl::debug_logs);
     return 0.0;
   }
 #endif
@@ -311,10 +312,12 @@ double Peng_Robinson::GetVolume(double p, double t) {
       std::pow(model_coef_b_, 3.0) + (parameters_->cgetR()*
           t *model_coef_b_*model_coef_b_ - model_coef_a_ * alf *model_coef_b_)/p,
       0.0, 0.0, 0.0};
-  CardanoMethod_HASUNIQROOT(&coef[0], &coef[4]);
+  int roots_count;
+  CardanoMethod_roots_count(&coef[0], &coef[4], &roots_count);
 #ifdef _DEBUG
   if (!is_above0(coef[4])) {
     error_.SetError(ERR_CALC_MODEL_ST);
+    error_.LogIt();
     return 0.0;
   }
 #endif

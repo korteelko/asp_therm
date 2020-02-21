@@ -103,7 +103,7 @@ ProgramState &ProgramState::Instance() {
 }
 
 ProgramState::ProgramState()
-  : error_(ERR_SUCCESS_T), program_config_(nullptr), gasmix_file("") {}
+  : error_(ERROR_SUCCESS_T), program_config_(nullptr), gasmix_file("") {}
 
 merror_t ProgramState::ResetConfigFile(
     const std::string &config_file) {
@@ -156,13 +156,13 @@ const db_parameters ProgramState::GetDatabaseConfiguration() const {
 using PSConfiguration = ProgramState::ProgramConfiguration;
 
 PSConfiguration::ProgramConfiguration()
-  : error(ERR_SUCCESS_T), config_filename(""), is_initialized(false) {
+  : error(ERROR_SUCCESS_T), config_filename(""), is_initialized(false) {
   setDefault();
 }
 
 PSConfiguration::ProgramConfiguration(
     const std::string &config_file)
-  : error(ERR_SUCCESS_T), config_filename(config_file), is_initialized(false) {
+  : error(ERROR_SUCCESS_T), config_filename(config_file), is_initialized(false) {
   ResetConfigFile(config_file);
 }
 

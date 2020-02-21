@@ -3,7 +3,7 @@
 
 #include "common.h"
 #include "gasmix_init.h"
-#include "models_errors.h"
+#include "ErrorWrap.h"
 #include "phase_diagram_models.h"
 #include "target_sys.h"
 
@@ -83,7 +83,7 @@ private:
   // Мьютекс здесь не нужен, ввиду отсутствия каких либо потоков(нитей),
   //   для многопоточности придётся вводить как минимум ООП исключения
   // std::mutex mtx;
-  merror_t error_;
+  ErrorWrap error_;
 
   /* calculated points storage */
   std::map<uniqueMark, std::shared_ptr<binodalpoints>> calculated_;
@@ -133,8 +133,11 @@ bool operator< (const PhaseDiagram::uniqueMark &lum,
 
 
 class PhaseDiagram::PhaseDiagramException final: public std::exception {
+private:
+  std::string msg_;
+
 public:
-  PhaseDiagramException(merror_t err, const char *msg);
+  PhaseDiagramException(merror_t err, const std::string &msg);
 
   virtual ~PhaseDiagramException() noexcept;
   virtual const char *what() const noexcept;

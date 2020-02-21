@@ -4,7 +4,7 @@
 #include "common.h"
 #include "db_defines.h"
 #include "db_query.h"
-#include "models_errors.h"
+#include "ErrorWrap.h"
 
 #include <string>
 #include <variant>

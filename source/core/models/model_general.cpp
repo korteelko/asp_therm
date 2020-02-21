@@ -5,12 +5,14 @@
 #include "gasmix_init.h"
 #include "gas_ng_gost.h"
 #include "models_math.h"
-#include "models_errors.h"
+#include "ErrorWrap.h"
 
 #include <algorithm>
 #ifdef _DEBUG
 #  include <iostream>
 #endif  // _DEBUG
+
+ErrorWrap modelGeneral::init_error;
 
 DerivateFunctor::~DerivateFunctor() {}
 
@@ -93,7 +95,7 @@ const GasParameters *modelGeneral::get_gasparameters() const {
 
 /** \brief set general struct of gas parameters.
   * \return: 'true' for success, 'false' for error; */
-bool modelGeneral::set_gasparameters(const gas_params_input &gpi,
+void modelGeneral::set_gasparameters(const gas_params_input &gpi,
     modelGeneral *mg) {
   if (gm_ & GAS_NG_GOST_MARK) {
     parameters_ = std::unique_ptr<GasParameters>(
@@ -105,14 +107,17 @@ bool modelGeneral::set_gasparameters(const gas_params_input &gpi,
     parameters_ = std::unique_ptr<GasParameters>(
         GasParameters_dyn::Init(gpi, mg));
   }
-  return parameters_ != nullptr;
+  if (parameters_ == nullptr) {
+    GasParameters::init_error.LogIt();
+    error_.SetError(ERR_INIT_T, "error occurred while init gost model");
+  }
 }
 
 // static 
 merror_t modelGeneral::check_input(const model_input &mi) {
-  merror_t err = ERR_SUCCESS_T;
+  merror_t err = ERROR_SUCCESS_T;
   if ((mi.gm & GAS_MIX_MARK) && (mi.gm & GAS_NG_GOST_MARK))
-    err = set_error_message(ERR_INIT_T,
+     err = modelGeneral::init_error.SetError(ERR_INIT_T,
         "options GAS_MIX_MARK and GAS_NG_GOST_MARK not compatible\n");
   if ((!err) && (mi.gm & GAS_MIX_MARK)) {
     if (!mi.gpi.const_dyn.components->empty()) {
@@ -124,7 +129,7 @@ merror_t modelGeneral::check_input(const model_input &mi) {
                { parts_sum += x.first; });
       if (parts_sum < (GASMIX_PERSENT_AVR - GASMIX_PERCENT_EPS) ||
           parts_sum > (GASMIX_PERSENT_AVR + GASMIX_PERCENT_EPS))
-        err = set_error_message(ERR_INIT_T,
+        err = modelGeneral::init_error.SetError(ERR_INIT_T,
             "gasmix sum of parts != 100%\n");
     }
   }
@@ -138,12 +143,12 @@ merror_t modelGeneral::check_input(const model_input &mi) {
               { parts_sum += x.second; });
       if (parts_sum < (GASMIX_PERSENT_AVR - GASMIX_PERCENT_EPS) ||
           parts_sum > (GASMIX_PERSENT_AVR + GASMIX_PERCENT_EPS))
-        err = set_error_message(ERR_INIT_T,
+        err = modelGeneral::init_error.SetError(ERR_INIT_T,
             "gasmix sum of parts != 100%\n");
     }
   }
   if (!(err || is_above0(mi.gpi.p, mi.gpi.t)))
-    err = set_error_code(ERR_INIT_T | ERR_INIT_ZERO_ST);
+    err = modelGeneral::init_error.SetError(ERR_INIT_T | ERR_INIT_ZERO_ST);
   return err;
 }
 

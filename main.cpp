@@ -50,8 +50,6 @@ int test_program_configuration() {
   std::cerr << "test_program_configuration start\n";
   ProgramState &ps = ProgramState::Instance();
   ps.ResetConfigFile(std::string(cwd) + xml_path + xml_configuration);
-  if (get_error_code())
-    std::cerr << get_error_message() << std::endl;
   merror_t e = ps.GetErrorCode();
   if (e) {
     std::cerr << "program state bida " << e;
@@ -171,12 +169,9 @@ int test_models_mix() {
 
 int main() {
   if (test_models()) {
-    std::cerr << "test_models()" << get_error_message();
     return 1;
   }
-  std::cerr << "\n\n\n" << get_error_message();
   if (test_models_mix()) {
-    std::cerr << "test_models_mix()" << get_error_message();
     return 2;
   }
   std::cerr << "test_program_configuration()" << test_program_configuration();

@@ -21,9 +21,23 @@ set(CMAKE_BUILD_TYPE Debug)
 # set(CMAKE_BUILD_TYPE "Release")
 # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
 
+# setup cmake directories
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(THERMCORE_SOURCE_DIR "${ASP_THERM_ROOT}/source/core")
 set(THERMDB_SOURCE_DIR "${ASP_THERM_ROOT}/source/database")
+set(THERMUTILS_SOURCE_DIR "${ASP_THERM_ROOT}/source/utils")
+
+# setup cmake variables
+set(DEFINES_SOURCE "")
+set(ERRORCODES_FILE "merror_codes.h")
+set(ERRORCODES_PATH "${THERMCORE_SOURCE_DIR}/common/${ERRORCODES_FILE}")
+if(EXISTS ${ERRORCODES_PATH})
+  message(STATUS "Add file with codes of errors: ${ERRORCODES_PATH}")
+  # include(${ERRORCODES_PATH})
+  set(INCLUDE_ERRORCODES TRUE)
+  add_definitions(-DINCLUDE_ERRORCODES)
+endif()
+
 
 if(UNIX)
   add_definitions(-DOS_NIX)
@@ -34,6 +48,9 @@ elseif(MSVC)
 else()
   message(SEND_ERROR "UNDEFINED SYSTEM ${CMAKE_SYSTEM_NAME}")
 endif(UNIX)
+
+# setup utils
+
 
 # LIBS_DIR - для моих библиотек
 set(LIBS_DIR ${ASP_THERM_ROOT}/lib/${RESULT_LIB})
@@ -70,15 +87,17 @@ set(THERMCORE_INCLUDES
   "${THERMCORE_SOURCE_DIR}/phase_diagram"
   "${THERMCORE_SOURCE_DIR}/subroutins"
 )
-include_directories(${THERMCORE_INCLUDES} ${THERMDB_SOURCE_DIR})
+include_directories(
+  ${THERMCORE_INCLUDES}
+  ${THERMUTILS_SOURCE_DIR}
+  ${THERMDB_SOURCE_DIR}
+)
 
 set(
   MODELS_SRC
 
 # common sources
   ${THERMCORE_SOURCE_DIR}/common/common.cpp
-  ${THERMCORE_SOURCE_DIR}/common/models_errors.cpp
-  ${THERMCORE_SOURCE_DIR}/common/models_logging.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 
 # gas_parameters sources
@@ -108,6 +127,12 @@ set(
   ${THERMCORE_SOURCE_DIR}/models/models_configurations.cpp
   ${THERMCORE_SOURCE_DIR}/models/models_creator.cpp
 
+
+# utils sources
+  ${THERMUTILS_SOURCE_DIR}/ErrorWrap.cpp
+  ${THERMUTILS_SOURCE_DIR}/Logging.cpp
+
+# database sources
   ${THERMDB_SOURCE_DIR}/db_connection.cpp
   ${THERMDB_SOURCE_DIR}/db_connection_postgre.cpp
   ${THERMDB_SOURCE_DIR}/db_connection_manager.cpp
@@ -117,6 +142,10 @@ set(
 # plot sources
 # maybe OpenGL libs
 )
+if(INCLUDE_ERRORCODES)
+  LIST(APPEND MODELS_SRC
+      "${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp")
+endif()
 
 # output for static libraries
 add_library(${RESULT_LIB} STATIC ${MODELS_SRC})

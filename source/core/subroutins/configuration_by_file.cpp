@@ -37,7 +37,7 @@ ConfigurationByFile *ConfigurationByFile::Init(
 }
 
 merror_t ConfigurationByFile::init_parameters() {
-  merror_t error = ERR_SUCCESS_T;
+  merror_t error = ERROR_SUCCESS_T;
   std::vector<std::string> xml_path(1);
   std::string tmp_str = "";
   for (const auto &param : config_params) {
@@ -60,7 +60,7 @@ merror_t ConfigurationByFile::init_parameters() {
 }
 
 merror_t ConfigurationByFile::init_dbparameters() {
-  merror_t error = ERR_SUCCESS_T;
+  merror_t error = ERROR_SUCCESS_T;
   std::vector<std::string> xml_path = std::vector<std::string> {
       STRTPL_CONFIG_DATABASE, ""};
   std::string tmp_str = "";

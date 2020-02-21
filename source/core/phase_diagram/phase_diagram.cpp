@@ -1,6 +1,6 @@
 #include "phase_diagram.h"
 
-#include "models_logging.h"
+#include "Logging.h"
 #include "models_math.h"
 
 #include <algorithm>
@@ -35,11 +35,12 @@ void PhaseDiagram::calculateBinodal(
                         // Maxwell construction requirement splineAR==rectanAR;
   size_t functions_index = set_functions_index(mn);
   if (functions_index == 0xFF) {
-    set_error_message(ERR_INIT_T, "error in programmer DNA");
+    error_.SetError(ERR_INIT_T, "error in programmer DNA");
     return;
   }
   auto integrateFun = line_integrate_f_.at(functions_index);
   auto inializeFun  = initialize_f_.at(functions_index);
+  merror_t error = ERROR_SUCCESS_T;
   // get pressure by volume and temperature
   for (size_t t_iter = 0; t_iter < nPoints; ++t_iter) {
     std::vector<double> tempvec = {
@@ -50,9 +51,10 @@ void PhaseDiagram::calculateBinodal(
         0.0, 0.0, 0.0
     };
     // calculate derivate(dpressure/dtemperature)=0
-    reset_error();
-    bool has_uniq_root = CardanoMethod_HASUNIQROOT(&tempvec[0], &tempvec[4]);
-    if (get_error_code() != ERR_SUCCESS_T) {
+    int roots_count = 0;
+    error = CardanoMethod_roots_count(&tempvec[0], &tempvec[4], &roots_count);
+    bool has_uniq_root = (roots_count == 1) ? true : false;
+    if (error) {
       Logging::Append(io_loglvl::debug_logs, "For temperature index: " +
           std::to_string(t_iter) + "\nCardano method error(phase_diagram)");
       bdp->t[t_iter] = -1.0;
@@ -92,9 +94,11 @@ void PhaseDiagram::calculateBinodal(
       pi+=dpi;
       // calculate volume
       inializeFun(tempvec, pi, bdp->t[t_iter], acentric);
-      reset_error();
-      bool has_uniq_root = CardanoMethod_HASUNIQROOT(&tempvec[0], &tempvec[4]);
-      if (get_error_code() != ERR_SUCCESS_T) {
+      int roots_count = 0;
+      error = CardanoMethod_roots_count(&tempvec[0],
+          &tempvec[4], &roots_count);
+      bool has_uniq_root = (roots_count == 1) ? true : false;
+      if (error) {
         bdp->t[t_iter] = -1.0;
         break;
       }
@@ -176,8 +180,7 @@ void PhaseDiagram::searchNegative(
   }
 }
 
-PhaseDiagram::PhaseDiagram()
-  : error_(ERR_SUCCESS_T) {}
+PhaseDiagram::PhaseDiagram() {}
 
 PhaseDiagram &PhaseDiagram::GetCalculated() {
   static PhaseDiagram phd;
@@ -186,10 +189,9 @@ PhaseDiagram &PhaseDiagram::GetCalculated() {
 
 binodalpoints *PhaseDiagram::GetBinodalPoints(double VK, double PK,
     double TK, rg_model_t mn, double acentric) {
-  reset_error();
   bool isValid = is_above0(VK, PK, TK, acentric);
   if (!isValid) {
-    error_ = set_error_message(ERR_CALCULATE_T,
+    error_.SetError(ERR_CALCULATE_T,
         "PhaseDiagram::getBinodalPoints get incorrect data:\n"
         " V_K, P_K, T_K or acentric_factor <= 0.0 or is NaN");
     return nullptr;
@@ -265,16 +267,11 @@ binodalpoints::binodalpoints()
 
 
 PhaseDiagram::PhaseDiagramException::PhaseDiagramException(
-    merror_t err, const char *msg) {
-  if (msg == nullptr) {
-    set_error_code(err);
-    return;
-  }
-  set_error_message(err, msg);
-}
+    merror_t err, const std::string &msg)
+  : msg_(msg) {}
 
 PhaseDiagram::PhaseDiagramException::~PhaseDiagramException() noexcept {}
 
 const char *PhaseDiagram::PhaseDiagramException::what() const noexcept {
-  return get_error_message();
+  return msg_.c_str();
 }

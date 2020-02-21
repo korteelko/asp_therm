@@ -15,6 +15,9 @@
  *   с элементами ООП
 */
 class GasParameters {
+public:
+  static ErrorWrap init_error;
+
 protected:
   state_phase sph_;
   parameters  vpte_;

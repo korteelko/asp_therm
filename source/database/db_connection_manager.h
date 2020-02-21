@@ -2,7 +2,7 @@
 #define _DATABASE__DB_CONNECTION_MANAGER_H_
 
 #include "db_connection.h"
-#include "models_errors.h"
+#include "ErrorWrap.h"
 
 #include <string>
 #include <vector>

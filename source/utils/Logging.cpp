@@ -1,4 +1,4 @@
-#include "models_logging.h"
+#include "Logging.h"
 
 #include <ctime>
 #include <filesystem>
@@ -18,7 +18,7 @@ logging_cfg Logging::li_ = {
   DEFAULT_LOGFILE
 };
 std::string Logging::status_msg_ = "";
-merror_t Logging::error_ = ERR_SUCCESS_T;
+ErrorWrap Logging::error_;
 bool Logging::is_aval_ = false;
 
 namespace  {
@@ -55,7 +55,7 @@ merror_t Logging::checkInstance() {
         std::filesystem::rename(
             Logging::li_.filepath, logfile_copy);
       }
-      error = ERR_SUCCESS_T;
+      error = ERROR_SUCCESS_T;
     } else {
       error = ERR_FILEIO_T | ERR_FILE_OUT_ST;
       Logging::status_msg_ = "cannot open logging file";
@@ -65,8 +65,8 @@ merror_t Logging::checkInstance() {
 }
 
 merror_t Logging::initInstance() {
-  Logging::error_ = checkInstance();
-  if (Logging::error_) {
+  merror_t error = checkInstance();
+  if (error) {
     is_aval_ = false;
   } else {
     is_aval_ = true;
@@ -85,13 +85,13 @@ merror_t Logging::initInstance() {
       Logging::output_.close();
     } else {
       is_aval_ = false;
-      Logging::error_ = ERR_FILEIO_T | ERR_FILE_LOGGING;
+      Logging::error_.SetError(ERR_FILEIO_T | ERR_FILE_LOGGING_ST);
     }
   }
-  if (Logging::error_)
-    set_error_message(Logging::error_, "Open loggingfile end with error.\n"
-        "  Message: %s\n", Logging::status_msg_.c_str());
-  return Logging::error_;
+  if (error)
+    error_.SetError(error, "Open loggingfile end with error.\n"
+        "  Message: " + Logging::status_msg_ + "\n");
+  return error;
 }
 
 void Logging::append(const char *msg) {
@@ -106,7 +106,7 @@ void Logging::append(const char *msg) {
     Logging::output_.close();
   } else {
     Logging::is_aval_ = false;
-    Logging::error_ = ERR_FILEIO_T | ERR_FILE_LOGGING;
+    Logging::error_.SetError(ERR_FILEIO_T | ERR_FILE_LOGGING_ST);
   }
 }
 
@@ -121,8 +121,8 @@ merror_t Logging::ResetInstance(logging_cfg &li) {
   return initInstance();
 }
 
-merror_t Logging::GetError() {
-  return Logging::error_;
+merror_t Logging::GetErrorCode() {
+  return Logging::error_.GetErrorCode();
 }
 
 io_loglvl Logging::GetLogLevel() {
@@ -135,7 +135,7 @@ void Logging::ClearLogfile() {
     Logging::output_.close();
   } else {
     Logging::is_aval_ = false;
-    Logging::error_ = ERR_FILEIO_T | ERR_FILE_LOGGING;
+    Logging::error_.SetError(ERR_FILEIO_T | ERR_FILE_LOGGING_ST);
   }
   return;
 }
@@ -151,4 +151,26 @@ void Logging::Append(io_loglvl lvl, const std::string &msg) {
     if (lvl <= Logging::li_.loglvl)
       if (!msg.empty() && (Logging::li_.loglvl != io_loglvl::no_log))
         Logging::append(msg.c_str());
+}
+
+void Logging::Append(merror_t error_code, const std::string &msg) {
+  Logging::Append(io_loglvl::err_logs, error_code, msg);
+}
+
+void Logging::Append(io_loglvl lvl, merror_t error_code,
+    const std::string &msg) {
+  if (Logging::is_aval_)
+    if (lvl <= Logging::li_.loglvl)
+      Logging::Append(io_loglvl::err_logs, "Error occurred.\n  err_msg:" + msg +
+          "\n  code:0x" + hex2str(error_code));
+}
+
+void Logging::Append(const std::stringstream &sstr) {
+  Logging::Append(sstr.str());
+}
+
+void Logging::Append(io_loglvl lvl, const std::stringstream &sstr) {
+  if (Logging::is_aval_)
+    if (lvl <= Logging::li_.loglvl)
+      Logging::Append(lvl, sstr.str());
 }

@@ -1,7 +1,7 @@
 #include "gasmix_by_file.h"
 
 #include "common.h"
-#include "models_errors.h"
+#include "ErrorWrap.h"
 #include "models_math.h"
 
 #include <algorithm>
@@ -41,14 +41,14 @@ static std::string gasname_by_path(const std::string &path);
 GasMixComponentsFile::GasMixComponentsFile(rg_model_t mn,
     XMLReader<gasmix_node> *xml_doc)
   : xml_doc_(xml_doc), files_handler_(nullptr),
-    model_conf_(mn), error_(ERR_SUCCESS_T) {
+    model_conf_(mn), error_(ERROR_SUCCESS_T) {
   init_components();
 }
 
 void GasMixComponentsFile::init_components() {
   std::string gasmix_file_dir = (xml_doc_) ?
       dir_by_path(xml_doc_->GetFileName()) : "";
-  merror_t error = ERR_SUCCESS_T;
+  merror_t error = ERROR_SUCCESS_T;
   if (gasmix_file_dir.empty() || !is_exist(gasmix_file_dir)) {
     std::string error_str = "ошибка инициализации директории файла"
         "описывающего газовую смесь:\n  файл:" + xml_doc_->GetFileName() +
@@ -80,12 +80,12 @@ void GasMixComponentsFile::init_components() {
       try {
         part = std::stod(part_str);
       } catch (std::out_of_range &) {
-        error = set_error_code(ERR_STRING_T | ERR_STR_PARSE_ST);
+        error = error_.SetError(ERR_STRING_T | ERR_STR_PARSE_ST);
       }
       gasmix_files_.emplace_back(gasmix_file(trim_str(gasname), gaspath, part));
     }
     if (error == XML_LAST_STRING) {
-      error = ERR_SUCCESS_T;
+      error = ERROR_SUCCESS_T;
       setup_gasmix_files(gasmix_file_dir);
     }
     if (error) {
@@ -138,7 +138,7 @@ GasMixByFiles *GasMixByFiles::Init(const std::vector<gasmix_file> &parts) {
 }
 
 GasMixByFiles::GasMixByFiles(const std::vector<gasmix_file> &parts)
-  : prs_mix_(nullptr), error_(ERR_SUCCESS_T), is_valid_(true) {
+  : prs_mix_(nullptr), error_(ERROR_SUCCESS_T), is_valid_(true) {
   prs_mix_ = std::unique_ptr<parameters_mix>(new parameters_mix());
   gost_mix_ = std::unique_ptr<ng_gost_mix>(new ng_gost_mix());
   for (const auto &x : parts) {
@@ -155,24 +155,22 @@ GasMixByFiles::GasMixByFiles(const std::vector<gasmix_file> &parts)
 
 // finished
 merror_t GasMixByFiles::check_input(const std::vector<gasmix_file> &parts) {
-  merror_t err = ERR_SUCCESS_T;
+  merror_t err = ERROR_SUCCESS_T;
   if (parts.empty())
-    err = set_error_message(
-        ERR_INIT_T | ERR_INIT_ZERO_ST, "init mix by file empty\n");
+    GasParameters::init_error.SetError(ERR_INIT_ZERO_ST, "init mix by file empty\n");
   // check parts > 0 and sum pf parts == 1.0
   double parts_sum = 0;
   for (const auto &x: parts) {
     if (x.part >= 0.0) {
       parts_sum += x.part;
     } else {
-      err = set_error_message(
-          ERR_INIT_T | ERR_INIT_ZERO_ST, "init mix by files part <=0\n");
+      GasParameters::init_error.SetError(ERR_INIT_ZERO_ST, "init mix by files part <=0\n");
       break;
     }
   }
   if ((!err) && (!is_equal(parts_sum, 1.0, GASMIX_PERCENT_EPS)))
-    err = set_error_message(
-        ERR_CALCULATE_T | ERR_CALC_MIX_ST, "gasmix sum of part != 100%\n");
+      GasParameters::init_error.SetError(
+          ERR_CALC_MIX_ST, "gasmix sum of part != 100%\n");
   return err;
 }
 
