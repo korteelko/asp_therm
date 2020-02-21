@@ -1,5 +1,5 @@
-#ifndef _CORE__SUBROUTINS__DB_QUERY_H_
-#define _CORE__SUBROUTINS__DB_QUERY_H_
+#ifndef _DATABASE__DB_QUERY_H_
+#define _DATABASE__DB_QUERY_H_
 
 #include "db_defines.h"
 #include "gas_description.h"
@@ -117,4 +117,4 @@ public:
   void unExecute() override;
 };
 
-#endif  // !_CORE__SUBROUTINS__DB_QUERY_H_
+#endif  // !_DATABASE__DB_QUERY_H_

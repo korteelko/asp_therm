@@ -1,5 +1,5 @@
-#ifndef _CORE__SUBROUTINS__DB_CONNECTION_MANAGER_H_
-#define _CORE__SUBROUTINS__DB_CONNECTION_MANAGER_H_
+#ifndef _DATABASE__DB_CONNECTION_MANAGER_H_
+#define _DATABASE__DB_CONNECTION_MANAGER_H_
 
 #include "db_connection.h"
 #include "models_errors.h"
@@ -95,4 +95,4 @@ public:
 };
 using DBConnectionIns = DBConnectionManager::DBConnectionCreator;
 
-#endif  // !_CORE__SUBROUTINS__DB_CONNECTION_MANAGER_H_
+#endif  // !_DATABASE__DB_CONNECTION_MANAGER_H_

@@ -1,5 +1,5 @@
-#ifndef _CORE__SUBROUTINS__DB_CONNECTION_POSTGRESQL_H_
-#define _CORE__SUBROUTINS__DB_CONNECTION_POSTGRESQL_H_
+#ifndef _DATABASE__DB_CONNECTION_POSTGRESQL_H_
+#define _DATABASE__DB_CONNECTION_POSTGRESQL_H_
 
 #include "common.h"
 #include "db_connection.h"
@@ -52,4 +52,4 @@ private:
   std::unique_ptr<pqxx::connection> pconnect_;
 };
 
-#endif  // !_CORE__SUBROUTINS__DB_CONNECTION_POSTGRESQL_H_
+#endif  // !_DATABASE__DB_CONNECTION_POSTGRESQL_H_

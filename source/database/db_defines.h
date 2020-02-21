@@ -1,5 +1,5 @@
-#ifndef _CORE__SUBROUTINS__DB_DEFINES_H_
-#define _CORE__SUBROUTINS__DB_DEFINES_H_
+#ifndef _DATABASE__DB_DEFINES_H_
+#define _DATABASE__DB_DEFINES_H_
 
 #include <string>
 
@@ -43,4 +43,4 @@ enum class db_query_str {
   query_str_complex_fk
 };
 
-#endif  // !_CORE__SUBROUTINS__DB_DEFINES_H_
+#endif  // !_DATABASE__DB_DEFINES_H_

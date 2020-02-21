@@ -1,5 +1,5 @@
-#ifndef _CORE__SUBROUTINS__DB_CONNECTION_H_
-#define _CORE__SUBROUTINS__DB_CONNECTION_H_
+#ifndef _DATABASE__DB_CONNECTION_H_
+#define _DATABASE__DB_CONNECTION_H_
 
 #include "common.h"
 #include "db_defines.h"
@@ -102,9 +102,9 @@ struct db_complex_pk {
 struct db_complex_fk {
 public:
   enum class db_on_delete {
-    empty = 0,
-    cascade,
-    restrict
+    on_delete_empty = 0,
+    on_delete_cascade,
+    on_delete_restrict
   };
 
 public:
@@ -213,4 +213,4 @@ protected:
   bool is_connected_;
 };
 
-#endif  // !_CORE__SUBROUTINS__DB_CONNECTION_H_
+#endif  // !_DATABASE__DB_CONNECTION_H_

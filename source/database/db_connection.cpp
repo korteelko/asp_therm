@@ -67,8 +67,10 @@ db_variable::db_variable(std::string fname, db_type type,
 ErrorWrap db_variable::CheckYourself() const {
   ErrorWrap ew;
   if (fname.empty()) {
+    // just check that looks __FUNCTION__
     ew.SetError(ERR_DB_VARIABLE,
-        "Имя столбца таблицы базы данных не задано");
+        "Имя столбца таблицы базы данных не задано "
+        + std::string(__FUNCTION__));
   }
   return ew;
 }
