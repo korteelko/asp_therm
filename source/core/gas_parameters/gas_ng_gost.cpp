@@ -112,14 +112,14 @@ GasParameters_NG_Gost_dyn::GasParameters_NG_Gost_dyn(
   set_Bn();
   set_Cn();
   if (set_molar_mass()) {
-    error_.SetError(ERR_INIT_T, "udefined component of natural gas");
+    error_.SetError(ERROR_INIT_T, "udefined component of natural gas");
   } else {
     set_p0m();
     if (!(error = set_cp0r())) {
       error = (!init_pseudocrit_vpte()) ? set_volume() :
-          error_.SetError(ERR_INIT_T, "undefined component of natural gas\n");
+          error_.SetError(ERROR_INIT_T, "undefined component of natural gas\n");
     } else {
-      error_.SetError(ERR_INIT_T, "set_cp0r for natural gas model\n");
+      error_.SetError(ERROR_INIT_T, "set_cp0r for natural gas model\n");
     }
   }
 }
@@ -128,11 +128,11 @@ GasParameters_NG_Gost_dyn *GasParameters_NG_Gost_dyn::Init(
     gas_params_input gpi) {
   if (gpi.const_dyn.ng_gost_components->empty()) {
     GasParameters::init_error.SetError(
-        ERR_INIT_T | ERR_INIT_NULLP_ST | ERR_GAS_MIX);
+        ERROR_INIT_T | ERROR_INIT_NULLP_ST | ERROR_GAS_MIX);
     return nullptr;
   }
   if (!is_valid_limits(*gpi.const_dyn.ng_gost_components)) {
-    GasParameters_NG_Gost_dyn::init_error.SetError(ERR_INIT_T | ERR_GAS_MIX,
+    GasParameters_NG_Gost_dyn::init_error.SetError(ERROR_INIT_T | ERROR_GAS_MIX,
         "natural gas model init error:\n components limits check fail\n");
     return nullptr;
   }
@@ -157,7 +157,7 @@ void GasParameters_NG_Gost_dyn::set_V() {
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
     if (xi_ch == nullptr) {
-      error_.SetError(ERR_INIT_T, "undefined component in gost model");
+      error_.SetError(ERROR_INIT_T, "undefined component in gost model");
       return;
     }
     V += components_[i].second * pow(xi_ch->E, 2.5);
@@ -206,7 +206,7 @@ void GasParameters_NG_Gost_dyn::set_G() {
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
     if (xi_ch == nullptr) {
-      error_.SetError(ERR_INIT_T, "undefined component in gost model");
+      error_.SetError(ERROR_INIT_T, "undefined component in gost model");
       return;
     }
     G += components_[i].second * xi_ch->G;
@@ -277,7 +277,7 @@ merror_t GasParameters_NG_Gost_dyn::set_molar_mass() {
     if (xi_ch != nullptr) {
       ng_molar_mass_ += components_[i].second * xi_ch->M;
     } else {
-      return ERR_INIT_T;
+      return ERROR_INIT_T;
     }
   }
   return ERROR_SUCCESS_T;
@@ -294,7 +294,7 @@ merror_t GasParameters_NG_Gost_dyn::init_kx() {
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
     if (xi_ch == nullptr)
-      return error_.SetError(ERR_INIT_T, "undefined component in gost model");
+      return error_.SetError(ERROR_INIT_T, "undefined component in gost model");
     coef_kx_ += components_[i].second * pow(xi_ch->K, 2.5);
   }
   coef_kx_ *= coef_kx_;
@@ -437,7 +437,7 @@ void GasParameters_NG_Gost_dyn::update_dynamic() {
 merror_t GasParameters_NG_Gost_dyn::check_pt_limits(double p, double t) {
   /* ckeck pressure[0.1, 30.0]MPa, temperature[250,350]K */
   return ((p >= 100000 && p <= 30000000 ) && (t >= 250 && t <= 350)) ?
-      ERROR_SUCCESS_T : error_.SetError(ERR_INIT_T, "check ng_gost limits");
+      ERROR_SUCCESS_T : error_.SetError(ERROR_INIT_T, "check ng_gost limits");
 }
 
 merror_t GasParameters_NG_Gost_dyn::set_cp0r() {
@@ -453,7 +453,7 @@ merror_t GasParameters_NG_Gost_dyn::set_cp0r() {
     cp_coefs = get_A4_coefs(components_[i].first);
     x_ch = get_characteristics(components_[i].first);
     if (cp_coefs == nullptr)
-      return ERR_INIT_T;
+      return ERROR_INIT_T;
     cp0r += components_[i].second * (cp_coefs->B + pow_sinh(cp_coefs->C, cp_coefs->D) +
         pow_cosh(cp_coefs->E, cp_coefs->F) + pow_sinh(cp_coefs->G, cp_coefs->H) + 
         pow_cosh(cp_coefs->I, cp_coefs->J))  // ; // by Annex B of ISO 20765

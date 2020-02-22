@@ -122,10 +122,10 @@ const_parameters *const_parameters::Init(gas_t gas_name, double vk,
       return new const_parameters(gas_name, vk, pk, tk, zk,
           mol, 1000.0 * GAS_CONSTANT / mol, af);
     const_parameters::init_error.SetError(
-        ERR_INIT_T, "const_parameters: invalid gas_name");
+        ERROR_INIT_T, "const_parameters: invalid gas_name");
   } else {
     const_parameters::init_error.SetError(
-        ERR_INIT_T, "const_parameters: input pars < 0");
+        ERROR_INIT_T, "const_parameters: input pars < 0");
   }
   return nullptr;
 }

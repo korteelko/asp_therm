@@ -57,7 +57,7 @@ mstatus_t DBConnectionManager::CheckConnection() {
         new DBQueryCloseConnection()));
     tryExecuteTransaction(tr);
   } else {
-    error_.SetError(ERR_DB_CONNECTION, "Не удалось установить"
+    error_.SetError(ERROR_DB_CONNECTION, "Не удалось установить"
         "соединение для для БД: " + parameters_.GetInfo());
     status_ = STATUS_HAVE_ERROR;
   }
@@ -87,7 +87,7 @@ bool DBConnectionManager::IsTableExist(db_table dt) {
         new DBQueryCloseConnection()));
     tryExecuteTransaction(tr);
   } else {
-    error_.SetError(ERR_DB_CONNECTION, "Не удалось установить"
+    error_.SetError(ERROR_DB_CONNECTION, "Не удалось установить"
         "соединение для для БД: " + parameters_.GetInfo());
     status_ = STATUS_HAVE_ERROR;
   }
@@ -120,7 +120,7 @@ void DBConnectionManager::tryExecuteTransaction(Transaction &tr) {
   try {
     status_ = tr.ExecuteQueries();
   } catch (const std::exception &e) {
-    error_.SetError(ERR_DB_CONNECTION, "Во время попытки "
+    error_.SetError(ERROR_DB_CONNECTION, "Во время попытки "
         "подключения к БД перехвачено исключение: " + std::string(e.what()));
     error_.LogIt();
     status_ = STATUS_HAVE_ERROR;

@@ -1,10 +1,12 @@
-#ifndef _CORE__COMMON__MODELS_LOGGING_H_
-#define _CORE__COMMON__MODELS_LOGGING_H_
+#ifndef UTILS__LOGGING_H
+#define UTILS__LOGGING_H
 
 #include "common.h"
 #include "ErrorWrap.h"
 
 #include <fstream>
+#include <string>
+#include <sstream>
 
 #ifdef OS_NIX
 #  include <sys/param.h>
@@ -13,10 +15,8 @@
 #  include <climits>
 #endif  // OS_NIX
 
+/* максимальный размер файла логов */
 #define MAXSIZE_LOGFILE  128*1024  // 128 KiB
-
-#define DEFAULT_LOGFILE  "models_logs"
-#define OLD_LOGFILE_SFX  "_prev"
 
 /** logging settings: level and filename */
 typedef struct {
@@ -76,4 +76,4 @@ public:
 
 };
 
-#endif  // !_CORE__COMMON__MODELS_LOGGING_H_
+#endif  // !UTILS__LOGGING_H

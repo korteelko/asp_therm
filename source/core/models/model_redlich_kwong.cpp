@@ -96,7 +96,7 @@ double Redlich_Kwong2::get_volume(double p, double t,
   CardanoMethod_roots_count(&coef[0], &coef[4], &roots_count);
 #ifdef _DEBUG
   if (!is_above0(coef[4])) {
-    error_.SetError(ERR_CALC_MODEL_ST);
+    error_.SetError(ERROR_CALC_MODEL_ST);
     error_.LogIt();
     return 0.0;
   }
@@ -171,7 +171,7 @@ void Redlich_Kwong2::SetPressure(double v, double t) {
 
 double Redlich_Kwong2::GetVolume(double p, double t) {
   if (!is_above0(p, t)) {
-    error_.SetError(ERR_CALC_MODEL_ST);
+    error_.SetError(ERROR_CALC_MODEL_ST);
     return 0.0;
   }
   std::vector<double> coef {
@@ -189,7 +189,7 @@ double Redlich_Kwong2::GetVolume(double p, double t) {
   CardanoMethod_roots_count(&coef[0], &coef[4], &roots_count);
 #ifdef _DEBUG
   if (!is_above0(coef[4])) {
-    error_.SetError(ERR_CALC_MODEL_ST);
+    error_.SetError(ERROR_CALC_MODEL_ST);
     error_.LogIt();
     return 0.0;
   }
@@ -199,7 +199,7 @@ double Redlich_Kwong2::GetVolume(double p, double t) {
 
 double Redlich_Kwong2::GetPressure(double v, double t) {
   if (!is_above0(v, t)) {
-    error_.SetError(ERR_CALC_MODEL_ST);
+    error_.SetError(ERROR_CALC_MODEL_ST);
     return 0.0;
   }
   const double temp = parameters_->cgetR() * t / (v - model_coef_b_) -

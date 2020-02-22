@@ -17,6 +17,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#define XML_LAST_STRING     0x1000
+
 
 template <class xml_node_t>
 class gasxml_node {
@@ -117,7 +119,7 @@ private:
     if (nt == NODE_T_UNDEFINED) {
       std::string estr = "get undefined xml node while parsing, node name: "
           + std::string(nx_xml_nd.name()) + "\n";
-      error_.SetError(ERR_FILE_IN_ST, estr);
+      error_.SetError(ERROR_FILE_IN_ST, estr);
       return;
     }
     gasxml_nd->first_child = std::unique_ptr<gasxml_node<xml_node_t>>(
@@ -157,12 +159,12 @@ public:
     merror_t err = ERROR_SUCCESS_T;
     XMLReader<xml_node_t> *reader = nullptr;
     if (gas_xml_file.empty()) {
-      err = ERR_INIT_NULLP_ST;
+      err = ERROR_INIT_NULLP_ST;
       Logging::Append(err, "имя xml-файла пусто");
     }
     if (err == ERROR_SUCCESS_T) {
       if (!is_exist(gas_xml_file)) {
-        err = ERR_FILE_IN_ST;
+        err = ERROR_FILE_IN_ST;
         Logging::Append(err, std::string(
             std::string("cannot open file: ") + gas_xml_file).c_str());
       } else {

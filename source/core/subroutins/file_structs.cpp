@@ -112,7 +112,7 @@ merror_t set_bool(const std::string &val, bool *ans) {
   merror_t error = ERROR_SUCCESS_T;
   if (strcmp(trimed_val.c_str(), STRTPL_BOOL_TRUE) != 0) {
     if (strcmp(trimed_val.c_str(), STRTPL_BOOL_FALSE) != 0) {
-      error = ERR_STRTPL_VALWRONG;
+      error = ERROR_STRTPL_VALWRONG;
     } else {
       *ans = false;
     }
@@ -138,11 +138,11 @@ merror_t set_int(const std::string &val, int *ans) {
   try {
     *ans = std::stoi(val);
   } catch (std::invalid_argument &) {
-    error = ERR_STR_TOINT_ST;
+    error = ERROR_STR_TOINT_ST;
     Logging::Append(io_loglvl::debug_logs, "Ошибка при конвертации"
         "строки к целочисленному типу: invalid_argument");
   } catch (std::out_of_range &) {
-    error = ERR_STR_TOINT_ST;
+    error = ERROR_STR_TOINT_ST;
     Logging::Append(io_loglvl::debug_logs, "Ошибка при конвертации"
         "строки к целочисленному типу: out_of_range");
   }

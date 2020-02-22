@@ -109,7 +109,7 @@ void modelGeneral::set_gasparameters(const gas_params_input &gpi,
   }
   if (parameters_ == nullptr) {
     GasParameters::init_error.LogIt();
-    error_.SetError(ERR_INIT_T, "error occurred while init gost model");
+    error_.SetError(ERROR_INIT_T, "error occurred while init gost model");
   }
 }
 
@@ -117,7 +117,7 @@ void modelGeneral::set_gasparameters(const gas_params_input &gpi,
 merror_t modelGeneral::check_input(const model_input &mi) {
   merror_t err = ERROR_SUCCESS_T;
   if ((mi.gm & GAS_MIX_MARK) && (mi.gm & GAS_NG_GOST_MARK))
-     err = modelGeneral::init_error.SetError(ERR_INIT_T,
+     err = modelGeneral::init_error.SetError(ERROR_INIT_T,
         "options GAS_MIX_MARK and GAS_NG_GOST_MARK not compatible\n");
   if ((!err) && (mi.gm & GAS_MIX_MARK)) {
     if (!mi.gpi.const_dyn.components->empty()) {
@@ -129,7 +129,7 @@ merror_t modelGeneral::check_input(const model_input &mi) {
                { parts_sum += x.first; });
       if (parts_sum < (GASMIX_PERSENT_AVR - GASMIX_PERCENT_EPS) ||
           parts_sum > (GASMIX_PERSENT_AVR + GASMIX_PERCENT_EPS))
-        err = modelGeneral::init_error.SetError(ERR_INIT_T,
+        err = modelGeneral::init_error.SetError(ERROR_INIT_T,
             "gasmix sum of parts != 100%\n");
     }
   }
@@ -143,12 +143,12 @@ merror_t modelGeneral::check_input(const model_input &mi) {
               { parts_sum += x.second; });
       if (parts_sum < (GASMIX_PERSENT_AVR - GASMIX_PERCENT_EPS) ||
           parts_sum > (GASMIX_PERSENT_AVR + GASMIX_PERCENT_EPS))
-        err = modelGeneral::init_error.SetError(ERR_INIT_T,
+        err = modelGeneral::init_error.SetError(ERROR_INIT_T,
             "gasmix sum of parts != 100%\n");
     }
   }
   if (!(err || is_above0(mi.gpi.p, mi.gpi.t)))
-    err = modelGeneral::init_error.SetError(ERR_INIT_T | ERR_INIT_ZERO_ST);
+    err = modelGeneral::init_error.SetError(ERROR_INIT_T | ERROR_INIT_ZERO_ST);
   return err;
 }
 

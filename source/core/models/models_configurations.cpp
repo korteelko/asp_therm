@@ -32,21 +32,21 @@ typedef std::function<merror_t(models_configuration *,
 merror_t update_debug_mode(models_configuration *mc,
     const std::string &val) {
   return (mc) ?
-      set_bool(val, &mc->calc_cfg.is_debug_mode) : ERR_INIT_ZERO_ST;
+      set_bool(val, &mc->calc_cfg.is_debug_mode) : ERROR_INIT_ZERO_ST;
 }
 merror_t update_pseudocritical(models_configuration *mc,
      const std::string &val) {
   return (mc) ?
-      set_bool(val, &mc->calc_cfg.by_pseudocritic) : ERR_INIT_ZERO_ST;
+      set_bool(val, &mc->calc_cfg.by_pseudocritic) : ERROR_INIT_ZERO_ST;
 }
 merror_t update_enable_iso_20765(models_configuration *mc,
      const std::string &val) {
   return (mc) ?
-      set_bool(val, &mc->calc_cfg.enable_iso_20765) : ERR_INIT_ZERO_ST;
+      set_bool(val, &mc->calc_cfg.enable_iso_20765) : ERROR_INIT_ZERO_ST;
 }
 merror_t update_log_level(models_configuration *mc,
      const std::string &val) {
-  return (mc) ? set_loglvl(val, &mc->log_level) : ERR_INIT_ZERO_ST;
+  return (mc) ? set_loglvl(val, &mc->log_level) : ERROR_INIT_ZERO_ST;
 }
 
 struct config_setup_fuctions {
@@ -85,8 +85,8 @@ bool calculation_configuration::EnableISO20765() const {
 merror_t models_configuration::SetConfigurationParameter(
     const std::string &param_strtpl, const std::string &param_value) {
   if (param_strtpl.empty())
-    return ERR_STRTPL_TPLNULL;
-  merror_t error = ERR_STRTPL_TPLUNDEF;
+    return ERROR_STRTPL_TPLNULL;
+  merror_t error = ERROR_STRTPL_TPLUNDEF;
   auto it_map = ns_ucf::map_config_fuctions.find(param_strtpl);
   if (it_map != ns_ucf::map_config_fuctions.end())
     error = it_map->second.update(this, param_value);
@@ -174,7 +174,7 @@ merror_t PSConfiguration::ResetConfigFile(
       ConfigurationByFile::Init(config_filename));
   if (config_by_file) {
     if (config_by_file->GetErrorWrap().GetErrorCode()) {
-      error.SetError(ERR_INIT_T,
+      error.SetError(ERROR_INIT_T,
           "Ошибка инициализации конфигурации программы");
       error.LogIt();
     } else {
@@ -183,7 +183,7 @@ merror_t PSConfiguration::ResetConfigFile(
       is_initialized = true;
     }
   } else {
-    error.SetError(ERR_FILE_IN_ST,
+    error.SetError(ERROR_FILE_IN_ST,
         "Ошибка чтения файла конфигурации программы");
     error.LogIt();
   }

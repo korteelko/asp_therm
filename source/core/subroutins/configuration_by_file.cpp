@@ -22,7 +22,7 @@ ConfigurationByFile::ConfigurationByFile(
   if (xml_doc) {
     init_parameters();
   } else {
-    error_.SetError(ERR_INIT_T,
+    error_.SetError(ERROR_INIT_T,
         "Инициализация XMLReader для файла конфигурации");
     error_.LogIt();
   }

@@ -35,7 +35,7 @@ void PhaseDiagram::calculateBinodal(
                         // Maxwell construction requirement splineAR==rectanAR;
   size_t functions_index = set_functions_index(mn);
   if (functions_index == 0xFF) {
-    error_.SetError(ERR_INIT_T, "error in programmer DNA");
+    error_.SetError(ERROR_INIT_T, "error in programmer DNA");
     return;
   }
   auto integrateFun = line_integrate_f_.at(functions_index);
@@ -191,7 +191,7 @@ binodalpoints *PhaseDiagram::GetBinodalPoints(double VK, double PK,
     double TK, rg_model_t mn, double acentric) {
   bool isValid = is_above0(VK, PK, TK, acentric);
   if (!isValid) {
-    error_.SetError(ERR_CALCULATE_T,
+    error_.SetError(ERROR_CALCULATE_T,
         "PhaseDiagram::getBinodalPoints get incorrect data:\n"
         " V_K, P_K, T_K or acentric_factor <= 0.0 or is NaN");
     return nullptr;
@@ -232,7 +232,7 @@ binodalpoints *PhaseDiagram::GetBinodalPoints(parameters_mix &components,
   std::unique_ptr<const_parameters> cgp = 
       GasParameters_mix_dyn::GetAverageParams(components);
   if (cgp == nullptr)
-    throw PhaseDiagramException(ERR_GAS_MIX | ERR_INIT_T,
+    throw PhaseDiagramException(ERROR_GAS_MIX | ERROR_INIT_T,
 #ifdef _DEBUG
       "PhaseDiagram::GetBinodalPoints cannot get average"
       " parameters of gasmix!"

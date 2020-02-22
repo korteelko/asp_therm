@@ -62,7 +62,7 @@ void Ideal_Gas::SetPressure(double v, double t) {
 
 double Ideal_Gas::GetVolume(double p, double t) {
   if (!is_above0(p, t)) {
-    error_.SetError(ERR_CALC_MODEL_ST);
+    error_.SetError(ERROR_CALC_MODEL_ST);
     return 0.0;
   }
   return  t * parameters_->cgetR() / p;
@@ -70,7 +70,7 @@ double Ideal_Gas::GetVolume(double p, double t) {
 
 double Ideal_Gas::GetPressure(double v, double t) {
   if (!is_above0(v, t)) {
-    error_.SetError(ERR_CALC_MODEL_ST);
+    error_.SetError(ERROR_CALC_MODEL_ST);
     return 0.0;
   }
   return t * parameters_->cgetR() / v;

@@ -1,5 +1,7 @@
 #include "Logging.h"
 
+#define DEFAULT_LOGFILE  "logs"
+#define OLD_LOGFILE_SFX  "_prev"
 #include <ctime>
 #include <filesystem>
 
@@ -7,6 +9,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+
 
 mlog_fostream Logging::output_;
 logging_cfg Logging::li_ = {
@@ -17,25 +20,20 @@ logging_cfg Logging::li_ = {
 #endif  // _DEBUG
   DEFAULT_LOGFILE
 };
-std::string Logging::status_msg_ = "";
 ErrorWrap Logging::error_;
 bool Logging::is_aval_ = false;
-
-namespace  {
-// it's not cool remove this to new class of programm state
-merror_t definit_err = Logging::InitDefault();
-}  // namespace
 
 merror_t Logging::checkInstance() {
   // don't try call models_errors.h function
   //   in this function)
-  merror_t error = ERR_FILEIO_T;
-  Logging::status_msg_ = "";
+  merror_t error = ERROR_FILEIO_T;
   if (*Logging::li_.filepath != '\0') {
     if (Logging::output_.is_open()) {
   # if !defined(NDEBUG)
       assert(0 && "logging module error");
   # else
+      // todo: set error and error_msg
+      //   push error message to stdio
       Logging::status_msg_ = "error in progger DNA";
       Logging::output_.close();
   #endif
@@ -57,8 +55,8 @@ merror_t Logging::checkInstance() {
       }
       error = ERROR_SUCCESS_T;
     } else {
-      error = ERR_FILEIO_T | ERR_FILE_OUT_ST;
-      Logging::status_msg_ = "cannot open logging file";
+      error = ERROR_FILEIO_T | ERROR_FILE_OUT_ST;
+      Logging::error_.SetError(error, "cannot open logging file");
     }
   }
   return error;
@@ -79,18 +77,15 @@ merror_t Logging::initInstance() {
           << "==========================================================\n"
           << "Logging by " << std::asctime(std::localtime(&tm)) << "\n"
           << "==========================================================";
-      if (!Logging::status_msg_.empty())
-        Logging::output_ << "!log loga:) " << Logging::status_msg_;
       Logging::output_ << "\n";
       Logging::output_.close();
     } else {
       is_aval_ = false;
-      Logging::error_.SetError(ERR_FILEIO_T | ERR_FILE_LOGGING_ST);
+      Logging::error_.SetError(ERROR_FILEIO_T | ERROR_FILE_LOGGING_ST);
     }
   }
   if (error)
-    error_.SetError(error, "Open loggingfile end with error.\n"
-        "  Message: " + Logging::status_msg_ + "\n");
+    error_.SetError(error, "Open loggingfile end with error.\n");
   return error;
 }
 
@@ -106,7 +101,7 @@ void Logging::append(const char *msg) {
     Logging::output_.close();
   } else {
     Logging::is_aval_ = false;
-    Logging::error_.SetError(ERR_FILEIO_T | ERR_FILE_LOGGING_ST);
+    Logging::error_.SetError(ERROR_FILEIO_T | ERROR_FILE_LOGGING_ST);
   }
 }
 
@@ -135,7 +130,7 @@ void Logging::ClearLogfile() {
     Logging::output_.close();
   } else {
     Logging::is_aval_ = false;
-    Logging::error_.SetError(ERR_FILEIO_T | ERR_FILE_LOGGING_ST);
+    Logging::error_.SetError(ERROR_FILEIO_T | ERROR_FILE_LOGGING_ST);
   }
   return;
 }

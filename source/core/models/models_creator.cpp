@@ -106,7 +106,7 @@ modelGeneral *ModelsCreator::initModel(rg_model_t mn, binodalpoints *bp,
       break;
   }
   if (ModelsCreator::error_.GetErrorCode() != ERROR_SUCCESS_T )
-     ModelsCreator::error_.SetError(ERR_INIT_T,
+     ModelsCreator::error_.SetError(ERROR_INIT_T,
          "undefined calculation model in modelCreator");
   if (mg->GetErrorCode()) {
     delete mg;

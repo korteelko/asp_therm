@@ -57,7 +57,7 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
   merror_t err = ERROR_SUCCESS_T;
   if (gpi.const_dyn.components->empty() || mg == nullptr)
     err = init_error.SetError(
-        ERR_INIT_T | ERR_INIT_NULLP_ST | ERR_GAS_MIX);
+        ERROR_INIT_T | ERROR_INIT_NULLP_ST | ERROR_GAS_MIX);
   std::unique_ptr<const_parameters> tmp_cgp = nullptr;
   std::unique_ptr<dyn_parameters> tmp_dgp = nullptr;
   dyn_setup setup = DYNAMIC_SETUP_MASK;
@@ -70,7 +70,7 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
         avr_vals[2], avr_vals[3], avr_vals[4], avr_vals[5]));
     if (tmp_cgp == nullptr) {
       err = init_error.SetError(
-          ERR_INIT_T | ERR_GAS_MIX | ERR_CALC_GAS_P_ST);
+          ERROR_INIT_T | ERROR_GAS_MIX | ERROR_CALC_GAS_P_ST);
     } else {
       double volume = 0.0;
       for (const auto &x : *gpi.const_dyn.components)
@@ -97,7 +97,7 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
         *gpi.const_dyn.components, mg);
   else
     err = init_error.SetError(
-        ERR_INIT_T | ERR_CALC_GAS_P_ST | ERR_GAS_MIX);
+        ERROR_INIT_T | ERROR_CALC_GAS_P_ST | ERROR_GAS_MIX);
   return mix;
 }
 
@@ -110,10 +110,10 @@ std::unique_ptr<const_parameters> GasParameters_mix_dyn::GetAverageParams(
     if (!(tmp_cgp = std::unique_ptr<const_parameters>(
         const_parameters::Init(GAS_TYPE_MIX, avr_vals[0], avr_vals[1],
         avr_vals[2], avr_vals[3], avr_vals[4], avr_vals[5]))))
-      init_error.SetError(ERR_INIT_T | ERR_GAS_MIX | ERR_CALC_GAS_P_ST,
+      init_error.SetError(ERROR_INIT_T | ERROR_GAS_MIX | ERROR_CALC_GAS_P_ST,
           "Расчёт средних параметров для газовой смеси");
   } else {
-    init_error.SetError(ERR_INIT_T | ERR_INIT_NULLP_ST | ERR_GAS_MIX,
+    init_error.SetError(ERROR_INIT_T | ERROR_INIT_NULLP_ST | ERROR_GAS_MIX,
         "Инициализация газовой смеси компонентов нет");
   }
   return tmp_cgp;

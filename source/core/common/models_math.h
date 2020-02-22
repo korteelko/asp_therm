@@ -24,9 +24,9 @@ template<class T,
     class = typename std::enable_if<std::is_floating_point<T>::value>::type>
 merror_t CardanoMethod(const T *coef, std::complex<T> *results) {
   if ((coef == nullptr) || (results == nullptr))
-    return ERR_INIT_NULLP_ST;
+    return ERROR_INIT_NULLP_ST;
   if (coef[0] == 0.0)
-    return ERR_INIT_ZERO_ST;
+    return ERROR_INIT_ZERO_ST;
   const T  b = coef[1]/coef[0],
            c = coef[2]/coef[0],
            d = coef[3]/coef[0],

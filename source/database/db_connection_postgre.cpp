@@ -122,17 +122,17 @@ mstatus_t DBConnectionPostgre::SetupConnection() {
             Logging::Append(io_loglvl::debug_logs, "Подключение к БД "
                 + parameters_.name);
         } else {
-          error_.SetError(ERR_DB_CONNECTION,
+          error_.SetError(ERROR_DB_CONNECTION,
               "Подключение к БД не открыто. Запрос:\n" + connect_str);
           status_ = STATUS_HAVE_ERROR;
         }
       } else {
-        error_.SetError(ERR_DB_CONNECTION,
+        error_.SetError(ERROR_DB_CONNECTION,
             "Подключение к БД: инициализация. Запрос:\n" + connect_str);
         status_ = STATUS_HAVE_ERROR;
       }
     } catch(const std::exception &e) {
-      error_.SetError(ERR_DB_CONNECTION,
+      error_.SetError(ERROR_DB_CONNECTION,
           "Подключение к БД: exception. Запрос:\n" + connect_str
           + "\nexception what: " + e.what());
       status_ = STATUS_HAVE_ERROR;
@@ -177,7 +177,7 @@ mstatus_t DBConnectionPostgre::IsTableExists(db_table t, bool *is_exists) {
           *is_exists = false;
         }
       } catch (const std::exception &e) {
-        error_.SetError(ERR_DB_CONNECTION,
+        error_.SetError(ERROR_DB_CONNECTION,
             "Подключение к БД: exception. Запрос:\n" + select_ss.str()
             + "\nexception what: " + e.what());
         status_ = STATUS_HAVE_ERROR;
@@ -211,7 +211,7 @@ std::string DBConnectionPostgre::db_variable_to_string(
     if (itDBtype != postgresql_impl::str_db_types.end()) {
       ss << postgresql_impl::str_db_types[dv.type] << " ";
     } else {
-      error_.SetError(ERR_DB_VARIABLE,
+      error_.SetError(ERROR_DB_VARIABLE,
           "Тип переменной не задан для данной имплементации БД");
     }
     if (dv.flags.is_array)

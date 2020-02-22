@@ -64,7 +64,7 @@ void NG_Gost::SetVolume(double p, double t) {
 
 void NG_Gost::SetPressure(double v, double t) {
   (void)v; (void)t;
-  error_.SetError(ERR_CALC_MODEL_ST, "invalid operation for this model");
+  error_.SetError(ERROR_CALC_MODEL_ST, "invalid operation for this model");
 }
 
 double NG_Gost::GetVolume(double p, double t) {
@@ -74,7 +74,7 @@ double NG_Gost::GetVolume(double p, double t) {
 
 double NG_Gost::GetPressure(double v, double t) {
   (void) v; (void) t;
-  error_.SetError(ERR_CALC_MODEL_ST, "invalid operation for gost model");
+  error_.SetError(ERROR_CALC_MODEL_ST, "invalid operation for gost model");
   return 0.0;
 }
 

@@ -2,12 +2,7 @@
 
 #include "Logging.h"
 
-#include <assert.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
 
-/* ErrorWrap */
 ErrorWrap::ErrorWrap()
   : ErrorWrap(ERROR_SUCCESS_T, "") {}
 

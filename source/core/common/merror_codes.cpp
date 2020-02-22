@@ -53,29 +53,29 @@ static const char *custom_msg_database[] = {
 };
 
 const char *GetCustomErrorMsg(unsigned int error) {
-  unsigned int err_type     = ERR_MASK_TYPE & error;
-  unsigned int err_concrete = ERR_MASK_SUBTYPE & error;
+  unsigned int err_type     = ERROR_MASK_TYPE & error;
+  unsigned int err_concrete = ERROR_MASK_SUBTYPE & error;
   // Прицеливаемся в ногу
   const char **list_of_custom_msg = nullptr;
   switch (err_type) {
     case ERROR_SUCCESS_T:
       return custom_msg[ERROR_SUCCESS_T];
-    case ERR_FILEIO_T:
+    case ERROR_FILEIO_T:
       list_of_custom_msg = custom_msg_fileio;
       break;
-    case ERR_CALCULATE_T:
+    case ERROR_CALCULATE_T:
       list_of_custom_msg = custom_msg_calculate;
       break;
-    case ERR_STRING_T:
+    case ERROR_STRING_T:
       list_of_custom_msg = custom_msg_string;
       break;
-    case ERR_INIT_T:
+    case ERROR_INIT_T:
       list_of_custom_msg = custom_msg_init;
       break;
-    case ERR_STRTPL_T:
+    case ERROR_STRTPL_T:
       list_of_custom_msg = custom_msg_strtpl;
       break;
-    case ERR_DATABASE_T:
+    case ERROR_DATABASE_T:
       list_of_custom_msg = custom_msg_database;
       break;
     default:

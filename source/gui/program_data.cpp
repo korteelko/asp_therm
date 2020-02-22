@@ -41,7 +41,7 @@ std::string get_file_name(const std::string &full_path) {
 }  // anonymous namespace
 
 ProgramData::ProgramData()
-  : error_status_(ERR_SUCCESS_T) {
+  : error_status_(ERROR_SUCCESS_T) {
   init_gas_files();
   init_gas_names();
 }
@@ -85,14 +85,14 @@ int ProgramData::read_gases_dir(const std::string &dirname) {
   DIR *dirptr;
   struct dirent *drn;
   if ((dirptr = opendir(dirname.c_str())) == NULL) {
-    set_error_message(ERR_INIT_T, "cannot open dir with gases xml");
-    return ERR_INIT_T;
+    set_error_message(ERROR_INIT_T, "cannot open dir with gases xml");
+    return ERROR_INIT_T;
   }
   while ((drn = readdir(dirptr)) != NULL)
     if (ends_with(drn->d_name, ".xml"))
       gas_files_.push_back(dirname + drn->d_name);
   closedir(dirptr);
-  return ERR_SUCCESS_T;
+  return ERROR_SUCCESS_T;
 #elif defined(_OS_WIN)
   assert(0);
 #endif  // _OS

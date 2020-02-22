@@ -16,10 +16,10 @@ typedef std::function<merror_t(db_parameters *,
     const std::string &value)> update_dbconfig_f;
 
 merror_t update_db_dry_run(db_parameters *dbp, const std::string &val) {
-  return (dbp) ? set_bool(val, &dbp->is_dry_run) : ERR_INIT_ZERO_ST;
+  return (dbp) ? set_bool(val, &dbp->is_dry_run) : ERROR_INIT_ZERO_ST;
 }
 merror_t update_db_client(db_parameters *dbp, const std::string &val) {
-  return (dbp) ? set_db_client(val, &dbp->supplier) : ERR_INIT_ZERO_ST;
+  return (dbp) ? set_db_client(val, &dbp->supplier) : ERROR_INIT_ZERO_ST;
 }
 merror_t update_db_name(db_parameters *dbp, const std::string &val) {
   dbp->name = val;
@@ -38,7 +38,7 @@ merror_t update_db_host(db_parameters *dbp, const std::string &val) {
   return ERROR_SUCCESS_T;
 }
 merror_t update_db_port(db_parameters *dbp, const std::string &val) {
-  return (dbp) ? set_int(val, &dbp->port) : ERR_INIT_ZERO_ST;
+  return (dbp) ? set_int(val, &dbp->port) : ERROR_INIT_ZERO_ST;
 }
 
 struct dbconfig_fuctions {
@@ -68,7 +68,7 @@ ErrorWrap db_variable::CheckYourself() const {
   ErrorWrap ew;
   if (fname.empty()) {
     // just check that looks __FUNCTION__
-    ew.SetError(ERR_DB_VARIABLE,
+    ew.SetError(ERROR_DB_VARIABLE,
         "Имя столбца таблицы базы данных не задано "
         + std::string(__FUNCTION__));
   }
@@ -103,8 +103,8 @@ namespace ns_ucf = update_configuration_functional;
 merror_t db_parameters::SetConfigurationParameter(
     const std::string &param_strtpl, const std::string &param_value) {
   if (param_strtpl.empty())
-    return ERR_STRTPL_TPLNULL;
-  merror_t error = ERR_STRTPL_TPLUNDEF;
+    return ERROR_STRTPL_TPLNULL;
+  merror_t error = ERROR_STRTPL_TPLUNDEF;
   auto it_map = ns_ucf::map_dbconfig_fuctions.find(param_strtpl);
   if (it_map != ns_ucf::map_dbconfig_fuctions.end())
     error = it_map->second.update(this, param_value);
