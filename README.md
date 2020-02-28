@@ -1,4 +1,4 @@
-# asp_therm
+# asp\_therm
 
 **ToDo**
 
@@ -11,18 +11,18 @@
 
 ### Подключение PostgreSQL
 
-*Для управления БД [PostgreSQL](https://www.postgresql.org) можно использовать [pgAdmin4](https://www.pgadmin.org)*.  
-**Пример настройки**   
-После установки сервера postgre создадим пользователя *jorge* с паролем *my_pass* и базу данных *africae*.   
-Переключимся на пользователя postgres и запустим cli субд   
+*Для управления БД [PostgreSQL](https://www.postgresql.org) можно использовать [pgAdmin4](https://www.pgadmin.org)*.   
+**Пример**  
+После установки субд postgresql, для примера, создадим в ней базу данных *africae* и пользователя *jorge* с паролем *my_pass* и соответствующими привилегиями.   
+Первым делом необходимо переключиться на пользователя postgres и запустим cli субд:   
 `$ sudo -u postgres psql`   
-Создадим базу данных *africae* и пользователя *jorge* с соответствующими привилегиями   
+После запуска cli создадим базу данных и пользователя:    
 `=# create database africae;`  
 `=# create user jorge with encrypted password 'my_pass';`   
 `=# grant all privileges on database africae to jorge;`   
-Посмотреть результат можно командой `\l`. Полный help можно посмотреть командой `\?`.   
+Посмотреть состояние субд можно командой `\l`. Полный help отобразит `\?`.   
 Для завершения сессии введите команду '`exit;`' или `\q`.     
-Соответсвенно, после соответствующих изменений секция базы данных в файле конфигурации configuration.xml будет выглядеть примерно так:    
+После соответствующих изменений секция базы данных в файле конфигурации configuration.xml будет выглядеть примерно так:    
 <code>
 \<group name="database">    
 &nbsp;&nbsp;\<parameter name="dry\_run"> false \</parameter>    
