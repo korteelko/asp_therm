@@ -134,6 +134,7 @@ struct gas_params_input {
   const_dyn_union const_dyn;
 };
 
+/* todo: add link to calculation info */
 struct calculation_state_log {
   dyn_parameters dyn_pars;    // p, v, t and cp(p,v,t), cv(p,v,t), u(p,v,t)
   double enthalpy;

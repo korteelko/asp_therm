@@ -1,12 +1,12 @@
-#ifndef _UTILS__MERROR_CODES_H_
-#define _UTILS__MERROR_CODES_H_
+#ifndef UTILS__MERROR_CODES_H
+#define UTILS__MERROR_CODES_H
 
 
 #if not defined(ERROR_SUCCESS_T)
-#  define ERROR_SUCCESS_T   0x00000000
+#  define ERROR_SUCCESS_T       0x00000000
 #endif  // !ERROR_SUCCESS_T
 #if not defined(ERROR_GENERAL_T)
-#  define ERROR_GENERAL_T   0x00000001
+#  define ERROR_GENERAL_T       0x00000001
 #endif  // !ERROR_GENERAL_T
 
 // error type
@@ -72,4 +72,4 @@
 
 const char *GetCustomErrorMsg(unsigned int error);
 
-#endif  // !_UTILS__MERROR_CODES_H_
+#endif  // !UTILS__MERROR_CODES_H

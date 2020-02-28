@@ -52,17 +52,12 @@ struct model_str {
   rg_model_t ml_type;
   /** subtypenumber - наверное привязаться к
     *   енамам конкретных моделей
-    * default 0 */
+    * default 0, т.е. например для Редлиха-Квонга есть модификация
+    * Соаве, а для Пенг-Робинсона их не счесть */
   int32_t subtype_num;
   std::string name;
   int32_t vers_major;
   int32_t vers_minor;
-};
-
-/* сейчас посто заглушка */
-struct calculation_info {
-  // я хз чё тут надо, но вроде как инпут прописать
-  time_t time;
 };
 
 struct calculation_configuration {
@@ -81,9 +76,18 @@ public:
   bool EnableISO20765() const;
 };
 
+/* сейчас посто заглушка
+ * todo: добавить calculation configuration */
+struct calculation_info {
+  // я хз чё тут надо, но вроде как инпут прописать
+  time_t time;
+  calculation_configuration configuration;
+};
+
 /** \brief конфигурация моделей реального газа */
 struct models_configuration {
 public:
+  /** \brief информация о текущем расчёте */
   calculation_configuration calc_cfg;
   /** \brief уровень логирования */
   io_loglvl log_level;

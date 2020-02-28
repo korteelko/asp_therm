@@ -3,6 +3,9 @@
 // ес, онгличанин ( ͡° ͜ʖ ͡°)
 static const char *custom_msg[] = {
   "there are not any errors ",
+  /* not used messages(first message
+   *   in concrete list of custom messages) */
+  "default error ",
   "fileio error ",
   "calculation error ",
   "string processing error ",

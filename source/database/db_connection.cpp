@@ -3,6 +3,7 @@
 #include "configuration_strtpl.h"
 #include "db_query.h"
 #include "file_structs.h"
+#include "models_configurations.h"
 
 #include <functional>
 #include <map>
@@ -76,8 +77,12 @@ ErrorWrap db_variable::CheckYourself() const {
 }
 
 
+static_assert(sizeof(model_info) == 64, "Необходимо перепроверить "
+    "функцию table_model_info() - вероятно изменился формат струтуры данных "
+    "model_info добавьте новые поля, или измените старые");
 std::vector<create_table_variant> table_model_info() {
   std::vector<create_table_variant> vars;
+  db_complex_pk mi_pk {};
   assert(0);
   return vars;
 }

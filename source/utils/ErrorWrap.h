@@ -16,13 +16,12 @@
 
 typedef size_t merror_t;
 
-
 /** \brief класс, в котором инкапсулирована ошибка(код, сообщение,
   *   логирована ли, выведелена ли и т.п.) */
 class ErrorWrap {
 public:
   ErrorWrap();
-  ErrorWrap(merror_t error);
+  explicit ErrorWrap(merror_t error);
   ErrorWrap(merror_t error, const std::string &msg);
   /** \brief установить(хранить) код ошибки 'error'
     * \param error код ошибки
@@ -54,7 +53,7 @@ public:
   ErrorWrap &operator= (merror_t) = delete;
 
 private:
-  /** \brief код ошибки(см дефайны выше) */
+  /** \brief код ошибки(см merror_codes.h) */
   merror_t error_;
   /** \brief сообщение к ошибке */
   std::string msg_;

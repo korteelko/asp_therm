@@ -124,8 +124,15 @@ public:
 typedef std::variant<db_variable, db_complex_pk, db_complex_fk>
     create_table_variant;
 
+/* todo: такс, выписать sql запросы для этих функций */
+/** \brief функция собирающая набор полей для
+  *   создания таблицы БД model_info информации о модели */
 std::vector<create_table_variant> table_model_info();
+/** \brief функция собирающая набор полей для
+  *   создания таблицы БД calculation_info информации о расчёте */
 std::vector<create_table_variant> table_calculation_info();
+/** \brief функция собирающая набор полей для
+  *   создания таблицы БД calculation_state_log строку расчёта */
 std::vector<create_table_variant> table_calculation_state_log();
 
 
@@ -208,8 +215,12 @@ protected:
 
 protected:
   ErrorWrap error_;
+  /** \brief статус подключения. Для этого класса кроме обычных
+    *   статусных дефайнов может быть установлен 'STATUS_DRY_RUN' */
   mstatus_t status_;
+  /** \brief параметры подключения к базе данных */
   db_parameters parameters_;
+  /** \brief флаг подключения к бд */
   bool is_connected_;
 };
 
