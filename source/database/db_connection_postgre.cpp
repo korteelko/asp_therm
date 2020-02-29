@@ -156,8 +156,7 @@ void DBConnectionPostgre::CloseConnection() {
 mstatus_t DBConnectionPostgre::IsTableExists(db_table t, bool *is_exists) {
   if (is_connected_ && pconnect_) {
     std::stringstream select_ss;
-    select_ss << "SELECT to_regclass('public." <<
-        get_table_name(t) << "');" ;
+    select_ss << "SELECT * FROM " << get_table_name(t) << ";";
     if (status_ != STATUS_DRY_RUN && pconnect_->is_open()) {
       try {
         pqxx::work tr(*pconnect_);
@@ -173,9 +172,9 @@ mstatus_t DBConnectionPostgre::IsTableExists(db_table t, bool *is_exists) {
           if (ProgramState::Instance().IsDebugMode())
             Logging::Append(io_loglvl::debug_logs, "Ответ на запрос БД:"
                 + select_ss.str() + "\n\t" + trres.begin()[0].as<std::string>());
-        } else {
-          *is_exists = false;
         }
+      } catch (const pqxx::undefined_table &) {
+        *is_exists = false;
       } catch (const std::exception &e) {
         error_.SetError(ERROR_DB_CONNECTION,
             "Подключение к БД: exception. Запрос:\n" + select_ss.str()

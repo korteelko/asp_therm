@@ -125,9 +125,12 @@ void DBConnectionManager::tryExecuteTransaction(Transaction &tr) {
     error_.LogIt();
     status_ = STATUS_HAVE_ERROR;
   }
-  if (db_connection_)
+  if (db_connection_) {
     if (db_connection_->IsOpen())
       db_connection_->CloseConnection();
+    if (db_connection_->GetErrorCode())
+      db_connection_->LogError();
+  }
 }
 
 /* DBConnection::DBConnectionInstance */

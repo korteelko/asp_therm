@@ -29,12 +29,12 @@ merror_t Logging::checkInstance() {
   merror_t error = ERROR_FILEIO_T;
   if (*Logging::li_.filepath != '\0') {
     if (Logging::output_.is_open()) {
-  # if !defined(NDEBUG)
+  # if defined(NDEBUG)
       assert(0 && "logging module error");
   # else
       // todo: set error and error_msg
       //   push error message to stdio
-      Logging::status_msg_ = "error in progger DNA";
+      Logging::error_.SetError(ERROR_GENERAL_T, "error in progran DNA");
       Logging::output_.close();
   #endif
     }

@@ -65,7 +65,7 @@ int test_program_configuration() {
     return 1;
   }
   std::cerr << " table model info exists: " <<
-      dbm.IsTableExist(db_table::table_model_info);
+      dbm.IsTableExist(db_table::table_model_info) << std::endl;
   return ps.GetErrorCode();
 }
 
@@ -168,12 +168,12 @@ int test_models_mix() {
 }
 
 int main() {
-  if (test_models()) {
+  /*if (test_models()) {
     return 1;
   }
   if (test_models_mix()) {
     return 2;
-  }
+  }*/
   std::cerr << "test_program_configuration()" << test_program_configuration();
   return 0;
 }
