@@ -20,6 +20,8 @@ protected:
 public:
   static NG_Gost *Init(const model_input &mi);
 
+  model_str GetModelShortInfo() const override;
+
   void DynamicflowAccept(class DerivateFunctor &df) override;
   bool IsValid() const override;
   double InitVolume(double p, double t,

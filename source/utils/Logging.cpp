@@ -11,6 +11,11 @@
 #include <string.h>
 
 
+logging_cfg::logging_cfg(io_loglvl ll, const std::string &file)
+  : loglvl(ll) {
+  strncpy(filepath, file.c_str(), sizeof(filepath));
+}
+
 mlog_fostream Logging::output_;
 logging_cfg Logging::li_ = {
 #ifdef _DEBUG
@@ -109,7 +114,7 @@ merror_t Logging::InitDefault() {
   return initInstance();
 }
 
-merror_t Logging::ResetInstance(logging_cfg &li) {
+merror_t Logging::ResetInstance(const logging_cfg &li) {
   Logging::li_.loglvl = li.loglvl;
   memset(Logging::li_.filepath, 0, sizeof(Logging::li_.filepath));
   strncpy(Logging::li_.filepath, li.filepath, sizeof(Logging::li_.filepath));

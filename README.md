@@ -13,10 +13,10 @@
 
 *Для управления БД [PostgreSQL](https://www.postgresql.org) можно использовать [pgAdmin4](https://www.pgadmin.org)*.   
 **Пример**  
-После установки субд postgresql, для примера, создадим в ней базу данных *africae* и пользователя *jorge* с паролем *my_pass* и соответствующими привилегиями.   
+*В пример имя БД - 'africae', имя пользователя(user или role) - 'jorge', пароль пользователя 'my\_pass'*.   
 Первым делом необходимо переключиться на пользователя postgres и запустим cli субд:   
 `$ sudo -u postgres psql`   
-После запуска cli создадим базу данных и пользователя:    
+После запуска cli создадим базу данных и пользователя, предоставив ему все привилегии над этой БД:    
 `=# create database africae;`  
 `=# create user jorge with encrypted password 'my_pass';`   
 `=# grant all privileges on database africae to jorge;`   

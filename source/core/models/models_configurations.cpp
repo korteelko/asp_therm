@@ -24,6 +24,10 @@ model_name model_names[] = {
   {MODEL_NG_GOST, "GOST 30319-2015"}
 };
 */
+model_str::model_str(rg_model_t ml, rg_model_subtype subtype,
+    int32_t vmaj, int32_t vmin, const std::string &info)
+  : model_type(ml), model_subtype_id(subtype), vers_major(vmaj),
+    vers_minor(vmin), short_info(info) {}
 
 namespace update_configuration_functional {
 typedef std::function<merror_t(models_configuration *,
@@ -48,6 +52,11 @@ merror_t update_log_level(models_configuration *mc,
      const std::string &val) {
   return (mc) ? set_loglvl(val, &mc->log_level) : ERROR_INIT_ZERO_ST;
 }
+merror_t update_log_file(models_configuration *mc,
+     const std::string &val) {
+  mc->log_file = trim_str(val);
+  return ERROR_SUCCESS_T;
+}
 
 struct config_setup_fuctions {
   /** \brief функция обновляющая параметр */
@@ -60,7 +69,8 @@ static std::map<const std::string, config_setup_fuctions> map_config_fuctions =
   {STRTPL_CONFIG_DEBUG_MODE, {update_debug_mode}},
   {STRTPL_CONFIG_PSEUDOCRITICAL, {update_pseudocritical}},
   {STRTPL_CONFIG_INCLUDE_ISO_20765, {update_enable_iso_20765}},
-  {STRTPL_CONFIG_LOG_LEVEL, {update_log_level}}
+  {STRTPL_CONFIG_LOG_LEVEL, {update_log_level}},
+  {STRTPL_CONFIG_LOG_FILE, {update_log_file}},
 };
 }  // update_configuration_functional namespace
 
@@ -95,7 +105,7 @@ merror_t models_configuration::SetConfigurationParameter(
 
 models_configuration::models_configuration()
   : calc_cfg(calculation_configuration()),
-    log_level(io_loglvl::debug_logs) {}
+    log_level(io_loglvl::debug_logs), log_file("") {}
 
 ProgramState &ProgramState::Instance() {
   static ProgramState state;
@@ -199,6 +209,8 @@ void PSConfiguration::setDefault() {
 
 void PSConfiguration::initProgramConfig() {
   configuration = config_by_file->GetConfiguration();
+  Logging::ResetInstance(
+      logging_cfg(configuration.log_level, configuration.log_file));
 }
 
 void PSConfiguration::initDatabaseConfig() {

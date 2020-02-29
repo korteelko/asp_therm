@@ -19,10 +19,13 @@
 #define MAXSIZE_LOGFILE  128*1024  // 128 KiB
 
 /** logging settings: level and filename */
-typedef struct {
+struct logging_cfg {
   io_loglvl loglvl;
   char filepath[PATH_MAX];  //MAXPATHLEN
-} logging_cfg;
+
+public:
+  logging_cfg(io_loglvl ll, const std::string &file);
+};
 
 typedef std::ofstream mlog_fostream;
 
@@ -47,7 +50,7 @@ public:
   /** \brief init class with default parameters **/
   static merror_t InitDefault();
   /** \brief change output file, log level **/
-  static merror_t ResetInstance(logging_cfg &li);
+  static merror_t ResetInstance(const logging_cfg &li);
   static merror_t GetErrorCode();
   static io_loglvl GetLogLevel();
   static std::string GetStatusMessage();

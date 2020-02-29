@@ -41,20 +41,8 @@ const std::string xml_propane = "propane.xml";
 const std::string xml_gasmix = "../gasmix_inp_example.xml";
 const std::string xml_configuration = "../../configuration.xml";
 
-int test_program_configuration() {
-  char cwd[512] = {0};
-  if (!getcwd(cwd, (sizeof(cwd)))) {
-    std::cerr << "cann't get current dir";
-    return 1;
-  }
-  std::cerr << "test_program_configuration start\n";
+int test_database() {
   ProgramState &ps = ProgramState::Instance();
-  ps.ResetConfigFile(std::string(cwd) + xml_path + xml_configuration);
-  merror_t e = ps.GetErrorCode();
-  if (e) {
-    std::cerr << "program state bida " << e;
-    return e;
-  }
   // db_parameters p = ps.GetDatabaseConfiguration();
   DBConnectionManager &dbm = DBConnectionManager::Instance();
   dbm.ResetConnectionParameters(
@@ -67,6 +55,21 @@ int test_program_configuration() {
   std::cerr << " table model info exists: " <<
       dbm.IsTableExist(db_table::table_model_info) << std::endl;
   return ps.GetErrorCode();
+}
+
+int test_program_configuration() {
+  char cwd[512] = {0};
+  if (!getcwd(cwd, (sizeof(cwd)))) {
+    std::cerr << "cann't get current dir";
+    return 1;
+  }
+  std::cerr << "test_program_configuration start\n";
+  ProgramState &ps = ProgramState::Instance();
+  ps.ResetConfigFile(std::string(cwd) + xml_path + xml_configuration);
+  merror_t e = ps.GetErrorCode();
+  if (e)
+    std::cerr << "program state bida " << e;
+  return e;
 }
 
 int test_models() {
@@ -168,12 +171,15 @@ int test_models_mix() {
 }
 
 int main() {
-  /*if (test_models()) {
-    return 1;
+  if (!test_program_configuration()) {
+    Logging::Append(io_loglvl::debug_logs, "Запускаю тесты сборки");
+    //*
+    if (test_models()) return 1;
+    if (test_models_mix()) return 2;
+    // if (test_database()) return 3;
+    Logging::Append(io_loglvl::debug_logs, "Ни одной ошибки не заметил");
+  //*/
   }
-  if (test_models_mix()) {
-    return 2;
-  }*/
-  std::cerr << "test_program_configuration()" << test_program_configuration();
+
   return 0;
 }

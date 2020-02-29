@@ -3,7 +3,6 @@
 #include "common.h"
 #include "gas_description_dynamic.h"
 #include "ErrorWrap.h"
-#include "ErrorWrap.h"
 #include "models_math.h"
 
 #ifdef _DEBUG
@@ -12,6 +11,18 @@
 #include <vector>
 
 #include <assert.h>
+
+static double sq2 = 1.41421356237; // std::sqrt(2.0);
+
+/** \brief варианты model_info для моделей Пенга-Робинсона
+  *   расчитанный по псевдопараметрам. Для модели Пенга-Робинсона
+  *   свой метод расчёта - по бинодальным коэффициетам
+  *   n.b.: без этого параметра считается просто по среднему арифмtтическому! */
+static model_str peng_robinson_mi(rg_model_t::PENG_ROBINSON,
+    MODEL_SUBTYPE_DEFAULT, 1, 0,"Модель Пенга-Робинсона");
+static model_str peng_robinson_binary_mi(rg_model_t::PENG_ROBINSON,
+    MODEL_SUBTYPE_BINASSOC, 1, 0,
+    "Модель Пенга-Робинсона(инициализация смеси ч/з бинарные коэффициенты)");
 
 struct binary_associate_PR {
   gas_t i,
@@ -71,7 +82,6 @@ static double get_binary_associate_coef_PR(gas_t i, gas_t j) {
   return 0.0;
 }
 
-static double sq2 = std::sqrt(2.0);
 
 void Peng_Robinson::set_model_coef() {
   model_coef_a_ = 0.45724 * std::pow(parameters_->cgetR(), 2.0) *
@@ -150,6 +160,11 @@ Peng_Robinson *Peng_Robinson::Init(const model_input &mi) {
       pr = nullptr;
     }
   return pr; 
+}
+
+model_str Peng_Robinson::GetModelShortInfo() const {
+  return (calc_config_.ByPseudocritic()) ?
+      peng_robinson_binary_mi : peng_robinson_mi;
 }
 
 //  расчёт смотри в ежедневнике

@@ -16,6 +16,8 @@ protected:
 public:
   static Ideal_Gas *Init(const model_input &mi);
 
+  model_str GetModelShortInfo() const override;
+
   void DynamicflowAccept(DerivateFunctor &df) override;
   bool IsValid() const override;
   double InitVolume(double p, double t,

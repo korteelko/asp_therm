@@ -7,6 +7,9 @@
 
 #include <assert.h>
 
+static model_str redlich_kwong_mi(rg_model_t::REDLICH_KWONG2, 0, 1, 0,
+    "Модель Редлиха-Квонга");
+
 void Redlich_Kwong2::set_model_coef() {
   model_coef_a_ = 0.42748*std::pow(parameters_->cgetR(), 2.0) *
       std::pow(parameters_->cgetT_K(), 2.5) / parameters_->cgetP_K();
@@ -43,6 +46,10 @@ Redlich_Kwong2 *Redlich_Kwong2::Init(const model_input &mi) {
     }
   return rk;
  }
+
+model_str Redlich_Kwong2::GetModelShortInfo() const {
+  return redlich_kwong_mi;
+}
 
 //  расчёт смотри в ежедневнике
 double Redlich_Kwong2::internal_energy_integral(

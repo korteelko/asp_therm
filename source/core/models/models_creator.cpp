@@ -90,6 +90,7 @@ modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
 modelGeneral *ModelsCreator::initModel(rg_model_t mn, binodalpoints *bp,
     // double p, double t, const parameters_mix &components) {
     double p, double t, const_dyn_union cdu) {
+  modelGeneral::ResetInitError();
   modelGeneral *mg = nullptr;
   switch (mn) {
     case rg_model_t::IDEAL_GAS:
@@ -105,12 +106,18 @@ modelGeneral *ModelsCreator::initModel(rg_model_t mn, binodalpoints *bp,
       mg = NG_Gost::Init(set_input(mn, bp, p, t, *cdu.ng_gost_components));
       break;
   }
-  if (ModelsCreator::error_.GetErrorCode() != ERROR_SUCCESS_T )
-     ModelsCreator::error_.SetError(ERROR_INIT_T,
-         "undefined calculation model in modelCreator");
-  if (mg->GetErrorCode()) {
-    delete mg;
-    mg = nullptr;
+  if (modelGeneral::init_error.GetErrorCode()) {
+    modelGeneral::init_error.LogIt();
+    ModelsCreator::error_.SetError(ERROR_INIT_T);
+  } else {
+    ModelsCreator::error_.SetError(ERROR_INIT_T,
+        "undefined calculation model in modelCreator");
+  }
+  if (mg) {
+    if (mg->GetErrorCode()) {
+      delete mg;
+      mg = nullptr;
+    }
   }
   return mg;
 }

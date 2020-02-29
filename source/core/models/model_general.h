@@ -47,6 +47,7 @@ struct model_input {
 class modelGeneral {
   modelGeneral(const modelGeneral &) = delete;
   modelGeneral &operator=(const modelGeneral &) = delete;
+
 public:
   static ErrorWrap init_error;
 
@@ -74,11 +75,15 @@ protected:
   static merror_t check_input(const model_input &mi);
 
 public:
+  static void ResetInitError();
+
   /// Функции обновления динамических параметров
   virtual void update_dyn_params(dyn_parameters &prev_state,
       const parameters new_state) = 0;
   virtual void update_dyn_params(dyn_parameters &prev_state,
       const parameters new_state, const const_parameters &cp) = 0;
+
+  virtual model_str GetModelShortInfo() const = 0;
 
   // Models have application limits
   //  isValid - method for check this limits

@@ -23,19 +23,19 @@ merror_t update_db_client(db_parameters *dbp, const std::string &val) {
   return (dbp) ? set_db_client(val, &dbp->supplier) : ERROR_INIT_ZERO_ST;
 }
 merror_t update_db_name(db_parameters *dbp, const std::string &val) {
-  dbp->name = val;
+  dbp->name = trim_str(val);
   return ERROR_SUCCESS_T;
 }
 merror_t update_db_username(db_parameters *dbp, const std::string &val) {
-  dbp->username = val;
+  dbp->username = trim_str(val);
   return ERROR_SUCCESS_T;
 }
 merror_t update_db_password(db_parameters *dbp, const std::string &val) {
-  dbp->password = val;
+  dbp->password = trim_str(val);
   return ERROR_SUCCESS_T;
 }
 merror_t update_db_host(db_parameters *dbp, const std::string &val) {
-  dbp->host = val;
+  dbp->host = trim_str(val);
   return ERROR_SUCCESS_T;
 }
 merror_t update_db_port(db_parameters *dbp, const std::string &val) {
@@ -77,7 +77,17 @@ ErrorWrap db_variable::CheckYourself() const {
 }
 
 
-static_assert(sizeof(model_info) == 64, "Необходимо перепроверить "
+/* SQL_QUERY:
+CREATE TABLE MODEL_INFO (
+  model_type uint NOT NULL,
+  model_subtype uint,
+  name string,
+  vers_major uint not NULL,
+  vers_minor uint,
+  PRIMARY KEY (model_type, model_subtype)
+);
+*/
+static_assert(sizeof(model_info) == 96, "Необходимо перепроверить "
     "функцию table_model_info() - вероятно изменился формат струтуры данных "
     "model_info добавьте новые поля, или измените старые");
 std::vector<create_table_variant> table_model_info() {

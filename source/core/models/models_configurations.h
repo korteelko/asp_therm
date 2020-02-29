@@ -37,6 +37,7 @@
  * - PSEUDOCRITIC : BOOL
  * - INCLUDE_ISO_20765 : BOOL
  * - LOG_LEVEL : INT
+ * - LOG_FILE : STRING
  * - DATABASE : DATABASE_CONFIGURATION
  * // - MODELS : MODELS_STR[] - move to calculation.json
 */
@@ -49,20 +50,26 @@ class ConfigurationByFile;
 ///   методом GetModelStr
 struct model_str {
   /// define of model
-  rg_model_t ml_type;
-  /** subtypenumber - наверное привязаться к
+  rg_model_t model_type;
+  /** \brief subtypenumber(subml_typenumber) - наверное привязаться к
     *   енамам конкретных моделей
     * default 0, т.е. например для Редлиха-Квонга есть модификация
     * Соаве, а для Пенг-Робинсона их не счесть */
-  int32_t subtype_num;
-  std::string name;
+  rg_model_subtype model_subtype_id;
   int32_t vers_major;
   int32_t vers_minor;
+  /** \brief информация о модели */
+  std::string short_info;
+
+public:
+  model_str(rg_model_t ml, rg_model_subtype subtype, int32_t vmaj, int32_t vmin,
+      const std::string &info);
 };
 
 struct calculation_configuration {
   /** \brief выводить отладочную информацию */
   bool is_debug_mode;
+  /* todo: rename to by_binary!!! */
   /** \brief пересчитывать модели по псевдокритическим параметрам */
   bool by_pseudocritic;
   /** \brief использовать 'ISO 20665' поверх 'ГОСТ 30319-3' */
@@ -91,6 +98,8 @@ public:
   calculation_configuration calc_cfg;
   /** \brief уровень логирования */
   io_loglvl log_level;
+  /** \brief файл логирования */
+  std::string log_file;
 
 public:
   models_configuration();

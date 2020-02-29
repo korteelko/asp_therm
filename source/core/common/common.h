@@ -30,10 +30,11 @@
 #define MODEL_NG_GOST         0x00000004
 
 
+/* todo: переделать установку/чтение флажков -
+ *   вынести всё в отдельную функцию */
 #define MARK_MASK             0x0000FF00
 #define GAS_MIX_MARK          0x00000100
 #define PSEUDO_CRITIC_MARK    0x00000200
-#define BINASSOC_COEFS_MARK   0x00000300
 // ГОСТ 30319.3-2015
 #define GAS_NG_GOST_MARK      0x00000400
 
@@ -65,12 +66,23 @@ typedef uint32_t mstatus_t;
 
 typedef uint64_t gas_marks_t;
 
+
+/* Используемые модели */
 enum class rg_model_t : uint64_t {
   IDEAL_GAS = MODEL_IDEAL_GAS,
   REDLICH_KWONG2 = MODEL_REDLICH_KWONG,
   PENG_ROBINSON = MODEL_PENG_ROBINSON,
   NG_GOST = MODEL_NG_GOST
 };
+typedef int64_t rg_model_subtype;
+/* model_subtypes */
+#define MODEL_SUBTYPE_DEFAULT   0x00000000
+/* для модели Пенга Робинсона - инициализация
+ *   параметров смеси ч/з бинодальные коэффициенты */
+#define MODEL_SUBTYPE_BINASSOC  0x00000001
+/* расширение ГОСТ 30319-2015 */
+#define MODEL_SUBTYPE_ISO_20765 0x00000002
+
 
 typedef enum {
   no_log     = 0,              /* no messages     */

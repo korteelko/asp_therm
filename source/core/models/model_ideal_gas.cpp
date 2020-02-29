@@ -9,6 +9,10 @@
 #include <cmath>
 #include <memory>
 
+/** \brief строка model_info для идеального газа */
+static model_str ideal_gas_mi(rg_model_t::IDEAL_GAS, MODEL_SUBTYPE_DEFAULT,
+    1, 0, "Идеальный газ");
+
 Ideal_Gas::Ideal_Gas(const model_input &mi)
   : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
   set_gasparameters(mi.gpi, this);
@@ -26,6 +30,10 @@ Ideal_Gas *Ideal_Gas::Init(const model_input &mi) {
       ig = nullptr;
     }
   return ig; 
+}
+
+model_str Ideal_Gas::GetModelShortInfo() const {
+  return ideal_gas_mi;
 }
 
 void Ideal_Gas::update_dyn_params(dyn_parameters &prev_state,

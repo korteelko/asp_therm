@@ -9,7 +9,7 @@ namespace  {
 std::set<std::string> config_params = std::set<std::string> {
     STRTPL_CONFIG_DEBUG_MODE, STRTPL_CONFIG_PSEUDOCRITICAL,
     STRTPL_CONFIG_INCLUDE_ISO_20765, STRTPL_CONFIG_LOG_LEVEL,
-    STRTPL_CONFIG_DATABASE
+    STRTPL_CONFIG_LOG_FILE, STRTPL_CONFIG_DATABASE
 };
 std::set<std::string> config_database = std::set<std::string> {
     STRTPL_CONFIG_DB_CLIENT, STRTPL_CONFIG_DB_NAME, STRTPL_CONFIG_DB_USERNAME,

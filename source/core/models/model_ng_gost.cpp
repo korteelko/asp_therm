@@ -14,7 +14,13 @@
 #  include <iostream>
 #endif  // _DEBUG
 
-NG_Gost::NG_Gost(const model_input &mi) 
+/** \brief варианты model_info для ГОСТ 30319 и его оригинала - ISO-20765 */
+static model_str ng_gost_mi(rg_model_t::NG_GOST, MODEL_SUBTYPE_DEFAULT,
+    1, 0, "ГОСТ 30319.1-2015");
+static model_str ng_gost_iso20765_mi(rg_model_t::NG_GOST,
+    MODEL_SUBTYPE_ISO_20765, 1, 0, "ГОСТ 30319.1-2015 / ISO-20765");
+
+NG_Gost::NG_Gost(const model_input &mi)
   : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
   set_gasparameters(mi.gpi, this);
 }
@@ -26,6 +32,10 @@ NG_Gost *NG_Gost::Init(const model_input &mi) {
   if (!(mi.gm & GAS_NG_GOST_MARK))
     return nullptr;
   return new NG_Gost(mi);
+}
+
+model_str NG_Gost::GetModelShortInfo() const {
+  return (calc_config_.EnableISO20765()) ? ng_gost_iso20765_mi : ng_gost_mi;
 }
 
 void NG_Gost::DynamicflowAccept(class DerivateFunctor &df) {

@@ -114,6 +114,10 @@ void modelGeneral::set_gasparameters(const gas_params_input &gpi,
 }
 
 // static 
+void modelGeneral::ResetInitError() {
+  init_error.Reset();
+}
+
 merror_t modelGeneral::check_input(const model_input &mi) {
   merror_t err = ERROR_SUCCESS_T;
   if ((mi.gm & GAS_MIX_MARK) && (mi.gm & GAS_NG_GOST_MARK))
