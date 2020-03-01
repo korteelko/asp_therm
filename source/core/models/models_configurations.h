@@ -87,8 +87,9 @@ public:
  * todo: добавить calculation configuration */
 struct calculation_info {
   // я хз чё тут надо, но вроде как инпут прописать
-  time_t time;
   calculation_configuration configuration;
+  model_str *model;
+  time_t time;
 };
 
 /** \brief конфигурация моделей реального газа */

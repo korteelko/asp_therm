@@ -21,18 +21,17 @@ std::string db_client_to_string(db_client client);
 
 /** \brief перечисление типов используемых таблиц */
 enum class db_table {
-  /** информация о ревизии уравнения состояния */
+  /** \brief информация о ревизии уравнения состояния */
   table_model_info = 0,
-  /* TODO: добавить структуру с++, содержащую
-   *   данные для этой таблицы*/
-  /** информация о расчёте */
-  table_calculation_info = 1, // reference to 'table_model_info '
-  /** лог расчёта */
-  table_calculation_state_log = 2  // foreign key to 'table_calculation_info '
+  /** \brief информация о расчёте */
+  table_calculation_info = 1,
+  /** \brief лог расчёта */
+  table_calculation_state_log = 2
 };
 
 std::string get_table_name(db_table dt);
 
+/* todo: remove db_query_str!!! */
 /* если запрос как набор типизированных строк
  *   то необходимо определить строки неформата.
  *   например запрос "создать таблицу" может содержать

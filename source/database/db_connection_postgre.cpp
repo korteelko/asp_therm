@@ -45,16 +45,16 @@ void DBConnectionPostgre::Rollback() {
 }
 
 void DBConnectionPostgre::CreateTable(db_table t,
-    const std::vector<create_table_variant> &components) {
+    const db_table_create_setup &fields) {
   (void) t;
-  (void) components;
+  (void) fields;
   assert(0);
 }
 
 void DBConnectionPostgre::UpdateTable(db_table t,
-    const std::vector<create_table_variant> &components) {
+    const db_table_select_setup &vals) {
   (void) t;
-  (void) components;
+  (void) vals;
   assert(0);
 }
 
@@ -64,7 +64,7 @@ void DBConnectionPostgre::InsertModelInfo(const model_info &mi) {
 }
 
 void DBConnectionPostgre::SelectModelInfo(
-    const std::vector<db_variable> &mip) {
+    const db_table_select_setup &mip) {
   (void) mip;
   assert(0);
 }
@@ -202,9 +202,10 @@ std::string DBConnectionPostgre::setupConnectionString() {
  *   вообще вынести эту функцию в родительский класс */
 std::string DBConnectionPostgre::db_variable_to_string(
     const db_variable &dv) {
+  assert(0 && "dodelat'");
   std::stringstream ss;
   auto ew = dv.CheckYourself();
-  if (ew.GetErrorCode()) {
+  if (!ew) {
     ss << dv.fname << " ";
     auto itDBtype = postgresql_impl::str_db_types.find(dv.type);
     if (itDBtype != postgresql_impl::str_db_types.end()) {
@@ -220,7 +221,8 @@ std::string DBConnectionPostgre::db_variable_to_string(
     if (dv.flags.has_default)
       ss << " DEFAULT " << dv.default_str;
   } else {
-    error_.SetError(ew.GetErrorCode(), ew.GetMessage());
+    error_.SetError(ew,
+        "Проверка параметров поля таблицы завершилось ошибкой");
   }
   return ss.str();
 }

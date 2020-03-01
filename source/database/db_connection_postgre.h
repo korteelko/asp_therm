@@ -21,18 +21,14 @@ public:
   void Commit() override;
   void Rollback() override;
 
-  /* not checked */
-  void CreateTable(db_table t,
-      const std::vector<create_table_variant> &components) override;
-  void UpdateTable(db_table t,
-      const std::vector<create_table_variant> &components) override;
+  void CreateTable(db_table t, const db_table_create_setup &fields) override;
+  void UpdateTable(db_table t, const db_table_select_setup &vals) override;
 
   void InsertModelInfo(const model_info &mi) override;
-  void SelectModelInfo(const std::vector<db_variable> &mip) override;
+  void SelectModelInfo(const db_table_select_setup &mip) override;
 
   void InsertCalculationInfo(const calculation_info &ci) override;
   void InsertCalculationStateLog(const calculation_state_log &sl) override;
-
 
   /* checked functions */
   mstatus_t SetupConnection() override;

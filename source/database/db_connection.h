@@ -18,8 +18,6 @@
   *   так что можно чекать формат/неформат  */
 struct db_variable {
 public:
-  /* не знаю получится ли реализовать
-   *   пока это место сыровато - сного лишнего */
   enum class db_type {
     /** автоинкрементируюмое поле id
       *   в postgresql это SERIAL */
@@ -48,9 +46,9 @@ public:
     db_type_blob
   };
 
-public:
   struct db_variable_flags {
-    // bool is_primary_key = false;
+    bool is_primary_key = false;
+    bool is_reference = false;
     bool is_unique = false;
     bool can_be_null = true;
     /** \only for numeric types */
@@ -77,29 +75,17 @@ public:
       db_variable_flags flags, int len = 1);
 
   /** \brief проверить несовместимы ли флаги и другие параметры */
-  ErrorWrap CheckYourself() const;
+  merror_t CheckYourself() const;
 };
 
-using db_type = db_variable::db_type;
 
-/* TODO: функции составления полей(db_variable) по умолчанию */
-/* набор функций для разных типов данных db параметры
- *   которых отличаются от дефолтных
- * UPD: блять, вынести всё в отдельный файл */
-inline db_variable default_autoinc() {
-  return db_variable("id", db_type::db_type_autoinc,
-      {.is_unique = true,
-       .can_be_null = false});
-}
-
-/* TODO: а pk то наверно и не нужен, в db_variable
- *   флага достаточно наверно(проверить) */
 /** \brief структура содержащая параметры первичного ключа */
 struct db_complex_pk {
-  std::vector<db_variable> elements;
+  std::vector<std::string> fnames;
 };
+
 /** \brief структура содержащая параметры удалённого ключа */
-struct db_complex_fk {
+struct db_reference {
 public:
   enum class db_on_delete {
     on_delete_empty = 0,
@@ -108,32 +94,74 @@ public:
   };
 
 public:
-  /** \brief набор элементов таблицы которые ссылаются на ключи другой */
-  std::vector<db_variable> element;
-  /** \brief набор элементов таблицы которые ссылаются на ключи другой */
+  /** \brief собственное имя параметра таблицы */
+  std::string fname;
+  /** \brief таблица на которую ссылается параметр */
   db_table foreign_table;
-  /** \brief набор элементов таблицы которые ссылаются на ключи другой */
-  std::vector<db_variable> foreign_element;
+  /** \brief имя параметра в таблице foreign_table */
+  std::string foreign_fname;
 
-  bool has_ON_DELETE = false;
+  /** \brief флаг 'внешнего ключа' */
+  bool is_foreign_key = false;
+  /** \brief флаг наличия on_delete метода */
+  bool has_on_delete = false;
   /** \brief метод удаления значения
     * \default db_on_delete::empty */
   db_on_delete delete_method;
+
+public:
+  db_reference(const std::string &fname, db_table ftable,
+      const std::string &f_fname, bool is_fkey,
+      db_on_delete on_del = db_on_delete::on_delete_empty);
 };
 
-typedef std::variant<db_variable, db_complex_pk, db_complex_fk>
-    create_table_variant;
+typedef std::vector<db_variable> db_fields_collection;
+typedef std::vector<db_reference> db_ref_collection;
+using db_type = db_variable::db_type;
 
-/* todo: такс, выписать sql запросы для этих функций */
+
+/* todo: можно наверное общую имплементацию
+ *   db_table_create_setup и db_table_select_setup
+ *   вынести в структуру db_table_setup */
+struct db_table_create_setup {
+public:
+  ErrorWrap error;
+  db_table table;
+  const db_fields_collection &fields;
+  db_complex_pk pk_string;
+  const db_ref_collection *ref_strings;
+
+private:
+  void setupPrimaryKeyString();
+  void checkReferences();
+
+public:
+  db_table_create_setup(db_table table, const db_fields_collection &fields);
+};
+
+/** \brief структура для сборки SELECT/UPDATE запросов */
+struct db_table_select_setup {
+  typedef uint32_t field_index;
+
+public:
+  ErrorWrap error;
+  db_table table;
+  const db_fields_collection &fields;
+  std::map<field_index, std::string> values;
+
+public:
+  db_table_select_setup(db_table table, const db_fields_collection &fields);
+};
+
 /** \brief функция собирающая набор полей для
   *   создания таблицы БД model_info информации о модели */
-std::vector<create_table_variant> table_model_info();
+db_table_create_setup table_create_model_info();
 /** \brief функция собирающая набор полей для
   *   создания таблицы БД calculation_info информации о расчёте */
-std::vector<create_table_variant> table_calculation_info();
+db_table_create_setup table_create_calculation_info();
 /** \brief функция собирающая набор полей для
   *   создания таблицы БД calculation_state_log строку расчёта */
-std::vector<create_table_variant> table_calculation_state_log();
+db_table_create_setup table_create_calculation_state_log();
 
 
 /** \brief структура содержит параметры коннектинга */
@@ -182,14 +210,13 @@ public:
    *   здесь должны быть только низкоуровневые функции
    *   Update, Insert, Select */
   /* вызывается командами! */
-  virtual void CreateTable(db_table t,
-      const std::vector<create_table_variant> &components) = 0;
-  virtual void UpdateTable(db_table t,
-      const std::vector<create_table_variant> &components) = 0;
+  virtual void CreateTable(db_table t, const db_table_create_setup &fields) = 0;
+  virtual void UpdateTable(db_table t, const db_table_select_setup &vals) = 0;
 
+  // todo - replace argument 'const model_info &mi'
+  //   with 'const db_table_select_setup &mip'
   virtual void InsertModelInfo(const model_info &mi) = 0;
-  virtual void SelectModelInfo(
-      const std::vector<db_variable> &mip) = 0;
+  virtual void SelectModelInfo(const db_table_select_setup &mip) = 0;
 
   virtual void InsertCalculationInfo(
       const calculation_info &ci) = 0;

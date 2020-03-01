@@ -1,6 +1,7 @@
 #include "merror_codes.h"
 
 // ес, онгличанин ( ͡° ͜ʖ ͡°)
+// ! check comma after last but one message
 static const char *custom_msg[] = {
   "there are not any errors ",
   /* not used messages(first message
@@ -16,7 +17,7 @@ static const char *custom_msg[] = {
 static const char *custom_msg_fileio[] {
   "fileio error ",
   "input from file error ",
-  "output to file error "
+  "output to file error ",
   "error with logging file "
 };
 
@@ -51,7 +52,8 @@ static const char *custom_msg_strtpl[] = {
 
 static const char *custom_msg_database[] = {
   "database error ",
-  "database connection error "
+  "database connection error ",
+  "database variable error ",
   "database variable error "
 };
 

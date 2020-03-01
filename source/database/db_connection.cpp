@@ -12,6 +12,9 @@
 #include <assert.h>
 
 
+/* todo: в итоге здесь перемешаны модуль конфигурации бд,
+ *   и модуль инициализации полей таблиц бд */
+
 namespace update_configuration_functional {
 typedef std::function<merror_t(db_parameters *,
     const std::string &value)> update_dbconfig_f;
@@ -59,61 +62,228 @@ static std::map<const std::string, dbconfig_fuctions> map_dbconfig_fuctions =
   {STRTPL_CONFIG_DB_HOST, {update_db_host}},
   {STRTPL_CONFIG_DB_PORT, {update_db_port}}
 };
-}  // update_configuration_functional namespace
+}  // namespace update_configuration_functional
+
+namespace table_fields_setup {
+/* SQL_QUERY:
+TABLE MODEL_INFO (
+  model_id autoinc,
+  model_type uint NOT NULL,
+  model_subtype uint,
+  vers_major uint not NULL,
+  vers_minor uint,
+  short_info string,
+  PRIMARY KEY (model_id)
+); */
+static const db_fields_collection model_info_fields = {
+  db_variable("model_id", db_type::db_type_autoinc,
+      {.is_primary_key = true, .is_unique = true, .can_be_null = false}),
+  db_variable("model_type", db_type::db_type_int, {.can_be_null = false}),
+  db_variable("model_subtype", db_type::db_type_int, {}),
+  db_variable("vers_major", db_type::db_type_int, {.can_be_null = false}),
+  db_variable("vers_minor", db_type::db_type_int, {}),
+  db_variable("short_info", db_type::db_type_text, {})
+};
+static const db_table_create_setup model_info_create_setup(
+    db_table::table_model_info, model_info_fields);
+
+/* SQL_QUERY:
+TABLE CALCULATION_INFO (
+  calculation_id autoinc,
+  model_info_id int,
+  date date,
+  time time,
+  PRIMARY KEY (calculation_id),
+  FOREIGN KEY (model_info_id) REFERENCE model_info(model_id)
+); */
+static const db_fields_collection calculation_info_fields = {
+  db_variable("calculation_id", db_type::db_type_autoinc,
+      {.is_primary_key = true, .is_unique = true, .can_be_null = false}),
+  // reference to model_info(fk)
+  db_variable("model_info_id", db_type::db_type_int,
+      {.is_reference = true, .can_be_null = false}),
+  db_variable("date", db_type::db_type_date, {.can_be_null = false}),
+  db_variable("time", db_type::db_type_time, {.can_be_null = false})
+};
+static const db_ref_collection calculation_info_references = {
+  db_reference("model_info_id", db_table::table_model_info, "model_id", true)
+};
+static const db_table_create_setup calculation_info_create_setup(
+    db_table::table_calculation_info, calculation_info_fields);
+
+/* SQL_QUERY:
+TABLE CALCULATION_STATE_LOG (
+  calcaultion_log_id int,
+  calcaultion_info_id int,
+  volume real,
+  pressure real,
+  temperature real,
+  heat_capac_vol real,
+  heat_capac_pres real,
+  internal_energy real,
+  beta_kr real,
+  enthalpy real
+  state_phase char(12)
+  PRIMARY KEY (calculation_log_id, calculation_info_id),
+  FOREIGN KEY (calculation_info_id)
+      REFERENCE calculation_info(calculation_id) ON DELETE CASCADE
+); */
+static const db_fields_collection calculation_state_log_fields = {
+  db_variable("calculation_log_id", db_type::db_type_autoinc,
+      {.is_primary_key = true, .is_unique = true, .can_be_null = false}),
+  db_variable("calculation_info_id", db_type::db_type_int,
+      {.is_primary_key = true, .is_reference = true, .can_be_null = false}),
+  db_variable("volume", db_type::db_type_real, {}),
+  db_variable("pressure", db_type::db_type_real, {}),
+  db_variable("temperature", db_type::db_type_real, {}),
+  db_variable("heat_capacity_vol", db_type::db_type_real, {}),
+  db_variable("heat_capacity_pres", db_type::db_type_real, {}),
+  db_variable("internal_energy", db_type::db_type_real, {}),
+  db_variable("beta_kr", db_type::db_type_real, {}),
+  db_variable("enthalpy", db_type::db_type_real, {}),
+  db_variable("state_phase", db_type::db_type_char_array,
+      {.is_array = true}, 12)
+};
+static const db_ref_collection calculation_state_log_references = {
+  db_reference("calculation_info_id", db_table::table_calculation_info,
+      "calculation_id", true)
+};
+static const db_table_create_setup calculation_state_log_create_setup(
+    db_table::table_calculation_state_log, calculation_state_log_fields);
+}  // namespace table_fields_setup
+
 
 db_variable::db_variable(std::string fname, db_type type,
     db_variable_flags flags, int len)
   : fname(fname), type(type), flags(flags), len(len) {}
 
-ErrorWrap db_variable::CheckYourself() const {
-  ErrorWrap ew;
+merror_t db_variable::CheckYourself() const {
+  merror_t ew = ERROR_SUCCESS_T;
   if (fname.empty()) {
-    // just check that looks __FUNCTION__
-    ew.SetError(ERROR_DB_VARIABLE,
-        "Имя столбца таблицы базы данных не задано "
-        + std::string(__FUNCTION__));
+    ew = ERROR_DB_VARIABLE;
+    Logging::Append(io_loglvl::err_logs, "пустое имя поля таблицы бд" +
+        STRING_DEBUG_INFO);
+  } else if (type == db_type::db_type_char_array &&
+      (!flags.is_array || len < 1)) {
+    ew = ERROR_DB_VARIABLE;
+    Logging::Append(io_loglvl::err_logs,
+        "установки поля char array не соответствуют ожиданиям :(" +
+        STRING_DEBUG_INFO);
   }
   return ew;
 }
 
+namespace ns_tfs = table_fields_setup;
 
-/* SQL_QUERY:
-CREATE TABLE MODEL_INFO (
-  model_type uint NOT NULL,
-  model_subtype uint,
-  name string,
-  vers_major uint not NULL,
-  vers_minor uint,
-  PRIMARY KEY (model_type, model_subtype)
-);
-*/
+db_table_create_setup::db_table_create_setup(db_table table,
+    const db_fields_collection &fields)
+  : table(table), fields(fields), ref_strings(nullptr) {
+  switch (table) {
+    case db_table::table_model_info:
+      break;
+    case db_table::table_calculation_info:
+      ref_strings = &ns_tfs::calculation_info_references;
+      break;
+    case db_table::table_calculation_state_log:
+      ref_strings = &ns_tfs::calculation_state_log_references;
+      break;
+    default:
+      assert(0 && "undef table");
+      break;
+  }
+  setupPrimaryKeyString();
+  checkReferences();
+  if (error.GetErrorCode()) {
+    error.LogIt();
+  }
+}
+
+void db_table_create_setup::setupPrimaryKeyString() {
+  pk_string.fnames.clear();
+  for (const auto &field: fields) {
+    if (field.flags.is_primary_key)
+      pk_string.fnames.push_back(field.fname);
+  }
+  assert(pk_string.fnames.empty() == false);
+}
+
+// todo: too long function
+//   split in few method(for example remove 'switch')
+void db_table_create_setup::checkReferences() {
+  if (ref_strings) {
+    for (auto const &tref : *ref_strings) {
+      // check fname present in fields
+      bool exist = std::find_if(fields.begin(), fields.end(),
+          [&tref](const db_variable &v)
+              {return v.fname == tref.fname;}) != fields.end();
+      if (exist) {
+        const db_fields_collection *ffields= nullptr;
+        switch (tref.foreign_table) {
+          case db_table::table_model_info:
+            ffields = &ns_tfs::model_info_fields;
+            break;
+          case db_table::table_calculation_info:
+            ffields = &ns_tfs::calculation_info_fields;
+            break;
+          case db_table::table_calculation_state_log:
+            ffields = &ns_tfs::calculation_state_log_fields;
+            break;
+          default:
+            assert(0 && "undef table");
+            break;
+        }
+        exist = std::find_if(ffields->begin(), ffields->end(),
+            [&tref](const db_variable &v)
+                {return v.fname == tref.foreign_fname;}) != ffields->end();
+        if (!exist) {
+          error.SetError(ERROR_DB_REFER_FIELD,
+              "Неверное имя внешнего поля для reference.\n"
+              "Таблица - " + get_table_name(table) + "\n"
+              "Внешняя таблица - " + get_table_name(tref.foreign_table) + "\n"
+              + STRING_DEBUG_INFO);
+          break;
+        }
+      } else {
+        error.SetError(ERROR_DB_REFER_FIELD,
+            "Неверное собственное имя поля для reference" + STRING_DEBUG_INFO);
+        break;
+      }
+    }
+  }
+}
+
+db_reference::db_reference(const std::string &fname, db_table ftable,
+    const std::string &f_fname, bool is_fkey, db_on_delete on_del)
+  : fname(fname), foreign_table(ftable), foreign_fname(f_fname),
+    is_foreign_key(is_fkey), has_on_delete(false), delete_method(on_del) {
+  if (delete_method != db_on_delete::on_delete_empty)
+    has_on_delete = true;
+}
+
 static_assert(sizeof(model_info) == 96, "Необходимо перепроверить "
     "функцию table_model_info() - вероятно изменился формат струтуры данных "
     "model_info добавьте новые поля, или измените старые");
-std::vector<create_table_variant> table_model_info() {
-  std::vector<create_table_variant> vars;
-  db_complex_pk mi_pk {};
-  assert(0);
-  return vars;
+db_table_create_setup table_create_model_info() {
+  return ns_tfs::model_info_create_setup;
 }
 
-std::vector<create_table_variant> table_calculation_info() {
-  std::vector<create_table_variant> vars;
-  assert(0);
-  return vars;
+static_assert(sizeof(calculation_info) == 24, "См static_assert "
+    "для table_cteate_model_info, идея таже");
+db_table_create_setup table_create_calculation_info() {
+  return ns_tfs::calculation_info_create_setup;
 }
 
-std::vector<create_table_variant> table_calculation_state_log() {
-  std::vector<create_table_variant> vars;
-  assert(0);
-  return vars;
+static_assert(sizeof(calculation_state_log) == 104, "См static_assert "
+    "для table_cteate_model_info, идея таже");
+db_table_create_setup table_create_calculation_state_log() {
+  return ns_tfs::calculation_state_log_create_setup;
 }
 
+
+namespace ns_ucf = update_configuration_functional;
 
 db_parameters::db_parameters()
   : is_dry_run(true), supplier(db_client::NOONE) {}
-
-namespace ns_ucf = update_configuration_functional;
 
 merror_t db_parameters::SetConfigurationParameter(
     const std::string &param_strtpl, const std::string &param_value) {

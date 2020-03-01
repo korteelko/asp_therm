@@ -5,7 +5,6 @@ set(RESULT_LIB atherm)
 project(${PROJECT_NAME})
 # TODO:
 #   CHECK WINDOWS BUILDING
-#   add MIT License
 
 add_compile_options(-Wall)
 set(CMAKE_CXX_STANDARD 17)

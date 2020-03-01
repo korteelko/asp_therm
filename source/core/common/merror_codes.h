@@ -68,6 +68,7 @@
 /** ошибка подключения к базе данных */
 #define ERROR_DB_CONNECTION   (0x0100 | ERROR_DATABASE_T)
 #define ERROR_DB_VARIABLE     (0x0200 | ERROR_DATABASE_T)
+#define ERROR_DB_REFER_FIELD  (0x0300 | ERROR_DATABASE_T)
 
 
 const char *GetCustomErrorMsg(unsigned int error);
