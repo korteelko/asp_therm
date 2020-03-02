@@ -1,3 +1,12 @@
+/**
+ * asp_therm - implementation of real gas equations of state
+ *
+ *
+ * Copyright (c) 2020 Mishutinski Yurii
+ *
+ * This library is distributed under the MIT License.
+ * See LICENSE file in the project root for full license information.
+ */
 #ifndef _CORE__GAS_PARAMETERS__GAS_NG_GOST_H_
 #define _CORE__GAS_PARAMETERS__GAS_NG_GOST_H_
 
