@@ -7,11 +7,11 @@
   "log_level": "debug",
   "database": {
     "dry_run": "true",
-    "client": "redis",
-    "name": "asp_therm_db",
-    "username": "",
-    "password": "",
-    "host": "",
-    "port": ""
+    "client": "postgresql",
+    "name": "africae",
+    "username": "jorge",
+    "password": "my_pass",
+    "host": "127.0.0.1",
+    "port": "5432"
   }
 }

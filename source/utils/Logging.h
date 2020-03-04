@@ -14,8 +14,8 @@
 #include "ErrorWrap.h"
 
 #include <fstream>
-#include <string>
 #include <sstream>
+#include <string>
 
 #ifdef OS_NIX
 #  include <sys/param.h>
@@ -43,7 +43,6 @@ typedef std::ofstream mlog_fostream;
 class Logging {
   static mlog_fostream output_;
   static logging_cfg li_;
-  static std::string status_msg_;
   static ErrorWrap error_;
   static bool is_aval_;
 

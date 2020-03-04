@@ -14,6 +14,7 @@
 #include "db_connection.h"
 
 #include <memory>
+#include <sstream>
 #include <string>
 
 #include <pqxx/pqxx>
@@ -30,7 +31,7 @@ public:
   void Commit() override;
   void Rollback() override;
 
-  void CreateTable(db_table t, const db_table_create_setup &fields) override;
+  mstatus_t CreateTable(const db_table_create_setup &fields) override;
   void UpdateTable(db_table t, const db_table_select_setup &vals) override;
 
   void InsertModelInfo(const model_info &mi) override;
@@ -51,7 +52,13 @@ public:
 
 private:
   std::string setupConnectionString();
+  std::stringstream setupCreateTableString(
+      const db_table_create_setup &fields);
+
+  /** \brief собрать строку поля БД по значению db_variable */
   std::string db_variable_to_string(const db_variable &dv);
+  /** \brief собрать строку ссылки на другую таблицу по значению db_reference*/
+  std::string db_reference_to_string(const db_reference &ref);
 
 private:
   std::unique_ptr<pqxx::connection> pconnect_;

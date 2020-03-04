@@ -27,32 +27,32 @@
   *   так что можно чекать формат/неформат  */
 struct db_variable {
 public:
-  enum class db_type {
+  enum class db_var_type {
     /** автоинкрементируюмое поле id
       *   в postgresql это SERIAL */
-    db_type_autoinc = 0,
+    type_autoinc = 0,
     /** для хранения Universal Unique Identificator(RFC 4122) */
-    db_type_uuid,
+    type_uuid,
     /** boolean */
-    db_type_bool,
+    type_bool,
     /** 2байт int {-32,768; 32,767} */
-    db_type_short,
+    type_short,
     /** 4байт int {-2,147,483,648; 2,147,483,647} */
-    db_type_int,
+    type_int,
     /** 8байт int {-9,223,372,036,854,775,808; 9,223,372,036,854,775,807} */
-    db_type_long,
+    type_long,
     /** 4байт число с п.т. */
-    db_type_real,
+    type_real,
     /** дата */
-    db_type_date,
+    type_date,
     /** время */
-    db_type_time,
+    type_time,
     /** массив символов */
-    db_type_char_array,
+    type_char_array,
     /** просто текст(в postgresql такой есть) */
-    db_type_text,
+    type_text,
     /** поле сырых данных blob */
-    db_type_blob
+    type_blob
   };
 
   struct db_variable_flags {
@@ -70,7 +70,7 @@ public:
   /** \brief имя столбца/параметра, чтоб создавать и апдейтить */
   std::string fname;
   /** \brief тип значения */
-  db_type type;
+  db_var_type type;
   /** \brief флаги колонуи таблицы */
   db_variable_flags flags;
   /** \brief дефолтное значение, если есть */
@@ -80,7 +80,7 @@ public:
   int len;
 
 public:
-  db_variable(std::string fname, db_type type,
+  db_variable(std::string fname, db_var_type type,
       db_variable_flags flags, int len = 1);
 
   /** \brief проверить несовместимы ли флаги и другие параметры */
@@ -96,10 +96,12 @@ struct db_complex_pk {
 /** \brief структура содержащая параметры удалённого ключа */
 struct db_reference {
 public:
-  enum class db_on_delete {
-    on_delete_empty = 0,
-    on_delete_cascade,
-    on_delete_restrict
+  enum class db_reference_act {
+    ref_act_empty = 0,
+    // ref_act_set_null,
+    // ref_act_set_default,
+    ref_act_cascade,
+    ref_act_restrict
   };
 
 public:
@@ -114,19 +116,28 @@ public:
   bool is_foreign_key = false;
   /** \brief флаг наличия on_delete метода */
   bool has_on_delete = false;
+  /** \brief флаг наличия on_update метода */
+  bool has_on_update = false;
   /** \brief метод удаления значения
     * \default db_on_delete::empty */
-  db_on_delete delete_method;
+  db_reference_act delete_method;
+  db_reference_act update_method;
 
 public:
   db_reference(const std::string &fname, db_table ftable,
       const std::string &f_fname, bool is_fkey,
-      db_on_delete on_del = db_on_delete::on_delete_empty);
+      db_reference_act on_del = db_reference_act::ref_act_empty,
+      db_reference_act on_upd = db_reference_act::ref_act_empty);
+
+  /** \brief проверить несовместимы ли флаги и другие параметры */
+  merror_t CheckYourself() const;
+
+  static std::string GetReferenceActString(db_reference_act act);
 };
 
 typedef std::vector<db_variable> db_fields_collection;
 typedef std::vector<db_reference> db_ref_collection;
-using db_type = db_variable::db_type;
+using db_type = db_variable::db_var_type;
 
 
 /* todo: можно наверное общую имплементацию
@@ -162,6 +173,7 @@ public:
   db_table_select_setup(db_table table, const db_fields_collection &fields);
 };
 
+// create setup
 /** \brief функция собирающая набор полей для
   *   создания таблицы БД model_info информации о модели */
 db_table_create_setup table_create_model_info();
@@ -219,7 +231,7 @@ public:
    *   здесь должны быть только низкоуровневые функции
    *   Update, Insert, Select */
   /* вызывается командами! */
-  virtual void CreateTable(db_table t, const db_table_create_setup &fields) = 0;
+  virtual mstatus_t CreateTable(const db_table_create_setup &fields) = 0;
   virtual void UpdateTable(db_table t, const db_table_select_setup &vals) = 0;
 
   // todo - replace argument 'const model_info &mi'

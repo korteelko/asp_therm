@@ -108,7 +108,7 @@ std::string trim_str(const std::string &str);
 bool is_exist(const std::string &path);
 /** \brief Вернуть путь к директории содержащей файл */
 std::string dir_by_path(const std::string &path);
-/** \brief Вернуть путь к директории содержащей файл */
+/** \brief Вывести целочисленное значение в шестнадцеричном формате */
 std::string hex2str(int hex);
 
 #endif  // !_CORE__COMMON__COMMON_H_

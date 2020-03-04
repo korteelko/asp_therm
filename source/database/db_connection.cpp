@@ -85,13 +85,13 @@ TABLE MODEL_INFO (
   PRIMARY KEY (model_id)
 ); */
 static const db_fields_collection model_info_fields = {
-  db_variable("model_id", db_type::db_type_autoinc,
+  db_variable("model_id", db_type::type_autoinc,
       {.is_primary_key = true, .is_unique = true, .can_be_null = false}),
-  db_variable("model_type", db_type::db_type_int, {.can_be_null = false}),
-  db_variable("model_subtype", db_type::db_type_int, {}),
-  db_variable("vers_major", db_type::db_type_int, {.can_be_null = false}),
-  db_variable("vers_minor", db_type::db_type_int, {}),
-  db_variable("short_info", db_type::db_type_text, {})
+  db_variable("model_type", db_type::type_int, {.can_be_null = false}),
+  db_variable("model_subtype", db_type::type_int, {}),
+  db_variable("vers_major", db_type::type_int, {.can_be_null = false}),
+  db_variable("vers_minor", db_type::type_int, {}),
+  db_variable("short_info", db_type::type_text, {})
 };
 static const db_table_create_setup model_info_create_setup(
     db_table::table_model_info, model_info_fields);
@@ -106,13 +106,13 @@ TABLE CALCULATION_INFO (
   FOREIGN KEY (model_info_id) REFERENCE model_info(model_id)
 ); */
 static const db_fields_collection calculation_info_fields = {
-  db_variable("calculation_id", db_type::db_type_autoinc,
+  db_variable("calculation_id", db_type::type_autoinc,
       {.is_primary_key = true, .is_unique = true, .can_be_null = false}),
   // reference to model_info(fk)
-  db_variable("model_info_id", db_type::db_type_int,
+  db_variable("model_info_id", db_type::type_int,
       {.is_reference = true, .can_be_null = false}),
-  db_variable("date", db_type::db_type_date, {.can_be_null = false}),
-  db_variable("time", db_type::db_type_time, {.can_be_null = false})
+  db_variable("date", db_type::type_date, {.can_be_null = false}),
+  db_variable("time", db_type::type_time, {.can_be_null = false})
 };
 static const db_ref_collection calculation_info_references = {
   db_reference("model_info_id", db_table::table_model_info, "model_id", true)
@@ -138,31 +138,32 @@ TABLE CALCULATION_STATE_LOG (
       REFERENCE calculation_info(calculation_id) ON DELETE CASCADE
 ); */
 static const db_fields_collection calculation_state_log_fields = {
-  db_variable("calculation_log_id", db_type::db_type_autoinc,
+  db_variable("calculation_log_id", db_type::type_autoinc,
       {.is_primary_key = true, .is_unique = true, .can_be_null = false}),
-  db_variable("calculation_info_id", db_type::db_type_int,
+  db_variable("calculation_info_id", db_type::type_int,
       {.is_primary_key = true, .is_reference = true, .can_be_null = false}),
-  db_variable("volume", db_type::db_type_real, {}),
-  db_variable("pressure", db_type::db_type_real, {}),
-  db_variable("temperature", db_type::db_type_real, {}),
-  db_variable("heat_capacity_vol", db_type::db_type_real, {}),
-  db_variable("heat_capacity_pres", db_type::db_type_real, {}),
-  db_variable("internal_energy", db_type::db_type_real, {}),
-  db_variable("beta_kr", db_type::db_type_real, {}),
-  db_variable("enthalpy", db_type::db_type_real, {}),
-  db_variable("state_phase", db_type::db_type_char_array,
+  db_variable("volume", db_type::type_real, {}),
+  db_variable("pressure", db_type::type_real, {}),
+  db_variable("temperature", db_type::type_real, {}),
+  db_variable("heat_capacity_vol", db_type::type_real, {}),
+  db_variable("heat_capacity_pres", db_type::type_real, {}),
+  db_variable("internal_energy", db_type::type_real, {}),
+  db_variable("beta_kr", db_type::type_real, {}),
+  db_variable("enthalpy", db_type::type_real, {}),
+  db_variable("state_phase", db_type::type_char_array,
       {.is_array = true}, 12)
 };
 static const db_ref_collection calculation_state_log_references = {
   db_reference("calculation_info_id", db_table::table_calculation_info,
-      "calculation_id", true)
+      "calculation_id", true, db_reference::db_reference_act::ref_act_cascade,
+      db_reference::db_reference_act::ref_act_cascade)
 };
 static const db_table_create_setup calculation_state_log_create_setup(
     db_table::table_calculation_state_log, calculation_state_log_fields);
 }  // namespace table_fields_setup
 
 
-db_variable::db_variable(std::string fname, db_type type,
+db_variable::db_variable(std::string fname, db_var_type type,
     db_variable_flags flags, int len)
   : fname(fname), type(type), flags(flags), len(len) {}
 
@@ -172,7 +173,7 @@ merror_t db_variable::CheckYourself() const {
     ew = ERROR_DB_VARIABLE;
     Logging::Append(io_loglvl::err_logs, "пустое имя поля таблицы бд" +
         STRING_DEBUG_INFO);
-  } else if (type == db_type::db_type_char_array &&
+  } else if (type == db_var_type::type_char_array &&
       (!flags.is_array || len < 1)) {
     ew = ERROR_DB_VARIABLE;
     Logging::Append(io_loglvl::err_logs,
@@ -262,12 +263,62 @@ void db_table_create_setup::checkReferences() {
 }
 
 db_reference::db_reference(const std::string &fname, db_table ftable,
-    const std::string &f_fname, bool is_fkey, db_on_delete on_del)
+    const std::string &f_fname, bool is_fkey, db_reference_act on_del,
+    db_reference_act on_upd)
   : fname(fname), foreign_table(ftable), foreign_fname(f_fname),
-    is_foreign_key(is_fkey), has_on_delete(false), delete_method(on_del) {
-  if (delete_method != db_on_delete::on_delete_empty)
+    is_foreign_key(is_fkey), has_on_delete(false), delete_method(on_del),
+    update_method(on_upd) {
+  if (delete_method != db_reference_act::ref_act_empty)
     has_on_delete = true;
+  if (update_method != db_reference_act::ref_act_empty)
+    has_on_update = true;
 }
+
+merror_t db_reference::CheckYourself() const {
+  merror_t error = ERROR_SUCCESS_T;
+  if (!fname.empty()) {
+    if (!foreign_fname.empty()) {
+      // перестраховались
+      if (has_on_delete && delete_method == db_reference_act::ref_act_empty) {
+        error = ERROR_DB_VARIABLE;
+        Logging::Append(io_loglvl::err_logs, "несоответсвие метода удаления "
+            "для ссылки. Поле: " + fname + ". Внешнее поле: " + foreign_fname);
+      }
+      if (has_on_update && update_method == db_reference_act::ref_act_empty) {
+        error = ERROR_DB_VARIABLE;
+        Logging::Append(io_loglvl::err_logs, "несоответсвие метода обновления "
+            "для ссылки. Поле: " + fname + ". Внешнее поле: " + foreign_fname);
+      }
+    } else {
+      error = ERROR_DB_VARIABLE;
+      Logging::Append(io_loglvl::err_logs, "пустое имя поля для "
+          "внешней таблицы бд\n");
+    }
+  } else {
+    error = ERROR_DB_VARIABLE;
+      Logging::Append(io_loglvl::err_logs, "пустое имя поля таблицы бд\n");
+  }
+  return error;
+}
+
+/* this is for postgresql, what about anothers? */
+std::string db_reference::GetReferenceActString(db_reference_act act) {
+  std::string act_str;
+  switch (act) {
+    case db_reference_act::ref_act_empty:
+      break;
+    case db_reference_act::ref_act_cascade:
+      act_str = "CASCADE";
+      break;
+    case db_reference_act::ref_act_restrict:
+      act_str = "RESTRICT";
+      break;
+    default:
+      assert(0 && "undef act type");
+  }
+  return act_str;
+}
+
 
 static_assert(sizeof(model_info) == 96, "Необходимо перепроверить "
     "функцию table_model_info() - вероятно изменился формат струтуры данных "
