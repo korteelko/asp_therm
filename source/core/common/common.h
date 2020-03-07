@@ -58,12 +58,9 @@
 typedef uint32_t mstatus_t;
 /** статус при инициализации */
 #define STATUS_DEFAULT        0x00000001
-/** как и STATUS_DEFAULT, но для дебажной
-  *   dry_run опции */
-#define STATUS_DRY_RUN        0x00000002
-#define STATUS_OK             0x00000003
-#define STATUS_NOT            0x00000004
-#define STATUS_HAVE_ERROR     0x00000005
+#define STATUS_OK             0x00000002
+#define STATUS_NOT            0x00000003
+#define STATUS_HAVE_ERROR     0x00000004
 
 #if defined(OS_WIN)
 #  define PATH_SEPARATOR '\\'
@@ -110,5 +107,7 @@ bool is_exist(const std::string &path);
 std::string dir_by_path(const std::string &path);
 /** \brief Вывести целочисленное значение в шестнадцеричном формате */
 std::string hex2str(int hex);
+/** \brief Проверить допустимость текущего состояния статуса */
+bool is_status_aval(mstatus_t status);
 
 #endif  // !_CORE__COMMON__COMMON_H_

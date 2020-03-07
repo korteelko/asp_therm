@@ -29,6 +29,7 @@
 namespace postgresql_impl {
 static std::map<db_type, std::string> str_db_types =
     std::map<db_type, std::string>{
+  {db_type::type_autoinc, "SERIAL"},
   {db_type::type_uuid, "UUID"},
   {db_type::type_bool, "BOOL"},
   {db_type::type_int, "INTEGER"},
@@ -45,33 +46,26 @@ static std::map<db_type, std::string> str_db_types =
 DBConnectionPostgre::DBConnectionPostgre(const db_parameters &parameters)
   : DBConnection(parameters), pconnect_(nullptr) {}
 
-void DBConnectionPostgre::Commit() {
-  assert(0);
-}
+void DBConnectionPostgre::Commit() {}
 
-void DBConnectionPostgre::Rollback() {
-  assert(0);
-}
+void DBConnectionPostgre::Rollback() {}
 
 mstatus_t DBConnectionPostgre::CreateTable(
     const db_table_create_setup &fields) {
+  std::stringstream create_ss = setupCreateTableString(fields);
   if (is_connected_ && pconnect_) {
-    std::stringstream create_ss = setupCreateTableString(fields);
-    if (status_ != STATUS_DRY_RUN && pconnect_->is_open()) {
+    if (pconnect_->is_open() && !error_.GetErrorCode()) {
       try {
-        assert(0 && "otsuda");
         pqxx::work tr(*pconnect_);
-        pqxx::result trres(tr.exec(create_ss.str()));
-        // в примерах коммитят после запроса
+        tr.exec(create_ss.str());
         tr.commit();
-
-        if (!trres.empty()) {
-          if (ProgramState::Instance().IsDebugMode())
-            Logging::Append(io_loglvl::debug_logs, "Запрос БД на создание таблицы:"
-                + create_ss.str() + "\n\t");
-        }
-      } catch (const pqxx::undefined_table &) {
+        if (ProgramState::Instance().IsDebugMode())
+          Logging::Append(io_loglvl::debug_logs, "Запрос БД на создание таблицы:"
+              + create_ss.str() + "\n\t");
+      } catch (const pqxx::integrity_constraint_violation &e) {
         status_ = STATUS_HAVE_ERROR;
+        error_.SetError(ERROR_DB_SQL_QUERY, "Exception text: " +
+            std::string(e.what()) + "\n Query: " + e.query());
       } catch (const std::exception &e) {
         error_.SetError(ERROR_DB_CONNECTION,
             "Подключение к БД: exception. Запрос:\n" + create_ss.str()
@@ -79,7 +73,20 @@ mstatus_t DBConnectionPostgre::CreateTable(
         status_ = STATUS_HAVE_ERROR;
       }
     } else {
-      Logging::Append(io_loglvl::debug_logs, "dry_run:\n" + create_ss.str());
+      // is not connected
+      if (!error_.GetErrorCode()) {
+        error_.SetError(ERROR_DB_CONNECTION, "Соединение с бд не открыто");
+        status_ = STATUS_NOT;
+      }
+    }
+  } else {
+    if (is_dry_run_) {
+      // dry_run_ programm setup
+      Logging::Append(io_loglvl::debug_logs, "dry_run: " + create_ss.str());
+    } else {
+      // error - not connected
+      error_.SetError(ERROR_DB_CONNECTION);
+      status_ = STATUS_NOT;
     }
   }
   return status_;
@@ -119,36 +126,13 @@ DBConnectionPostgre::~DBConnectionPostgre() {
   CloseConnection();
 }
 
-/*
- * postgresql language
-
-CREATE TABLE so_items (
-   item_id INTEGER NOT NULL,
-   so_id INTEGER,
-   product_id INTEGER,
-   qty INTEGER,
-   net_price NUMERIC,
-   PRIMARY KEY (item_id, so_id),
-   FOREIGN KEY (so_id) REFERENCES so_headers (id)
-);
-
- * or add foreign key after creation table:
-
-ALTER TABLE child_table
-ADD CONSTRAINT constraint_fk
-FOREIGN KEY (c1)
-REFERENCES parent_table(p1)
-ON DELETE CASCADE;
-
- * */
-
 mstatus_t DBConnectionPostgre::SetupConnection() {
   auto connect_str = setupConnectionString();
-  if (status_ != STATUS_DRY_RUN && status_ != STATUS_HAVE_ERROR) {
+  if (!is_dry_run_ ) {
     try {
       pconnect_ = std::unique_ptr<pqxx::connection>(
           new pqxx::connection(connect_str));
-      if (pconnect_) {
+      if (pconnect_ && !error_.GetErrorCode()) {
         if (pconnect_->is_open()) {
           status_ = STATUS_OK;
           is_connected_ = true;
@@ -172,7 +156,7 @@ mstatus_t DBConnectionPostgre::SetupConnection() {
       status_ = STATUS_HAVE_ERROR;
     }
   } else {
-    Logging::Append(io_loglvl::debug_logs, connect_str);
+    Logging::Append(io_loglvl::debug_logs, "dry_run connect:" + connect_str);
   }
   return status_;
 }
@@ -185,13 +169,16 @@ void DBConnectionPostgre::CloseConnection() {
       Logging::Append(io_loglvl::debug_logs, "Закрытие соединения c БД "
           + parameters_.name);
   }
+  if (is_dry_run_) {
+    Logging::Append(io_loglvl::debug_logs, "dry_run disconect");
+  }
 }
 
 mstatus_t DBConnectionPostgre::IsTableExists(db_table t, bool *is_exists) {
+  std::stringstream select_ss;
+  select_ss << "SELECT * FROM " << get_table_name(t) << ";";
   if (is_connected_ && pconnect_) {
-    std::stringstream select_ss;
-    select_ss << "SELECT * FROM " << get_table_name(t) << ";";
-    if (status_ != STATUS_DRY_RUN && pconnect_->is_open()) {
+    if (pconnect_->is_open()) {
       try {
         pqxx::work tr(*pconnect_);
         pqxx::result trres(tr.exec(select_ss.str()));
@@ -215,10 +202,10 @@ mstatus_t DBConnectionPostgre::IsTableExists(db_table t, bool *is_exists) {
             + "\nexception what: " + e.what() + "\n" + STRING_DEBUG_INFO);
         status_ = STATUS_HAVE_ERROR;
       }
-    } else {
-      Logging::Append(io_loglvl::debug_logs, "dry_run:\n" + select_ss.str());
     }
   }
+  if (is_dry_run_)
+    Logging::Append(io_loglvl::debug_logs, "dry_run: " + select_ss.str());
   return status_;
 }
 
@@ -234,25 +221,28 @@ std::string DBConnectionPostgre::setupConnectionString() {
 
 std::stringstream DBConnectionPostgre::setupCreateTableString(
     const db_table_create_setup &fields) {
-  std::stringstream sstr("CREATE TABLE ");
-  sstr << get_table_name(fields.table) << " (";
+  std::stringstream sstr;
+  sstr << "CREATE TABLE " << get_table_name(fields.table) << " (";
   // сначала забить все поля
   for (const auto &field : fields.fields) {
     if (!error_.GetErrorCode()) {
-      sstr << db_variable_to_string(field) << "\n";
+      sstr << db_variable_to_string(field) << ", ";
     } else {
       break;
     }
   }
   if (!error_.GetErrorCode()) {
     // REFERENCE
-    for (const auto &ref : *fields.ref_strings) {
-      sstr << db_reference_to_string(ref);
-      if (error_.GetErrorCode())
-        break;
+    if (fields.ref_strings) {
+      for (const auto &ref : *fields.ref_strings) {
+        sstr << db_reference_to_string(ref) << ", ";
+        if (error_.GetErrorCode())
+          break;
+      }
     }
     // PRIMARY KEY
-    assert(0);
+    if (!error_.GetErrorCode())
+      sstr << db_primarykey_to_string(fields.pk_string);
   }
   sstr << ");";
   return sstr;
@@ -268,7 +258,7 @@ std::string DBConnectionPostgre::db_variable_to_string(
     ss << dv.fname << " ";
     auto itDBtype = postgresql_impl::str_db_types.find(dv.type);
     if (itDBtype != postgresql_impl::str_db_types.end()) {
-      ss << postgresql_impl::str_db_types[dv.type] << " ";
+      ss << postgresql_impl::str_db_types[dv.type];
     } else {
       error_.SetError(ERROR_DB_VARIABLE,
           "Тип переменной не задан для данной имплементации БД");
@@ -279,7 +269,6 @@ std::string DBConnectionPostgre::db_variable_to_string(
       ss << " NOT NULL";
     if (dv.flags.has_default)
       ss << " DEFAULT " << dv.default_str;
-    ss << ",";
   } else {
     error_.SetError(ew,
         "Проверка параметров поля таблицы завершилось ошибкой");
@@ -304,4 +293,20 @@ std::string DBConnectionPostgre::db_reference_to_string(
     error_.SetError(ew,
         "Проверка поля ссылки на другую таблицу завершилось ошибкой");
   }
+  return str;
+}
+
+std::string DBConnectionPostgre::db_primarykey_to_string(
+    const db_complex_pk &pk) {
+  std::string str;
+  if (!pk.fnames.empty()) {
+    str = "PRIMARY KEY (";
+    for (const auto &fname : pk.fnames)
+      str += fname + ", ";
+    str.replace(str.size() - 2, str.size() - 1, ")");
+  } else {
+    error_.SetError(ERROR_DB_TABLE_PKEY, "ни одного первичного ключа "
+        "для таблицы не задано");
+  }
+  return str;
 }

@@ -64,7 +64,10 @@ static const char *custom_msg_database[] = {
   "database connection error ",
   "database variable error ",
   "database reference to another table error ",
-  "database table exist error "
+  "database table exist error ",
+  "database query setup - database nullptr error ",
+  "database table primary key setup error ",
+  "database sql query exception "
 };
 
 const char *GetCustomErrorMsg(unsigned int error) {

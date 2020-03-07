@@ -138,16 +138,22 @@ public:
   /** \brief Загрузить или перезагрузить параметры газовой смеси */
   merror_t ResetGasmixFile(const std::string &gasmix_file);
 
-  /** \brief Проверить ProgramConfiguration */
+  /** \brief Конфигурация из файла была загружена
+    * \return true да, false нет */
   bool IsInitialized() const;
+  /** \brief Приложение запущено в режиме отладки
+    * \return true да, false нет */
   bool IsDebugMode() const;
+  /** \brief Приложение работает без подключения к бд
+    * \return true да, false нет */
+  bool IsDryRunDBConn() const;
   merror_t GetErrorCode() const;
   const models_configuration GetConfiguration() const;
   const calculation_configuration GetCalcConfiguration() const;
   const db_parameters GetDatabaseConfiguration() const;
 
 public:
-  /// конфигурация расчёта
+  /** \brief класс конфигурации расчёта */
   class ProgramConfiguration;
 
 private:

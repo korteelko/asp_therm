@@ -24,22 +24,23 @@ Transaction::Transaction(DBConnection *connection)
 
 void Transaction::AddQuery(QuerySmartPtr &&query) {
   queries_.emplace_back(query);
-  queries_.back()->SetDB(connection_);
 }
 
 mstatus_t Transaction::ExecuteQueries() {
   if (status_ == STATUS_DEFAULT) {
-    for (auto &query: queries_) {
-      status_ = query->Execute();
+    for (auto it_query = queries_.begin(); it_query != queries_.end(); it_query++) {
+      status_ = (*it_query)->Execute();
       // если статус после выполнения не удовлетворителен -
-      //   откатим все изменения, залоггируем ошибку
-      if (status_ != STATUS_OK && status_ != STATUS_DRY_RUN) {
-        query->LogError();
-        for (QueryContainer::reverse_iterator ri = queries_.rbegin(); ri != queries_.rend(); ++ri )
+      //   откатим все изменения, залогируем ошибку
+      if (!is_status_aval(status_)) {
+        (*it_query)->LogError();
+        auto ri = std::make_reverse_iterator(it_query);
+        for (;ri != queries_.rend(); ++ri) {
           if ((*ri)->IsPerformed())
             // dev может и им статус поменять?
             (*ri)->unExecute();
-        return status_;
+        }
+        break;
       }
     }
   }
@@ -57,14 +58,13 @@ mstatus_t DBConnectionManager::CheckConnection() {
     if (!db_connection_)
       initDBConnection();
   }
-  if (db_connection_ && status_ != STATUS_HAVE_ERROR) {
-    status_ = STATUS_DEFAULT;
+  if (db_connection_ && is_status_aval(status_)) {
     Transaction tr(db_connection_.get());
     tr.AddQuery(QuerySmartPtr(
-        new DBQuerySetupConnection()));
+        new DBQuerySetupConnection(db_connection_.get())));
     tr.AddQuery(QuerySmartPtr(
-        new DBQueryCloseConnection()));
-    tryExecuteTransaction(tr);
+        new DBQueryCloseConnection(db_connection_.get())));
+    status_ = tryExecuteTransaction(tr);
   } else {
     error_.SetError(ERROR_DB_CONNECTION, "Не удалось установить"
         "соединение для для БД: " + parameters_.GetInfo());
@@ -85,22 +85,42 @@ bool DBConnectionManager::IsTableExist(db_table dt) {
   bool exists = false;
   if (status_ == STATUS_DEFAULT)
     status_ = CheckConnection();
-  if (db_connection_ && status_ != STATUS_HAVE_ERROR) {
-    status_ = STATUS_DEFAULT;
+  if (db_connection_ && is_status_aval(status_)) {
     Transaction tr(db_connection_.get());
     tr.AddQuery(QuerySmartPtr(
-        new DBQuerySetupConnection()));
+        new DBQuerySetupConnection(db_connection_.get())));
     tr.AddQuery(QuerySmartPtr(
-        new DBQueryIsTableExist(dt, exists)));
+        new DBQueryIsTableExist(db_connection_.get(), dt, exists)));
     tr.AddQuery(QuerySmartPtr(
-        new DBQueryCloseConnection()));
-    tryExecuteTransaction(tr);
+        new DBQueryCloseConnection(db_connection_.get())));
+    status_ = tryExecuteTransaction(tr);
   } else {
-    error_.SetError(ERROR_DB_CONNECTION, "Не удалось установить"
-        "соединение для для БД: " + parameters_.GetInfo());
+    error_.SetError(ERROR_DB_CONNECTION, "Не удалось установить "
+        "соединение для БД: " + parameters_.GetInfo());
     status_ = STATUS_HAVE_ERROR;
   }
   return exists;
+}
+
+mstatus_t DBConnectionManager::CreateTable(db_table dt) {
+  if (status_ == STATUS_DEFAULT)
+    status_ = CheckConnection();
+  if (db_connection_ && is_status_aval(status_)) {
+    Transaction tr(db_connection_.get());
+    tr.AddQuery(QuerySmartPtr(
+        new DBQuerySetupConnection(db_connection_.get())));
+    tr.AddQuery(QuerySmartPtr(
+        new DBQueryCreateTable(db_connection_.get(),
+        get_table_create_setup(dt))));
+    tr.AddQuery(QuerySmartPtr(
+        new DBQueryCloseConnection(db_connection_.get())));
+    status_ = tryExecuteTransaction(tr);
+  } else {
+    error_.SetError(ERROR_DB_CONNECTION, "Не удалось установить "
+        "соединение для БД: " + parameters_.GetInfo());
+    status_ = STATUS_HAVE_ERROR;
+  }
+  return status_;
 }
 
 merror_t DBConnectionManager::GetErrorCode() {
@@ -121,11 +141,13 @@ void DBConnectionManager::initDBConnection() {
   db_connection_ = std::unique_ptr<DBConnection>(
       DBConnectionCreator().InitDBConnection(parameters_));
   if (!db_connection_) {
-    assert(0 && "ebobo vsyo propalo");
+    status_ = STATUS_HAVE_ERROR;
+    error_.SetError(ERROR_DB_CONNECTION,
+        "Подключение к базе данных не инициализировано");
   }
 }
 
-void DBConnectionManager::tryExecuteTransaction(Transaction &tr) {
+mstatus_t DBConnectionManager::tryExecuteTransaction(Transaction &tr) {
   try {
     status_ = tr.ExecuteQueries();
   } catch (const std::exception &e) {
@@ -139,7 +161,13 @@ void DBConnectionManager::tryExecuteTransaction(Transaction &tr) {
       db_connection_->CloseConnection();
     if (db_connection_->GetErrorCode())
       db_connection_->LogError();
+  } else {
+    if (!error_.GetErrorCode())
+      error_.SetError(ERROR_DB_CONNECTION,
+          "Подключение к базе данных не инициализировано");
+    status_ = STATUS_HAVE_ERROR;
   }
+  return status_;
 }
 
 /* DBConnection::DBConnectionInstance */
@@ -155,6 +183,8 @@ DBConnection *DBConnectionIns::InitDBConnection(
       connect = new DBConnectionPostgre(parameters);
       break;
     // TODO: можно тут ошибку установить
+    default:
+      assert(0 && "undefined db_client");
   }
   return connect;
 }

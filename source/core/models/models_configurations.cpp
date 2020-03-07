@@ -152,6 +152,11 @@ bool ProgramState::IsDebugMode() const {
       program_config_->configuration.calc_cfg.is_debug_mode : true;
 }
 
+bool ProgramState::IsDryRunDBConn() const {
+  return (program_config_) ?
+      program_config_->db_parameters_conf.is_dry_run : true;
+}
+
 merror_t ProgramState::GetErrorCode() const {
   return error_.GetErrorCode();
 }

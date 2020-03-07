@@ -60,7 +60,7 @@ public:
     bool is_reference = false;
     bool is_unique = false;
     bool can_be_null = true;
-    /** \only for numeric types */
+    /** \note only for numeric types */
     bool can_be_negative = false;
     bool is_array = false;
     bool has_default = false;
@@ -145,9 +145,11 @@ using db_type = db_variable::db_var_type;
  *   вынести в структуру db_table_setup */
 struct db_table_create_setup {
 public:
-  ErrorWrap error;
+  ErrorWrap init_error;
   db_table table;
   const db_fields_collection &fields;
+  /** \brief вектор имен полей таблицы которые составляют
+   *    сложный(неодинарный) первичный ключ */
   db_complex_pk pk_string;
   const db_ref_collection *ref_strings;
 
@@ -173,17 +175,8 @@ public:
   db_table_select_setup(db_table table, const db_fields_collection &fields);
 };
 
-// create setup
-/** \brief функция собирающая набор полей для
-  *   создания таблицы БД model_info информации о модели */
-db_table_create_setup table_create_model_info();
-/** \brief функция собирающая набор полей для
-  *   создания таблицы БД calculation_info информации о расчёте */
-db_table_create_setup table_create_calculation_info();
-/** \brief функция собирающая набор полей для
-  *   создания таблицы БД calculation_state_log строку расчёта */
-db_table_create_setup table_create_calculation_state_log();
-
+/** \brief получить сетап на создание таблицы */
+const db_table_create_setup &get_table_create_setup(db_table dt);
 
 /** \brief структура содержит параметры коннектинга */
 struct db_parameters {
@@ -227,7 +220,7 @@ public:
   virtual void Commit() = 0;
   virtual void Rollback() = 0;
 
-  /* ъ вынести это всё в соответствующий класс
+  /* todo: вынести это всё в соответствующий класс
    *   здесь должны быть только низкоуровневые функции
    *   Update, Insert, Select */
   /* вызывается командами! */
@@ -263,13 +256,14 @@ protected:
 
 protected:
   ErrorWrap error_;
-  /** \brief статус подключения. Для этого класса кроме обычных
-    *   статусных дефайнов может быть установлен 'STATUS_DRY_RUN' */
+  /** \brief статус подключения */
   mstatus_t status_;
   /** \brief параметры подключения к базе данных */
   db_parameters parameters_;
   /** \brief флаг подключения к бд */
   bool is_connected_;
+  /** \brief флаг работы без подключения к бд */
+  bool is_dry_run_;
 };
 
 #endif  // !_DATABASE__DB_CONNECTION_H_

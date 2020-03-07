@@ -48,8 +48,6 @@ public:
 
   ~DBConnectionPostgre() override;
 
-
-
 private:
   std::string setupConnectionString();
   std::stringstream setupCreateTableString(
@@ -57,8 +55,10 @@ private:
 
   /** \brief собрать строку поля БД по значению db_variable */
   std::string db_variable_to_string(const db_variable &dv);
-  /** \brief собрать строку ссылки на другую таблицу по значению db_reference*/
+  /** \brief собрать строку ссылки на другую таблицу по значению db_reference */
   std::string db_reference_to_string(const db_reference &ref);
+  /** \brief собрать строку первичного ключа */
+  std::string db_primarykey_to_string(const db_complex_pk &pk);
 
 private:
   std::unique_ptr<pqxx::connection> pconnect_;

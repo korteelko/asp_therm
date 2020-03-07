@@ -36,7 +36,7 @@ void Redlich_Kwong2::set_model_coef(
 Redlich_Kwong2::Redlich_Kwong2(const model_input &mi)
   : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
   set_gasparameters(mi.gpi, this);
-  if (error_.GetErrorCode()) {
+  if (!error_.GetErrorCode()) {
     set_model_coef();
     if (parameters_->cgetDynSetup() & DYNAMIC_ENTALPHY)
       set_enthalpy();

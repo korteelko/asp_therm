@@ -76,7 +76,7 @@ public:
   mstatus_t ResetConnectionParameters(
       const db_parameters &parameters);
   bool IsTableExist(db_table dt);
-
+  mstatus_t CreateTable(db_table dt);
 
 
   merror_t GetErrorCode();
@@ -86,7 +86,9 @@ public:
 private:
   DBConnectionManager();
   void initDBConnection();
-  void tryExecuteTransaction(Transaction &tr);
+  /** \brief провести транзакцию tr из собраных запросов(строк) */
+  [[nodiscard]]
+  mstatus_t tryExecuteTransaction(Transaction &tr);
 
 private:
   ErrorWrap error_;

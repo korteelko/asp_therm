@@ -20,18 +20,18 @@
 
 // error type
 #define ERROR_MASK_TYPE       0x000f
-/** ошибка файлового ввода/вывода */
+/** \brief ошибка файлового ввода/вывода */
 #define ERROR_FILEIO_T        0x0002
-/** ошибка при проведении расчётов */
+/** \brief ошибка при проведении расчётов */
 #define ERROR_CALCULATE_T     0x0003
-/** ошибка при работе со строками */
+/** \brief ошибка при работе со строками */
 #define ERROR_STRING_T        0x0004
-/** ошибка инициализации */
+/** \brief ошибка инициализации */
 #define ERROR_INIT_T          0x0005
-/** ошибка работы со стоковыми шаблонами.
+/** \brief ошибка работы со стоковыми шаблонами.
   *   строковые шаблоны - текстовые значения в xml и json файлах */
 #define ERROR_STRTPL_T        0x0006
-/** ошибка работы с базой данных */
+/** \brief ошибка работы с базой данных */
 #define ERROR_DATABASE_T      0x0007
 
 // type gas / gas_mix
@@ -66,19 +66,22 @@
 #define ERROR_INIT_NULLP_ST   (0x0200 | ERROR_INIT_T)
 
 // string templates error
-/** пустой текстовый шаблон */
+/** \brief пустой текстовый шаблон */
 #define ERROR_STRTPL_TPLNULL  (0x0100 | ERROR_STRTPL_T)
-/** неизвестный текстовый шаблон */
+/** \brief неизвестный текстовый шаблон */
 #define ERROR_STRTPL_TPLUNDEF (0x0200 | ERROR_STRTPL_T)
-/** недопустимое значение текстового шаблона */
+/** \brief недопустимое значение текстового шаблона */
 #define ERROR_STRTPL_VALWRONG (0x0300 | ERROR_STRTPL_T)
 
 // database connection
-/** ошибка подключения к базе данных */
+/** \brief ошибка подключения к базе данных */
 #define ERROR_DB_CONNECTION   (0x0100 | ERROR_DATABASE_T)
 #define ERROR_DB_VARIABLE     (0x0200 | ERROR_DATABASE_T)
 #define ERROR_DB_REFER_FIELD  (0x0300 | ERROR_DATABASE_T)
 #define ERROR_DB_TABLE_EXISTS (0x0400 | ERROR_DATABASE_T)
+#define ERROR_DB_QUERY_NULLP  (0x0500 | ERROR_DATABASE_T)
+#define ERROR_DB_TABLE_PKEY   (0x0600 | ERROR_DATABASE_T)
+#define ERROR_DB_SQL_QUERY    (0x0700 | ERROR_DATABASE_T)
 
 
 const char *GetCustomErrorMsg(unsigned int error);

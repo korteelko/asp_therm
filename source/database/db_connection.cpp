@@ -203,8 +203,8 @@ db_table_create_setup::db_table_create_setup(db_table table,
   }
   setupPrimaryKeyString();
   checkReferences();
-  if (error.GetErrorCode()) {
-    error.LogIt();
+  if (init_error.GetErrorCode()) {
+    init_error.LogIt();
   }
 }
 
@@ -246,7 +246,7 @@ void db_table_create_setup::checkReferences() {
             [&tref](const db_variable &v)
                 {return v.fname == tref.foreign_fname;}) != ffields->end();
         if (!exist) {
-          error.SetError(ERROR_DB_REFER_FIELD,
+          init_error.SetError(ERROR_DB_REFER_FIELD,
               "Неверное имя внешнего поля для reference.\n"
               "Таблица - " + get_table_name(table) + "\n"
               "Внешняя таблица - " + get_table_name(tref.foreign_table) + "\n"
@@ -254,7 +254,7 @@ void db_table_create_setup::checkReferences() {
           break;
         }
       } else {
-        error.SetError(ERROR_DB_REFER_FIELD,
+        init_error.SetError(ERROR_DB_REFER_FIELD,
             "Неверное собственное имя поля для reference" + STRING_DEBUG_INFO);
         break;
       }
@@ -303,45 +303,55 @@ merror_t db_reference::CheckYourself() const {
 
 /* this is for postgresql, what about anothers? */
 std::string db_reference::GetReferenceActString(db_reference_act act) {
-  std::string act_str;
   switch (act) {
     case db_reference_act::ref_act_empty:
-      break;
+      return "";
     case db_reference_act::ref_act_cascade:
-      act_str = "CASCADE";
-      break;
+      return "CASCADE";
     case db_reference_act::ref_act_restrict:
-      act_str = "RESTRICT";
-      break;
-    default:
-      assert(0 && "undef act type");
+      return "RESTRICT";
   }
-  return act_str;
 }
-
 
 static_assert(sizeof(model_info) == 96, "Необходимо перепроверить "
     "функцию table_model_info() - вероятно изменился формат струтуры данных "
     "model_info добавьте новые поля, или измените старые");
-db_table_create_setup table_create_model_info() {
+/** \brief функция собирающая набор полей для
+  *   создания таблицы БД model_info информации о модели */
+static const db_table_create_setup &table_create_model_info() {
   return ns_tfs::model_info_create_setup;
 }
 
 static_assert(sizeof(calculation_info) == 24, "См static_assert "
     "для table_cteate_model_info, идея таже");
-db_table_create_setup table_create_calculation_info() {
+/** \brief функция собирающая набор полей для
+  *   создания таблицы БД calculation_info информации о расчёте */
+static const db_table_create_setup &table_create_calculation_info() {
   return ns_tfs::calculation_info_create_setup;
 }
 
 static_assert(sizeof(calculation_state_log) == 104, "См static_assert "
     "для table_cteate_model_info, идея таже");
-db_table_create_setup table_create_calculation_state_log() {
+/** \brief функция собирающая набор полей для
+  *   создания таблицы БД calculation_state_log строку расчёта */
+static const db_table_create_setup &table_create_calculation_state_log() {
   return ns_tfs::calculation_state_log_create_setup;
 }
 
+const db_table_create_setup &get_table_create_setup(db_table dt) {
+  switch (dt) {
+    case db_table::table_model_info:
+      return table_create_model_info();
+    case db_table::table_calculation_info:
+      return table_create_calculation_info();
+    case db_table::table_calculation_state_log:
+      return table_create_calculation_state_log();
+  }
+}
 
 namespace ns_ucf = update_configuration_functional;
 
+/* db_parameters */
 db_parameters::db_parameters()
   : is_dry_run(true), supplier(db_client::NOONE) {}
 
@@ -367,8 +377,8 @@ std::string db_parameters::GetInfo() const {
 
 /* DBConnection */
 DBConnection::DBConnection(const db_parameters &parameters)
-  : status_(STATUS_DEFAULT), parameters_(parameters),
-    is_connected_(false) {}
+  : status_(STATUS_DEFAULT), parameters_(parameters), is_connected_(false),
+    is_dry_run_(ProgramState::Instance().IsDryRunDBConn()) {}
 
 DBConnection::~DBConnection() {}
 

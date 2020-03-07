@@ -102,8 +102,6 @@ const GasParameters *modelGeneral::get_gasparameters() const {
   return parameters_.get();
 }
 
-/** \brief set general struct of gas parameters.
-  * \return: 'true' for success, 'false' for error; */
 void modelGeneral::set_gasparameters(const gas_params_input &gpi,
     modelGeneral *mg) {
   if (gm_ & GAS_NG_GOST_MARK) {
@@ -122,7 +120,6 @@ void modelGeneral::set_gasparameters(const gas_params_input &gpi,
   }
 }
 
-// static 
 void modelGeneral::ResetInitError() {
   init_error.Reset();
 }

@@ -24,12 +24,12 @@
  * хотя здесь всё выглядит логично */
 
 class DBConnection;
-/** \brief класс запросов, сделаю пока так может
-  *  потом понятнее будет как лучше */
+struct db_table_create_setup;
+
+/** \brief абстрактный класс запросов */
 class DBQuery {
 public:
-  void SetDB(DBConnection *db_ptr);
-  bool IsPerformed() const;
+  bool IsPerformed() const {return is_performed_;}
 
   void LogError();
 
@@ -39,7 +39,6 @@ public:
 
 protected:
   DBQuery(DBConnection *db_ptr);
-  DBQuery();
 
 protected:
   // std::string query_body_;
@@ -50,28 +49,30 @@ protected:
 typedef std::shared_ptr<DBQuery> QuerySmartPtr;
 typedef std::vector<QuerySmartPtr> QueryContainer;
 
+/** \brief Запрос установить соединение с бд */
 class DBQuerySetupConnection: public DBQuery {
 public:
-  DBQuerySetupConnection();
   DBQuerySetupConnection(DBConnection *db_ptr);
   mstatus_t Execute() override;
+  /** \brief отключиться от бд */
   void unExecute() override;
 };
 
+/** \brief Запрос отключения от бд */
 class DBQueryCloseConnection: public DBQuery {
 public:
-  DBQueryCloseConnection();
   DBQueryCloseConnection(DBConnection *db_ptr);
   mstatus_t Execute() override;
+  /** \brief не делать ничего */
   void unExecute() override;
 };
 
+/** \brief Запрос проверки существования таблицы в бд */
 class DBQueryIsTableExist: public DBQuery {
 public:
-  DBQueryIsTableExist(db_table dt, bool &is_exists);
-  DBQueryIsTableExist(DBConnection *db_ptr,
-      db_table dt, bool &is_exists);
+  DBQueryIsTableExist(DBConnection *db_ptr, db_table dt, bool &is_exists);
   mstatus_t Execute() override;
+  /** \brief не делать ничего */
   void unExecute() override;
 
 private:
@@ -79,16 +80,19 @@ private:
   bool &is_exists_;
 };
 
-
-
+/** \brief Запрос создания таблицы в бд */
 class DBQueryCreateTable: public DBQuery {
 public:
-  DBQueryCreateTable(const std::string &query);
-  DBQueryCreateTable(
-      DBConnection *db_ptr, const std::string &query);
+  DBQueryCreateTable(DBConnection *db_ptr, const db_table_create_setup &create_setup);
   mstatus_t Execute() override;
+  /** \brief обычный rollback создания таблицы */
   void unExecute() override;
+
+private:
+  const db_table_create_setup &create_setup;
 };
+
+
 
 class DBQueryUpdateTable: public DBQuery {
 public:

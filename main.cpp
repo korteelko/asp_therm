@@ -35,8 +35,8 @@
 /// ethane  0.004926    4.871       305.33     30.07        ~1.22     ~1750           0.089
 /// propane 0.004545    4.255       369.9      44.097       ~1.13     ~1750           0.153
 
-#define RK2_TEST
-#define PR_TEST
+// #define RK2_TEST
+// #define PR_TEST
 // #define NG_GOST_TEST
 
 #define INPUT_P_T  3000000, 350
@@ -51,18 +51,37 @@ const std::string xml_gasmix = "../gasmix_inp_example.xml";
 const std::string xml_configuration = "../../configuration.xml";
 
 int test_database() {
+  char cwd[512] = {0};
+  if (!getcwd(cwd, (sizeof(cwd)))) {
+    std::cerr << "cann't get current dir";
+    return 1;
+  }
+  std::string filename = std::string(cwd) + xml_path + xml_configuration;
   ProgramState &ps = ProgramState::Instance();
+  // merror_t err = ps.ResetConfigFile(filename);
+  // if (err)
+  //   std::cerr << "update config error: " << hex2str(err) << std::endl;
   // db_parameters p = ps.GetDatabaseConfiguration();
   DBConnectionManager &dbm = DBConnectionManager::Instance();
   dbm.ResetConnectionParameters(
       ps.GetDatabaseConfiguration());
   auto st = dbm.CheckConnection();
   if (st == STATUS_HAVE_ERROR) {
-    std::cerr << "ebobo bida";
+    std::cerr << "error during connection check: "
+        << dbm.GetErrorCode() << std::endl;
+    std::cerr << "  message: " << dbm.GetErrorMessage() << std::endl;
     return 1;
   }
+  bool exists = false;
   std::cerr << " table model info exists: " <<
-      dbm.IsTableExist(db_table::table_model_info) << std::endl;
+      (exists = dbm.IsTableExist(db_table::table_model_info)) << std::endl;
+  if (!exists) {
+    st = dbm.CreateTable(db_table::table_model_info);
+  }
+  if (st == STATUS_HAVE_ERROR) {
+    std::cerr << "error during create table: "
+        << dbm.GetErrorCode() << std::endl;
+  }
   return ps.GetErrorCode();
 }
 
@@ -185,7 +204,7 @@ int main() {
     //*
     if (test_models()) return 1;
     if (test_models_mix()) return 2;
-    // if (test_database()) return 3;
+    if (test_database()) return 3;
     Logging::Append(io_loglvl::debug_logs, "Ни одной ошибки не заметил");
   //*/
   }
