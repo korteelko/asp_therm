@@ -26,7 +26,7 @@ private:
 
   void set_model_coef();
   void set_model_coef(const const_parameters &cp);
-  model_input set_pseudo_critic_parameters(const model_input &mi);
+  model_input critpars_by_binarycoefs(const model_input &mi);
 
 protected:
   void update_dyn_params(dyn_parameters &prev_state,

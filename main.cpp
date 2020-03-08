@@ -35,9 +35,10 @@
 /// ethane  0.004926    4.871       305.33     30.07        ~1.22     ~1750           0.089
 /// propane 0.004545    4.255       369.9      44.097       ~1.13     ~1750           0.153
 
-// #define RK2_TEST
-// #define PR_TEST
+#define RK2_TEST
+#define PR_TEST
 // #define NG_GOST_TEST
+// #define DATABASE_TEST
 
 #define INPUT_P_T  3000000, 350
 #define NEW_PARAMS 500000, 250
@@ -204,7 +205,9 @@ int main() {
     //*
     if (test_models()) return 1;
     if (test_models_mix()) return 2;
+  #if defined(DATABASE_TEST)
     if (test_database()) return 3;
+  #endif  // DATABASE_TEST
     Logging::Append(io_loglvl::debug_logs, "Ни одной ошибки не заметил");
   //*/
   }

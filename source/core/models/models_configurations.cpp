@@ -93,7 +93,7 @@ bool calculation_configuration::IsDebug() const {
   return is_debug_mode;
 }
 
-bool calculation_configuration::ByPseudocritic() const {
+bool calculation_configuration::PR_ByBinaryCoefs() const {
   return by_pseudocritic;
 }
 

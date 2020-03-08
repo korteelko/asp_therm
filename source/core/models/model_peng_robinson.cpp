@@ -110,7 +110,7 @@ void Peng_Robinson::set_model_coef(
       0.26992 * std::pow(cp.acentricfactor, 2.0);
 }
 
-model_input Peng_Robinson::set_pseudo_critic_parameters(
+model_input Peng_Robinson::critpars_by_binarycoefs(
     const model_input &mi) {
   // available only for GAS_MIX
   //   я ничего уже не понимаю (((((((((((((
@@ -145,8 +145,8 @@ model_input Peng_Robinson::set_pseudo_critic_parameters(
 
 Peng_Robinson::Peng_Robinson(const model_input &mi)
   : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
-  if (calc_config_.ByPseudocritic()) {
-    auto mi_pc = set_pseudo_critic_parameters(mi);
+  if (calc_config_.PR_ByBinaryCoefs()) {
+    auto mi_pc = critpars_by_binarycoefs(mi);
     set_gasparameters(mi_pc.gpi, this);
   } else {
     set_gasparameters(mi.gpi, this);
@@ -172,7 +172,7 @@ Peng_Robinson *Peng_Robinson::Init(const model_input &mi) {
 }
 
 model_str Peng_Robinson::GetModelShortInfo() const {
-  return (calc_config_.ByPseudocritic()) ?
+  return (calc_config_.PR_ByBinaryCoefs()) ?
       peng_robinson_binary_mi : peng_robinson_mi;
 }
 

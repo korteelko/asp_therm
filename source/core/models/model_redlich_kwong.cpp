@@ -64,8 +64,8 @@ model_str Redlich_Kwong2::GetModelShortInfo() const {
 double Redlich_Kwong2::internal_energy_integral(
     const parameters new_state, const parameters old_state) {
   double ans = 3.0 * model_coef_a_ *
-      log((new_state.volume * (old_state.volume + model_coef_b_) /
-          (old_state.volume * (new_state.volume + model_coef_b_)))) /
+      log(new_state.volume * (old_state.volume + model_coef_b_) /
+          (old_state.volume * (new_state.volume + model_coef_b_))) /
       (2.0 * sqrt(new_state.temperature) * model_coef_b_);
   return ans;
 }

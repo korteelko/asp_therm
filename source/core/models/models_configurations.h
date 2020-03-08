@@ -88,7 +88,7 @@ public:
   calculation_configuration();
 
   bool IsDebug() const;
-  bool ByPseudocritic() const;
+  bool PR_ByBinaryCoefs() const;
   bool EnableISO20765() const;
 };
 
