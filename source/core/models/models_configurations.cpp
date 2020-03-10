@@ -17,22 +17,8 @@
 #include <map>
 
 #include <assert.h>
-/*
-struct model_name {
-  const int id;
-  const char *const name;
-};
-// warning 
-//  what VS say to this???
 
-// TODO: remove to "configuration_strtpl.h"
-model_name model_names[] = {
-  {MODEL_IDEAL_GAS, "ideal gas"},
-  {MODEL_REDLICH_KWONG, "redlich-kwong"},
-  {MODEL_PENG_ROBINSON, "peng-robinson"},
-  {MODEL_NG_GOST, "GOST 30319-2015"}
-};
-*/
+
 model_str::model_str(rg_model_t ml, rg_model_subtype subtype,
     int32_t vmaj, int32_t vmin, const std::string &info)
   : model_type(ml), model_subtype_id(subtype), vers_major(vmaj),
@@ -42,27 +28,22 @@ namespace update_configuration_functional {
 typedef std::function<merror_t(models_configuration *,
     const std::string &value)> update_models_config_f;
 
-merror_t update_debug_mode(models_configuration *mc,
-    const std::string &val) {
-  return (mc) ?
-      set_bool(val, &mc->calc_cfg.is_debug_mode) : ERROR_INIT_ZERO_ST;
+merror_t update_debug_mode(models_configuration *mc, const std::string &val) {
+  return (mc) ? set_bool(val, &mc->calc_cfg.is_debug_mode) : ERROR_INIT_ZERO_ST;
 }
-merror_t update_pseudocritical(models_configuration *mc,
-     const std::string &val) {
-  return (mc) ?
-      set_bool(val, &mc->calc_cfg.by_pseudocritic) : ERROR_INIT_ZERO_ST;
+merror_t update_rk_soave_mod(models_configuration *mc, const std::string &val) {
+  return (mc) ? set_bool(val, &mc->calc_cfg.rk_is_soave_mod) : ERROR_INIT_ZERO_ST;
 }
-merror_t update_enable_iso_20765(models_configuration *mc,
-     const std::string &val) {
-  return (mc) ?
-      set_bool(val, &mc->calc_cfg.enable_iso_20765) : ERROR_INIT_ZERO_ST;
+merror_t update_pr_binary_coefs(models_configuration *mc, const std::string &val) {
+  return (mc) ? set_bool(val, &mc->calc_cfg.pr_by_binary_coefs) : ERROR_INIT_ZERO_ST;
 }
-merror_t update_log_level(models_configuration *mc,
-     const std::string &val) {
+merror_t update_enable_iso_20765(models_configuration *mc, const std::string &val) {
+  return (mc) ? set_bool(val, &mc->calc_cfg.enable_iso_20765) : ERROR_INIT_ZERO_ST;
+}
+merror_t update_log_level(models_configuration *mc, const std::string &val) {
   return (mc) ? set_loglvl(val, &mc->log_level) : ERROR_INIT_ZERO_ST;
 }
-merror_t update_log_file(models_configuration *mc,
-     const std::string &val) {
+merror_t update_log_file(models_configuration *mc, const std::string &val) {
   mc->log_file = trim_str(val);
   return ERROR_SUCCESS_T;
 }
@@ -76,7 +57,8 @@ struct config_setup_fuctions {
 static std::map<const std::string, config_setup_fuctions> map_config_fuctions =
     std::map<const std::string, config_setup_fuctions> {
   {STRTPL_CONFIG_DEBUG_MODE, {update_debug_mode}},
-  {STRTPL_CONFIG_PSEUDOCRITICAL, {update_pseudocritical}},
+  {STRTPL_CONFIG_RK_SOAVE_MOD, {update_rk_soave_mod}},
+  {STRTPL_CONFIG_PR_BINARYCOEFS, {update_pr_binary_coefs}},
   {STRTPL_CONFIG_INCLUDE_ISO_20765, {update_enable_iso_20765}},
   {STRTPL_CONFIG_LOG_LEVEL, {update_log_level}},
   {STRTPL_CONFIG_LOG_FILE, {update_log_file}},
@@ -86,15 +68,19 @@ static std::map<const std::string, config_setup_fuctions> map_config_fuctions =
 namespace ns_ucf = update_configuration_functional;
 
 calculation_configuration::calculation_configuration()
-  : is_debug_mode(true), by_pseudocritic(true),
-   enable_iso_20765(true) {}
+  : is_debug_mode(true), rk_is_soave_mod(true),
+    pr_by_binary_coefs(true), enable_iso_20765(true) {}
 
 bool calculation_configuration::IsDebug() const {
   return is_debug_mode;
 }
 
+bool calculation_configuration::RK_IsSoaveMod() const {
+  return rk_is_soave_mod;
+}
+
 bool calculation_configuration::PR_ByBinaryCoefs() const {
-  return by_pseudocritic;
+  return pr_by_binary_coefs;
 }
 
 bool calculation_configuration::EnableISO20765() const {
@@ -186,7 +172,8 @@ PSConfiguration::ProgramConfiguration()
 
 PSConfiguration::ProgramConfiguration(
     const std::string &config_file)
-  : error(ERROR_SUCCESS_T), config_filename(config_file), is_initialized(false) {
+  : error(ERROR_SUCCESS_T), config_filename(config_file),
+    is_initialized(false) {
   ResetConfigFile(config_file);
 }
 

@@ -43,7 +43,6 @@
  *   вынести всё в отдельную функцию */
 #define MARK_MASK             0x0000FF00
 #define GAS_MIX_MARK          0x00000100
-#define PSEUDO_CRITIC_MARK    0x00000200
 // ГОСТ 30319.3-2015
 #define GAS_NG_GOST_MARK      0x00000400
 
@@ -56,10 +55,13 @@
 #define DEBUG_LOGLVL          0x0f
 
 typedef uint32_t mstatus_t;
-/** статус при инициализации */
+/** \brief статус при инициализации */
 #define STATUS_DEFAULT        0x00000001
+/** \brief статус удачного результата операции */
 #define STATUS_OK             0x00000002
+/** \brief статус неудачного результата операции */
 #define STATUS_NOT            0x00000003
+/** \brief статус yfkbxbz ошибки при выполнении операции */
 #define STATUS_HAVE_ERROR     0x00000004
 
 #if defined(OS_WIN)
@@ -71,9 +73,17 @@ typedef uint32_t mstatus_t;
 #endif
 
 typedef uint64_t gas_marks_t;
+/** \brief Проверить, установлен ли флаг использования модели ГОСТ 30319 */
+bool HasGostModelMark(const gas_marks_t m);
+/** \brief Проверить, установлен ли флаг смеси газов */
+bool HasGasMixMark(const gas_marks_t m);
 
+/** \brief Установить флаг использования модели ГОСТ 30319 */
+void AddGostModelMark(gas_marks_t *m);
+/** \brief Установлен флаг смеси газов */
+void AddGasMixMark(gas_marks_t *m);
 
-/* Используемые модели */
+/** \brief Используемые модели */
 enum class rg_model_t : uint64_t {
   IDEAL_GAS = MODEL_IDEAL_GAS,
   REDLICH_KWONG2 = MODEL_REDLICH_KWONG,

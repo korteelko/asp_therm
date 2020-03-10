@@ -3,7 +3,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <program_config name="debug">
   <parameter name="debug_mode"> true </parameter>
-  <parameter name="pseudocritical"> true </parameter>
+  <parameter name="rk_soave_mod"> true </parameter>
+  <parameter name="pr_binary_coefs"> true </parameter>
   <parameter name="include_iso_20765"> true </parameter>
   <parameter name="log_level"> debug </parameter>
   <group name="database"> 

@@ -52,6 +52,8 @@ int32_t modelGeneral::set_state_phasesub(double p) {
 
 state_phase modelGeneral::set_state_phase(
     double v, double p, double t) {
+  /* todo: для газовых смесей наблюдается расслоение газовых фаз,
+   *   так что задача не столь тривиальна */
   if (bp_ == nullptr)
     return state_phase::NOT_SET;
   if (t >= parameters_->cgetT_K())
@@ -104,10 +106,12 @@ const GasParameters *modelGeneral::get_gasparameters() const {
 
 void modelGeneral::set_gasparameters(const gas_params_input &gpi,
     modelGeneral *mg) {
-  if (gm_ & GAS_NG_GOST_MARK) {
+  if (HasGostModelMark(gm_)) {
     parameters_ = std::unique_ptr<GasParameters>(
         GasParameters_NG_Gost_dyn::Init(gpi));
-  } else if (gm_ & GAS_MIX_MARK) {
+  } else if (HasGasMixMark(gm_)) {
+    // todo: самое интересное здесь, т.к. для различных моделей
+    //   реаализуется различный подход
     parameters_ = std::unique_ptr<GasParameters>(
         GasParameters_mix_dyn::Init(gpi, mg));
   } else {
@@ -126,10 +130,10 @@ void modelGeneral::ResetInitError() {
 
 merror_t modelGeneral::check_input(const model_input &mi) {
   merror_t err = ERROR_SUCCESS_T;
-  if ((mi.gm & GAS_MIX_MARK) && (mi.gm & GAS_NG_GOST_MARK))
+  if (HasGasMixMark(mi.gm) && HasGostModelMark(mi.gm))
      err = modelGeneral::init_error.SetError(ERROR_INIT_T,
         "options GAS_MIX_MARK and GAS_NG_GOST_MARK not compatible\n");
-  if ((!err) && (mi.gm & GAS_MIX_MARK)) {
+  if ((!err) && HasGasMixMark(mi.gm)) {
     if (!mi.gpi.const_dyn.components->empty()) {
       // для проверки установленных доль
       double parts_sum = 0.0;
@@ -143,7 +147,7 @@ merror_t modelGeneral::check_input(const model_input &mi) {
             "gasmix sum of parts != 100%\n");
     }
   }
-  if ((!err) && (mi.gm & GAS_NG_GOST_MARK)) {
+  if ((!err) && HasGostModelMark(mi.gm)) {
     if (!mi.gpi.const_dyn.ng_gost_components->empty()) {
       // для проверки установленных доль
       double parts_sum = 0.0;

@@ -38,7 +38,7 @@ NG_Gost *NG_Gost::Init(const model_input &mi) {
   if (check_input(mi))
     return nullptr;
   // only for gas_mix
-  if (!(mi.gm & GAS_NG_GOST_MARK))
+  if (!(HasGostModelMark(mi.gm)))
     return nullptr;
   return new NG_Gost(mi);
 }

@@ -2,7 +2,8 @@
 //   and set your parameters
 {
   "debug_mode": true,
-  "pseudocritical": true,
+  "rk_soave_mod": true,
+  "pr_binary_coefs": true,
   "include_iso_20765": true,
   "log_level": "debug",
   "database": {

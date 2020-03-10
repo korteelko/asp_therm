@@ -1,2 +1,5 @@
 flow_modeling/
 plot/
+
+# наверное в один файл солью
+core/models/model_redlich_kwong_soave.*

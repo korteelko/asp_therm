@@ -72,6 +72,9 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
   std::unique_ptr<dyn_parameters> tmp_dgp = nullptr;
   dyn_setup setup = DYNAMIC_SETUP_MASK;
   if (!err) {
+    // рассчитать средние критические параметры смеси
+    //   как арифметическое среднее её компонентов
+    // n.b. это скорее неправильный подход, переделать
     std::array<double, 6> avr_vals = get_average_params(
         *gpi.const_dyn.components);
     // init gasmix const_parameters

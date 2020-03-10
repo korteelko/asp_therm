@@ -19,7 +19,8 @@
 /* TEMPLATES */
 /* параметры конфигурации */
 #define STRTPL_CONFIG_DEBUG_MODE "debug_mode"
-#define STRTPL_CONFIG_PSEUDOCRITICAL "pseudocritical"
+#define STRTPL_CONFIG_RK_SOAVE_MOD "rk_soave_mod"
+#define STRTPL_CONFIG_PR_BINARYCOEFS "pr_binary_coefs"
 #define STRTPL_CONFIG_INCLUDE_ISO_20765 "include_iso_20765"
 #define STRTPL_CONFIG_LOG_LEVEL "log_level"
 #define STRTPL_CONFIG_LOG_FILE "log_file"

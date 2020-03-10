@@ -76,18 +76,23 @@ public:
 };
 
 struct calculation_configuration {
-  /** \brief выводить отладочную информацию */
+  /** \brief флаг вывода отладочной информации */
   bool is_debug_mode;
-  /* todo: rename to by_binary!!! */
-  /** \brief пересчитывать модели по псевдокритическим параметрам */
-  bool by_pseudocritic;
-  /** \brief использовать 'ISO 20665' поверх 'ГОСТ 30319-3' */
+  /** \brief флаг использования модификации Соаве
+    *   для модели Редлиха-Квонга */
+  bool rk_is_soave_mod;
+  /** \brief флаг инициализации модели Пенга-Робинсона через
+   *    коэфициенты бинарного взаимодействия */
+  bool pr_by_binary_coefs;
+  /** \brief флаг использования 'ISO 20665' поверх 'ГОСТ 30319-3'
+   *    для ng_gost модели */
   bool enable_iso_20765;
 
 public:
   calculation_configuration();
 
   bool IsDebug() const;
+  bool RK_IsSoaveMod() const;
   bool PR_ByBinaryCoefs() const;
   bool EnableISO20765() const;
 };

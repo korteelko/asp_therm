@@ -43,7 +43,8 @@ ErrorWrap ModelsCreator::error_;
 model_input ModelsCreator::set_input(rg_model_t mn, binodalpoints *bp,
     double p, double t, const parameters_mix &mix_components) {
   gas_marks_t gm = 0x00;
-  gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_MIX_MARK;
+  gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT);
+  AddGasMixMark(&gm);
   model_input &&mi = model_input(gm, bp, {p, t,
       const_dyn_union{.components = &mix_components}},
       ProgramState::Instance().GetCalcConfiguration());
@@ -53,7 +54,8 @@ model_input ModelsCreator::set_input(rg_model_t mn, binodalpoints *bp,
 model_input ModelsCreator::set_input(rg_model_t mn, binodalpoints *bp,
     double p, double t, const ng_gost_mix &mix_components) {
   gas_marks_t gm = 0x00;
-  gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT) | GAS_NG_GOST_MARK;
+  gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT);
+  AddGostModelMark(&gm);
   model_input &&mi = model_input(gm, bp, {p, t,
       const_dyn_union{.ng_gost_components = &mix_components}},
       ProgramState::Instance().GetCalcConfiguration());

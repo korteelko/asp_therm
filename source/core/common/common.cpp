@@ -13,6 +13,22 @@
 #include <cctype>
 #include <filesystem>
 
+bool HasGostModelMark(const gas_marks_t m) {
+  return m & GAS_NG_GOST_MARK;
+}
+
+bool HasGasMixMark(const gas_marks_t m) {
+  return m & GAS_MIX_MARK;
+}
+
+void AddGostModelMark(gas_marks_t *m) {
+  *m = *m | GAS_NG_GOST_MARK;
+}
+
+void AddGasMixMark(gas_marks_t *m) {
+  *m = *m | GAS_MIX_MARK;
+}
+
 std::string trim_str(const std::string &str) {
   if (str.empty())
     return "";

@@ -39,6 +39,10 @@ struct binary_associate_PR {
   double c;
 };
 
+// Брусиловский А.И.:
+//   Фазовые превращения при
+//   разработке месторождений нефти и газа
+
 static binary_associate_PR PR_coefs[] = {
   {GAS_TYPE_NITROGEN, GAS_TYPE_CARBON_DIOXIDE, 0.0},
   {GAS_TYPE_NITROGEN, GAS_TYPE_HYDROGEN_SULFIDE, 0.130},
