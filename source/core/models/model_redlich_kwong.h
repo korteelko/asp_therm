@@ -17,35 +17,6 @@
 #include <memory>
 
 class Redlich_Kwong2 final: public modelGeneral {
-  double model_coef_a_,
-         model_coef_b_;
-
-private:
-  Redlich_Kwong2(const model_input &mi);
-
-  void set_model_coef();
-  void set_model_coef(const const_parameters &cp);
-// #ifdef BY_PSEUDO_CRITIC
-// TODO: uncomment, for redlich_kwong it's norm)
-  // model_input set_pseudo_critic_parameters(const model_input &mi);
-// #endif  // BY_PSEUDO_CRITIC
-
-protected:
-  void update_dyn_params(dyn_parameters &prev_state,
-      const parameters new_state) override;
-  void update_dyn_params(dyn_parameters &prev_state,
-      const parameters new_state, const const_parameters &cp) override;
-
-// integrals for calculating u, cv and cv
-  double internal_energy_integral(const parameters new_state,
-      const parameters prev_state);
-  double heat_capac_vol_integral(const parameters new_state,
-      const parameters prev_state);
-  double heat_capac_dif_prs_vol(const parameters new_state, double R);
-// sub functions to update parameters
-  double get_volume(double p, double t, const const_parameters &cp);
-  double get_pressure(double v, double t, const const_parameters &cp);
-
 public:
   static Redlich_Kwong2 *Init(const model_input &mi);
 
@@ -62,5 +33,39 @@ public:
 
   double GetCoefficient_a() const;
   double GetCoefficient_b() const;
+
+private:
+  Redlich_Kwong2(const model_input &mi);
+
+  /** \brief Установить коэфициенты модели model_coef_a_ и model_coef_b_
+    *   по параметрам газа parameters_ */
+  void set_model_coef();
+  /** \brief Установить коэфициенты модели model_coef_a_ и model_coef_b_
+    *   по переданным параметрам cp  */
+  void set_model_coef(const const_parameters &cp);
+  /** \brief Установить коэфициенты модели model_coef_a_ и model_coef_b_
+    *   для газовой смеси по классическому методу Редлиха-Квонга */
+  void gasmix_model_coefs(const model_input &mi);
+
+
+  void update_dyn_params(dyn_parameters &prev_state,
+      const parameters new_state) override;
+  void update_dyn_params(dyn_parameters &prev_state,
+      const parameters new_state, const const_parameters &cp) override;
+
+// integrals for calculating u, cv and cv
+// todo: how does it work with mixes?
+  double internal_energy_integral(const parameters new_state,
+      const parameters prev_state);
+  double heat_capac_vol_integral(const parameters new_state,
+      const parameters prev_state);
+  double heat_capac_dif_prs_vol(const parameters new_state, double R);
+// sub functions to update parameters
+  double get_volume(double p, double t, const const_parameters &cp);
+  double get_pressure(double v, double t, const const_parameters &cp);
+
+protected:
+  double model_coef_a_,
+         model_coef_b_;
 };
 #endif  // !_CORE__MODELS__MODEL_REDLICH_KWONG_H_

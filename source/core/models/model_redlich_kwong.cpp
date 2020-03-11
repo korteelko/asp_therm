@@ -20,7 +20,7 @@ static model_str redlich_kwong_mi(rg_model_t::REDLICH_KWONG2, 0, 1, 0,
     "Модель Редлиха-Квонга");
 
 void Redlich_Kwong2::set_model_coef() {
-  model_coef_a_ = 0.42748*std::pow(parameters_->cgetR(), 2.0) *
+  model_coef_a_ = 0.42747 * std::pow(parameters_->cgetR(), 2.0) *
       std::pow(parameters_->cgetT_K(), 2.5) / parameters_->cgetP_K();
   model_coef_b_ = 0.08664*parameters_->cgetR()*parameters_->cgetT_K() /
       parameters_->cgetP_K();
@@ -28,16 +28,45 @@ void Redlich_Kwong2::set_model_coef() {
 
 void Redlich_Kwong2::set_model_coef(
     const const_parameters &cp) {
-  model_coef_a_ = 0.42748 * std::pow(cp.R, 2.0) *
+  model_coef_a_ = 0.42747 * std::pow(cp.R, 2.0) *
       std::pow(cp.T_K, 2.5) / cp.P_K;
   model_coef_b_ = 0.08664 * cp.R * cp.T_K / cp.P_K;
 }
 
+/* в англ вики и обеих книга Брусиловского */
+void Redlich_Kwong2::gasmix_model_coefs(const model_input &mi) {
+  if (mi.gpi.const_dyn.components->size() == 1)
+    return;
+  const parameters_mix *pm_p = mi.gpi.const_dyn.components;
+  double result_a_coef = 0.0,
+         result_b_coef = 0.0;
+  for (const auto &x : *pm_p) {
+    set_model_coef(x.second.first);
+    result_a_coef += x.first * sqrt(model_coef_a_);
+    result_b_coef += x.first * model_coef_b_;
+  }
+  model_coef_a_ = result_a_coef * result_a_coef;
+  model_coef_b_ = result_b_coef;
+}
+
 Redlich_Kwong2::Redlich_Kwong2(const model_input &mi)
   : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
-  set_gasparameters(mi.gpi, this);
-  if (!error_.GetErrorCode()) {
+  if (HasGasMixMark(gm_)) {
+    /* газовая смесь: */
+    /* установить коэфициенты модели для смеси */
+    gasmix_model_coefs(mi);
+    /* рассчитать усреднённые const параметры(Pk, Tk, Vk),
+     *   инициализровать начальные параметры смеси - v, cp, cv, u... */
+    set_gasparameters(mi.gpi, this);
+  } else {
+    /* чистый газ: */
+    /* задать параметры газа, инициализровать
+     *   начальные параметры смеси - v, cp, cv, u...*/
+    set_gasparameters(mi.gpi, this);
+    /* установить коэфициенты модели для смеси */
     set_model_coef();
+  }
+  if (!error_.GetErrorCode()) {
     if (parameters_->cgetDynSetup() & DYNAMIC_ENTALPHY)
       set_enthalpy();
     SetVolume(mi.gpi.p, mi.gpi.t);

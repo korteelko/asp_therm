@@ -76,22 +76,28 @@ public:
 };
 
 struct calculation_configuration {
-  /** \brief флаг вывода отладочной информации */
-  bool is_debug_mode;
+  /** \brief флаг вывода отладочной информации
+    * \default true */
+  bool is_debug_mode = true;
+  /** \brief флаг использования классической модели Редлиха-Квонга
+    * \default false */
+  bool rk_is_origin_mod = false;
   /** \brief флаг использования модификации Соаве
-    *   для модели Редлиха-Квонга */
-  bool rk_is_soave_mod;
+    *   для модели Редлиха-Квонга
+    * \default true */
+  bool rk_is_soave_mod = true;
   /** \brief флаг инициализации модели Пенга-Робинсона через
-   *    коэфициенты бинарного взаимодействия */
-  bool pr_by_binary_coefs;
+    *   коэфициенты бинарного взаимодействия
+    * \default true */
+  bool pr_by_binary_coefs = true;
   /** \brief флаг использования 'ISO 20665' поверх 'ГОСТ 30319-3'
-   *    для ng_gost модели */
-  bool enable_iso_20765;
+    *    для ng_gost модели
+    * \default true */
+  bool enable_iso_20765 = true;
 
 public:
-  calculation_configuration();
-
   bool IsDebug() const;
+  bool RK_IsOriginMod() const;
   bool RK_IsSoaveMod() const;
   bool PR_ByBinaryCoefs() const;
   bool EnableISO20765() const;

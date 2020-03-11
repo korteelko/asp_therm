@@ -143,6 +143,9 @@ void GasParameters_mix_dyn::csetParameters(double v, double p, double t,
   vpte_.pressure     = p;
   vpte_.temperature  = t;
   sph_ = sp;
+  // todo: здесь не совсем правильно -
+  //   модель выставлена для смеси(скорее всего),
+  //   а используется для компонентов отдельно!
   for (auto &x : components_)
     model_->update_dyn_params(x.second.second, vpte_);
   dyn_params_.heat_cap_vol  = 0.0;
@@ -155,6 +158,5 @@ void GasParameters_mix_dyn::csetParameters(double v, double p, double t,
     dyn_params_.heat_cap_pres += x.first * x.second.second.heat_cap_pres;
     dyn_params_.internal_energy +=
         x.first * x.second.second.internal_energy;
-    dyn_params_.beta_kr += x.first * x.second.second.beta_kr;
   }
 }

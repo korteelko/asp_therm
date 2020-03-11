@@ -42,7 +42,6 @@ struct binary_associate_PR {
 // Брусиловский А.И.:
 //   Фазовые превращения при
 //   разработке месторождений нефти и газа
-
 static binary_associate_PR PR_coefs[] = {
   {GAS_TYPE_NITROGEN, GAS_TYPE_CARBON_DIOXIDE, 0.0},
   {GAS_TYPE_NITROGEN, GAS_TYPE_HYDROGEN_SULFIDE, 0.130},
@@ -114,13 +113,13 @@ void Peng_Robinson::set_model_coef(
       0.26992 * std::pow(cp.acentricfactor, 2.0);
 }
 
-model_input Peng_Robinson::critpars_by_binarycoefs(
+void Peng_Robinson::coefs_by_binary(
     const model_input &mi) {
   // available only for GAS_MIX
-  //   я ничего уже не понимаю (((((((((((((
-  //     сделаю как в статье из университета Келдыша
+  //   сделаю как в статье из университета Келдыша
+  //   (ссылку в студию)
   if (mi.gpi.const_dyn.components->size() == 1)
-    return mi;
+    return;
   const parameters_mix *pm_p = mi.gpi.const_dyn.components;
   double part_x = 0.0,
          part_y = 0.0;
@@ -144,19 +143,19 @@ model_input Peng_Robinson::critpars_by_binarycoefs(
   }
   model_coef_a_ = result_a_coef;
   model_coef_b_ = result_b_coef;
-  return model_input(mi.gm, mi.bp, mi.gpi, mi.calc_config);
+  assert(0 && "how about model_coef_k_");
 }
 
 Peng_Robinson::Peng_Robinson(const model_input &mi)
   : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
-  if (calc_config_.PR_ByBinaryCoefs()) {
-    auto mi_pc = critpars_by_binarycoefs(mi);
-    set_gasparameters(mi_pc.gpi, this);
-  } else {
-    set_gasparameters(mi.gpi, this);
-  }
+  assert(0);  // che tvorit'sya?
+  if (calc_config_.PR_ByBinaryCoefs())
+    coefs_by_binary(mi);
+  set_gasparameters(mi.gpi, this);
   if (!error_.GetErrorCode()) {
+    assert(0);
     set_model_coef();
+    // todo: incapsulate dynamicsetup
     if (parameters_->cgetDynSetup() & DYNAMIC_ENTALPHY)
       set_enthalpy();
     SetVolume(mi.gpi.p, mi.gpi.t);
@@ -237,9 +236,6 @@ double Peng_Robinson::heat_capac_dif_prs_vol(const parameters new_state,
 
 double Peng_Robinson::get_volume(
     double p, double t, const const_parameters &cp) {
-#ifdef GAS_MIX_VARIANT
-  set_model_coef(cp);
-#endif  // GAS_MIX_VARIANT
   double alf = std::pow(1.0 + model_coef_k_*(1.0 - t / cp.T_K), 2.0);
   std::vector<double> coef {
       1.0,
@@ -263,9 +259,6 @@ double Peng_Robinson::get_volume(
 
 double Peng_Robinson::get_pressure(double v, double t,
     const const_parameters &cp) {
-#ifdef GAS_MIX_VARIANT
-  set_model_coef(cp);
-#endif  // GAS_MIX_VARIANT
   const double a = std::pow(1.0 + model_coef_k_ * std::pow(1.0 -
       std::sqrt(t / cp.T_K), 2.0), 2.0);
   const double temp = cp.R*t / (v-model_coef_b_) -

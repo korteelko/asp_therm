@@ -67,22 +67,19 @@ static std::map<const std::string, config_setup_fuctions> map_config_fuctions =
 
 namespace ns_ucf = update_configuration_functional;
 
-calculation_configuration::calculation_configuration()
-  : is_debug_mode(true), rk_is_soave_mod(true),
-    pr_by_binary_coefs(true), enable_iso_20765(true) {}
-
+/* calculation_configuration */
 bool calculation_configuration::IsDebug() const {
   return is_debug_mode;
 }
-
+bool calculation_configuration::RK_IsOriginMod() const {
+  return rk_is_origin_mod;
+}
 bool calculation_configuration::RK_IsSoaveMod() const {
   return rk_is_soave_mod;
 }
-
 bool calculation_configuration::PR_ByBinaryCoefs() const {
   return pr_by_binary_coefs;
 }
-
 bool calculation_configuration::EnableISO20765() const {
   return enable_iso_20765;
 }
