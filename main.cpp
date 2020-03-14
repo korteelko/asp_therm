@@ -111,7 +111,7 @@ int test_models() {
   std::string filename = std::string(cwd) + xml_path + xml_gasmix;
 #if defined(RK2_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(rg_model_t::REDLICH_KWONG2, filename,
+      ModelsCreator::GetCalculatingModel(rg_model_t::REDLICH_KWONG, filename,
       INPUT_P_T)));
 #endif  // RK2_TEST
 #if defined(PR_TEST)
@@ -170,7 +170,7 @@ int test_models_mix() {
   };
 #if defined(RK2_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(rg_model_t::REDLICH_KWONG2, xml_files,
+      ModelsCreator::GetCalculatingModel(rg_model_t::REDLICH_KWONG, xml_files,
       INPUT_P_T)));
 #endif  // RK2_TEST
 #if defined(PR_TEST)

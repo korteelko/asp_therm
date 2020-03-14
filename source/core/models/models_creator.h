@@ -40,7 +40,7 @@ private:
     // for binodal available only RK2 and PR
     // todo
     rg_model_t binodal_mn = (mn == rg_model_t::PENG_ROBINSON) ?
-        rg_model_t::PENG_ROBINSON : rg_model_t::REDLICH_KWONG2;
+        rg_model_t::PENG_ROBINSON : rg_model_t::REDLICH_KWONG;
     try {
       // if ng_gost by xml_list
       if (mn == rg_model_t::NG_GOST) {

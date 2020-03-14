@@ -143,6 +143,18 @@ struct gas_params_input {
   const_dyn_union const_dyn;
 };
 
+/** \brief ключ для мапы бинарных коэффициентов  */
+struct gas_pair {
+  /** \brief значения сортированы: i >= j, для быстроко поиска */
+  gas_t i, j;
+
+  gas_pair() = delete;
+  gas_pair(gas_t f, gas_t s);
+  bool operator< (const gas_pair &rhs) const;
+};
+/** \brief мапа бинарных коэффициентов  */
+typedef std::map<const gas_pair, double> binary_coef_map;
+
 /* todo: add link to calculation info */
 struct calculation_state_log {
   dyn_parameters dyn_pars;    // p, v, t and cp(p,v,t), cv(p,v,t), u(p,v,t)

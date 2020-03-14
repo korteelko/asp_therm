@@ -21,6 +21,9 @@
 #  include <iostream>
 #endif  // _DEBUG
 
+
+/** \brief ошибка ининициализации модели - на проверке входных данных,
+  *   проверяется modelsCreator */
 ErrorWrap modelGeneral::init_error;
 
 DerivateFunctor::~DerivateFunctor() {}
@@ -31,7 +34,8 @@ model_input::model_input(gas_marks_t gm, binodalpoints *bp,
 
 modelGeneral::modelGeneral(calculation_configuration calc_config,
     gas_marks_t gm, binodalpoints *bp)
-  :  calc_config_(calc_config), gm_(gm), parameters_(nullptr), bp_(bp) {}
+  : status_(STATUS_DEFAULT), calc_config_(calc_config),
+    gm_(gm), parameters_(nullptr), bp_(bp) {}
 
 modelGeneral::~modelGeneral() {}
 

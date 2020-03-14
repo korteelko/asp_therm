@@ -100,7 +100,7 @@ private:
   /* storage of function pointers() */
   std::vector<rg_model_t> functions_indexes_ =
       std::vector<rg_model_t> {
-          rg_model_t::REDLICH_KWONG2, rg_model_t::PENG_ROBINSON};
+          rg_model_t::REDLICH_KWONG, rg_model_t::PENG_ROBINSON};
   std::vector<integ_func_t> line_integrate_f_ =
       std::vector<integ_func_t> {
           lineIntegrateRK2(), lineIntegratePR()};

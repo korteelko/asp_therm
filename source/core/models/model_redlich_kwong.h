@@ -16,6 +16,8 @@
 
 #include <memory>
 
+/** \brief Классическая интерпретация уравнения состояния
+  *   Редлиха-Квонга(с sqrt(T) в знаменателе) */
 class Redlich_Kwong2 final: public modelGeneral {
 public:
   static Redlich_Kwong2 *Init(const model_input &mi);
@@ -31,6 +33,7 @@ public:
   double GetVolume(double p, double t) override;
   double GetPressure(double v, double t) override;
 
+  // todo: udoli
   double GetCoefficient_a() const;
   double GetCoefficient_b() const;
 

@@ -123,7 +123,7 @@ set(
   ${THERMCORE_SOURCE_DIR}/models/model_ng_gost.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_peng_robinson.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_redlich_kwong.cpp
-  # ${THERMCORE_SOURCE_DIR}/models/model_redlich_kwong_soave.cpp
+  ${THERMCORE_SOURCE_DIR}/models/model_redlich_kwong_soave.cpp
   ${THERMCORE_SOURCE_DIR}/models/models_configurations.cpp
   ${THERMCORE_SOURCE_DIR}/models/models_creator.cpp
 

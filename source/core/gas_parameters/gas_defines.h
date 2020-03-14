@@ -43,6 +43,7 @@ typedef uint32_t gas_t;
 #define GAS_TYPE_HEPTANE           0x11   // C7H16
 #define GAS_TYPE_OCTANE            0x12   // C8H18
 
+// todo: remove this defines!!!
 #ifdef ISO_20765
 #  define GAS_TYPE_NONANE            0x13   // C9H20
 #  define GAS_TYPE_DECANE            0x14   // C10H22

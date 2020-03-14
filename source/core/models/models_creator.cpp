@@ -107,7 +107,7 @@ modelGeneral *ModelsCreator::initModel(rg_model_t mn, binodalpoints *bp,
     case rg_model_t::IDEAL_GAS:
       mg = Ideal_Gas::Init(set_input(mn, bp, p, t, *cdu.components));
       break;
-    case rg_model_t::REDLICH_KWONG2:
+    case rg_model_t::REDLICH_KWONG:
       mg = Redlich_Kwong2::Init(set_input(mn, bp, p, t, *cdu.components));
       break;
     case rg_model_t::PENG_ROBINSON:

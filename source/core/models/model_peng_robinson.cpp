@@ -10,6 +10,7 @@
 #include "model_peng_robinson.h"
 
 #include "common.h"
+#include "gas_description.h"
 #include "gas_description_dynamic.h"
 #include "ErrorWrap.h"
 #include "models_math.h"
@@ -17,6 +18,7 @@
 #ifdef _DEBUG
 #  include <iostream>
 #endif  // _DEBUG
+#include <map>
 #include <vector>
 
 #include <assert.h>
@@ -30,67 +32,53 @@ static double sq2 = 1.41421356237; // std::sqrt(2.0);
 static model_str peng_robinson_mi(rg_model_t::PENG_ROBINSON,
     MODEL_SUBTYPE_DEFAULT, 1, 0,"Модель Пенга-Робинсона");
 static model_str peng_robinson_binary_mi(rg_model_t::PENG_ROBINSON,
-    MODEL_SUBTYPE_BINASSOC, 1, 0,
+    MODEL_PR_SUBTYPE_BINASSOC, 1, 0,
     "Модель Пенга-Робинсона(инициализация смеси ч/з бинарные коэффициенты)");
-
-struct binary_associate_PR {
-  gas_t i,
-        j;
-  double c;
-};
 
 // Брусиловский А.И.:
 //   Фазовые превращения при
 //   разработке месторождений нефти и газа
-static binary_associate_PR PR_coefs[] = {
-  {GAS_TYPE_NITROGEN, GAS_TYPE_CARBON_DIOXIDE, 0.0},
-  {GAS_TYPE_NITROGEN, GAS_TYPE_HYDROGEN_SULFIDE, 0.130},
-  {GAS_TYPE_NITROGEN, GAS_TYPE_METHANE, 0.025},
-  {GAS_TYPE_NITROGEN, GAS_TYPE_ETHANE, 0.010},
-  {GAS_TYPE_NITROGEN, GAS_TYPE_PROPANE, 0.090},
-  {GAS_TYPE_NITROGEN, GAS_TYPE_N_BUTANE, 0.095},
+//   стр 196
+//static gas_binary_coef PR_coefs[] = {
+static binary_coef_map PR_coefs = binary_coef_map {
+  {gas_pair(GAS_TYPE_NITROGEN, GAS_TYPE_CARBON_DIOXIDE), 0.0},
+  {gas_pair(GAS_TYPE_NITROGEN, GAS_TYPE_HYDROGEN_SULFIDE), 0.130},
+  {gas_pair(GAS_TYPE_NITROGEN, GAS_TYPE_METHANE), 0.025},
+  {gas_pair(GAS_TYPE_NITROGEN, GAS_TYPE_ETHANE), 0.010},
+  {gas_pair(GAS_TYPE_NITROGEN, GAS_TYPE_PROPANE), 0.090},
+  {gas_pair(GAS_TYPE_NITROGEN, GAS_TYPE_N_BUTANE), 0.095},
 
-  {GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_HYDROGEN_SULFIDE, 0.135},
-  {GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_METHANE, 0.105},
-  {GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_ETHANE, 0.130},
-  {GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_PROPANE, 0.125},
-  {GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_N_BUTANE, 0.115},
+  {gas_pair(GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_HYDROGEN_SULFIDE), 0.135},
+  {gas_pair(GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_METHANE), 0.105},
+  {gas_pair(GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_ETHANE), 0.130},
+  {gas_pair(GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_PROPANE), 0.125},
+  {gas_pair(GAS_TYPE_CARBON_DIOXIDE, GAS_TYPE_N_BUTANE), 0.115},
 
-  {GAS_TYPE_HYDROGEN_SULFIDE, GAS_TYPE_METHANE, 0.070},
-  {GAS_TYPE_HYDROGEN_SULFIDE, GAS_TYPE_ETHANE, 0.085},
-  {GAS_TYPE_HYDROGEN_SULFIDE, GAS_TYPE_PROPANE, 0.080},
-  {GAS_TYPE_HYDROGEN_SULFIDE, GAS_TYPE_N_BUTANE, 0.075},
+  {gas_pair(GAS_TYPE_HYDROGEN_SULFIDE, GAS_TYPE_METHANE), 0.070},
+  {gas_pair(GAS_TYPE_HYDROGEN_SULFIDE, GAS_TYPE_ETHANE), 0.085},
+  {gas_pair(GAS_TYPE_HYDROGEN_SULFIDE, GAS_TYPE_PROPANE), 0.080},
+  {gas_pair(GAS_TYPE_HYDROGEN_SULFIDE, GAS_TYPE_N_BUTANE), 0.075},
 
-  {GAS_TYPE_METHANE, GAS_TYPE_ETHANE, 0.005},
-  {GAS_TYPE_METHANE, GAS_TYPE_PROPANE, 0.010},
-  {GAS_TYPE_METHANE, GAS_TYPE_N_BUTANE, 0.010},
+  {gas_pair(GAS_TYPE_METHANE, GAS_TYPE_ETHANE), 0.005},
+  {gas_pair(GAS_TYPE_METHANE, GAS_TYPE_PROPANE), 0.010},
+  {gas_pair(GAS_TYPE_METHANE, GAS_TYPE_N_BUTANE), 0.010},
 
-  {GAS_TYPE_N_PENTANE, GAS_TYPE_NITROGEN, 0.100},
-  {GAS_TYPE_N_PENTANE, GAS_TYPE_CARBON_DIOXIDE, 0.115},
-  {GAS_TYPE_N_PENTANE, GAS_TYPE_HYDROGEN_SULFIDE, 0.070},
-  {GAS_TYPE_N_PENTANE, GAS_TYPE_METHANE, 0.030},
-  {GAS_TYPE_N_PENTANE, GAS_TYPE_ETHANE, 0.010},
-  {GAS_TYPE_N_PENTANE, GAS_TYPE_PROPANE, 0.020},
-  {GAS_TYPE_N_PENTANE, GAS_TYPE_N_BUTANE, 0.005},
+  {gas_pair(GAS_TYPE_N_PENTANE, GAS_TYPE_NITROGEN), 0.100},
+  {gas_pair(GAS_TYPE_N_PENTANE, GAS_TYPE_CARBON_DIOXIDE), 0.115},
+  {gas_pair(GAS_TYPE_N_PENTANE, GAS_TYPE_HYDROGEN_SULFIDE), 0.070},
+  {gas_pair(GAS_TYPE_N_PENTANE, GAS_TYPE_METHANE), 0.030},
+  {gas_pair(GAS_TYPE_N_PENTANE, GAS_TYPE_ETHANE), 0.010},
+  {gas_pair(GAS_TYPE_N_PENTANE, GAS_TYPE_PROPANE), 0.020},
+  {gas_pair(GAS_TYPE_N_PENTANE, GAS_TYPE_N_BUTANE), 0.005},
 
-  {GAS_TYPE_UNDEFINED, GAS_TYPE_UNDEFINED, 0.000}
+  {gas_pair(GAS_TYPE_UNDEFINED, GAS_TYPE_UNDEFINED), 0.000}
 };
 
+// todo: см. аналогичный комментарий в файле model_redlich_kwong_soave.cpp
 static double get_binary_associate_coef_PR(gas_t i, gas_t j) {
-  if (i == j)
-    return 0.0;
-  size_t bin_coef_count = sizeof(PR_coefs) / sizeof(*PR_coefs);
-  size_t z = 0;
-  for (; z <  bin_coef_count; ++z)
-    if (PR_coefs[z].i == i)
-      break;
-  if (z >= bin_coef_count - 1)
-    return 0.0;
-  while (PR_coefs[z].i == i) {
-    if (PR_coefs[z].j == j)
-      return PR_coefs[z].c;
-    ++z;
-  }
+  auto it = PR_coefs.find(gas_pair(i, j));
+  if (it != PR_coefs.end())
+    return it->second;
   return 0.0;
 }
 

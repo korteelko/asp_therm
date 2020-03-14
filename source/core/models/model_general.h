@@ -38,6 +38,7 @@ class DerivateFunctor {
 public:
   virtual void getFunctor(class Ideal_Gas &mg) = 0;
   virtual void getFunctor(class Redlich_Kwong2 &mg) = 0;
+  virtual void getFunctor(class Redlich_Kwong_Soave &mg) = 0;
   virtual void getFunctor(class Peng_Robinson &mg) = 0;
   virtual void getFunctor(class NG_Gost &mg) = 0;
   virtual ~DerivateFunctor();
@@ -62,6 +63,7 @@ public:
 
 protected:
   ErrorWrap error_;
+  mstatus_t status_;
   rg_model_t model_conf_;
   calculation_configuration calc_config_;
   gas_marks_t gm_;

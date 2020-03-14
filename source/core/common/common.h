@@ -14,7 +14,7 @@
 
 #include <stdint.h>
 
-// separate calculation of parameters of mix 
+// separate calculation of parameters of mix
 //   просто интересно
 
 // original of CSI gost 30319-2015
@@ -86,18 +86,20 @@ void AddGasMixMark(gas_marks_t *m);
 /** \brief Используемые модели */
 enum class rg_model_t : uint64_t {
   IDEAL_GAS = MODEL_IDEAL_GAS,
-  REDLICH_KWONG2 = MODEL_REDLICH_KWONG,
+  REDLICH_KWONG = MODEL_REDLICH_KWONG,
   PENG_ROBINSON = MODEL_PENG_ROBINSON,
   NG_GOST = MODEL_NG_GOST
 };
 typedef int64_t rg_model_subtype;
 /* model_subtypes */
-#define MODEL_SUBTYPE_DEFAULT   0x00000000
-/* для модели Пенга Робинсона - инициализация
+#define MODEL_SUBTYPE_DEFAULT        0x00000000
+/* модификация Соаве для модели Редлиха-Квонга */
+#define MODEL_RK_SUBTYPE_SOAVE       0x00000001
+/* для модели Пенга-Робинсона - инициализация
  *   параметров смеси ч/з бинодальные коэффициенты */
-#define MODEL_SUBTYPE_BINASSOC  0x00000001
+#define MODEL_PR_SUBTYPE_BINASSOC    0x00000001
 /* расширение ГОСТ 30319-2015 */
-#define MODEL_SUBTYPE_ISO_20765 0x00000002
+#define MODEL_GOST_SUBTYPE_ISO_20765 0x00000001
 
 
 typedef enum {

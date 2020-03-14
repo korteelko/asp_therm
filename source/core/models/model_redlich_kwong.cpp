@@ -16,11 +16,11 @@
 
 #include <assert.h>
 
-static model_str redlich_kwong_mi(rg_model_t::REDLICH_KWONG2, 0, 1, 0,
-    "Модель Редлиха-Квонга");
+static model_str redlich_kwong_mi(rg_model_t::REDLICH_KWONG,
+    MODEL_SUBTYPE_DEFAULT, 1, 0, "Модель Редлиха-Квонга");
 
 void Redlich_Kwong2::set_model_coef() {
-  model_coef_a_ = 0.42747 * std::pow(parameters_->cgetR(), 2.0) *
+  model_coef_a_ = 0.42748 * std::pow(parameters_->cgetR(), 2.0) *
       std::pow(parameters_->cgetT_K(), 2.5) / parameters_->cgetP_K();
   model_coef_b_ = 0.08664*parameters_->cgetR()*parameters_->cgetT_K() /
       parameters_->cgetP_K();
@@ -28,7 +28,7 @@ void Redlich_Kwong2::set_model_coef() {
 
 void Redlich_Kwong2::set_model_coef(
     const const_parameters &cp) {
-  model_coef_a_ = 0.42747 * std::pow(cp.R, 2.0) *
+  model_coef_a_ = 0.42748 * std::pow(cp.R, 2.0) *
       std::pow(cp.T_K, 2.5) / cp.P_K;
   model_coef_b_ = 0.08664 * cp.R * cp.T_K / cp.P_K;
 }
@@ -41,6 +41,7 @@ void Redlich_Kwong2::gasmix_model_coefs(const model_input &mi) {
   double result_a_coef = 0.0,
          result_b_coef = 0.0;
   for (const auto &x : *pm_p) {
+    /* расчитать коэфициенты a и b для данного компонента смеси */
     set_model_coef(x.second.first);
     result_a_coef += x.first * sqrt(model_coef_a_);
     result_b_coef += x.first * model_coef_b_;
@@ -92,6 +93,7 @@ model_str Redlich_Kwong2::GetModelShortInfo() const {
 //  расчёт смотри в ежедневнике
 double Redlich_Kwong2::internal_energy_integral(
     const parameters new_state, const parameters old_state) {
+  assert(0);
   double ans = 3.0 * model_coef_a_ *
       log(new_state.volume * (old_state.volume + model_coef_b_) /
           (old_state.volume * (new_state.volume + model_coef_b_))) /
@@ -102,6 +104,7 @@ double Redlich_Kwong2::internal_energy_integral(
 //   return cv - cv0
 double Redlich_Kwong2::heat_capac_vol_integral(
     const parameters new_state, const parameters old_state) {
+  assert(0);
   double ans = - 3.0 * model_coef_a_ *
       log((new_state.volume * (old_state.volume + model_coef_b_)) /
           (old_state.volume * (new_state.volume + model_coef_b_))) /
@@ -113,6 +116,7 @@ double Redlich_Kwong2::heat_capac_vol_integral(
 //   исправлено 22_09_2018
 double Redlich_Kwong2::heat_capac_dif_prs_vol(
     const parameters new_state, double R) {
+  assert(0);
   double T = new_state.temperature,
          V = new_state.volume,
          a = model_coef_a_,

@@ -16,6 +16,7 @@
 
 ErrorWrap const_parameters::init_error;
 
+// todo: add another gases
 static std::map<std::string, gas_t> gas_names =
     std::map<std::string, gas_t> {
   {"methane", GAS_TYPE_METHANE},
@@ -156,6 +157,21 @@ bool is_valid_dgp(const dyn_parameters &dgp) {
       dgp.heat_cap_vol, dgp.internal_energy))
     return false;
   return true;
+}
+
+gas_pair::gas_pair(gas_t f, gas_t s) {
+  if (s > f)
+    std::swap(s, f);
+  i = f;
+  j = s;
+}
+
+bool gas_pair::operator< (const gas_pair &rhs) const {
+  if (i != rhs.i) {
+    return i < rhs.i;
+  } else {
+    return j < rhs.j;
+  }
 }
 
 const_dyn_union::~const_dyn_union() {}

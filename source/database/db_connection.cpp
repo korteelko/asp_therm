@@ -313,7 +313,9 @@ std::string db_reference::GetReferenceActString(db_reference_act act) {
   }
 }
 
-static_assert(sizeof(model_info) == 96, "Необходимо перепроверить "
+/* last update 2020.03.15: добавились флаги моделей, они
+ *   учитываются в версии модели */
+static_assert(sizeof(model_info) == 104, "Необходимо перепроверить "
     "функцию table_model_info() - вероятно изменился формат струтуры данных "
     "model_info добавьте новые поля, или измените старые");
 /** \brief функция собирающая набор полей для
