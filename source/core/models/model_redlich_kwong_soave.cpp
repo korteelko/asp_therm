@@ -108,10 +108,24 @@ static double get_binary_associate_coef_SRK(gas_t i, gas_t j) {
   return 0.0;
 }
 
+static double calculate_fw(double w) {
+  return 0.480 + 1.574*w - 0.176*w*w;
+}
+
+static double calculate_ac(const const_parameters &cp) {
+  return 0.42747 * std::pow(cp.R, 2.0) *
+      std::pow(cp.T_K, 2.0) / cp.P_K;
+}
+
+static double calculate_b(const const_parameters &cp) {
+  return 0.08664 * cp.R * cp.T_K / cp.P_K;
+}
+
+#ifdef RPS_FUNCTIONS
 double Redlich_Kwong_Soave::calculate_F(double t,
     const const_parameters &cp) {
-  return Redlich_Kwong_Soave::calculate_F(t, 0.48 + 1.574 * cp.acentricfactor -
-      0.176 * cp.acentricfactor * cp.acentricfactor, cp);
+  return Redlich_Kwong_Soave::calculate_F(
+      t, calculate_fw(cp.acentricfactor), cp);
 }
 
 double Redlich_Kwong_Soave::calculate_F(double t, double wf,
@@ -119,54 +133,78 @@ double Redlich_Kwong_Soave::calculate_F(double t, double wf,
   double m = 1.0 + wf * (1.0 - sqrt(t / cp.T_K));
   return m * m * cp.T_K / t;
 }
+#endif  // RPS_FUNCTIONS
 
-std::pair<double, double> Redlich_Kwong_Soave::calculate_ab_coefs(
-    const const_parameters &cp) {
-  double a = 0.42747 * std::pow(cp.R, 2.0) *
-      std::pow(cp.T_K, 2.0) / cp.P_K;
-  double  b = 0.08664 * cp.R * cp.T_K / cp.P_K;
-  return {a, b};
+void Redlich_Kwong_Soave::update_coef_a(double t) {
+  if (HasGasMixMark(gm_)) {
+    update_gasmix_coef_a(t);
+  } else {
+    model_coef_a_ = coef_ac_ *
+        const_rks_vals_[0].calculate_a(t / parameters_->cgetT_K());
+  }
 }
 
-void Redlich_Kwong_Soave::set_model_coef() {
-  model_coef_a_ = 0.42747 * std::pow(parameters_->cgetR(), 2.0) *
-      std::pow(parameters_->cgetT_K(), 2.0) / parameters_->cgetP_K();
-  model_coef_b_ = 0.08664*parameters_->cgetR()*parameters_->cgetT_K() /
-      parameters_->cgetP_K();
-}
-
-void Redlich_Kwong_Soave::set_model_coef(
-    const const_parameters &cp) {
-  model_coef_a_ = 0.42747 * std::pow(cp.R, 2.0) *
-      std::pow(cp.T_K, 2.0) / cp.P_K;
-  model_coef_b_ = 0.08664 * cp.R * cp.T_K / cp.P_K;
-}
-
-void Redlich_Kwong_Soave::gasmix_model_coefs(const model_input &mi) {
-  if (mi.gpi.const_dyn.components->size() == 1)
+void Redlich_Kwong_Soave::update_gasmix_coef_a(double t) {
+  /* todo: redo this ಥʖ̯ಥ(sadness cry)
+   *   indexes and iterators */
+  GasParameters_mix_dyn *gp =
+      dynamic_cast<GasParameters_mix_dyn *>(parameters_.get());
+  if (!gp) {
+    error_.SetError(ERROR_GAS_MIX | ERROR_CALC_MIX_ST, "dyn_cast");
+    error_.LogIt(io_loglvl::debug_logs);
+    status_ = STATUS_HAVE_ERROR;
     return;
-  const parameters_mix *pm_p = mi.gpi.const_dyn.components;
-  double result_a_coef = 0.0,
-         result_b_coef = 0.0;
-  std::vector<std::pair<double, double>> ab;
-  for (const auto &x: *mi.gpi.const_dyn.components)
-    ab.push_back(Redlich_Kwong_Soave::calculate_ab_coefs(x.second.first));
+  }
+  const parameters_mix &prs = gp->GetComponents();
+  std::vector<double> a(prs.size(), 0.0);
   int i = 0, j = 0;
-  for (const auto &x : *pm_p) {
-    result_b_coef += x.first * ab[i].second;
-    for (const auto &y : *pm_p) {
-      result_a_coef += (1.0 - get_binary_associate_coef_SRK(
+  auto prs_it = prs.begin();
+  model_coef_a_ = 0.0;
+  for (const auto &x: const_rks_vals_) {
+    a[i++] = x.calculate_a(t / prs_it->second.first.T_K);
+    prs_it++;
+  }
+  i = 0;
+  for (const auto &x: prs) {
+    for (const auto &y: prs) {
+      model_coef_a_ += (1.0 - get_binary_associate_coef_SRK(
           x.second.first.gas_name, y.second.first.gas_name)) *
-          x.first * y.first * sqrt(ab[i].second * ab[j].second);
+          x.first * y.first * sqrt(a[i]*a[j]);
       ++j;
     }
     ++i;
   }
-  model_coef_a_ = result_a_coef;
-  model_coef_b_ = result_b_coef;
 }
 
-// todo: test it
+void Redlich_Kwong_Soave::set_pure_gas_vals(const const_parameters &cp) {
+  coef_ac_ = 0.42747 * std::pow(cp.R, 2.0) *
+      std::pow(cp.T_K, 2.0) / cp.P_K;
+  model_coef_b_ = 0.08664 * cp.R * cp.T_K / cp.P_K;
+  const_rks_vals_ = std::vector<const_rks_val>();
+  const_rks_vals_.push_back(
+      const_rks_val(calculate_ac(cp), calculate_fw(cp.acentricfactor)));
+}
+
+void Redlich_Kwong_Soave::set_rks_const_vals(
+    const parameters_mix *components) {
+  /* расчитать константные части функций коэффициентов */
+  //   const_rks_vals_rps_.set_vals(components);
+  const_rks_vals_ = std::vector<const_rks_val>();
+  std::transform(components->begin(), components->end(),
+      std::back_insert_iterator<std::vector<const_rks_val>>(const_rks_vals_),
+      [](const std::pair<const double, const_dyn_parameters> &p) {
+          return const_rks_val(calculate_ac(p.second.first),
+          calculate_fw(p.second.first.acentricfactor));});
+}
+
+void Redlich_Kwong_Soave::set_gasmix_model_coefs(const model_input &mi) {
+  const parameters_mix *pm_p = mi.gpi.const_dyn.components;
+  model_coef_b_ = 0.0;
+  for (const auto &x : *pm_p)
+    model_coef_b_ += x.first * calculate_b(x.second.first);
+}
+
+#ifdef RPS_FUNCTIONS
 void Redlich_Kwong_Soave::gasmix_model_coefs_rps(const model_input &mi) {
   assert(0 && "redo|update");
   if (mi.gpi.const_dyn.components->size() == 1)
@@ -180,18 +218,18 @@ void Redlich_Kwong_Soave::gasmix_model_coefs_rps(const model_input &mi) {
   for (const auto &x : *pm_p) {
     set_model_coef(x.second.first);
     result_b_coef += x.first * model_coef_b_;
-    fi = calculate_F(t, const_rks_vals_.fw_i[i], x.second.first);
+    fi = calculate_F(t, const_rks_vals_rps_.fw_i[i], x.second.first);
     for (const auto &y : *pm_p) {
-      fj = calculate_F(t, const_rks_vals_.fw_i[j], y.second.first);
-      double tp = const_rks_vals_.fsqrt_tp_ij[i][j];
+      fj = calculate_F(t, const_rks_vals_rps_.fw_i[j], y.second.first);
+      double tp = const_rks_vals_rps_.fsqrt_tp_ij[i][j];
       fm += tp * sqrt(fi * fj);
       ++j;
     }
     ++i;
   }
-  fm /= const_rks_vals_.ftp_sum;
-  if (!is_equal(const_rks_vals_.ftp_sum, 0.0, FLOAT_ACCURACY)) {
-    fm /= const_rks_vals_.ftp_sum;
+  fm /= const_rks_vals_rps_.ftp_sum;
+  if (!is_equal(const_rks_vals_rps_.ftp_sum, 0.0, FLOAT_ACCURACY)) {
+    fm /= const_rks_vals_rps_.ftp_sum;
   } else {
     status_ = STATUS_HAVE_ERROR;
     error_.SetError(ERROR_GAS_MIX | ERROR_INIT_ZERO_ST,
@@ -199,32 +237,35 @@ void Redlich_Kwong_Soave::gasmix_model_coefs_rps(const model_input &mi) {
   }
   model_coef_b_ = result_b_coef;
 }
+#endif  // RPS_FUNCTIONS
 
 Redlich_Kwong_Soave::Redlich_Kwong_Soave(const model_input &mi)
   : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
   if (HasGasMixMark(gm_)) {
     /* газовая смесь: */
-    /* расчитать константные части функций коэффициентов */
-    const_rks_vals_.set_vals(mi.gpi.const_dyn.components);
+    set_rks_const_vals(mi.gpi.const_dyn.components);
+    // const_rks_vals_rps_.set_vals(mi.gpi.const_dyn.components);
     /* установить коэфициенты модели для смеси */
-    gasmix_model_coefs(mi);
+    set_gasmix_model_coefs(mi);
     // подумоть про этот подход
     // gasmix_model_coefs_rps(mi);
     /* рассчитать усреднённые const параметры(Pk, Tk, Vk),
      *   инициализровать начальные параметры смеси - v, cp, cv, u... */
     set_gasparameters(mi.gpi, this);
   } else {
+    /* установить коэфициенты модели для смеси */
+    set_pure_gas_vals(*mi.gpi.const_dyn.cdp.cgp);
     /* чистый газ: */
     /* задать параметры газа, инициализровать
      *   начальные параметры смеси - v, cp, cv, u...*/
     set_gasparameters(mi.gpi, this);
-    /* установить коэфициенты модели для смеси */
-    set_model_coef();
   }
   if (!error_.GetErrorCode()) {
+    update_gasmix_coef_a(mi.gpi.t);
     if (parameters_->cgetDynSetup() & DYNAMIC_ENTALPHY)
       set_enthalpy();
     SetVolume(mi.gpi.p, mi.gpi.t);
+    status_ = STATUS_OK;
   }
 }
 
@@ -287,6 +328,8 @@ bool Redlich_Kwong_Soave::IsValid() const {
 
 double Redlich_Kwong_Soave::InitVolume(double p, double t,
     const const_parameters &cp) {
+
+  return GetVolume(p, t);
   assert(0);
   // set_model_coef(cp);
   // return get_volume(p, t, cp);
@@ -302,16 +345,17 @@ void Redlich_Kwong_Soave::SetPressure(double v, double t) {
 }
 
 double Redlich_Kwong_Soave::GetVolume(double p, double t) {
+  update_coef_a(t);
   if (!is_above0(p, t)) {
     error_.SetError(ERROR_CALC_MODEL_ST);
     return 0.0;
   }
   std::vector<double> coef {
       1.0,
-      -parameters_->cgetR()*t/p,
-      model_coef_a_/(p*std::sqrt(t)) - parameters_->cgetR()*
-          t*model_coef_b_/p - model_coef_b_*model_coef_b_,
-      -model_coef_a_*model_coef_b_/(p*std::sqrt(t)),
+      -parameters_->cgetR() * t / p,
+      model_coef_a_/p - parameters_->cgetR()*t*model_coef_b_/p -
+          model_coef_b_*model_coef_b_,
+      -model_coef_a_*model_coef_b_/p,
       0.0, 0.0, 0.0
   };
   // Следующая функция заведомо получает валидные
@@ -330,17 +374,26 @@ double Redlich_Kwong_Soave::GetVolume(double p, double t) {
 }
 
 double Redlich_Kwong_Soave::GetPressure(double v, double t) {
-  assert(0);
+  update_coef_a(t);
   if (!is_above0(v, t)) {
     error_.SetError(ERROR_CALC_MODEL_ST);
+    status_ = STATUS_HAVE_ERROR;
     return 0.0;
   }
   const double temp = parameters_->cgetR() * t / (v - model_coef_b_) -
-      model_coef_a_ / (std::sqrt(t)* v *(v + model_coef_b_));
+      model_coef_a_ / (v * (v + model_coef_b_));
   return temp;
 }
 
-void Redlich_Kwong_Soave::const_rks_vals::set_vals(
+Redlich_Kwong_Soave::const_rks_val::const_rks_val(double ac, double fw)
+  : ac(ac), fw(fw) {}
+
+double Redlich_Kwong_Soave::const_rks_val::calculate_a(double tr) const {
+  return ac * pow(1.0 + fw * (1.0 - sqrt(tr)), 2.0);
+}
+
+#ifdef RPS_FUNCTIONS
+void Redlich_Kwong_Soave::const_rks_vals_rps::set_vals(
     const parameters_mix *components) {
   ftp_sum = 0.0;
   fw_i.assign(components->size(), 0.0);
@@ -365,3 +418,4 @@ void Redlich_Kwong_Soave::const_rks_vals::set_vals(
     }
   }
 }
+#endif  // RPS_FUNCTIONS

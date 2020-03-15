@@ -121,7 +121,7 @@ const_parameters *const_parameters::Init(gas_t gas_name, double vk,
       if (!is_above0(zk)) {
         correct_input = false;
       } else {
-        vk = volume_by_compress(pk,tk,zk);
+        vk = volume_by_compress(pk, tk, zk);
       }
     } else {
       zk = compress_by_volume(pk, tk, vk);
@@ -137,6 +137,8 @@ const_parameters *const_parameters::Init(gas_t gas_name, double vk,
     const_parameters::init_error.SetError(
         ERROR_INIT_T, "const_parameters: input pars < 0");
   }
+  // залогировать ошивку если она была
+  init_error.LogIt();
   return nullptr;
 }
 

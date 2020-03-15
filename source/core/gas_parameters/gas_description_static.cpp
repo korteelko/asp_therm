@@ -20,20 +20,13 @@ ErrorWrap GasParameters::init_error;
 // protected constructors
 GasParameters::GasParameters(double v, double p, double t,
     const const_parameters cgp, dyn_parameters dgp)
-  : sph_(state_phase::GAS), vpte_(parameters{v, p, t}), 
+  : status_(STATUS_DEFAULT), sph_(state_phase::GAS), vpte_(parameters{v, p, t}),
     dyn_params_(dgp), const_params(cgp) {}
 
 GasParameters::GasParameters(parameters prs,
     const_parameters cgp, dyn_parameters dgp)
-  : sph_(state_phase::GAS), vpte_(prs), dyn_params_(dgp), 
-    const_params(cgp) {}
-
-// static
-GasParameters *GasParameters::Init(parameters prs,
-    const const_parameters cgp, dyn_parameters dgp) {
-  assert(0 && "unrealized Init GasParameters method!!!");
-  return NULL;
-}
+  : status_(STATUS_DEFAULT), sph_(state_phase::GAS), vpte_(prs),
+    dyn_params_(dgp), const_params(cgp) {}
 
 GasParameters::~GasParameters() {}
 
@@ -78,6 +71,10 @@ double GasParameters::cgetCP() const {
 
 double GasParameters::cgetBeta() const {
   return dyn_params_.beta_kr;
+}
+
+mstatus_t GasParameters::cGetStatus() const {
+  return status_;
 }
 
 // current parametrs of gas

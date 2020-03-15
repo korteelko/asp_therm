@@ -23,14 +23,16 @@
  * По сути это совокупность других структур
  *   с элементами ООП
 */
+/** make abstract */
 class GasParameters {
 public:
   static ErrorWrap init_error;
 
 protected:
+  mstatus_t status_;
   state_phase sph_;
-  parameters  vpte_;
-  dyn_parameters  dyn_params_;
+  parameters vpte_;
+  dyn_parameters dyn_params_;
 
 public:
   const_parameters const_params;
@@ -60,8 +62,10 @@ public:
   dyn_parameters cgetDynParameters() const;
   const_parameters cgetConstparameters() const;
 
-  double cgetCP()         const;
-  double cgetBeta()       const;
+  double cgetCP() const;
+  double cgetBeta() const;
+
+  mstatus_t cGetStatus() const;
 
   /** reset parameters of gas **/
   virtual void csetParameters(double v,

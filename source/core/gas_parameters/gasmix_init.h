@@ -12,6 +12,8 @@
 
 #include "gas_description_static.h"
 
+/* todo: rename this file */
+
 // Не имеет слысла определять все составляющие газовой
 //   смеси. 97% составляющихбудет достаточно
 // И не забудем ошибку вычисления, или округления,
@@ -34,6 +36,7 @@ public:
 /* TODO: Проверить использование. Реализация - осттавляет вопросы */
 bool operator< (const gasmix_file &lg, const gasmix_file &rg);
 
+/* todo: remove this class */
 class GasParameters_mix : public GasParameters {
 protected:
   parameters_mix components_;
@@ -44,11 +47,20 @@ protected:
   virtual ~GasParameters_mix();
 };
 
+/** \brief класс инкапсулирующий работы с теплофизическими
+  *   параметрами смеси газов.
+  * Для смеси выставляются такие параметры(y_i - молярная доля компонента):
+  *   mol = SUM y_i*mol_i  - молярная масса
+  *   w = SUM y_i * w_i - фактор ацентричности(по Рид,
+  *     Праусниц, Шервуд для модели Редлиха-Квонга)
+  *   R = Rm / mol - газовая постоянная
+  *   и т. д. */
 class GasParameters_mix_dyn final : public GasParameters_mix {
   // previous pressure, volume and temperature
-  parameters         prev_vpte_;
-  // function for update dyn_parameters
-  modelGeneral       *model_;
+  parameters prev_vpte_;
+  /** \brief обратный указатель на модель, для использования
+    *   функций специализированных в модели */
+  modelGeneral *model_;
 
 private:
   GasParameters_mix_dyn(parameters prs, const_parameters cgp,

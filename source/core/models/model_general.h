@@ -101,6 +101,7 @@ public:
   //  isValid - method for check this limits
   virtual bool IsValid() const = 0;
   virtual void DynamicflowAccept(DerivateFunctor &df) = 0;
+  // todo: remove it!
   virtual double InitVolume(double p, double t,
       const const_parameters &cp) = 0;
   virtual void SetVolume(double p, double t) = 0;

@@ -109,6 +109,7 @@ typedef uint32_t gas_t;
 
 
 // state_phase enum || stateToString
+/* todo: добавить состояния расслоения фаз(актуально для смесей) */
 /// Агрегатное состояние вещества (как )
 /// SCF: t>T_K, p>P_K;    GAS: p_binodal < p < p_K, t>t_binodal;
 /// LIQUID: p<P_K; v<vleft;
@@ -123,8 +124,8 @@ enum class state_phase : uint32_t {
   /* if binodal parameters isn't set */
   NOT_SET = 0xff
 };
-static const std::array<std::string, 4> stateToString {
-  "SCF", "LIQUID", "LIQ_STEAM", "GAS"
+static const std::array<std::string, 5> stateToString {
+  "SCF", "LIQUID", "LIQ_STEAM", "GAS", "undefied gas state"
 };
 
 /// Общие параметры состояния вещества,

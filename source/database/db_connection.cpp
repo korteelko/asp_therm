@@ -311,6 +311,7 @@ std::string db_reference::GetReferenceActString(db_reference_act act) {
     case db_reference_act::ref_act_restrict:
       return "RESTRICT";
   }
+  return "";
 }
 
 /* last update 2020.03.15: добавились флаги моделей, они
@@ -340,6 +341,7 @@ static const db_table_create_setup &table_create_calculation_state_log() {
   return ns_tfs::calculation_state_log_create_setup;
 }
 
+/* todo: maybe replace with pointer */
 const db_table_create_setup &get_table_create_setup(db_table dt) {
   switch (dt) {
     case db_table::table_model_info:
@@ -349,6 +351,7 @@ const db_table_create_setup &get_table_create_setup(db_table dt) {
     case db_table::table_calculation_state_log:
       return table_create_calculation_state_log();
   }
+  assert(0 && "undef table");
 }
 
 namespace ns_ucf = update_configuration_functional;

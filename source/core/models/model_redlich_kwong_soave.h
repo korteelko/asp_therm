@@ -49,26 +49,30 @@ public:
 protected:
   Redlich_Kwong_Soave(const model_input &mi);
 
+#  ifdef RPS_FUNCTIONS
   /* интерпретация из книги Рида, Праусница, Шервуда
    *   я с ней не разобрался просто */
   /* удоли */
-  /** \brief Расчитать F параметр для модифмкации Соаве */
+  /** \brief Рассчитать F параметр для модифмкации Соаве */
   static double calculate_F(double t, const const_parameters &cp);
-  /** \brief Расчитать F параметр для модифмкации Соаве */
+  /** \brief Рассчитать F параметр для модифмкации Соаве */
   static double calculate_F(double t, double wf, const const_parameters &cp);
-  /** \brief Расчитать F параметр для модифмкации Соаве */
-  static std::pair<double, double> calculate_ab_coefs(
-      const const_parameters &cp);
-  /** \brief Установить коэфициенты модели model_coef_a_ и model_coef_b_
-    *   по параметрам газа parameters_ */
-  void set_model_coef();
+#  endif  //
+  /** \brief Пересчитать коэффициент model_coef_a_ для новых
+    *   параметров t / p */
+  void update_coef_a(double t);
+  /** \brief Пересчитать коэффициент model_coef_a_ для новых
+    *   параметров t / p для смесей */
+  void update_gasmix_coef_a(double t);
   /** \brief Установить коэфициенты модели model_coef_a_ и model_coef_b_
     *   по переданным параметрам cp  */
-  void set_model_coef(const const_parameters &cp);
+  void set_pure_gas_vals(const const_parameters &cp);
+  /** \brief Инициализироавть const_rks_vals_ */
+  void set_rks_const_vals(const parameters_mix *components);
   /* классический подход из книг Бруссиловского, алсо см. Публикации Соаве */
   /** \brief Установить коэфициенты модели model_coef_a_ и model_coef_b_
     *   для газовой смеси по методу Соаве-Редлиха-Квонга */
-  void gasmix_model_coefs(const model_input &mi);
+  void set_gasmix_model_coefs(const model_input &mi);
   /** \brief Установить коэфициенты модели model_coef_a_ и model_coef_b_
     *   для газовой смеси по методу Соаве-Редлиха-Квонга через
     *   параметр F - обобщённый подход для модели
@@ -77,10 +81,11 @@ protected:
 
 
 protected:
+#  ifdef RPS_FUNCTIONS
   /** \brief набор константных параметров компонента смеси
     *   зависящих от фактрора ацентричности и параметров в газа
     *   критической точке - P_k, T_k, V_k */
-  struct const_rks_vals {
+  struct const_rks_vals_rps {
     /// SRK: 0.480 + 1.574w - 0.176w^2
     std::vector<double> fw_i;  // cap: n
     /// SRK: xi*xj*(1.0 - kiy) * sqrt(Tci*Tcj / (Pci*Pcj))
@@ -91,9 +96,27 @@ protected:
     /** \brief Для случая смеси газов инициализировать набор
       *   постоянных величин компонентов */
     void set_vals(const parameters_mix *components);
-  } const_rks_vals_;
+  } const_rks_vals_rps_;
+#  endif  // UNDEFINED_DEFINE
 
-  double model_coef_a_,
-         model_coef_b_;
+  struct const_rks_val {
+    /// SRK: 0.42747 R^2 * Tc^2 / Pc
+    double ac;
+    /// SRK: 0.480 + 1.574w - 0.176w^2
+    double fw;
+
+    const_rks_val() = delete;
+    const_rks_val(double ac, double fw);
+    /** \brief рассчитать коэффициент а(tr) модели Соаве-Редлиха-Квонга
+      *   tr = t / T_k*/
+    double calculate_a(double tr) const;
+  };
+  std::vector<const_rks_val> const_rks_vals_;
+
+  /// SRK: ac - const для чистого газа
+  double coef_ac_;
+  /// SRK: model_coef_a_ = ac * a(T, w)
+  double model_coef_a_;
+  double model_coef_b_;
 };
 #endif  // !_CORE__MODELS__MODEL_REDLICH_KWONG_H_

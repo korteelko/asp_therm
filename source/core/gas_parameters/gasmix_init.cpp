@@ -33,6 +33,8 @@ static std::array<double, 6> get_average_params(
   // todo: буду обновлять функционал - сделаю как правильно
   //   пока я не нашёл удовлетворительного описания
   //   как решается эта задача
+  assert(0);
+  // todo: сделать как у Рида
   std::array<double, 6> avr_vals = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   for (auto const &x : components) {
     avr_vals[0] += x.first * x.second.first.V_K;
@@ -42,7 +44,7 @@ static std::array<double, 6> get_average_params(
     // avr_vals[3] += x.first * x.second.first.Z_K;
 
     avr_vals[4] += x.first * x.second.first.molecularmass;
-    // и по этому вопросы
+    // это общий подход к усредненному параметру
     avr_vals[5] += x.first * x.second.first.acentricfactor;
   }
   avr_vals[5] = std::pow(avr_vals[5], 1.0 / components.size());
@@ -86,6 +88,11 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
           ERROR_INIT_T | ERROR_GAS_MIX | ERROR_CALC_GAS_P_ST);
     } else {
       double volume = 0.0;
+      assert(0);
+      // todo:
+      // такс, здесь разбить на 2 этапа:
+      //   1) инициализация константных параметров
+      //   2) по константным парамертам, получить vpt параметры для смеси
       for (const auto &x : *gpi.const_dyn.components)
         volume += x.first * mg->InitVolume(gpi.p, gpi.t, x.second.first);
       std::vector<std::pair<double, dyn_parameters>> dgp_cpt;
