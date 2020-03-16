@@ -71,6 +71,8 @@ public:
   //  неправильно, средние параметры зависят от модели
   static std::unique_ptr<const_parameters> 
       GetAverageParams(parameters_mix &components);
+
+  void InitDynamicParams();
   const parameters_mix &GetComponents() const;
   void csetParameters(double v, double p, double t, state_phase sp) override;
 };

@@ -27,29 +27,95 @@ bool operator< (const gasmix_file &lg, const gasmix_file &rg) {
   return strcmp(lg.name.c_str(), rg.name.c_str()) <= 0;
 }
 
-// implicit functions
-static std::array<double, 6> get_average_params(
-    const parameters_mix &components) {
-  // todo: буду обновлять функционал - сделаю как правильно
-  //   пока я не нашёл удовлетворительного описания
-  //   как решается эта задача
-  assert(0);
-  // todo: сделать как у Рида
-  std::array<double, 6> avr_vals = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+/** \brief функции расчёта средних параметров по методам из
+  *   книги "Свойства газов и жидкостей" Рида, Праусница, Шервуда */
+namespace rsk_avg {
+/** \brief Рассчитать среднюю критическую температуру
+  *   простым методом(глава 4.2) */
+double dfl_avg_Tk(const parameters_mix &components) {
+  double tk = 0.0;
+  for (auto const &x : components)
+    tk += x.first * x.second.first.T_K;
+  return tk;
+}
+/** \brief Рассчитать среднее критическое давление
+  *   по правилу Праусница-Ганна(глава 4.2) */
+double dfl_avg_Pk(const parameters_mix &components, double R, double tk) {
+  double zk = 0.0, vk = 0.0;
   for (auto const &x : components) {
-    avr_vals[0] += x.first * x.second.first.V_K;
-    avr_vals[1] += x.first * x.second.first.P_K;
-    avr_vals[2] += x.first * x.second.first.T_K;
-    // по этому вопросы
-    // avr_vals[3] += x.first * x.second.first.Z_K;
-
-    avr_vals[4] += x.first * x.second.first.molecularmass;
-    // это общий подход к усредненному параметру
-    avr_vals[5] += x.first * x.second.first.acentricfactor;
+    zk += x.first * x.second.first.Z_K;
+    vk += x.first * x.second.first.V_K;
   }
-  avr_vals[5] = std::pow(avr_vals[5], 1.0 / components.size());
+  return R*zk*tk/vk;
+}
+/** \brief assert doesn't use it! Have not proof.
+ *    Рассчитать среднее значение фактора ацентричности */
+// todo: неверный метод(как мне кажется)
+//   по книге х используется, а не y
+double dfl_avg_acentric(const parameters_mix &components) {
+  double w = 0.0;
+  for (auto const &x : components)
+    w += x.first * x.second.first.acentricfactor;
+  return w;
+}
+/* todo: про критические параметры для разных уравнений состояний
+ *   можно почитать в этой же книге, или у Бруссиловского.
+ *   По правилу Лоренца-Бертло можно попридумывать функции и для
+ *   других моделей. */
+/** \brief Рассчитать среднюю критическую температуру по
+  *   методу Редлиха-Квонга(двухпараметрическому, глава 4.3) */
+double rk2_avg_Tk(const parameters_mix &components) {
+  double num = 0.0;
+  double dec = 0.0;
+  for (auto const &x : components) {
+    num += x.first * sqrt(pow(x.second.first.T_K, 2.5) / x.second.first.P_K);
+    dec += x.first * x.second.first.T_K / x.second.first.P_K;
+  }
+  return pow(num, 1.3333) / pow(dec, 0.6667);
+}
+/** \brief Рассчитать среднее критическое давление по
+  *   методу Редлиха-Квонга(двухпараметрическому, глава 4.3) */
+double rk2_avg_Pk(const parameters_mix &components) {
+  double num = 0.0;
+  double dec = 0.0;
+  for (auto const &x : components) {
+    num += x.first * sqrt(pow(x.second.first.T_K, 2.5) / x.second.first.P_K);
+    dec += x.first * x.second.first.T_K / x.second.first.P_K;
+  }
+  return pow(num, 1.3333) / pow(dec, 1.6667);
+}
+/** \brief Рассчитать среднее значение фактора ацентричности(глава 4.2) */
+double rk2_avg_acentric(const parameters_mix &components) {
+  double w = 0.0;
+  for (auto const &x : components)
+    w += x.first * x.second.first.acentricfactor;
+  return w;
+}
+/** \brief Получить массив средних значений(глава 4.2)
+  *   [P_k, T_k, mol, acentric]*/
+std::array<double, 4> get_average_params(const parameters_mix &components,
+    const model_str &ms) {
+  std::array<double, 4> avr_vals = {0.0, 0.0, 0.0, 0.0};
+  for (auto const &x : components) {
+    // молярная масса
+    avr_vals[2] += x.first * x.second.first.molecularmass;
+  }
+  // тут разграничение по моделям, если руки дойдут
+  //   классическая двухпараметрическая модель Редлиха-Квонга
+  if (ms.model_type == rg_model_t::REDLICH_KWONG &&
+     ms.model_subtype_id == MODEL_SUBTYPE_DEFAULT) {
+    avr_vals[0] = rk2_avg_Pk(components);
+    avr_vals[1] = rk2_avg_Tk(components);
+    avr_vals[3] = rk2_avg_acentric(components);
+  } else {
+    avr_vals[1] = dfl_avg_Tk(components);
+    avr_vals[0] = dfl_avg_Pk(components,
+        GAS_CONSTANT / avr_vals[2], avr_vals[1]);
+    avr_vals[3] = dfl_avg_acentric(components);
+  }
   return avr_vals;
 }
+}  // average_parameters namespace
 
 // GasParameters_mix
 GasParameters_mix::GasParameters_mix(parameters prs, const_parameters cgp,
