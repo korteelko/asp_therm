@@ -29,7 +29,10 @@ bool operator< (const gasmix_file &lg, const gasmix_file &rg) {
 
 /** \brief функции расчёта средних параметров по методам из
   *   книги "Свойства газов и жидкостей" Рида, Праусница, Шервуда */
-namespace rsk_avg {
+namespace ns_avg {
+/* todo: осталось несколько неясных моментов - по поводу vk и zk
+ *   когда разберусь - верну  */
+#ifdef UNDEFINED_DEFINE
 /** \brief Рассчитать среднюю критическую температуру
   *   простым методом(глава 4.2) */
 double dfl_avg_Tk(const parameters_mix &components) {
@@ -58,6 +61,7 @@ double dfl_avg_acentric(const parameters_mix &components) {
     w += x.first * x.second.first.acentricfactor;
   return w;
 }
+#endif  //
 /* todo: про критические параметры для разных уравнений состояний
  *   можно почитать в этой же книге, или у Бруссиловского.
  *   По правилу Лоренца-Бертло можно попридумывать функции и для
@@ -84,6 +88,11 @@ double rk2_avg_Pk(const parameters_mix &components) {
   }
   return pow(num, 1.3333) / pow(dec, 1.6667);
 }
+/** \brief Параметр сжимаемости в критической точке -
+  *   для модели Редлиха Квонга равен 1/3 */
+double rk2_avg_Zk() {
+  return 0.3333;
+}
 /** \brief Рассчитать среднее значение фактора ацентричности(глава 4.2) */
 double rk2_avg_acentric(const parameters_mix &components) {
   double w = 0.0;
@@ -91,31 +100,46 @@ double rk2_avg_acentric(const parameters_mix &components) {
     w += x.first * x.second.first.acentricfactor;
   return w;
 }
+constexpr int index_pk = 0;
+constexpr int index_tk = 1;
+constexpr int index_vk = 2;
+constexpr int index_zk = 3;
+constexpr int index_mol = 4;
+constexpr int index_accent = 5;
 /** \brief Получить массив средних значений(глава 4.2)
-  *   [P_k, T_k, mol, acentric]*/
-std::array<double, 4> get_average_params(const parameters_mix &components,
+  *   [P_k, T_k, V_k, Z_k, mol, acentric]*/
+std::array<double, 6> get_average_params(const parameters_mix &components,
     const model_str &ms) {
-  std::array<double, 4> avr_vals = {0.0, 0.0, 0.0, 0.0};
+  std::array<double, 6> avg_val = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   for (auto const &x : components) {
     // молярная масса
-    avr_vals[2] += x.first * x.second.first.molecularmass;
+    avg_val[index_mol] += x.first * x.second.first.molecularmass;
   }
   // тут разграничение по моделям, если руки дойдут
   //   классическая двухпараметрическая модель Редлиха-Квонга
-  if (ms.model_type == rg_model_t::REDLICH_KWONG &&
-     ms.model_subtype_id == MODEL_SUBTYPE_DEFAULT) {
-    avr_vals[0] = rk2_avg_Pk(components);
-    avr_vals[1] = rk2_avg_Tk(components);
-    avr_vals[3] = rk2_avg_acentric(components);
+  if (ms.model_type.type == rg_model_t::REDLICH_KWONG &&
+     ms.model_type.subtype == MODEL_SUBTYPE_DEFAULT) {
+    avg_val[index_pk] = rk2_avg_Pk(components);
+    avg_val[index_tk] = rk2_avg_Tk(components);
+    avg_val[index_zk] = rk2_avg_Zk();
+    avg_val[index_accent] = rk2_avg_acentric(components);
+    // v_k весьма условный параметр
+    avg_val[index_vk] = avg_val[index_pk] * avg_val[index_zk] /
+        (avg_val[index_tk] * 10e3 * GAS_CONSTANT / avg_val[index_mol]);
   } else {
-    avr_vals[1] = dfl_avg_Tk(components);
-    avr_vals[0] = dfl_avg_Pk(components,
-        GAS_CONSTANT / avr_vals[2], avr_vals[1]);
-    avr_vals[3] = dfl_avg_acentric(components);
+  #ifdef UNDEFINED_DEFINE
+    avg_val[index_tk] = dfl_avg_Tk(components);
+    avg_val[index_pk] = dfl_avg_Pk(components,
+        GAS_CONSTANT / avg_val[index_mol], avg_val[index_tk]);
+    avg_val[index_accent] = dfl_avg_acentric(components);
+  #else
+    assert(0);
+  #endif  // UNDEFINED_DEFINE
   }
-  return avr_vals;
+  return avg_val;
 }
-}  // average_parameters namespace
+}  // rps_avr namespace
+
 
 // GasParameters_mix
 GasParameters_mix::GasParameters_mix(parameters prs, const_parameters cgp,
@@ -143,16 +167,15 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
     // рассчитать средние критические параметры смеси
     //   как арифметическое среднее её компонентов
     // n.b. это скорее неправильный подход, переделать
-    std::array<double, 6> avr_vals = get_average_params(
-        *gpi.const_dyn.components);
+    std::array<double, 6> avr_vals = ns_avg::get_average_params(
+        *gpi.const_dyn.components, mg->GetModelShortInfo());
     // init gasmix const_parameters
     tmp_cgp = std::unique_ptr<const_parameters>(
-        const_parameters::Init(GAS_TYPE_MIX, avr_vals[0], avr_vals[1],
-        avr_vals[2], avr_vals[3], avr_vals[4], avr_vals[5]));
-    if (tmp_cgp == nullptr) {
-      err = init_error.SetError(
-          ERROR_INIT_T | ERROR_GAS_MIX | ERROR_CALC_GAS_P_ST);
-    } else {
+        const_parameters::Init(GAS_TYPE_MIX, avr_vals[ns_avg::index_vk],
+        avr_vals[ns_avg::index_pk], avr_vals[ns_avg::index_tk],
+        avr_vals[ns_avg::index_zk], avr_vals[ns_avg::index_mol],
+        avr_vals[ns_avg::index_accent]));
+    if (tmp_cgp != nullptr) {
       double volume = 0.0;
       assert(0);
       // todo:
@@ -177,6 +200,9 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
       tmp_dgp = std::unique_ptr<dyn_parameters>(dyn_parameters::Init(setup,
           dgp_tmp[0], dgp_tmp[1], dgp_tmp[2], {volume, gpi.p, gpi.t}));
     }
+    } else {
+      err = init_error.SetError(
+          ERROR_INIT_T | ERROR_GAS_MIX | ERROR_CALC_GAS_P_ST);
   }
   if ((!err) && (tmp_dgp != nullptr))
     mix = new GasParameters_mix_dyn({0.0, gpi.p, gpi.t}, *tmp_cgp, *tmp_dgp,
@@ -187,15 +213,21 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
   return mix;
 }
 
+void InitDynamicParams() {
+  assert(0);
+}
+
 std::unique_ptr<const_parameters> GasParameters_mix_dyn::GetAverageParams(
-    parameters_mix &components) {
+    parameters_mix &components, const model_str &mi) {
   std::unique_ptr<const_parameters> tmp_cgp = nullptr;
   if (!components.empty()) {
-    std::array<double, 6> avr_vals = get_average_params(components);
+    std::array<double, 6> avr_vals = ns_avg::get_average_params(components, mi);
     // init gasmix const_parameters
     if (!(tmp_cgp = std::unique_ptr<const_parameters>(
-        const_parameters::Init(GAS_TYPE_MIX, avr_vals[0], avr_vals[1],
-        avr_vals[2], avr_vals[3], avr_vals[4], avr_vals[5]))))
+        const_parameters::Init(GAS_TYPE_MIX, avr_vals[ns_avg::index_vk],
+        avr_vals[ns_avg::index_pk], avr_vals[ns_avg::index_tk],
+        avr_vals[ns_avg::index_zk], avr_vals[ns_avg::index_mol],
+        avr_vals[ns_avg::index_accent]))))
       init_error.SetError(ERROR_INIT_T | ERROR_GAS_MIX | ERROR_CALC_GAS_P_ST,
           "Расчёт средних параметров для газовой смеси");
   } else {
@@ -216,6 +248,10 @@ void GasParameters_mix_dyn::csetParameters(double v, double p, double t,
   vpte_.pressure     = p;
   vpte_.temperature  = t;
   sph_ = sp;
+  /*
+  assert(0 && "удалить обновление динамических параметров или "
+      "сделать правильно - в зависимости от используемой модели. "
+      "не таким методом - не для каждлго компонента отдельно");
   // todo: здесь не совсем правильно -
   //   модель выставлена для смеси(скорее всего),
   //   а используется для компонентов отдельно!
@@ -232,4 +268,5 @@ void GasParameters_mix_dyn::csetParameters(double v, double p, double t,
     dyn_params_.internal_energy +=
         x.first * x.second.second.internal_energy;
   }
+  */
 }

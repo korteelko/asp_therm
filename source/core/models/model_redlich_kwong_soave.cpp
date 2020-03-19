@@ -22,8 +22,8 @@
 /* функции, параметры, обозначения из книги
  *   Р. Рида, Дж. Праусница, Т. Шервуда
  *   "Свойства газов и жидкости" */
-static model_str redlich_kwong_soave_mi(rg_model_t::REDLICH_KWONG,
-    MODEL_RK_SUBTYPE_SOAVE, 1, 0, "Модель Редлиха-Квонга модификации Соаве");
+static model_str redlich_kwong_soave_mi(rg_model_id(rg_model_t::REDLICH_KWONG,
+    MODEL_RK_SUBTYPE_SOAVE), 1, 0, "Модель Редлиха-Квонга модификации Соаве");
 
 // Рид, Праусниц, Шервуд
 //   Свойства жидкости и газов

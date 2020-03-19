@@ -29,10 +29,10 @@ static double sq2 = 1.41421356237; // std::sqrt(2.0);
   *   расчитанный по псевдопараметрам. Для модели Пенга-Робинсона
   *   свой метод расчёта - по бинодальным коэффициетам
   *   n.b.: без этого параметра считается просто по среднему арифмtтическому! */
-static model_str peng_robinson_mi(rg_model_t::PENG_ROBINSON,
-    MODEL_SUBTYPE_DEFAULT, 1, 0,"Модель Пенга-Робинсона");
-static model_str peng_robinson_binary_mi(rg_model_t::PENG_ROBINSON,
-    MODEL_PR_SUBTYPE_BINASSOC, 1, 0,
+static model_str peng_robinson_mi(rg_model_id(rg_model_t::PENG_ROBINSON,
+    MODEL_SUBTYPE_DEFAULT), 1, 0,"Модель Пенга-Робинсона");
+static model_str peng_robinson_binary_mi(rg_model_id(rg_model_t::PENG_ROBINSON,
+    MODEL_PR_SUBTYPE_BINASSOC), 1, 0,
     "Модель Пенга-Робинсона(инициализация смеси ч/з бинарные коэффициенты)");
 
 // Брусиловский А.И.:

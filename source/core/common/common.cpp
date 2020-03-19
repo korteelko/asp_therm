@@ -29,6 +29,9 @@ void AddGasMixMark(gas_marks_t *m) {
   *m = *m | GAS_MIX_MARK;
 }
 
+rg_model_id::rg_model_id(rg_model_t t, rg_model_subtype subt)
+  : type(t), subtype(subt) {}
+
 std::string trim_str(const std::string &str) {
   if (str.empty())
     return "";

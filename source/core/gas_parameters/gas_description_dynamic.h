@@ -15,6 +15,7 @@
 
 #include <iostream>
 
+
 class GasParameters_dyn final: public GasParameters {
   GasParameters_dyn(parameters prs, const_parameters cgp,
       dyn_parameters dgp, modelGeneral *mg);

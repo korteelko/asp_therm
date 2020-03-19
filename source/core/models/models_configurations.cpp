@@ -19,9 +19,9 @@
 #include <assert.h>
 
 
-model_str::model_str(rg_model_t ml, rg_model_subtype subtype,
-    int32_t vmaj, int32_t vmin, const std::string &info)
-  : model_type(ml), model_subtype_id(subtype), vers_major(vmaj),
+model_str::model_str(rg_model_id mn, int32_t vmaj, int32_t vmin,
+    const std::string &info)
+  : model_type(mn), vers_major(vmaj),
     vers_minor(vmin), short_info(info) {}
 
 namespace update_configuration_functional {

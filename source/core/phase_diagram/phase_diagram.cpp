@@ -9,7 +9,9 @@
  */
 #include "phase_diagram.h"
 
+#include "gas_description.h"
 #include "Logging.h"
+#include "models_configurations.h"
 #include "models_math.h"
 
 #include <algorithm>
@@ -19,18 +21,22 @@
 #  include <iostream>
 #endif
 
-size_t PhaseDiagram::set_functions_index(rg_model_t mn) {
-  size_t functions_index = 0xFF;
-  for (size_t i = 0; i < functions_indexes_.size(); ++i)
-    if (functions_indexes_[i] == mn) {
-      functions_index = i;
-      break;
-    }
-  return functions_index;
+#define FUNCTIONS_INDEX_OUT 0xFF
+
+
+size_t PhaseDiagram::set_functions_index(rg_model_id mn) {
+  switch (mn.type) {
+    case rg_model_t::REDLICH_KWONG:
+      return (mn.subtype == MODEL_SUBTYPE_DEFAULT) ? 0 : FUNCTIONS_INDEX_OUT;
+    case rg_model_t::PENG_ROBINSON:
+      return (mn.subtype == MODEL_SUBTYPE_DEFAULT) ? 1 : FUNCTIONS_INDEX_OUT;
+    default:
+      return FUNCTIONS_INDEX_OUT;
+  }
 }
 
 void PhaseDiagram::calculateBinodal(
-    std::shared_ptr<binodalpoints>& bdp, rg_model_t mn, double acentric) {
+    std::shared_ptr<binodalpoints>& bdp, rg_model_id mn, double acentric) {
   const uint32_t nPoints = bdp->t.size();
   // Суть правила Максвелла: Расчитанные значения va и vb лежат на
   //   бинодали если
@@ -148,8 +154,7 @@ void PhaseDiagram::calculateBinodal(
 }
 
 // erase not calculated points
-void PhaseDiagram::checkResult(
-    std::shared_ptr<binodalpoints> &bdp) {
+void PhaseDiagram::checkResult(std::shared_ptr<binodalpoints> &bdp) {
   size_t sizebdp = bdp->t.size();
   for (size_t i = 0; i < sizebdp; ++i) {
     if (bdp->t[i] < -0.5) {
@@ -196,91 +201,55 @@ PhaseDiagram &PhaseDiagram::GetCalculated() {
   return phd;
 }
 
-binodalpoints *PhaseDiagram::GetBinodalPoints(double VK, double PK,
-    double TK, rg_model_t mn, double acentric) {
-  bool isValid = is_above0(VK, PK, TK, acentric);
-  if (!isValid) {
-    error_.SetError(ERROR_CALCULATE_T,
-        "PhaseDiagram::getBinodalPoints get incorrect data:\n"
-        " V_K, P_K, T_K or acentric_factor <= 0.0 or is NaN");
-    return nullptr;
-  }
-  uniqueMark um {(uint32_t)mn, acentric};
-  // если для таких параметров(модель и фактор ацентричности)
-  //   бинодаль ещё не рассчитана -- рассчитать и сохранить
-  if (calculated_.find(um) == calculated_.end()) {
-   // std::lock_guard<std::mutex> lg(mtx);
-    std::shared_ptr<binodalpoints> bdp(new binodalpoints());
-    calculateBinodal(bdp, mn, acentric);
+binodalpoints *PhaseDiagram::GetBinodalPoints(const const_parameters &cp,
+    const model_str &mi) {
+  binodalpoints *bp = nullptr;
+  if (!cp.IsGasmix()) {
+    auto f = [] (std::deque<double> &vec, double K) {
+        std::transform(vec.begin(), vec.end(), vec.begin(),
+        std::bind1st(std::multiplies<double>(), K));};
+    uniqueMark um(mi.model_type, cp.gas_name);
+    // если для таких параметров(модель и фактор ацентричности)
+    //   бинодаль ещё не рассчитана -- рассчитать и сохранить
+    std::shared_ptr<binodalpoints> bdp(new binodalpoints(mi.model_type));
+    calculateBinodal(bdp, mi.model_type, cp.acentricfactor);
     checkResult(bdp);
     bdp->p.push_front(1.0);
     bdp->t.push_front(1.0);
     bdp->vLeft.push_front(1.0);
     bdp->vRigth.push_front(1.0);
-    calculated_.emplace(um, bdp);
+    if (!cp.IsAbstractGas())
+      if (calculated_.find(um) == calculated_.end())
+        calculated_.emplace(um, bdp);
+    bp = new binodalpoints(*bdp);
+    f(bp->vLeft, cp.V_K);
+    f(bp->vRigth, cp.V_K);
+    f(bp->p, cp.P_K);
+    f(bp->t, cp.T_K);
+    bp->mn = um.mn;
   }
-  // найти среди сохраненных бинодалей нужную,
-  //   восстановить размерность и вернуть
-  binodalpoints *bp = new binodalpoints(
-      (*calculated_.find(um)).second.operator *());
-  auto f = [] (std::deque<double> &vec, double K) {
-      std::transform(vec.begin(), vec.end(), vec.begin(),
-          std::bind1st(std::multiplies<double>(), K));};
-  f(bp->vLeft, VK);
-  f(bp->vRigth, VK);
-  f(bp->p, PK);
-  f(bp->t, TK);
-  bp->mn = mn;
   return bp;
 }
 
 binodalpoints *PhaseDiagram::GetBinodalPoints(parameters_mix &components,
-    rg_model_t mn) {
-// 25.01.2019
-// Здесь нужно прописать как считать линию перехода для газовых смесей
-  std::unique_ptr<const_parameters> cgp = 
-      GasParameters_mix_dyn::GetAverageParams(components);
-  if (cgp == nullptr)
-    throw PhaseDiagramException(ERROR_GAS_MIX | ERROR_INIT_T,
-#ifdef _DEBUG
-      "PhaseDiagram::GetBinodalPoints cannot get average"
-      " parameters of gasmix!"
-#else
-      "Cannot get average parameters of gasmix"
-#endif  // _DEBUG
-      );
-  return PhaseDiagram::GetBinodalPoints(cgp->V_K, cgp->P_K, cgp->T_K, 
-      mn, cgp->acentricfactor);
-}
-// DEVELOP
-//   NOT TESTED
-void PhaseDiagram::EraseBinodalPoints(rg_model_t mn,
-    double acentric) {
-// std::lock_guard<std::mutex> lg(mtx);
-  auto iter = calculated_.find({(uint32_t)mn, acentric});
-  if (iter != calculated_.end())
-    calculated_.erase(iter);
+    const model_str &mi) {
+  // 25.01.2019
+  // Здесь нужно прописать как считать линию перехода для газовых смесей
+  // UPD: 17.03.2020
+  // todo: здесь неправильно - переделать(V_k для смеси - не пойми что)
+  auto max_el = components.upper_bound(0.95);
+  if (max_el->first < 0.95)
+    // todo: перевести условие в более удобоваримую форму
+    return nullptr;
+  return PhaseDiagram::GetBinodalPoints(max_el->second.first, mi);
+
 }
 
 bool operator< (const PhaseDiagram::uniqueMark &lum,
     const PhaseDiagram::uniqueMark &rum) {
-  return std::tie(lum.mn, lum.acentricfactor) <
-      std::tuple<size_t, double>(rum.mn, rum.acentricfactor + 0.0001) &&
-         std::tie(rum.mn, rum.acentricfactor) >
-      std::tuple<size_t, double>(lum.mn, lum.acentricfactor + 0.0001);
+  return std::tie(lum.mn.type, lum.mn.subtype, lum.gas) <
+         std::tie(rum.mn.type, rum.mn.subtype, rum.gas);
 }
 
-binodalpoints::binodalpoints()
-  : vLeft(t.size(), 0.0), vRigth(t.size(), 0.0), p(t.size(), 0.0) {}
-
-
-
-PhaseDiagram::PhaseDiagramException::PhaseDiagramException(
-    merror_t err, const std::string &msg)
-  : msg_(msg) {}
-
-PhaseDiagram::PhaseDiagramException::~PhaseDiagramException() noexcept {}
-
-const char *PhaseDiagram::PhaseDiagramException::what() const noexcept {
-  return msg_.c_str();
-}
+binodalpoints::binodalpoints(rg_model_id mn)
+  : mn(mn), vLeft(t.size(), 0.0), vRigth(t.size(), 0.0), p(t.size(), 0.0) {}

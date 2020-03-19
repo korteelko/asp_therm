@@ -41,27 +41,20 @@ private:
     // todo
     rg_model_t binodal_mn = (mn == rg_model_t::PENG_ROBINSON) ?
         rg_model_t::PENG_ROBINSON : rg_model_t::REDLICH_KWONG;
-    try {
-      // if ng_gost by xml_list
-      if (mn == rg_model_t::NG_GOST) {
-        auto gost_mix = gm->GetGostMixParameters();
-        if (!gost_mix->empty()) {
-          model = initModel(mn, nullptr, p, t,
-              const_dyn_union{.ng_gost_components = gost_mix.get()});
-        }
-      } else {
-        std::shared_ptr<parameters_mix> prs_mix = gm->GetMixParameters();
-        if (prs_mix != nullptr) {
-          binodalpoints *bp = pd.GetBinodalPoints(*prs_mix, binodal_mn);
-          model = initModel(mn, bp, p, t,
-              const_dyn_union{.components = prs_mix.get()});
-        }
+    // if ng_gost by xml_list
+    if (mn == rg_model_t::NG_GOST) {
+      auto gost_mix = gm->GetGostMixParameters();
+      if (!gost_mix->empty()) {
+        model = initModel(mn, nullptr, p, t,
+            const_dyn_union{.ng_gost_components = gost_mix.get()});
       }
-    } catch (PhaseDiagram::PhaseDiagramException &) {
-      return nullptr;
-    } catch (...) {
-      assert(0 && "check error message and and err_code");
-      return nullptr;
+    } else {
+      std::shared_ptr<parameters_mix> prs_mix = gm->GetMixParameters();
+      if (prs_mix != nullptr) {
+        binodalpoints *bp = pd.GetBinodalPoints(*prs_mix, binodal_mn);
+        model = initModel(mn, bp, p, t,
+            const_dyn_union{.components = prs_mix.get()});
+      }
     }
     return model;
   }

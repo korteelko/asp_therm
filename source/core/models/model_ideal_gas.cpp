@@ -19,8 +19,8 @@
 #include <memory>
 
 /** \brief строка model_info для идеального газа */
-static model_str ideal_gas_mi(rg_model_t::IDEAL_GAS, MODEL_SUBTYPE_DEFAULT,
-    1, 0, "Идеальный газ");
+static model_str ideal_gas_mi(rg_model_id(rg_model_t::IDEAL_GAS,
+    MODEL_SUBTYPE_DEFAULT), 1, 0, "Идеальный газ");
 
 Ideal_Gas::Ideal_Gas(const model_input &mi)
   : modelGeneral(mi.calc_config, mi.gm, mi.bp) {

@@ -101,6 +101,17 @@ typedef int64_t rg_model_subtype;
 /* расширение ГОСТ 30319-2015 */
 #define MODEL_GOST_SUBTYPE_ISO_20765 0x00000001
 
+struct rg_model_id {
+  rg_model_t type;
+  /** \brief subtypenumber(subml_typenumber) - наверное привязаться к
+    *   енамам конкретных моделей
+    * default 0, т.е. например для Редлиха-Квонга есть модификация
+    * Соаве, а для Пенг-Робинсона их не счесть */
+  rg_model_subtype subtype;
+
+  rg_model_id() = delete;
+  rg_model_id(rg_model_t t, rg_model_subtype subt);
+};
 
 typedef enum {
   no_log     = 0,              /* no messages     */

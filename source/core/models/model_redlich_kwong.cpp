@@ -16,8 +16,8 @@
 
 #include <assert.h>
 
-static model_str redlich_kwong_mi(rg_model_t::REDLICH_KWONG,
-    MODEL_SUBTYPE_DEFAULT, 1, 0, "Модель Редлиха-Квонга");
+static model_str redlich_kwong_mi(rg_model_id(rg_model_t::REDLICH_KWONG,
+    MODEL_SUBTYPE_DEFAULT), 1, 0, "Модель Редлиха-Квонга");
 
 void Redlich_Kwong2::set_model_coef() {
   model_coef_a_ = 0.42748 * std::pow(parameters_->cgetR(), 2.0) *

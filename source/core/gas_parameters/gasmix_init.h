@@ -33,7 +33,7 @@ public:
       const std::string &path, const double part);
 };
 
-/* TODO: Проверить использование. Реализация - осттавляет вопросы */
+/* TODO: Проверить использование. Реализация - оставляет вопросы */
 bool operator< (const gasmix_file &lg, const gasmix_file &rg);
 
 /* todo: remove this class */
@@ -55,7 +55,7 @@ protected:
   *     Праусниц, Шервуд для модели Редлиха-Квонга)
   *   R = Rm / mol - газовая постоянная
   *   и т. д. */
-class GasParameters_mix_dyn final : public GasParameters_mix {
+class GasParameters_mix_dyn final: public GasParameters_mix {
   // previous pressure, volume and temperature
   parameters prev_vpte_;
   /** \brief обратный указатель на модель, для использования
@@ -69,8 +69,8 @@ private:
 public:
   static GasParameters_mix_dyn *Init(gas_params_input gpi, modelGeneral *mg);
   //  неправильно, средние параметры зависят от модели
-  static std::unique_ptr<const_parameters> 
-      GetAverageParams(parameters_mix &components);
+  static std::unique_ptr<const_parameters> GetAverageParams(
+      parameters_mix &components, const model_str &mi);
 
   void InitDynamicParams();
   const parameters_mix &GetComponents() const;

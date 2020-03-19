@@ -20,7 +20,6 @@
 
 #include <stdint.h>
 
-bool is_valid_gas(gas_t gas_name);
 gas_t gas_by_name(const std::string &name);
 
 inline double volume_by_compress(double p, double t, double z) {
@@ -95,6 +94,11 @@ public:
   static const_parameters *Init(gas_t gas_name, double vk, double pk,
       double tk, double zk, double mol, double af);
   const_parameters(const const_parameters &cgp);
+
+  /** \brief Параметры инициализированы для газовой смеси */
+  bool IsGasmix() const;
+  /** \brief Параметры инициализированы для неопределённого газа */
+  bool IsAbstractGas() const;
 };
 
 bool is_valid_cgp(const const_parameters &cgp);
@@ -107,6 +111,7 @@ bool is_valid_dgp(const dyn_parameters &dgp);
  *   вецеством скорее всего пригодится
  */
 class modelGeneral;
+struct model_str;
 typedef std::pair<const_parameters, dyn_parameters>
     const_dyn_parameters;
 typedef std::multimap<const double, const_dyn_parameters> parameters_mix;

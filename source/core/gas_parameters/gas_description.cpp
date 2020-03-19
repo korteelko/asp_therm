@@ -61,7 +61,7 @@ static gas_t valid_gases[] = {
   GAS_TYPE_MIX
 };
 
-bool is_valid_gas(gas_t gas_name) {
+static bool is_valid_gas(gas_t gas_name) {
   size_t valid_gases_count = sizeof(valid_gases) / sizeof(*valid_gases);
   for (size_t i = 0; i < valid_gases_count; ++i)
     if (gas_name == valid_gases[i])
@@ -146,6 +146,14 @@ const_parameters::const_parameters(const const_parameters &cgp)
   : gas_name(cgp.gas_name), V_K(cgp.V_K), P_K(cgp.P_K), T_K(cgp.T_K), 
     Z_K(cgp.Z_K), molecularmass(cgp.molecularmass), R(cgp.R),
     acentricfactor(cgp.acentricfactor) {}
+
+bool const_parameters::IsGasmix() const {
+  return gas_name == GAS_TYPE_MIX;
+}
+
+bool const_parameters::IsAbstractGas() const {
+  return gas_name == GAS_TYPE_UNDEFINED;
+}
 
 bool is_valid_cgp(const const_parameters &cgp) {
   if (!is_above0(cgp.V_K, cgp.P_K, cgp.T_K, cgp.Z_K, cgp.molecularmass,

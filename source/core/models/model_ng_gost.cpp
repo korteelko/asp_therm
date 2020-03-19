@@ -24,10 +24,10 @@
 #endif  // _DEBUG
 
 /** \brief варианты model_info для ГОСТ 30319 и его оригинала - ISO-20765 */
-static model_str ng_gost_mi(rg_model_t::NG_GOST,
-    MODEL_SUBTYPE_DEFAULT, 1, 0, "ГОСТ 30319.1-2015");
-static model_str ng_gost_iso20765_mi(rg_model_t::NG_GOST,
-    MODEL_GOST_SUBTYPE_ISO_20765, 1, 0, "ГОСТ 30319.1-2015 / ISO-20765");
+static model_str ng_gost_mi(rg_model_id(rg_model_t::NG_GOST,
+    MODEL_SUBTYPE_DEFAULT), 1, 0, "ГОСТ 30319.1-2015");
+static model_str ng_gost_iso20765_mi(rg_model_id(rg_model_t::NG_GOST,
+    MODEL_GOST_SUBTYPE_ISO_20765), 1, 0, "ГОСТ 30319.1-2015 / ISO-20765");
 
 NG_Gost::NG_Gost(const model_input &mi)
   : modelGeneral(mi.calc_config, mi.gm, mi.bp) {

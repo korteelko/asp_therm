@@ -58,20 +58,14 @@ class ConfigurationByFile;
 ///   параметры прописываются в классе параметров модели
 ///   методом GetModelStr
 struct model_str {
-  /// define of model
-  rg_model_t model_type;
-  /** \brief subtypenumber(subml_typenumber) - наверное привязаться к
-    *   енамам конкретных моделей
-    * default 0, т.е. например для Редлиха-Квонга есть модификация
-    * Соаве, а для Пенг-Робинсона их не счесть */
-  rg_model_subtype model_subtype_id;
+  rg_model_id model_type;
   int32_t vers_major;
   int32_t vers_minor;
   /** \brief информация о модели */
   std::string short_info;
 
 public:
-  model_str(rg_model_t ml, rg_model_subtype subtype, int32_t vmaj, int32_t vmin,
+  model_str(rg_model_id ml, int32_t vmaj, int32_t vmin,
       const std::string &info);
 };
 
