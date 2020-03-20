@@ -240,7 +240,7 @@ void Redlich_Kwong_Soave::gasmix_model_coefs_rps(const model_input &mi) {
 #endif  // RPS_FUNCTIONS
 
 Redlich_Kwong_Soave::Redlich_Kwong_Soave(const model_input &mi)
-  : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
+  : modelGeneral(mi.ms, mi.gm, mi.bp) {
   if (HasGasMixMark(gm_)) {
     /* газовая смесь: */
     set_rks_const_vals(mi.gpi.const_dyn.components);
@@ -326,15 +326,16 @@ bool Redlich_Kwong_Soave::IsValid() const {
       0.5*parameters_->cgetTemperature()/parameters_->cgetT_K());
 }
 
+/*
 double Redlich_Kwong_Soave::InitVolume(double p, double t,
     const const_parameters &cp) {
-
   return GetVolume(p, t);
   assert(0);
   // set_model_coef(cp);
   // return get_volume(p, t, cp);
   return 0.0;
 }
+*/
 
 void Redlich_Kwong_Soave::SetVolume(double p, double t) {
   set_parameters(GetVolume(p, t), p, t);

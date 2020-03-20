@@ -17,14 +17,12 @@
 #include "model_ng_gost.h"
 #include "model_peng_robinson.h"
 #include "model_redlich_kwong.h"
+#include "model_redlich_kwong_soave.h"
 #include "models_configurations.h"
 
 // #include "dynamic_modeling.h"
 // #include "models_output.h"
 // #include "inputdata_by_file.h"
-#ifdef BOOST_LIB_USED
-#  include <boost/optional.hpp>
-#endif  // BOOST_LIB_USED
 
 #include <functional>
 #include <map>
@@ -34,87 +32,90 @@
 
 #include <assert.h>
 
-// statndard conds
+/** \brief стандартные физические условия */
 static parameters standard_conds = {0, 100000.0, 314.0};
 ErrorWrap ModelsCreator::error_;
 
-/* TODO:
+/* todo:
  *   добавить такую же функцию в класс ProgramState */
-model_input ModelsCreator::set_input(rg_model_t mn, binodalpoints *bp,
+model_input ModelsCreator::set_input(model_str ms, binodalpoints *bp,
     double p, double t, const parameters_mix &mix_components) {
   gas_marks_t gm = 0x00;
+  rg_model_t mn = ms.model_type.type;
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT);
   AddGasMixMark(&gm);
   model_input &&mi = model_input(gm, bp, {p, t,
-      const_dyn_union{.components = &mix_components}},
-      ProgramState::Instance().GetCalcConfiguration());
+      const_dyn_union{.components = &mix_components}}, ms);
   return std::move(mi);
 }
 
-model_input ModelsCreator::set_input(rg_model_t mn, binodalpoints *bp,
+model_input ModelsCreator::set_input(model_str ms, binodalpoints *bp,
     double p, double t, const ng_gost_mix &mix_components) {
   gas_marks_t gm = 0x00;
+  rg_model_t mn = ms.model_type.type;
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT);
   AddGostModelMark(&gm);
   model_input &&mi = model_input(gm, bp, {p, t,
-      const_dyn_union{.ng_gost_components = &mix_components}},
-      ProgramState::Instance().GetCalcConfiguration());
+      const_dyn_union{.ng_gost_components = &mix_components}}, ms);
   return std::move(mi);
 }
 
-modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
+modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
     std::vector<gasmix_file> components, double p, double t) {
   std::unique_ptr<GasMixByFiles> gm(GasMixByFiles::Init(components));
-  return (gm) ? getModel(mn, gm.get(), p, t) : nullptr;
+  return (gm) ? getModel(ms, gm.get(), p, t) : nullptr;
 }
 
-modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
+modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
     std::vector<gasmix_file> components) {
-  return ModelsCreator::GetCalculatingModel(mn, components,
+  return ModelsCreator::GetCalculatingModel(ms, components,
       standard_conds.pressure, standard_conds.temperature);
 }
 
-modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
+modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
     const std::string &gasmix_xml, double p, double t) {
   std::unique_ptr<GasMixComponentsFile> gm(
-      GasMixComponentsFile::Init(mn, gasmix_xml));
-  return (gm) ? getModel(mn, gm.get(), p, t) : nullptr;
+      GasMixComponentsFile::Init(ms.model_type.type, gasmix_xml));
+  return (gm) ? getModel(ms, gm.get(), p, t) : nullptr;
 }
 
-modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
+modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
     const std::string &gasmix_xml) {
-  return ModelsCreator::GetCalculatingModel(mn, gasmix_xml,
+  return ModelsCreator::GetCalculatingModel(ms, gasmix_xml,
       standard_conds.pressure, standard_conds.temperature);
 }
-modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
+modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
     const ng_gost_mix &ngg, double p, double t) {
-  return initModel(mn, nullptr, p,
+  return initModel(ms, nullptr, p,
       t, const_dyn_union{.ng_gost_components = &ngg});
 }
 
-modelGeneral *ModelsCreator::GetCalculatingModel(rg_model_t mn,
+modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
     const ng_gost_mix &ngg) {
-  return ModelsCreator::GetCalculatingModel(mn, ngg,
+  return ModelsCreator::GetCalculatingModel(ms, ngg,
       standard_conds.pressure, standard_conds.temperature);
 }
 
-modelGeneral *ModelsCreator::initModel(rg_model_t mn, binodalpoints *bp,
-    // double p, double t, const parameters_mix &components) {
+modelGeneral *ModelsCreator::initModel(model_str ms, binodalpoints *bp,
     double p, double t, const_dyn_union cdu) {
   modelGeneral::ResetInitError();
   modelGeneral *mg = nullptr;
-  switch (mn) {
+  switch (ms.model_type.type) {
     case rg_model_t::IDEAL_GAS:
-      mg = Ideal_Gas::Init(set_input(mn, bp, p, t, *cdu.components));
+      mg = Ideal_Gas::Init(set_input(ms, bp, p, t, *cdu.components));
       break;
     case rg_model_t::REDLICH_KWONG:
-      mg = Redlich_Kwong2::Init(set_input(mn, bp, p, t, *cdu.components));
+      if (ms.model_type.subtype == MODEL_RK_SUBTYPE_SOAVE)
+        mg = Redlich_Kwong_Soave::Init(
+            set_input(ms, bp, p, t, *cdu.components));
+      else
+        mg = Redlich_Kwong2::Init(set_input(ms, bp, p, t, *cdu.components));
       break;
     case rg_model_t::PENG_ROBINSON:
-      mg = Peng_Robinson::Init(set_input(mn, bp, p, t, *cdu.components));
+      mg = Peng_Robinson::Init(set_input(ms, bp, p, t, *cdu.components));
       break;
     case rg_model_t::NG_GOST:
-      mg = NG_Gost::Init(set_input(mn, bp, p, t, *cdu.ng_gost_components));
+      mg = NG_Gost::Init(set_input(ms, bp, p, t, *cdu.ng_gost_components));
       break;
   }
   if (modelGeneral::init_error.GetErrorCode()) {

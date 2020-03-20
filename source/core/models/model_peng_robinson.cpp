@@ -135,9 +135,9 @@ void Peng_Robinson::coefs_by_binary(
 }
 
 Peng_Robinson::Peng_Robinson(const model_input &mi)
-  : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
+  : modelGeneral(mi.ms, mi.gm, mi.bp) {
   assert(0);  // che tvorit'sya?
-  if (calc_config_.PR_ByBinaryCoefs())
+  if (model_config_.model_type.subtype == MODEL_PR_SUBTYPE_BINASSOC)
     coefs_by_binary(mi);
   set_gasparameters(mi.gpi, this);
   if (!error_.GetErrorCode()) {
@@ -163,7 +163,7 @@ Peng_Robinson *Peng_Robinson::Init(const model_input &mi) {
 }
 
 model_str Peng_Robinson::GetModelShortInfo() const {
-  return (calc_config_.PR_ByBinaryCoefs()) ?
+  return (model_config_.model_type.subtype == MODEL_PR_SUBTYPE_BINASSOC) ?
       peng_robinson_binary_mi : peng_robinson_mi;
 }
 
@@ -292,11 +292,13 @@ bool Peng_Robinson::IsValid() const {
   return (parameters_->cgetState() != state_phase::LIQUID);
 }
 
+/*
 double Peng_Robinson::InitVolume(double p, double t,
     const const_parameters &cp) {
   set_model_coef(cp);
   return get_volume(p, t, cp);
 }
+*/
 
 void Peng_Robinson::SetVolume(double p, double t) {
   set_parameters(GetVolume(p, t), p, t);

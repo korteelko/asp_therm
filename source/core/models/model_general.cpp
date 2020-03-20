@@ -29,12 +29,12 @@ ErrorWrap modelGeneral::init_error;
 DerivateFunctor::~DerivateFunctor() {}
 
 model_input::model_input(gas_marks_t gm, binodalpoints *bp,
-    gas_params_input gpi, calculation_configuration calc_config)
-  : gm(gm), bp(bp), gpi(gpi), calc_config(calc_config) {}
+    gas_params_input gpi, model_str ms)
+  : gm(gm), bp(bp), gpi(gpi), ms(ms) {}
 
-modelGeneral::modelGeneral(calculation_configuration calc_config,
+modelGeneral::modelGeneral(model_str model_config,
     gas_marks_t gm, binodalpoints *bp)
-  : status_(STATUS_DEFAULT), calc_config_(calc_config),
+  : status_(STATUS_DEFAULT), model_config_(model_config),
     gm_(gm), parameters_(nullptr), bp_(bp) {}
 
 modelGeneral::~modelGeneral() {}

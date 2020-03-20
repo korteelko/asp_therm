@@ -162,7 +162,6 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
         ERROR_INIT_T | ERROR_INIT_NULLP_ST | ERROR_GAS_MIX);
   std::unique_ptr<const_parameters> tmp_cgp = nullptr;
   std::unique_ptr<dyn_parameters> tmp_dgp = nullptr;
-  dyn_setup setup = DYNAMIC_SETUP_MASK;
   if (!err) {
     // рассчитать средние критические параметры смеси
     //   как арифметическое среднее её компонентов
@@ -175,6 +174,7 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
         avr_vals[ns_avg::index_pk], avr_vals[ns_avg::index_tk],
         avr_vals[ns_avg::index_zk], avr_vals[ns_avg::index_mol],
         avr_vals[ns_avg::index_accent]));
+    /*
     if (tmp_cgp != nullptr) {
       double volume = 0.0;
       assert(0);
@@ -199,21 +199,25 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
       }
       tmp_dgp = std::unique_ptr<dyn_parameters>(dyn_parameters::Init(setup,
           dgp_tmp[0], dgp_tmp[1], dgp_tmp[2], {volume, gpi.p, gpi.t}));
-    }
+    } */
     } else {
       err = init_error.SetError(
           ERROR_INIT_T | ERROR_GAS_MIX | ERROR_CALC_GAS_P_ST);
   }
-  if ((!err) && (tmp_dgp != nullptr))
-    mix = new GasParameters_mix_dyn({0.0, gpi.p, gpi.t}, *tmp_cgp, *tmp_dgp,
-        *gpi.const_dyn.components, mg);
-  else
+  if ((!err) && (tmp_dgp != nullptr)) {
+    assert(0);
+    tmp_dgp = std::unique_ptr<dyn_parameters>();
+    mix = new GasParameters_mix_dyn({0.0, gpi.p, gpi.t},
+        *tmp_cgp, *tmp_dgp, *gpi.const_dyn.components, mg);
+  } else {
     err = init_error.SetError(
         ERROR_INIT_T | ERROR_CALC_GAS_P_ST | ERROR_GAS_MIX);
+  }
   return mix;
 }
 
 void InitDynamicParams() {
+  dyn_setup setup = DYNAMIC_SETUP_MASK;
   assert(0);
 }
 

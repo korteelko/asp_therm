@@ -50,7 +50,7 @@ static std::string gasname_by_path(const std::string &path);
 GasMixComponentsFile::GasMixComponentsFile(rg_model_t mn,
     XMLReader<gasmix_node> *xml_doc)
   : xml_doc_(xml_doc), files_handler_(nullptr),
-    model_conf_(mn), error_(ERROR_SUCCESS_T) {
+    model_t_(mn), error_(ERROR_SUCCESS_T) {
   init_components();
 }
 
@@ -128,7 +128,7 @@ GasMixComponentsFile *GasMixComponentsFile::Init(
 
 std::shared_ptr<parameters_mix> GasMixComponentsFile::GetMixParameters() {
   std::shared_ptr<parameters_mix> params_p = nullptr;
-  if (model_conf_ != rg_model_t::NG_GOST)
+  if (model_t_ != rg_model_t::NG_GOST)
     if (files_handler_ != nullptr)
       params_p = files_handler_->GetMixParameters();
   return params_p;

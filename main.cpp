@@ -37,6 +37,7 @@
 
 #define RK2_TEST
 #define PR_TEST
+// #define RKS_TEST
 // #define NG_GOST_TEST
 // #define DATABASE_TEST
 
@@ -50,6 +51,13 @@ const std::string xml_propane = "propane.xml";
 
 const std::string xml_gasmix = "../gasmix_inp_example.xml";
 const std::string xml_configuration = "../../configuration.xml";
+
+static model_str rk2_str(rg_model_id(rg_model_t::REDLICH_KWONG,
+    MODEL_SUBTYPE_DEFAULT), 1, 0, "debugi rk2");
+static model_str rks_str(rg_model_id(rg_model_t::REDLICH_KWONG,
+    MODEL_RK_SUBTYPE_SOAVE), 1, 0, "debugi rks");
+static model_str pr_str(rg_model_id(rg_model_t::PENG_ROBINSON,
+    MODEL_SUBTYPE_DEFAULT), 1, 0, "debugi pr");
 
 int test_database() {
   char cwd[512] = {0};
@@ -111,13 +119,11 @@ int test_models() {
   std::string filename = std::string(cwd) + xml_path + xml_gasmix;
 #if defined(RK2_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(rg_model_t::REDLICH_KWONG, filename,
-      INPUT_P_T)));
+      ModelsCreator::GetCalculatingModel(rk2_str, filename, INPUT_P_T)));
 #endif  // RK2_TEST
 #if defined(PR_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(rg_model_t::PENG_ROBINSON, filename,
-      INPUT_P_T)));
+      ModelsCreator::GetCalculatingModel(pr_str, filename, INPUT_P_T)));
 #endif  // PR_TEST
 #if defined(NG_GOST_TEST)
   ng_gost_mix ngg = ng_gost_mix {
@@ -170,13 +176,11 @@ int test_models_mix() {
   };
 #if defined(RK2_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(rg_model_t::REDLICH_KWONG, xml_files,
-      INPUT_P_T)));
+      ModelsCreator::GetCalculatingModel(rk2_str, xml_files, INPUT_P_T)));
 #endif  // RK2_TEST
 #if defined(PR_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(rg_model_t::PENG_ROBINSON, xml_files,
-      INPUT_P_T)));
+      ModelsCreator::GetCalculatingModel(pr_str, xml_files, INPUT_P_T)));
 #endif  // PR_TEST
 #if defined(NG_GOST_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(

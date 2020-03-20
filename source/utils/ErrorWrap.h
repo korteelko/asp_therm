@@ -22,6 +22,7 @@
 #define ERROR_SUCCESS_T    0x00000000
 #define ERROR_GENERAL_T    0x00000001
 
+/* just for lulz */
 #if defined(_DEBUG)
 #  define STRING_DEBUG_INFO ("file: " + std::string(__FILE__) + \
        "\n\tfunction: " + std::string(__FUNCTION__) \

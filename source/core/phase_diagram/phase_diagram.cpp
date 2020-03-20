@@ -24,6 +24,9 @@
 #define FUNCTIONS_INDEX_OUT 0xFF
 
 
+PhaseDiagram ::uniqueMark::uniqueMark(rg_model_id mn, gas_t gt)
+  : mn(mn), gt(gt) {}
+
 size_t PhaseDiagram::set_functions_index(rg_model_id mn) {
   switch (mn.type) {
     case rg_model_t::REDLICH_KWONG:
@@ -49,7 +52,7 @@ void PhaseDiagram::calculateBinodal(
           rectan_area;       // area under pi=const, from v0 to v2;
                         // Maxwell construction requirement splineAR==rectanAR;
   size_t functions_index = set_functions_index(mn);
-  if (functions_index == 0xFF) {
+  if (functions_index == FUNCTIONS_INDEX_OUT) {
     error_.SetError(ERROR_INIT_T, "error in programmer DNA");
     return;
   }
@@ -196,23 +199,27 @@ void PhaseDiagram::searchNegative(
 
 PhaseDiagram::PhaseDiagram() {}
 
+bool PhaseDiagram::IsValidModel(rg_model_id mn) {
+  return set_functions_index(mn) != FUNCTIONS_INDEX_OUT;
+}
+
 PhaseDiagram &PhaseDiagram::GetCalculated() {
   static PhaseDiagram phd;
   return phd;
 }
 
 binodalpoints *PhaseDiagram::GetBinodalPoints(const const_parameters &cp,
-    const model_str &mi) {
+    const rg_model_id &id) {
   binodalpoints *bp = nullptr;
-  if (!cp.IsGasmix()) {
+  if (!cp.IsGasmix() && PhaseDiagram::IsValidModel(id)) {
     auto f = [] (std::deque<double> &vec, double K) {
         std::transform(vec.begin(), vec.end(), vec.begin(),
         std::bind1st(std::multiplies<double>(), K));};
-    uniqueMark um(mi.model_type, cp.gas_name);
+    uniqueMark um(id, cp.gas_name);
     // если для таких параметров(модель и фактор ацентричности)
     //   бинодаль ещё не рассчитана -- рассчитать и сохранить
-    std::shared_ptr<binodalpoints> bdp(new binodalpoints(mi.model_type));
-    calculateBinodal(bdp, mi.model_type, cp.acentricfactor);
+    std::shared_ptr<binodalpoints> bdp(new binodalpoints(id));
+    calculateBinodal(bdp, id, cp.acentricfactor);
     checkResult(bdp);
     bdp->p.push_front(1.0);
     bdp->t.push_front(1.0);
@@ -232,7 +239,7 @@ binodalpoints *PhaseDiagram::GetBinodalPoints(const const_parameters &cp,
 }
 
 binodalpoints *PhaseDiagram::GetBinodalPoints(parameters_mix &components,
-    const model_str &mi) {
+    const rg_model_id &id) {
   // 25.01.2019
   // Здесь нужно прописать как считать линию перехода для газовых смесей
   // UPD: 17.03.2020
@@ -241,14 +248,17 @@ binodalpoints *PhaseDiagram::GetBinodalPoints(parameters_mix &components,
   if (max_el->first < 0.95)
     // todo: перевести условие в более удобоваримую форму
     return nullptr;
-  return PhaseDiagram::GetBinodalPoints(max_el->second.first, mi);
-
+  return PhaseDiagram::GetBinodalPoints(max_el->second.first, id);
 }
 
-bool operator< (const PhaseDiagram::uniqueMark &lum,
+merror_t PhaseDiagram::GetError() const {
+  return error_.GetErrorCode();
+}
+
+bool operator<(const PhaseDiagram::uniqueMark &lum,
     const PhaseDiagram::uniqueMark &rum) {
-  return std::tie(lum.mn.type, lum.mn.subtype, lum.gas) <
-         std::tie(rum.mn.type, rum.mn.subtype, rum.gas);
+  return std::tie(lum.mn.type, lum.mn.subtype, lum.gt) <
+         std::tie(rum.mn.type, rum.mn.subtype, rum.gt);
 }
 
 binodalpoints::binodalpoints(rg_model_id mn)

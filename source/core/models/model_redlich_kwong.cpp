@@ -51,7 +51,7 @@ void Redlich_Kwong2::gasmix_model_coefs(const model_input &mi) {
 }
 
 Redlich_Kwong2::Redlich_Kwong2(const model_input &mi)
-  : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
+  : modelGeneral(mi.ms, mi.gm, mi.bp) {
   if (HasGasMixMark(gm_)) {
     /* газовая смесь: */
     /* установить коэфициенты модели для смеси */
@@ -204,11 +204,13 @@ bool Redlich_Kwong2::IsValid() const {
       0.5*parameters_->cgetTemperature()/parameters_->cgetT_K());
 }
 
+/*
 double Redlich_Kwong2::InitVolume(double p, double t,
     const const_parameters &cp) {
   set_model_coef(cp);
   return get_volume(p, t, cp);
 }
+*/
 
 void Redlich_Kwong2::SetVolume(double p, double t) {
   set_parameters(GetVolume(p, t), p, t);

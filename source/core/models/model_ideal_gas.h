@@ -29,8 +29,8 @@ public:
 
   void DynamicflowAccept(DerivateFunctor &df) override;
   bool IsValid() const override;
-  double InitVolume(double p, double t,
-      const const_parameters &cp) override;
+  // double InitVolume(double p, double t,
+  //     const const_parameters &cp) override;
   void SetVolume(double p, double t) override;
   void SetPressure(double v, double t) override;
   double GetVolume(double p, double t) override;

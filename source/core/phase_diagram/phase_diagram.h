@@ -80,13 +80,13 @@ private:
     /** \brief использованная модель */
     rg_model_id mn;
     /** \brief идентификатор газа */
-    gas_t gas;
+    gas_t gt;
 
     /** \brief неопределённый газ GAS_TYPE_UNDEFINED */
     uniqueMark(rg_model_id mn, gas_t gt = GAS_TYPE_UNDEFINED);
   };
-  friend bool operator< (const PhaseDiagram::uniqueMark& lum,
-      const PhaseDiagram::uniqueMark& rum);
+  friend bool operator<(const PhaseDiagram::uniqueMark &lum,
+      const PhaseDiagram::uniqueMark &rum);
 
   typedef std::function<double(double, double, double, double)> integ_func_t;
   typedef std::function<void(
@@ -116,7 +116,8 @@ private:
 private:
   PhaseDiagram();
 
-  size_t set_functions_index(rg_model_id mn);
+  static size_t set_functions_index(rg_model_id mn);
+
   void calculateBinodal(std::shared_ptr<binodalpoints> &bdp,
       rg_model_id mn, double acentric);
   void checkResult(std::shared_ptr<binodalpoints> &bdp);
@@ -125,18 +126,23 @@ private:
       std::deque<double> &v);
 
 public:
+  static bool IsValidModel(rg_model_id mn);
   // Просто метод возвращающий Синглетон-объект
   static PhaseDiagram &GetCalculated();
   // Рассчитать или получить копию, если уже было рассчитано,
   //   для этих параметров, точек на бинодали.
+  /* note: свапнул model_str -> rg_model_id, т.к. модель вычисления
+   *   не связана с вычислением бинодали */
   binodalpoints *GetBinodalPoints(const const_parameters &cp,
-      const model_str &mi);
+      const rg_model_id &id);
   // for gas_mix
   binodalpoints *GetBinodalPoints(parameters_mix &components,
-      const model_str &mi);
+      const rg_model_id &id);
+
+  merror_t GetError() const;
 };
 
-bool operator< (const PhaseDiagram::uniqueMark &lum,
+bool operator<(const PhaseDiagram::uniqueMark &lum,
     const PhaseDiagram::uniqueMark &rum);
 
 #endif  // !_CORE__PHASE_DIAGRAM__PHASE_DIAGRAM_H_

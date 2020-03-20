@@ -30,7 +30,7 @@ static model_str ng_gost_iso20765_mi(rg_model_id(rg_model_t::NG_GOST,
     MODEL_GOST_SUBTYPE_ISO_20765), 1, 0, "ГОСТ 30319.1-2015 / ISO-20765");
 
 NG_Gost::NG_Gost(const model_input &mi)
-  : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
+  : modelGeneral(mi.ms, mi.gm, mi.bp) {
   set_gasparameters(mi.gpi, this);
 }
 
@@ -44,7 +44,8 @@ NG_Gost *NG_Gost::Init(const model_input &mi) {
 }
 
 model_str NG_Gost::GetModelShortInfo() const {
-  return (calc_config_.EnableISO20765()) ? ng_gost_iso20765_mi : ng_gost_mi;
+  return (model_config_.model_type.subtype == MODEL_GOST_SUBTYPE_ISO_20765) ?
+      ng_gost_iso20765_mi : ng_gost_mi;
 }
 
 void NG_Gost::DynamicflowAccept(class DerivateFunctor &df) {
@@ -70,12 +71,13 @@ bool NG_Gost::IsValid() const {
 #endif  // _debug
 }
 
+/*
 double NG_Gost::InitVolume(double p, double t,
     const const_parameters &cp) {
   (void)p; (void)t; (void)cp;
   assert(0);
   return 0.0;
-}
+}*/
 
 void NG_Gost::SetVolume(double p, double t) {
   parameters_->csetParameters(0.0, p, t, state_phase::GAS);

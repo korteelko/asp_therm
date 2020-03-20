@@ -23,7 +23,7 @@ static model_str ideal_gas_mi(rg_model_id(rg_model_t::IDEAL_GAS,
     MODEL_SUBTYPE_DEFAULT), 1, 0, "Идеальный газ");
 
 Ideal_Gas::Ideal_Gas(const model_input &mi)
-  : modelGeneral(mi.calc_config, mi.gm, mi.bp) {
+  : modelGeneral(mi.ms, mi.gm, mi.bp) {
   set_gasparameters(mi.gpi, this);
   if (!error_.GetErrorCode())
     set_enthalpy();
@@ -63,11 +63,11 @@ bool Ideal_Gas::IsValid() const {
   return parameters_->cgetState() == state_phase::GAS;
 }
 
-double Ideal_Gas::InitVolume(double p, double t,
+/*double Ideal_Gas::InitVolume(double p, double t,
     const const_parameters &cp) {
   assert(0);
   return GetVolume(p, t);
-}
+}*/
 
 void Ideal_Gas::SetVolume(double p, double t) {
   set_parameters(GetVolume(p, t), p, t);

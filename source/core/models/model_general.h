@@ -10,18 +10,12 @@
 #ifndef _CORE__MODELS__MODEL_GENERAL_H_
 #define _CORE__MODELS__MODEL_GENERAL_H_
 
-#include "target_sys.h"
-
 #include "common.h"
 #include "gas_description.h"
 #include "gas_description_static.h"
 #include "gasmix_init.h"
 #include "models_configurations.h"
 #include "phase_diagram.h"
-
-#ifdef BOOST_LIB_USED
-#  include <boost/noncopyable.hpp>
-#endif  // BOOST_LIB_USED
 
 #include <array>
 #include <functional>
@@ -41,6 +35,7 @@ public:
   virtual void getFunctor(class Redlich_Kwong_Soave &mg) = 0;
   virtual void getFunctor(class Peng_Robinson &mg) = 0;
   virtual void getFunctor(class NG_Gost &mg) = 0;
+
   virtual ~DerivateFunctor();
 };
 
@@ -48,12 +43,15 @@ struct model_input {
   gas_marks_t gm;
   binodalpoints *bp;
   gas_params_input gpi;
-  calculation_configuration calc_config;
+  model_str ms;
 
   model_input(gas_marks_t gm, binodalpoints *bp,
-      gas_params_input gpi, calculation_configuration calc_config);
+      gas_params_input gpi, model_str ms);
 };
 
+
+/** \brief Базовый абстрактный класс имплементации
+  *   уравнения состояния реаьного газа(модели) */
 class modelGeneral {
   modelGeneral(const modelGeneral &) = delete;
   modelGeneral &operator=(const modelGeneral &) = delete;
@@ -64,26 +62,26 @@ public:
 protected:
   ErrorWrap error_;
   mstatus_t status_;
-  rg_model_t model_conf_;
-  calculation_configuration calc_config_;
+  /** \brief Информация о данной модели:
+    *   тип, модификация, версия имплементации в данной программе */
+  model_str model_config_;
   gas_marks_t gm_;
   std::unique_ptr<GasParameters> parameters_;
   std::unique_ptr<binodalpoints> bp_;
 
 protected:
-  modelGeneral(calculation_configuration calc_config,
-      gas_marks_t gm, binodalpoints *bp);
+  modelGeneral(model_str model_config, gas_marks_t gm, binodalpoints *bp);
 
   double vapor_part(int32_t index);
   state_phase set_state_phase(double v, double p, double t);
   int32_t set_state_phasesub(double p);
   void set_parameters(double v, double p, double t);
   void set_enthalpy();
-  /** \brief set general struct of gasparameters */
-  void set_gasparameters(const gas_params_input &gpi,
-      modelGeneral *mg);
+  /** \brief Инициализировать структуру параметров газа parameters_ */
+  void set_gasparameters(const gas_params_input &gpi, modelGeneral *mg);
   const GasParameters *get_gasparameters() const;
 
+  /** \brief Проверить входные параметры */
   static merror_t check_input(const model_input &mi);
 
 public:
@@ -97,13 +95,14 @@ public:
 
   virtual model_str GetModelShortInfo() const = 0;
 
-  // Models have application limits
-  //  isValid - method for check this limits
+  /** \brief Проверить допустимость использования данной модели
+    *   для данной конфигурации газа(смеси газов) при
+    *   текущих параметрах p, t */
   virtual bool IsValid() const = 0;
   virtual void DynamicflowAccept(DerivateFunctor &df) = 0;
   // todo: remove it!
-  virtual double InitVolume(double p, double t,
-      const const_parameters &cp) = 0;
+  // virtual double InitVolume(double p, double t,
+  //     const const_parameters &cp) = 0;
   virtual void SetVolume(double p, double t) = 0;
   virtual void SetPressure(double v, double t) = 0;
   virtual double GetVolume(double p, double t) = 0;
@@ -122,7 +121,7 @@ public:
   calculation_state_log GetStateLog() const;
   merror_t GetErrorCode() const;
 
-// maybe another class
+  // todo: maybe remove it in another class
   std::string ParametersString() const;
   std::string ConstParametersString() const;
   static std::string sParametersStringHead();

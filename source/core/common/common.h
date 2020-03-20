@@ -92,6 +92,7 @@ enum class rg_model_t : uint64_t {
 };
 typedef int64_t rg_model_subtype;
 /* model_subtypes */
+/* todo: привязать к моделям */
 #define MODEL_SUBTYPE_DEFAULT        0x00000000
 /* модификация Соаве для модели Редлиха-Квонга */
 #define MODEL_RK_SUBTYPE_SOAVE       0x00000001

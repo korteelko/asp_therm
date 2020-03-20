@@ -69,6 +69,7 @@ public:
       const std::string &info);
 };
 
+/** \brief Конфигурация расчёта(запуска программы) */
 struct calculation_configuration {
   /** \brief флаг вывода отладочной информации
     * \default true */
@@ -106,7 +107,9 @@ struct calculation_info {
   time_t time;
 };
 
-/** \brief конфигурация моделей реального газа */
+/** \brief конфигурация моделей реального газа,
+  *   информация не привязанна к конкретной модели
+  *   общая для запущенной конфигурации */
 struct models_configuration {
 public:
   /** \brief информация о текущем расчёте */
