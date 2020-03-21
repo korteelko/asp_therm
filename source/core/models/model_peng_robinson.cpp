@@ -292,14 +292,6 @@ bool Peng_Robinson::IsValid() const {
   return (parameters_->cgetState() != state_phase::LIQUID);
 }
 
-/*
-double Peng_Robinson::InitVolume(double p, double t,
-    const const_parameters &cp) {
-  set_model_coef(cp);
-  return get_volume(p, t, cp);
-}
-*/
-
 void Peng_Robinson::SetVolume(double p, double t) {
   set_parameters(GetVolume(p, t), p, t);
 }

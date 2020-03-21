@@ -63,12 +63,6 @@ bool Ideal_Gas::IsValid() const {
   return parameters_->cgetState() == state_phase::GAS;
 }
 
-/*double Ideal_Gas::InitVolume(double p, double t,
-    const const_parameters &cp) {
-  assert(0);
-  return GetVolume(p, t);
-}*/
-
 void Ideal_Gas::SetVolume(double p, double t) {
   set_parameters(GetVolume(p, t), p, t);
 }

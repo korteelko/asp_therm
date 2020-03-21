@@ -26,7 +26,10 @@ set(THERMCORE_SOURCE_DIR "${ASP_THERM_ROOT}/source/core")
 set(THERMDB_SOURCE_DIR "${ASP_THERM_ROOT}/source/database")
 set(THERMUTILS_SOURCE_DIR "${ASP_THERM_ROOT}/source/utils")
 
-# setup cmake variables
+# setup file paths and cmake
+#   tests
+set(THERMTEST_CMAKEFILE "${ASP_THERM_ROOT}/tests_run.cmake")
+#   error codes
 set(DEFINES_SOURCE "")
 set(ERRORCODES_FILE "merror_codes.h")
 set(ERRORCODES_PATH "${THERMCORE_SOURCE_DIR}/common/${ERRORCODES_FILE}")
@@ -49,8 +52,6 @@ else()
 endif(UNIX)
 
 # setup utils
-
-
 # LIBS_DIR - для моих библиотек
 set(LIBS_DIR ${ASP_THERM_ROOT}/lib/${RESULT_LIB})
 # MODULES_DIR - для сторонних библиотек.
@@ -175,3 +176,9 @@ target_link_libraries(${PROJECT_NAME}
   pqxx
   pq
 )
+
+# run tests
+#   пока тестирую
+if(EXISTS ${THERMTEST_CMAKEFILE})
+  include(${THERMTEST_CMAKEFILE})
+endif(EXISTS ${THERMTEST_CMAKEFILE})

@@ -71,14 +71,6 @@ bool NG_Gost::IsValid() const {
 #endif  // _debug
 }
 
-/*
-double NG_Gost::InitVolume(double p, double t,
-    const const_parameters &cp) {
-  (void)p; (void)t; (void)cp;
-  assert(0);
-  return 0.0;
-}*/
-
 void NG_Gost::SetVolume(double p, double t) {
   parameters_->csetParameters(0.0, p, t, state_phase::GAS);
 }

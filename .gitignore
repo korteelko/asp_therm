@@ -18,4 +18,5 @@ CMakeLists.txt.user*
 configuration.json
 configuration.xml
 CMakeSettings.json
+tests_run.cmake
 
