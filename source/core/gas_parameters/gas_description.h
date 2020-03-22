@@ -23,16 +23,17 @@
 gas_t gas_by_name(const std::string &name);
 
 inline double volume_by_compress(double p, double t, double z) {
-  return z * GAS_CONSTANT * t / p;
+  return z * 10e3 * GAS_CONSTANT * t / p;
 }
 
 inline double compress_by_volume(double p, double t, double v) {
-  return v *  p / (GAS_CONSTANT * t);
+  return v * p / (10e3 * GAS_CONSTANT * t);
 }
 
 /// Динамические параметры вещества, зависящие от
 ///   других его параметров
 struct dyn_parameters {
+  mstatus_t status;
   dyn_setup setup;
   double heat_cap_vol,     // heat capacity for volume = const // Cv
          heat_cap_pres,    // heat capacity for pressure = const // Cp
@@ -54,8 +55,18 @@ private:
       double int_eng, parameters pm);
   void check_setup();
 
+  static merror_t check_input(dyn_setup setup, double cv, double cp,
+      double int_eng, parameters pm);
+
 public:
+  /** \brief Инициализировать структуру, проверив входные параметры */
   static dyn_parameters *Init(dyn_setup setup, double cv,
+      double cp, double int_eng, parameters pm);
+  /** \brief Инициализировать пустую структуру(заглушка для газовых смесей).
+    *   Инициализировать после можно методом ResetParameters */
+  dyn_parameters();
+  /** \brief Инициализировать структуру, проверив входные параметры */
+  merror_t ResetParameters(dyn_setup setup, double cv,
       double cp, double int_eng, parameters pm);
   void Update();
 };
@@ -88,7 +99,7 @@ struct const_parameters {
 private:
   const_parameters(gas_t gas_name, double vk, double pk, double tk,
       double zk, double mol, double R, double af);
-  const_parameters &operator= (const const_parameters &) = delete;
+  const_parameters &operator=(const const_parameters &) = delete;
 
 public:
   static const_parameters *Init(gas_t gas_name, double vk, double pk,
@@ -155,7 +166,7 @@ struct gas_pair {
 
   gas_pair() = delete;
   gas_pair(gas_t f, gas_t s);
-  bool operator< (const gas_pair &rhs) const;
+  bool operator<(const gas_pair &rhs) const;
 };
 /** \brief мапа бинарных коэффициентов  */
 typedef std::map<const gas_pair, double> binary_coef_map;
@@ -166,4 +177,35 @@ struct calculation_state_log {
   double enthalpy;
   std::string state_phase;
 };
+
+/** \brief стат структура характеристик газа */
+struct gas_char {
+  /** \brief газ является ароматическим соединением */
+  static bool IsAromatic(gas_t gas);
+  /** \brief газ является углеводородом */
+  static bool IsHydrocarbon(gas_t gas);
+  /** \brief газ имеет циклическую связь(кольцо) */
+  static bool HasCycle(gas_t gas);
+
+  static inline bool IsHydrogenSulfide(gas_t gas) {
+    return (gas == GAS_TYPE_HYDROGEN_SULFIDE) ? true : false;
+  }
+  static inline bool IsCarbonDioxide(gas_t gas) {
+    return (gas == GAS_TYPE_CARBON_DIOXIDE) ? true : false;
+  }
+  static inline bool IsAcetylen(gas_t gas) {
+  #ifdef ASSIGNMENT_TRACE_COMPONENTS
+    return (gas == GAS_TYPE_ACETYLENE) ? true : false;
+  #else
+    return false;
+  #endif  // ASSIGNMENT_TRACE_COMPONENTS
+  }
+  static inline bool IsCarbonMonoxide(gas_t gas) {
+    return (gas == GAS_TYPE_CARBON_MONOXIDE) ? true : false;
+  }
+
+private:
+  static bool is_in(gas_t g, const std::vector<gas_t> &v);
+};
+
 #endif  // !_CORE__GAS_PARAMETERS__GAS_DESCRIPTION_H_

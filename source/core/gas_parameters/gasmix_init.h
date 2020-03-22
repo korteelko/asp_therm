@@ -32,9 +32,54 @@ public:
   gasmix_file(const std::string &name,
       const std::string &path, const double part);
 };
+bool operator<(const gasmix_file &lg, const gasmix_file &rg);
 
-/* TODO: Проверить использование. Реализация - оставляет вопросы */
-bool operator< (const gasmix_file &lg, const gasmix_file &rg);
+
+/** \brief функции расчёта средних параметров по методам из
+  *   книги "Свойства газов и жидкостей" Рида, Праусница, Шервуда */
+namespace ns_avg {
+/* методика применяемая к классической модели Редлиха-Квонга */
+/** \brief Рассчитать среднюю критическую температуру по
+  *   методу Редлиха-Квонга(двухпараметрическому, глава 4.3) */
+double rk2_avg_Tk(const parameters_mix &components);
+/** \brief Рассчитать среднее критическое давление по
+  *   методу Редлиха-Квонга(двухпараметрическому, глава 4.3) */
+double rk2_avg_Pk(const parameters_mix &components);
+/** \brief Параметр сжимаемости в критической точке -
+  *   для модели Редлиха Квонга равен 1/3 */
+double rk2_avg_Zk();
+/** \brief Рассчитать среднее значение фактора ацентричности(глава 4.2) */
+/* todo: такс, вероятно, там объёмная доля, а не молярная  */
+double rk2_avg_acentric(const parameters_mix &components);
+
+// "истинные" параметры критической точки
+/** \brief Рассчитать среднюю критическую температуру по
+  *   методу Ли (глава 5.7):
+  * PSY_i = y_i * Vk_i / SUM_j (y_j * Vk_j)
+  * Tk = SUM_i (PSY_i * Tk_i) */
+double lee_avg_Tk(const parameters_mix &components);
+/** \brief Рассчитать среднюю критическую температуру по
+  *   методу Чью-Праусница (глава 5.7):
+  * TETA_i = y_i * Vk_i^0.66(6) / SUM_j (y_j * Vk_j^0.66(6))
+  * Tk = SUM_i (TETA_i * Tk_i) + SUM_i (SUM_j (TETA_i * TETA_j  * t_i_j))
+  *   t_i_j = 0 для i = j
+  *   иначе:
+  *   psy = A + B*d + C*d^2 + D*d^3 + E*d^4,
+  *   also: psy = 2 * t_i_j / (Tk_i + Tk_j)
+  *   and: d = |(Tk_i - Tk_j) / (Tk_i + Tk_j)| */
+double ch_pr_avg_Tk(const parameters_mix &components);
+/** \brief Рассчитать среднюю критический объём смеси по
+  *   методу Чью-Праусница (глава 5.7):
+  * TETA_i = y_i * Vk_i^0.66(6) / SUM_j (y_j * Vk_j^0.66(6))
+  * Vk = SUM_i (TETA_i * Vk_i) + SUM_i (SUM_j (TETA_i * TETA_j  * v_i_j))
+  *   v_i_j = 0 для i = j
+  *   иначе:
+  *   psy = A + B*d + C*d^2 + D*d^3 + E*d^4,
+  *   also: psy = 2 * v_i_j / (Vk_i + Vk_j)
+  *   and: d = |(Vk_i^0.6667 - Vk_j^0.6667) / (Vk_i^0.6667 + Vk_j^0.6667)| */
+double ch_pr_avg_Vk(const parameters_mix &components);
+}  // namespace ns_avg
+
 
 /* todo: remove this class */
 class GasParameters_mix : public GasParameters {

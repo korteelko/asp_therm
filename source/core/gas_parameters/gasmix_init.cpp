@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <numeric>
 #include <vector>
 
 #include <assert.h>
@@ -27,8 +28,6 @@ bool operator< (const gasmix_file &lg, const gasmix_file &rg) {
   return strcmp(lg.name.c_str(), rg.name.c_str()) <= 0;
 }
 
-/** \brief функции расчёта средних параметров по методам из
-  *   книги "Свойства газов и жидкостей" Рида, Праусница, Шервуда */
 namespace ns_avg {
 /* todo: осталось несколько неясных моментов - по поводу vk и zk
  *   когда разберусь - верну  */
@@ -66,8 +65,6 @@ double dfl_avg_acentric(const parameters_mix &components) {
  *   можно почитать в этой же книге, или у Бруссиловского.
  *   По правилу Лоренца-Бертло можно попридумывать функции и для
  *   других моделей. */
-/** \brief Рассчитать среднюю критическую температуру по
-  *   методу Редлиха-Квонга(двухпараметрическому, глава 4.3) */
 double rk2_avg_Tk(const parameters_mix &components) {
   double num = 0.0;
   double dec = 0.0;
@@ -77,8 +74,6 @@ double rk2_avg_Tk(const parameters_mix &components) {
   }
   return pow(num, 1.3333) / pow(dec, 0.6667);
 }
-/** \brief Рассчитать среднее критическое давление по
-  *   методу Редлиха-Квонга(двухпараметрическому, глава 4.3) */
 double rk2_avg_Pk(const parameters_mix &components) {
   double num = 0.0;
   double dec = 0.0;
@@ -88,18 +83,151 @@ double rk2_avg_Pk(const parameters_mix &components) {
   }
   return pow(num, 1.3333) / pow(dec, 1.6667);
 }
-/** \brief Параметр сжимаемости в критической точке -
-  *   для модели Редлиха Квонга равен 1/3 */
 double rk2_avg_Zk() {
   return 0.3333;
 }
-/** \brief Рассчитать среднее значение фактора ацентричности(глава 4.2) */
 double rk2_avg_acentric(const parameters_mix &components) {
   double w = 0.0;
   for (auto const &x : components)
     w += x.first * x.second.first.acentricfactor;
   return w;
 }
+
+/* истинные параметры критической точки смесей
+ *   "Свойства газов и жидкостей" Рида, Праусница, Шервуда глава 5.7 */
+double lee_avg_Tk(const parameters_mix &components) {
+  double psy_dec = std::accumulate(components.begin(), components.end(), 0.0,
+      [](double a, const std::pair<const double, const_dyn_parameters> &c) {
+        return a + c.first*c.second.first.V_K;});
+  double tk = std::accumulate(components.begin(), components.end(), 0.0,
+      [psy_dec](double a, const std::pair<const double, const_dyn_parameters> &c) {
+        return a + c.first * c.second.first.V_K * c.second.first.T_K / psy_dec;});
+  return tk;
+}
+
+/** \brief Получить коэффициенты функции расчитывания крит. температуры
+  *   для d <= 0.5 (lh в названии - less half) */
+static std::array<double, 5> ch_pr_psy_tk_coefs_lh(gas_t i, gas_t j) {
+  if (gas_char::IsAromatic(i) || gas_char::IsAromatic(j)) {
+    return {-0.0219, 1.227, -24.277, 147.673, -259.433};
+  } else {
+    if (gas_char::IsHydrogenSulfide(i) || gas_char::IsHydrogenSulfide(j)) {
+      return {-0.0479, -5.725, 70.974, -161.319, 0.0};
+    } else {
+      if (gas_char::IsCarbonDioxide(i) || gas_char::IsCarbonDioxide(j)) {
+        return {-0.0953, 2.185, -33.985, 179.068, -264.522};
+      } else {
+        if (gas_char::IsAcetylen(i) || gas_char::IsAcetylen(j)) {
+          return {-0.0077, -0.095, -0.225, 3.528, 0.0};
+        } else {
+          if (gas_char::IsCarbonMonoxide(i) || gas_char::IsCarbonMonoxide(j))
+            return {-0.0076, 0.286, -1.343, 5.443, -3.038};
+        }
+      }
+    }
+  }
+  return {-0.0076, 0.287, -1.343, 5.443, -3.038};
+}
+  /* todo: don't use: таблица не полная, а толька из РПШ для
+   *   0.0 <= d <= 0.5] */
+double ch_pr_avg_Tk(const parameters_mix &components) {
+  double teta_dec = std::accumulate(components.begin(), components.end(), 0.0,
+      [](double a, const std::pair<const double, const_dyn_parameters> &c) {
+        return a + c.first * std::pow(c.second.first.V_K, 0.666667);});
+  double teta_i, teta_j;
+  double d;
+  double tau;
+  double dtau;
+  double tk = 0.0;
+  int i = 0, j = 0;
+  for (auto const &x : components) {
+    teta_i = x.first * std::pow(x.second.first.V_K, 0.666667) / teta_dec;
+    j = 0;
+    dtau = 0.0;
+    for (auto const &y : components) {
+      if (i != j) {
+        teta_j = y.first * std::pow(y.second.first.V_K, 0.666667) / teta_dec;
+        d = std::abs(x.second.first.T_K - y.second.first.T_K) /
+            (x.second.first.T_K + y.second.first.T_K);
+        std::array<double, 5> psy_c;
+        if (d <= 0.5 + FLOAT_ACCURACY)
+          psy_c = ch_pr_psy_tk_coefs_lh(
+              x.second.first.gas_name, y.second.first.gas_name);
+        tau = (x.second.first.T_K + y.second.first.T_K) * (psy_c[0] +
+            psy_c[1] * d + psy_c[2] * d * d + psy_c[3] * std::pow(d, 3.0) +
+            psy_c[4] * std::pow(d, 4.0)) * 0.5;
+        dtau += teta_i * teta_j * tau;
+      }
+      j++;
+    }
+    tk += teta_i * x.second.first.T_K + dtau;
+    i++;
+  }
+  return tk;
+}
+/** \brief Получить коэффициенты функции расчитывания крит. объёма
+  *   для d <= 0.5 (lh в названии - less half) */
+static std::array<double, 5> ch_pr_psy_vk_coefs_lh(gas_t i, gas_t j) {
+  // если оба ароматические:
+  if (gas_char::IsAromatic(i) && gas_char::IsAromatic(j)) {
+    return {0.0, 0.0, 0.0, 0.0, 0.0};
+  } else {
+    if (gas_char::HasCycle(i) || gas_char::HasCycle(j)) {
+      return {-0.0479, -5.725, 70.974, -161.319, 0.0};
+    } else {
+      // там про парафин нормального строения, а я про обычный углеводород
+      if ((gas_char::IsHydrocarbon(i) && gas_char::IsAromatic(j)) ||
+          (gas_char::IsHydrocarbon(j) && gas_char::IsAromatic(i))) {
+        return {0.0753, -3.332, 2.220, 0.0, 0.0};
+      } else {
+        if (gas_char::IsHydrogenSulfide(i) || gas_char::IsHydrogenSulfide(j) ||
+            gas_char::IsCarbonDioxide(i) || gas_char::IsCarbonDioxide(j)) {
+          return {-0.4957, 17.1185, -168.56, 587.05, -698.89};
+        }
+      }
+    }
+  }
+  return {0.1397, -2.9672, 1.8337, -1.536, 0.0};
+}
+
+double ch_pr_avg_Vk(const parameters_mix &components) {
+  double teta_dec = std::accumulate(components.begin(), components.end(), 0.0,
+      [](double a, const std::pair<const double, const_dyn_parameters> &c) {
+        return a + c.first * std::pow(c.second.first.V_K, 0.666667);});
+  double teta_i, teta_j;
+  double d;
+  double nu;
+  double dnu;
+  double vk = 0.0;
+  int i = 0, j = 0;
+  for (auto const &x : components) {
+    teta_i = x.first * std::pow(x.second.first.V_K, 0.666667) / teta_dec;
+    j = 0;
+    dnu = 0.0;
+    for (auto const &y : components) {
+      if (i != j) {
+        teta_j = y.first * std::pow(y.second.first.V_K, 0.666667) / teta_dec;
+        d = std::abs(std::pow(x.second.first.V_K, 0.66667) -
+            std::pow(y.second.first.V_K, 0.66667)) /
+            (std::pow(x.second.first.V_K, 0.66667) +
+            std::pow(y.second.first.V_K, 0.66667));
+        std::array<double, 5> psy_c;
+        if (d <= 0.5 + FLOAT_ACCURACY)
+          psy_c = ch_pr_psy_vk_coefs_lh(
+              x.second.first.gas_name, y.second.first.gas_name);
+        nu = (x.second.first.V_K + y.second.first.V_K) * (psy_c[0] +
+            psy_c[1] * d + psy_c[2] * d * d + psy_c[3] * std::pow(d, 3.0) +
+            psy_c[4] * std::pow(d, 4.0)) * 0.5;
+        dnu += teta_i * teta_j * nu;
+      }
+      j++;
+    }
+    vk += teta_i * x.second.first.V_K + dnu;
+    i++;
+  }
+  return vk;
+}
+
 constexpr int index_pk = 0;
 constexpr int index_tk = 1;
 constexpr int index_vk = 2;
@@ -161,7 +289,6 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
     err = init_error.SetError(
         ERROR_INIT_T | ERROR_INIT_NULLP_ST | ERROR_GAS_MIX);
   std::unique_ptr<const_parameters> tmp_cgp = nullptr;
-  std::unique_ptr<dyn_parameters> tmp_dgp = nullptr;
   if (!err) {
     // рассчитать средние критические параметры смеси
     //   как арифметическое среднее её компонентов
@@ -174,41 +301,13 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
         avr_vals[ns_avg::index_pk], avr_vals[ns_avg::index_tk],
         avr_vals[ns_avg::index_zk], avr_vals[ns_avg::index_mol],
         avr_vals[ns_avg::index_accent]));
-    /*
-    if (tmp_cgp != nullptr) {
-      double volume = 0.0;
-      assert(0);
-      // todo:
-      // такс, здесь разбить на 2 этапа:
-      //   1) инициализация константных параметров
-      //   2) по константным парамертам, получить vpt параметры для смеси
-      for (const auto &x : *gpi.const_dyn.components)
-        volume += x.first * mg->InitVolume(gpi.p, gpi.t, x.second.first);
-      std::vector<std::pair<double, dyn_parameters>> dgp_cpt;
-      for (auto const &x : *gpi.const_dyn.components) {
-        dgp_cpt.push_back({x.first, x.second.second});
-        mg->update_dyn_params(dgp_cpt.back().second,
-        { volume, gpi.p, gpi.t}, x.second.first);
-      }
-      std::array<double, 3> dgp_tmp = {0.0, 0.0, 0.0};
-      for (auto const &x : dgp_cpt) {
-        dgp_tmp[0] += x.first * x.second.heat_cap_vol;
-        dgp_tmp[1] += x.first * x.second.heat_cap_pres;
-        dgp_tmp[2] += x.first * x.second.internal_energy;
-        setup &= x.second.setup;
-      }
-      tmp_dgp = std::unique_ptr<dyn_parameters>(dyn_parameters::Init(setup,
-          dgp_tmp[0], dgp_tmp[1], dgp_tmp[2], {volume, gpi.p, gpi.t}));
-    } */
     } else {
       err = init_error.SetError(
           ERROR_INIT_T | ERROR_GAS_MIX | ERROR_CALC_GAS_P_ST);
   }
-  if ((!err) && (tmp_dgp != nullptr)) {
-    assert(0);
-    tmp_dgp = std::unique_ptr<dyn_parameters>();
+  if (!err) {
     mix = new GasParameters_mix_dyn({0.0, gpi.p, gpi.t},
-        *tmp_cgp, *tmp_dgp, *gpi.const_dyn.components, mg);
+        *tmp_cgp, dyn_parameters(), *gpi.const_dyn.components, mg);
   } else {
     err = init_error.SetError(
         ERROR_INIT_T | ERROR_CALC_GAS_P_ST | ERROR_GAS_MIX);
@@ -218,7 +317,32 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
 
 void InitDynamicParams() {
   dyn_setup setup = DYNAMIC_SETUP_MASK;
-  assert(0);
+  /*
+  if (tmp_cgp != nullptr) {
+    double volume = 0.0;
+    assert(0);
+    // todo:
+    // такс, здесь разбить на 2 этапа:
+    //   1) инициализация константных параметров
+    //   2) по константным парамертам, получить vpt параметры для смеси
+    for (const auto &x : *gpi.const_dyn.components)
+      volume += x.first * mg->InitVolume(gpi.p, gpi.t, x.second.first);
+    std::vector<std::pair<double, dyn_parameters>> dgp_cpt;
+    for (auto const &x : *gpi.const_dyn.components) {
+      dgp_cpt.push_back({x.first, x.second.second});
+      mg->update_dyn_params(dgp_cpt.back().second,
+      { volume, gpi.p, gpi.t}, x.second.first);
+    }
+    std::array<double, 3> dgp_tmp = {0.0, 0.0, 0.0};
+    for (auto const &x : dgp_cpt) {
+      dgp_tmp[0] += x.first * x.second.heat_cap_vol;
+      dgp_tmp[1] += x.first * x.second.heat_cap_pres;
+      dgp_tmp[2] += x.first * x.second.internal_energy;
+      setup &= x.second.setup;
+    }
+    tmp_dgp = std::unique_ptr<dyn_parameters>(dyn_parameters::Init(setup,
+        dgp_tmp[0], dgp_tmp[1], dgp_tmp[2], {volume, gpi.p, gpi.t}));
+  } */
 }
 
 std::unique_ptr<const_parameters> GasParameters_mix_dyn::GetAverageParams(

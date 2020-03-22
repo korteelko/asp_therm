@@ -316,25 +316,25 @@ std::string db_reference::GetReferenceActString(db_reference_act act) {
 
 /* last update 2020.03.15: добавились флаги моделей, они
  *   учитываются в версии модели */
-static_assert(sizeof(model_info) == 104, "Необходимо перепроверить "
-    "функцию table_model_info() - вероятно изменился формат струтуры данных "
-    "model_info добавьте новые поля, или измените старые");
+// static_assert(sizeof(model_info) == 104, "Необходимо перепроверить "
+//     "функцию table_model_info() - вероятно изменился формат струтуры данных "
+//     "model_info добавьте новые поля, или измените старые");
 /** \brief функция собирающая набор полей для
   *   создания таблицы БД model_info информации о модели */
 static const db_table_create_setup &table_create_model_info() {
   return ns_tfs::model_info_create_setup;
 }
 
-static_assert(sizeof(calculation_info) == 24, "См static_assert "
-    "для table_cteate_model_info, идея таже");
+// static_assert(sizeof(calculation_info) == 24, "См static_assert "
+//     "для table_cteate_model_info, идея таже");
 /** \brief функция собирающая набор полей для
   *   создания таблицы БД calculation_info информации о расчёте */
 static const db_table_create_setup &table_create_calculation_info() {
   return ns_tfs::calculation_info_create_setup;
 }
 
-static_assert(sizeof(calculation_state_log) == 104, "См static_assert "
-    "для table_cteate_model_info, идея таже");
+// static_assert(sizeof(calculation_state_log) == 112, "См static_assert "
+//     "для table_cteate_model_info, идея таже");
 /** \brief функция собирающая набор полей для
   *   создания таблицы БД calculation_state_log строку расчёта */
 static const db_table_create_setup &table_create_calculation_state_log() {

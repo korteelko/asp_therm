@@ -17,6 +17,9 @@
 ErrorWrap const_parameters::init_error;
 
 // todo: add another gases
+/** \brief список газов, для которых прописаны файлы параметров,
+  *   ключ соответствует имени xml файла
+  *   (и строке в БД если мне будет не лень) */
 static std::map<std::string, gas_t> gas_names =
     std::map<std::string, gas_t> {
   {"methane", GAS_TYPE_METHANE},
@@ -38,6 +41,7 @@ static std::map<std::string, gas_t> gas_names =
   {"octane", GAS_TYPE_OCTANE}
 };
 
+// todo: add another gases
 static gas_t valid_gases[] = {
   GAS_TYPE_METHANE,
   GAS_TYPE_ETHANE,
@@ -79,6 +83,7 @@ dyn_parameters::dyn_parameters(dyn_setup setup, double cv, double cp,
     double int_eng, parameters pm)
   : setup(setup), heat_cap_vol(cv), heat_cap_pres(cp),
     internal_energy(int_eng), beta_kr(0.0), parm(pm) {
+  status = STATUS_OK;
   Update();
 }
 
@@ -87,7 +92,7 @@ void dyn_parameters::check_setup() {
     setup |= DYNAMIC_BETA_KR;
 }
 
-dyn_parameters *dyn_parameters::Init(dyn_setup setup, double cv, double cp,
+merror_t dyn_parameters::check_input(dyn_setup setup, double cv, double cp,
     double int_eng, parameters pm) {
   cp = (setup & DYNAMIC_HEAT_CAP_PRES) ? cp : 1.0;
   cv = (setup & DYNAMIC_HEAT_CAP_VOL) ? cv : 1.0;
@@ -95,15 +100,42 @@ dyn_parameters *dyn_parameters::Init(dyn_setup setup, double cv, double cp,
   bool correct_input = is_above0(cp, cv, int_eng);
   correct_input &= is_above0(pm.pressure, pm.temperature, pm.volume);
   if (!correct_input)
+    return ERROR_INIT_T;
+  return ERROR_SUCCESS_T;
+}
+
+dyn_parameters *dyn_parameters::Init(dyn_setup setup, double cv, double cp,
+    double int_eng, parameters pm) {
+  if (dyn_parameters::check_input(setup, cv, cp, int_eng, pm))
     return nullptr;
   return new dyn_parameters(setup, cv, cp, int_eng, pm);
 }
 
+dyn_parameters::dyn_parameters()
+  : status(STATUS_NOT), setup(0) {}
+
+merror_t dyn_parameters::ResetParameters(dyn_setup new_setup, double cv,
+    double cp, double int_eng, parameters pm) {
+  merror_t error = dyn_parameters::check_input(new_setup, cv, cp, int_eng, pm);
+  if (!error) {
+    status = STATUS_OK;
+    setup = new_setup;
+    heat_cap_vol = cv;
+    heat_cap_pres = cp;
+    internal_energy = int_eng;
+    beta_kr = 0.0;
+    parm = pm;
+  }
+  return error;
+}
+
 // update beta critical
 void dyn_parameters::Update() {
-  if (setup & DYNAMIC_BETA_KR) {
-    double ai = heat_cap_pres / heat_cap_vol;
-    beta_kr = std::pow(2.0 / (ai + 1.0), ai / (ai - 1.0));
+  if (status == STATUS_OK) {
+    if (setup & DYNAMIC_BETA_KR) {
+      double ai = heat_cap_pres / heat_cap_vol;
+      beta_kr = std::pow(2.0 / (ai + 1.0), ai / (ai - 1.0));
+    }
   }
 }
 
@@ -176,7 +208,7 @@ gas_pair::gas_pair(gas_t f, gas_t s) {
   j = s;
 }
 
-bool gas_pair::operator< (const gas_pair &rhs) const {
+bool gas_pair::operator<(const gas_pair &rhs) const {
   if (i != rhs.i) {
     return i < rhs.i;
   } else {
@@ -185,3 +217,44 @@ bool gas_pair::operator< (const gas_pair &rhs) const {
 }
 
 const_dyn_union::~const_dyn_union() {}
+
+#define CH(x) (GAS_TYPE_ ## x)
+bool gas_char::IsAromatic(gas_t gas) {
+#ifdef ASSIGNMENT_TRACE_COMPONENTS
+  return gas_char::is_in(gas, {
+      CH(BENZENE), CH(TOLUENE), CH(ETHYLBENZENE), CH(O_XYLENE)});
+#else
+  return false;
+#endif  // ASSIGNMENT_TRACE_COMPONENTS
+}
+
+bool gas_char::IsHydrocarbon(gas_t gas) {
+  bool is_hc = gas_char::is_in(gas, {CH(METHANE), CH(ETHANE),
+      CH(PROPANE), CH(HEXANE), CH(N_BUTANE), CH(ISO_BUTANE),
+      CH(N_PENTANE), CH(ISO_PENTANE), CH(HEPTANE),
+      CH(OCTANE), CH(NONANE), CH(DECANE)});
+#ifdef ASSIGNMENT_TRACE_COMPONENTS
+  if (!is_hc) {
+    assert(0);
+    // todo: доделать
+    is_hc = gas_char::is_in(gas, {CH(NEO_PENTANE)});
+  }
+#endif  // ASSIGNMENT_TRACE_COMPONENTS
+  return is_hc;
+}
+
+bool gas_char::HasCycle(gas_t gas) {
+  bool hc = gas_char::IsAromatic(gas);
+  if (!hc) {
+    hc = is_in(gas, {CH(CYCLOPENTENE), CH(MCYCLOPENTENE), CH(ECYCLOPENTENE),
+        CH(CYCLOHEXANE), CH(MCYCLOHEXANE), CH(ECYCLOHEXANE)});
+  }
+  return hc;
+}
+
+bool gas_char::is_in(gas_t g, const std::vector<gas_t> &v) {
+  for (const auto &x: v)
+    if (x == g)
+      return true;
+  return false;
+}

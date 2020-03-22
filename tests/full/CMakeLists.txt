@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.7)
 
 project(asp_therm-fulltests)
 
+# so intresting and it's all about cmake and gtest!
+#   https://cmake.org/cmake/help/latest/module/GoogleTest.html
+
 # setup gtest tests
 #   maybe
 # todo: replace with more common method
