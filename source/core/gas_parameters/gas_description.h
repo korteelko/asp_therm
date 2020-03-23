@@ -22,12 +22,12 @@
 
 gas_t gas_by_name(const std::string &name);
 
-inline double volume_by_compress(double p, double t, double z) {
-  return z * 10e3 * GAS_CONSTANT * t / p;
+inline double volume_by_compress(double p, double t, double mol, double z) {
+  return z * 1000 * GAS_CONSTANT * t / (p * mol);
 }
 
-inline double compress_by_volume(double p, double t, double v) {
-  return v * p / (10e3 * GAS_CONSTANT * t);
+inline double compress_by_volume(double p, double t, double mol, double v) {
+  return v * p * mol / (1000 * GAS_CONSTANT * t);
 }
 
 /// Динамические параметры вещества, зависящие от
@@ -184,8 +184,8 @@ struct gas_char {
   static bool IsAromatic(gas_t gas);
   /** \brief газ является углеводородом */
   static bool IsHydrocarbon(gas_t gas);
-  /** \brief газ имеет циклическую связь(кольцо) */
-  static bool HasCycle(gas_t gas);
+  /** \brief газ является циклопарафином */
+  static bool IsCycleParafine(gas_t gas);
 
   static inline bool IsHydrogenSulfide(gas_t gas) {
     return (gas == GAS_TYPE_HYDROGEN_SULFIDE) ? true : false;

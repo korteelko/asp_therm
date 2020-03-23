@@ -13,6 +13,7 @@ set(GTEST_INCLUDE_DIR /opt/gtest/googletest/include)
 find_package(GTest REQUIRED)
 find_package(Threads REQUIRED)
 
+add_definitions(-DGASMIX_TEST -DMATH_TEST)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,7 +23,7 @@ set(THERMCORE_SOURCE_DIR "${ASP_THERM_ROOT}/source/core")
 # set(THERMDB_SOURCE_DIR "${ASP_THERM_ROOT}/source/database")
 set(THERMUTILS_SOURCE_DIR "${ASP_THERM_ROOT}/source/utils")
 
-set(AST_THERM_FULLTEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+set(ASP_THERM_FULLTEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
 # setup file paths and cmake
 #   tests
@@ -51,18 +52,39 @@ endif(UNIX)
 # includes
 include_directories(
   ${THERMCORE_SOURCE_DIR}/common
+  ${THERMCORE_SOURCE_DIR}/gas_parameters
   ${THERMUTILS_SOURCE_DIR}
   ${GTEST_INCLUDE_DIRS}
 )
 
 # core testes
+#   math
 add_executable(
   test_math
-  ${AST_THERM_FULLTEST_DIR}/core/test_math.cpp
+  ${ASP_THERM_FULLTEST_DIR}/core/test_math.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
+)
+#   gasmix
+add_executable(
+  test_gasmix
+
+  ${THERMCORE_SOURCE_DIR}/common/common.cpp
+  ${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp
+
+  ${ASP_THERM_FULLTEST_DIR}/core/test_gasmix.cpp
+  ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
+  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description.cpp
+  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_dynamic.cpp
+  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_static.cpp
+  ${THERMCORE_SOURCE_DIR}/gas_parameters/gasmix_init.cpp
+
+  ${THERMUTILS_SOURCE_DIR}/ErrorWrap.cpp
+  ${THERMUTILS_SOURCE_DIR}/Logging.cpp
 )
 
 target_link_libraries(test_math ${GTEST_LIBRARIES} Threads::Threads)
+target_link_libraries(test_gasmix ${GTEST_LIBRARIES} Threads::Threads)
 
 enable_testing()
 add_test(test_math "core/test_math")
+add_test(test_gasmix "core/test_gasmix")

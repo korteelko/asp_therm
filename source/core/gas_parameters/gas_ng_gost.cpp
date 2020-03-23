@@ -367,7 +367,7 @@ merror_t GasParameters_NG_Gost_dyn::init_pseudocrit_vpte() {
   press_var = 0.291 - press_var;
   pseudocrit_vpte_.volume = 0.125 * vol;
   pseudocrit_vpte_.temperature = 0.125 * temp / vol;
-  pseudocrit_vpte_.pressure = 10e3 * GAS_CONSTANT *
+  pseudocrit_vpte_.pressure = 1000 * GAS_CONSTANT *
       pseudocrit_vpte_.temperature * press_var / pseudocrit_vpte_.volume;
   return ERROR_SUCCESS_T;
 }
@@ -405,10 +405,10 @@ merror_t GasParameters_NG_Gost_dyn::set_volume() {
          tau = vpte_.temperature / Lt;
   double A0 = calculate_A0(sigm);
   double pi_calc = sigm * tau * (1.0 + A0),
-         pi = 10e-6 * vpte_.pressure / coef_p0m_;
+         pi = 0.000001 * vpte_.pressure / coef_p0m_;
   int loop_max = 3000;
   while (--loop_max > 0) {
-    if (abs(pi_calc - pi) / pi < 10e-6)
+    if (abs(pi_calc - pi) / pi < 0.000001)
       break;
     sigm += calculate_d_sigm(sigm);
     A0 = calculate_A0(sigm);
@@ -476,14 +476,14 @@ merror_t GasParameters_NG_Gost_dyn::set_cp0r() {
 
 /* check 07_11_19 */
 double GasParameters_NG_Gost_dyn::sigma_start() const {
-  return 10e-3 * vpte_.pressure * pow(coef_kx_, 3.0) /
+  return 0.001 * vpte_.pressure * pow(coef_kx_, 3.0) /
       (GAS_CONSTANT * vpte_.temperature);
 }
 
 /* check 07_11_19 */
 double GasParameters_NG_Gost_dyn::calculate_d_sigm(double sigm) const {
   double tau = vpte_.temperature / Lt,
-         pi  = 10e-6 * vpte_.pressure / coef_p0m_,
+         pi  = 0.000001 * vpte_.pressure / coef_p0m_,
          d_sigm = (pi / tau - (1.0 + calculate_A0(sigm))*sigm) / (1.0 + calculate_A1(sigm));
   return d_sigm;
 }

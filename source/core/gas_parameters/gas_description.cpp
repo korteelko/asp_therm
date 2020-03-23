@@ -61,6 +61,10 @@ static gas_t valid_gases[] = {
   GAS_TYPE_HEPTANE,
   GAS_TYPE_OCTANE,
 
+#ifdef GASMIX_TEST
+  GAS_TYPE_TOLUENE,
+#endif  // GASMIX_TEST
+
   GAS_TYPE_UNDEFINED,
   GAS_TYPE_MIX
 };
@@ -153,10 +157,10 @@ const_parameters *const_parameters::Init(gas_t gas_name, double vk,
       if (!is_above0(zk)) {
         correct_input = false;
       } else {
-        vk = volume_by_compress(pk, tk, zk);
+        vk = volume_by_compress(pk, tk, mol, zk);
       }
     } else {
-      zk = compress_by_volume(pk, tk, vk);
+      zk = compress_by_volume(pk, tk, mol, vk);
     }
   }
   if (correct_input) {
@@ -235,20 +239,17 @@ bool gas_char::IsHydrocarbon(gas_t gas) {
       CH(OCTANE), CH(NONANE), CH(DECANE)});
 #ifdef ASSIGNMENT_TRACE_COMPONENTS
   if (!is_hc) {
-    assert(0);
-    // todo: доделать
-    is_hc = gas_char::is_in(gas, {CH(NEO_PENTANE)});
+    is_hc = gas_char::is_in(gas, {CH(NEO_PENTANE), CH(METHYL_PENTANE2),
+         CH(METHYL_PENTANE3), CH(DIMETHYL_BUTANE2), CH(DIMETHYL_BUTANE3)});
   }
 #endif  // ASSIGNMENT_TRACE_COMPONENTS
   return is_hc;
 }
 
-bool gas_char::HasCycle(gas_t gas) {
-  bool hc = gas_char::IsAromatic(gas);
-  if (!hc) {
-    hc = is_in(gas, {CH(CYCLOPENTENE), CH(MCYCLOPENTENE), CH(ECYCLOPENTENE),
-        CH(CYCLOHEXANE), CH(MCYCLOHEXANE), CH(ECYCLOHEXANE)});
-  }
+// Парафины - алканы с формулой C[n]H[2n]
+bool gas_char::IsCycleParafine(gas_t gas) {
+  bool hc = is_in(gas, {CH(CYCLOPENTENE), CH(MCYCLOPENTENE), CH(ECYCLOPENTENE),
+      CH(CYCLOHEXANE), CH(MCYCLOHEXANE), CH(ECYCLOHEXANE)});
   return hc;
 }
 

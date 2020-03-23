@@ -78,6 +78,8 @@ double ch_pr_avg_Tk(const parameters_mix &components);
   *   also: psy = 2 * v_i_j / (Vk_i + Vk_j)
   *   and: d = |(Vk_i^0.6667 - Vk_j^0.6667) / (Vk_i^0.6667 + Vk_j^0.6667)| */
 double ch_pr_avg_Vk(const parameters_mix &components);
+/* todo: вычисление критического давления по книге РПШ
+ *   сложно и не понятно */
 }  // namespace ns_avg
 
 
