@@ -123,7 +123,7 @@ merror_t ProgramState::ResetConfigFile(
 
 merror_t ProgramState::ResetGasmixFile(
     const std::string &gasmix_file) {
-  assert(0);
+  // assert(0);
 }
 
 bool ProgramState::IsInitialized() const {
@@ -216,5 +216,5 @@ void PSConfiguration::initDatabaseConfig() {
 }
 
 model_str PSConfiguration::initModelStr() {
-  assert(0);
+  // assert(0);
 }

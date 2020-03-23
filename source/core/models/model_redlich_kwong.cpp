@@ -163,6 +163,7 @@ double Redlich_Kwong2::get_pressure(double v, double t,
 
 void Redlich_Kwong2::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state) {
+  /*
   // parameters prev_parm = prev_state.parm;
   // internal_energy addition 
   double du  = internal_energy_integral(new_state, prev_state.parm);
@@ -176,11 +177,13 @@ void Redlich_Kwong2::update_dyn_params(dyn_parameters &prev_state,
   prev_state.heat_cap_pres   = prev_state.heat_cap_vol + dif_c;
   prev_state.parm = new_state;
   prev_state.Update();
+  */
 }
 
 // функция вызывается из класса GasParameters_dyn
 void Redlich_Kwong2::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state, const const_parameters &cp) {
+  /*
   set_model_coef(cp);
   double du  = internal_energy_integral(new_state, prev_state.parm);
   // heat_capacity_volume addition
@@ -192,6 +195,7 @@ void Redlich_Kwong2::update_dyn_params(dyn_parameters &prev_state,
   prev_state.heat_cap_pres   = prev_state.heat_cap_vol + dif_c;
   prev_state.parm = new_state;
   prev_state.Update();
+  */
 }
 
 // visitor

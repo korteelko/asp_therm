@@ -121,7 +121,7 @@ void modelGeneral::set_gasparameters(const gas_params_input &gpi,
   } else {
     parameters_ = std::unique_ptr<GasParameters>(
         GasParameters_dyn::Init(gpi, mg));
-    assert(0);
+    // assert(0);
   }
   if (parameters_ == nullptr) {
     GasParameters::init_error.LogIt();

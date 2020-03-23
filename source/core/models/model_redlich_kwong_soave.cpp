@@ -287,7 +287,6 @@ model_str Redlich_Kwong_Soave::GetModelShortInfo() const {
 
 void Redlich_Kwong_Soave::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state) {
-  assert(0);
   /*double du  = internal_energy_integral(new_state, prev_state.parm);
   // heat_capacity_volume addition
   double dcv = heat_capac_vol_integral(new_state, prev_state.parm);
@@ -321,7 +320,8 @@ void Redlich_Kwong_Soave::DynamicflowAccept(DerivateFunctor &df) {
 }
 
 bool Redlich_Kwong_Soave::IsValid() const {
-  assert(0);
+  // todo: replace
+  // assert(0);
   return (parameters_->cgetPressure()/parameters_->cgetP_K() <
       0.5*parameters_->cgetTemperature()/parameters_->cgetT_K());
 }

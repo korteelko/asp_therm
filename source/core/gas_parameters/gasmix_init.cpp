@@ -270,7 +270,14 @@ std::array<double, 6> get_average_params(const parameters_mix &components,
         GAS_CONSTANT / avg_val[index_mol], avg_val[index_tk]);
     avg_val[index_accent] = dfl_avg_acentric(components);
   #else
-    assert(0);
+    // todo: вообще-то нужно разобраться с каталогом(выбором)
+    //   этих функций ч/з конфигурацию программы
+    avg_val[index_pk] = 0.0;
+    avg_val[index_tk] = lee_avg_Tk(components);
+    avg_val[index_vk] = ch_pr_avg_Vk(components);
+    avg_val[index_zk] = 0.0;
+    avg_val[index_accent] = 0.0;
+
   #endif  // UNDEFINED_DEFINE
   }
   return avg_val;
@@ -324,34 +331,24 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
   return mix;
 }
 
-void InitDynamicParams() {
-  dyn_setup setup = DYNAMIC_SETUP_MASK;
+void GasParameters_mix_dyn::InitDynamicParams() {
   /*
-  if (tmp_cgp != nullptr) {
-    double volume = 0.0;
-    assert(0);
-    // todo:
-    // такс, здесь разбить на 2 этапа:
-    //   1) инициализация константных параметров
-    //   2) по константным парамертам, получить vpt параметры для смеси
-    for (const auto &x : *gpi.const_dyn.components)
-      volume += x.first * mg->InitVolume(gpi.p, gpi.t, x.second.first);
-    std::vector<std::pair<double, dyn_parameters>> dgp_cpt;
-    for (auto const &x : *gpi.const_dyn.components) {
-      dgp_cpt.push_back({x.first, x.second.second});
-      mg->update_dyn_params(dgp_cpt.back().second,
-      { volume, gpi.p, gpi.t}, x.second.first);
-    }
-    std::array<double, 3> dgp_tmp = {0.0, 0.0, 0.0};
-    for (auto const &x : dgp_cpt) {
-      dgp_tmp[0] += x.first * x.second.heat_cap_vol;
-      dgp_tmp[1] += x.first * x.second.heat_cap_pres;
-      dgp_tmp[2] += x.first * x.second.internal_energy;
-      setup &= x.second.setup;
-    }
-    tmp_dgp = std::unique_ptr<dyn_parameters>(dyn_parameters::Init(setup,
-        dgp_tmp[0], dgp_tmp[1], dgp_tmp[2], {volume, gpi.p, gpi.t}));
-  } */
+  dyn_setup setup = DYNAMIC_SETUP_MASK;
+  double volume = 0.0;
+  std::vector<std::pair<double, dyn_parameters>> dgp_cpt;
+  model_->update_dyn_params(dgp_cpt.back().second,
+    { volume, gpi.p, gpi.t}, x.second.first);
+  std::array<double, 3> dgp_tmp = {0.0, 0.0, 0.0};
+  for (auto const &x : dgp_cpt) {
+    dgp_tmp[0] += x.first * x.second.heat_cap_vol;
+    dgp_tmp[1] += x.first * x.second.heat_cap_pres;
+    dgp_tmp[2] += x.first * x.second.internal_energy;
+    setup &= x.second.setup;
+  }
+  tmp_dgp = std::unique_ptr<dyn_parameters>(dyn_parameters::Init(setup,
+      dgp_tmp[0], dgp_tmp[1], dgp_tmp[2], {volume, gpi.p, gpi.t}));
+  */
+  status_ = STATUS_OK;
 }
 
 std::unique_ptr<const_parameters> GasParameters_mix_dyn::GetAverageParams(

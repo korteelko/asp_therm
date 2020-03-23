@@ -151,17 +151,23 @@ const_parameters::const_parameters(gas_t gas_name, double vk, double pk,
 
 const_parameters *const_parameters::Init(gas_t gas_name, double vk,
     double pk, double tk, double zk, double mol, double af) {
-  bool correct_input = is_above0(pk, tk, mol, af);
-  if (correct_input) {
-    if (!is_above0(vk)) {
-      if (!is_above0(zk)) {
-        correct_input = false;
+  bool correct_input = false;
+  if (gas_name != GAS_TYPE_MIX) {
+    correct_input = is_above0(pk, tk, mol, af);
+    if (correct_input) {
+      if (!is_above0(vk)) {
+        if (!is_above0(zk)) {
+          correct_input = false;
+        } else {
+          vk = volume_by_compress(pk, tk, mol, zk);
+        }
       } else {
-        vk = volume_by_compress(pk, tk, mol, zk);
+        zk = compress_by_volume(pk, tk, mol, vk);
       }
-    } else {
-      zk = compress_by_volume(pk, tk, mol, vk);
     }
+  } else {
+    // is gasmix
+    correct_input = is_above0(mol);
   }
   if (correct_input) {
     if (is_valid_gas(gas_name))
@@ -192,9 +198,10 @@ bool const_parameters::IsAbstractGas() const {
 }
 
 bool is_valid_cgp(const const_parameters &cgp) {
-  if (!is_above0(cgp.V_K, cgp.P_K, cgp.T_K, cgp.Z_K, cgp.molecularmass,
-      cgp.R, cgp.acentricfactor))
-    return false;
+  if (cgp.gas_name != GAS_TYPE_MIX)
+    if (!is_above0(cgp.V_K, cgp.P_K, cgp.T_K, cgp.Z_K, cgp.molecularmass,
+        cgp.R, cgp.acentricfactor))
+      return false;
   return is_valid_gas(cgp.gas_name) ? true : false;
 }
 

@@ -131,17 +131,17 @@ void Peng_Robinson::coefs_by_binary(
   }
   model_coef_a_ = result_a_coef;
   model_coef_b_ = result_b_coef;
-  assert(0 && "how about model_coef_k_");
+  //assert(0 && "how about model_coef_k_");
 }
 
 Peng_Robinson::Peng_Robinson(const model_input &mi)
   : modelGeneral(mi.ms, mi.gm, mi.bp) {
-  assert(0);  // che tvorit'sya?
+  //assert(0);  // che tvorit'sya?
   if (model_config_.model_type.subtype == MODEL_PR_SUBTYPE_BINASSOC)
     coefs_by_binary(mi);
   set_gasparameters(mi.gpi, this);
   if (!error_.GetErrorCode()) {
-    assert(0);
+    //assert(0);
     set_model_coef();
     // todo: incapsulate dynamicsetup
     if (parameters_->cgetDynSetup() & DYNAMIC_ENTALPHY)

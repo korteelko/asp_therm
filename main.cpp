@@ -36,8 +36,8 @@
 /// propane 0.004545    4.255       369.9      44.097       ~1.13     ~1750           0.153
 
 #define RK2_TEST
-#define PR_TEST
-// #define RKS_TEST
+// #define PR_TEST  // доделать для смесей
+#define RKS_TEST
 // #define NG_GOST_TEST
 // #define DATABASE_TEST
 
@@ -121,6 +121,10 @@ int test_models() {
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(rk2_str, filename, INPUT_P_T)));
 #endif  // RK2_TEST
+#if defined(RKS_TEST)
+  test_vec.push_back(std::unique_ptr<modelGeneral>(
+      ModelsCreator::GetCalculatingModel(rks_str, filename, INPUT_P_T)));
+#endif  // RKS_TEST
 #if defined(PR_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(pr_str, filename, INPUT_P_T)));
@@ -151,6 +155,7 @@ int test_models() {
       std::cerr << "        --------------          " << std::endl;
       continue;
     }
+    std::cerr << "\n" << (*calc_mod)->GetModelShortInfo().short_info << "\n";
     std::cerr << (*calc_mod)->ConstParametersString() << std::flush;
     std::cerr << modelGeneral::sParametersStringHead() << std::flush;
     std::cerr << (*calc_mod)->ParametersString() << std::flush;
@@ -178,6 +183,10 @@ int test_models_mix() {
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(rk2_str, xml_files, INPUT_P_T)));
 #endif  // RK2_TEST
+#if defined(RKS_TEST)
+  test_vec.push_back(std::unique_ptr<modelGeneral>(
+      ModelsCreator::GetCalculatingModel(rks_str, xml_files, INPUT_P_T)));
+#endif  // RKS_TEST
 #if defined(PR_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(pr_str, xml_files, INPUT_P_T)));
@@ -193,6 +202,7 @@ int test_models_mix() {
       std::cerr << "        --------------          " << std::endl;
       continue;
     }
+    std::cerr << "\n" << (*calc_mod)->GetModelShortInfo().short_info << "\n";
     std::cerr << (*calc_mod)->ConstParametersString() << std::flush;
     std::cerr << modelGeneral::sParametersStringHead() << std::flush;
     std::cerr << (*calc_mod)->ParametersString() << std::flush;
