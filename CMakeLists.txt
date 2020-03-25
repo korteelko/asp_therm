@@ -27,8 +27,6 @@ set(THERMDB_SOURCE_DIR "${ASP_THERM_ROOT}/source/database")
 set(THERMUTILS_SOURCE_DIR "${ASP_THERM_ROOT}/source/utils")
 
 # setup file paths and cmake
-#   tests
-set(THERMTEST_CMAKEFILE "${ASP_THERM_ROOT}/tests_run.cmake")
 #   error codes
 set(DEFINES_SOURCE "")
 set(ERRORCODES_FILE "merror_codes.h")
@@ -178,7 +176,4 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 # run tests
-#   пока тестирую
-if(EXISTS ${THERMTEST_CMAKEFILE})
-  include(${THERMTEST_CMAKEFILE})
-endif(EXISTS ${THERMTEST_CMAKEFILE})
+add_subdirectory(${ASP_THERM_ROOT}/tests/full)
