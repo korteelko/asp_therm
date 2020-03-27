@@ -1,18 +1,15 @@
 find_package(GTest)
-find_package(Threads)
-message(STATUS "\tlibs ${GTEST_LIBRARIES}")
-message(STATUS "\tincludes ${GTEST_INCLUDE_DIRS}")
-if(("${GTEST_LIBRARIES}" STREQUAL "") OR ("${GTEST_INCLUDE_DIRS}" STREQUAL ""))
+
+if(NOT ${GTEST_FOUND})
   set(GTEST_ROOT /opt/gtest/build)
   set(GTEST_INCLUDE_DIR /opt/gtest/googletest/include)
-  message(STATUS "gtest libraries wasn't found at standard paths."
-    " Try to search in directory: ${GTEST_ROOT}. Specify another path in "
-    "${CMAKE_CURRENT_LIST_FILE}")
-  find_package(GTest REQUIRED)
-else()
-  message(STATUS "gtest libraries was found at standard paths")
+  message(STATUS "Try to search gtest in directory: ${GTEST_ROOT}."
+    "Specify another path in ${CMAKE_CURRENT_LIST_FILE}")
+  find_package(GTest)
 endif()
 
-if(("${GTEST_LIBRARIES}" STREQUAL "") OR ("${GTEST_INCLUDE_DIRS}" STREQUAL ""))
-  message(SEND_ERROR "gtest libraries wasn't found!")
+if(NOT ${GTEST_FOUND})
+  message(WARNING "gtest libraries wasn't found!")
+else()
+  message(STATUS "gtest was found")
 endif()

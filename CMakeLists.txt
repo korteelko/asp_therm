@@ -1,43 +1,20 @@
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.9)
+# CXX 17 available for cmake version > 3.8
 
 set(PROJECT_NAME asp_therm)
 set(RESULT_LIB atherm)
 project(${PROJECT_NAME})
-# TODO:
-#   CHECK WINDOWS BUILDING
 
 add_compile_options(-Wall)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# set cmake options:
-# debug
 add_definitions(-D_DEBUG)
 set(CMAKE_BUILD_TYPE Debug)
-#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-# release
-# add_definitions(-DNDEBUG)
-# set(CMAKE_BUILD_TYPE "Release")
-# set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall")
 
-# setup cmake directories
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
-set(THERMCORE_SOURCE_DIR "${ASP_THERM_ROOT}/source/core")
-set(THERMDB_SOURCE_DIR "${ASP_THERM_ROOT}/source/database")
-set(THERMUTILS_SOURCE_DIR "${ASP_THERM_ROOT}/source/utils")
 
-# setup file paths and cmake
-#   error codes
-set(DEFINES_SOURCE "")
-set(ERRORCODES_FILE "merror_codes.h")
-set(ERRORCODES_PATH "${THERMCORE_SOURCE_DIR}/common/${ERRORCODES_FILE}")
-if(EXISTS ${ERRORCODES_PATH})
-  message(STATUS "Add file with codes of errors: ${ERRORCODES_PATH}")
-  # include(${ERRORCODES_PATH})
-  set(INCLUDE_ERRORCODES TRUE)
-  add_definitions(-DINCLUDE_ERRORCODES)
-endif()
-
+# set compiler requirements, source subdirectories
+#   file of error codes
+include(${ASP_THERM_ROOT}/atherm_setup.cmake)
 
 if(UNIX)
   add_definitions(-DOS_NIX)
@@ -146,6 +123,7 @@ if(INCLUDE_ERRORCODES)
       "${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp")
 endif()
 
+
 # output for static libraries
 add_library(${RESULT_LIB} STATIC ${MODELS_SRC})
 set_target_properties(${RESULT_LIB} PROPERTIES
@@ -168,7 +146,6 @@ target_link_libraries(${PROJECT_NAME}
   # pugixml site:
   #   http://pugixml.org
   pugixml
-
   # pqxx site:
   #   http://pqxx.org/development/libpqxx/
   pqxx
