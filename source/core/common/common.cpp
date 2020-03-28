@@ -50,12 +50,6 @@ std::string dir_by_path(const std::string &path) {
   return std::filesystem::path(path).parent_path();
 }
 
-std::string hex2str(int hex) {
-  std::stringstream hex_stream;
-  hex_stream << hex;
-  return hex_stream.str();
-}
-
 bool is_status_aval(mstatus_t status) {
   return status == STATUS_DEFAULT || status == STATUS_OK;
 }

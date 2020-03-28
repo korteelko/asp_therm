@@ -27,7 +27,7 @@ else()
 endif(UNIX)
 
 # setup utils
-# LIBS_DIR - для моих библиотек
+# LIBS_DIR - для библиотеки atherm
 set(LIBS_DIR ${ASP_THERM_ROOT}/lib/${RESULT_LIB})
 # MODULES_DIR - для сторонних библиотек.
 set(MODULES_DIR ${ASP_THERM_ROOT}/lib)
@@ -38,17 +38,62 @@ endif()
 link_directories(${LIBS_DIR})
 
 
-# maybe split in separate asp_therm_modules.cmake ???
+# todo: maybe split in separate asp_therm_modules.cmake ???
+
+# todo: rename to 'setup' 'modules'? something like this
+function(iterate_modules_list)
+  message(STATUS "\t${PROJECT_NAME} build configuration:")
+  foreach(mod ${ARGN})
+    message(STATUS "\t\t${mod}")
+    # todo: eto ne rabotaet, no vyglyadit interesno
+    # set(${mod} TRUE)
+    # В общем, чтобы не искать в коде С++ дефайны заданные
+    #   в cmake-файле сгруппируем их там и тут)
+    add_definitions(-DBYCMAKE_${mod})
+  endforeach()
+endfunction()
+
+# setup build options
+list(APPEND
+  MODULES_LIST
+
+  # use pugixml
+  #   now pugi is necessarily, not comment it
+  WITH_PUGIXML
+  # use rapidjson
+  WITH_RAPIDJSON
+  # build postgresql module and link pqxx library
+  WITH_POSTGRESQL
+  # enable test
+  TESTS_ENABLED
+)
+
+iterate_modules_list("${MODULES_LIST}")
+
 # modules
 #   pugixml
-set(PUGIXML_DIR "${MODULES_DIR}/pugixml")
-add_subdirectory(${PUGIXML_DIR})
-include_directories(${PUGIXML_DIR}/src)
+#   http://pugixml.org
+if(WITH_PUGIXML IN_LIST MODULES_LIST)
+  set(PUGIXML_DIR "${MODULES_DIR}/pugixml")
+  add_subdirectory(${PUGIXML_DIR})
+  include_directories(${PUGIXML_DIR}/src)
+  set(PUGIXML_LIB "pugixml")
+endif()
 
 #   rapidjson
-set(RAPIDJSON_DIR "${MODULES_DIR}/rapidjson")
-add_subdirectory(${RAPIDJSON_DIR})
-include_directories(${RAPIDJSON_DIR}/include)
+#   https://github.com/Tencent/rapidjson
+if(WITH_RAPIDJSON IN_LIST MODULES_LIST)
+  # rapidjson header-only
+  set(RAPIDJSON_DIR "${MODULES_DIR}/rapidjson")
+  add_subdirectory(${RAPIDJSON_DIR})
+  include_directories(${RAPIDJSON_DIR}/include)
+endif()
+
+#   pqxx
+#   http://pqxx.org/development/libpqxx/
+if(WITH_POSTGRESQL IN_LIST MODULES_LIST)
+  set(PQXX_LIBS pqxx pq)
+endif()
 
 message(STATUS "asp_therm cmake build info:")
 message(STATUS "\t\tSystem info: ${CMAKE_SYSTEM_NAME}")
@@ -68,8 +113,7 @@ include_directories(
   ${THERMDB_SOURCE_DIR}
 )
 
-set(
-  MODELS_SRC
+set(MODELS_SRC
 
 # common sources
   ${THERMCORE_SOURCE_DIR}/common/common.cpp
@@ -110,7 +154,6 @@ set(
 
 # database sources
   ${THERMDB_SOURCE_DIR}/db_connection.cpp
-  ${THERMDB_SOURCE_DIR}/db_connection_postgre.cpp
   ${THERMDB_SOURCE_DIR}/db_connection_manager.cpp
   ${THERMDB_SOURCE_DIR}/db_defines.cpp
   ${THERMDB_SOURCE_DIR}/db_query.cpp
@@ -120,11 +163,15 @@ set(
 )
 if(INCLUDE_ERRORCODES)
   LIST(APPEND MODELS_SRC
-      "${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp")
+      ${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp)
 endif()
 
+if(WITH_POSTGRESQL IN_LIST MODULES_LIST)
+  LIST(APPEND MODELS_SRC
+      ${THERMDB_SOURCE_DIR}/db_connection_postgre.cpp)
+endif()
 
-# output for static libraries
+# build result library
 add_library(${RESULT_LIB} STATIC ${MODELS_SRC})
 set_target_properties(${RESULT_LIB} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${LIBS_DIR}
@@ -139,18 +186,18 @@ foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
   )
 endforeach()
 
+# build test executable
 add_executable(${PROJECT_NAME} ${MODELS_SRC} main.cpp)
+
 target_link_libraries(${PROJECT_NAME}
   # ${RESULT_LIB}
+
   stdc++fs
-  # pugixml site:
-  #   http://pugixml.org
-  pugixml
-  # pqxx site:
-  #   http://pqxx.org/development/libpqxx/
-  pqxx
-  pq
+  ${PUGIXML_LIB}
+  ${PQXX_LIBS}
 )
 
 # run tests
-add_subdirectory(${ASP_THERM_ROOT}/tests/full)
+if(ENABLE_TESTS IN_LIST MODULES_LIST)
+  add_subdirectory(${ASP_THERM_ROOT}/tests/full)
+endif()

@@ -10,6 +10,7 @@
 #ifndef _CORE__COMMON__COMMON_H_
 #define _CORE__COMMON__COMMON_H_
 
+#include <sstream>
 #include <string>
 
 #include <stdint.h>
@@ -64,6 +65,22 @@ typedef uint32_t mstatus_t;
 /** \brief статус yfkbxbz ошибки при выполнении операции */
 #define STATUS_HAVE_ERROR     0x00000004
 
+
+/** \brief дефайны из файла CMakeLists.txt */
+#if defined(BYCMAKE_WITH_PUGIXML)
+#  define WITH_PUGIXML
+#endif  // BYCMAKE_WITH_PUGIXML
+#if defined(BYCMAKE_WITH_RAPIDJSON)
+#  define WITH_RAPIDJSON
+#endif  // BYCMAKE_WITH_RAPIDJSON
+#if defined(BYCMAKE_WITH_POSTGRESQL)
+#  define WITH_POSTGRESQL
+#endif  // BYCMAKE_WITH_POSTGRESQL
+#if defined(BYCMAKE_TESTS_ENABLED)
+#  define TESTS_ENABLED
+#endif  // BYCMAKE_TESTS_ENABLED
+
+
 #if defined(OS_WIN)
 #  define PATH_SEPARATOR '\\'
 #elif defined(OS_NIX)
@@ -71,6 +88,7 @@ typedef uint32_t mstatus_t;
 #else
 #  error **undef platform**
 #endif
+
 
 typedef uint64_t gas_marks_t;
 /** \brief Проверить, установлен ли флаг использования модели ГОСТ 30319 */
@@ -115,12 +133,24 @@ struct rg_model_id {
 };
 
 typedef enum {
-  no_log     = 0,              /* no messages     */
-  err_logs   = DEFAULT_LOGLVL, /* only errors     */
-  warn_logs,                   /* warning, errors */
-  debug_logs = DEBUG_LOGLVL    /* all mesages, default for debug */
+  /** \brief no messages */
+  no_log = 0,
+  /** \brief only errors */
+  err_logs = DEFAULT_LOGLVL,
+  /** \brief warning, errors */
+  warn_logs,
+  /** \brief all mesages, default for debug */
+  debug_logs = DEBUG_LOGLVL
 } io_loglvl;
 
+/** \brief Вывести целочисленное значение в шестнадцеричном формате */
+template <typename Integer,
+    typename = std::enable_if_t<std::is_integral<Integer>::value>>
+std::string hex2str(Integer hex) {
+  std::stringstream hex_stream;
+  hex_stream << hex;
+  return hex_stream.str();
+}
 
 /** \brief Обрезать пробелы с обоих концов */
 std::string trim_str(const std::string &str);
@@ -129,8 +159,6 @@ std::string trim_str(const std::string &str);
 bool is_exist(const std::string &path);
 /** \brief Вернуть путь к директории содержащей файл */
 std::string dir_by_path(const std::string &path);
-/** \brief Вывести целочисленное значение в шестнадцеричном формате */
-std::string hex2str(int hex);
 /** \brief Проверить допустимость текущего состояния статуса */
 bool is_status_aval(mstatus_t status);
 

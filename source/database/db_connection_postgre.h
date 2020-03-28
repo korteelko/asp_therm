@@ -11,13 +11,15 @@
 #define _DATABASE__DB_CONNECTION_POSTGRESQL_H_
 
 #include "common.h"
+
+#if defined(WITH_POSTGRESQL)
 #include "db_connection.h"
+
+#include <pqxx/pqxx>
 
 #include <memory>
 #include <sstream>
 #include <string>
-
-#include <pqxx/pqxx>
 
 
 // смотри страницу:
@@ -64,4 +66,5 @@ private:
   std::unique_ptr<pqxx::connection> pconnect_;
 };
 
+#endif  // WITH_POSTGRESQL
 #endif  // !_DATABASE__DB_CONNECTION_POSTGRESQL_H_

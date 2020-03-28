@@ -179,12 +179,14 @@ DBConnection *DBConnectionIns::InitDBConnection(
   switch (parameters.supplier) {
     case db_client::NOONE:
       break;
+    #if defined(WITH_POSTGRESQL)
     case db_client::POSTGRESQL:
       connect = new DBConnectionPostgre(parameters);
       break;
+    #endif  //
     // TODO: можно тут ошибку установить
     default:
-      assert(0 && "undefined db_client");
+      break;
   }
   return connect;
 }

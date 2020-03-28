@@ -15,8 +15,6 @@
 #include "models_configurations.h"
 #include "Logging.h"
 
-#include <pqxx/pqxx>
-
 #include <map>
 #include <sstream>
 

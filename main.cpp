@@ -159,7 +159,7 @@ int test_models() {
     std::cerr << (*calc_mod)->ConstParametersString() << std::flush;
     std::cerr << modelGeneral::sParametersStringHead() << std::flush;
     std::cerr << (*calc_mod)->ParametersString() << std::flush;
-    std::cerr << "Now we will set volume for p=30e6, t=300 \n" << std::flush;
+    std::cerr << "Now we will set new params\n" << std::flush;
     (*calc_mod)->SetVolume(NEW_PARAMS);
     std::cerr << (*calc_mod)->ParametersString() << std::flush;
   }
@@ -206,7 +206,7 @@ int test_models_mix() {
     std::cerr << (*calc_mod)->ConstParametersString() << std::flush;
     std::cerr << modelGeneral::sParametersStringHead() << std::flush;
     std::cerr << (*calc_mod)->ParametersString() << std::flush;
-    std::cerr << "Now we will set new params \n" << std::flush;
+    std::cerr << "Now we will set new params\n" << std::flush;
     (*calc_mod)->SetVolume(NEW_PARAMS);
     std::cerr << (*calc_mod)->ParametersString() << std::flush;
   }
