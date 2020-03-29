@@ -44,7 +44,9 @@ struct model_input {
   binodalpoints *bp;
   gas_params_input gpi;
   model_str ms;
+  model_priority mpri;
 
+  /* todo: add model_priority */
   model_input(gas_marks_t gm, binodalpoints *bp,
       gas_params_input gpi, model_str ms);
 };
@@ -66,6 +68,7 @@ protected:
     *   тип, модификация, версия имплементации в данной программе */
   model_str model_config_;
   gas_marks_t gm_;
+  model_priority priority_;
   std::unique_ptr<GasParameters> parameters_;
   std::unique_ptr<binodalpoints> bp_;
 
@@ -87,12 +90,15 @@ protected:
 public:
   static void ResetInitError();
 
-  /// Функции обновления динамических параметров
+  /** \brief Функции обновления динамических параметров */
   virtual void update_dyn_params(dyn_parameters &prev_state,
       const parameters new_state) = 0;
   virtual void update_dyn_params(dyn_parameters &prev_state,
       const parameters new_state, const const_parameters &cp) = 0;
 
+  /** \brief Получить информацию о модели:
+    *   уравнение состояния, его модификация,
+    *   версия его модификации в программном обеспечении */
   virtual model_str GetModelShortInfo() const = 0;
 
   /** \brief Проверить допустимость использования данной модели
@@ -100,13 +106,26 @@ public:
     *   текущих параметрах p, t */
   virtual bool IsValid() const = 0;
   virtual void DynamicflowAccept(DerivateFunctor &df) = 0;
-  // todo: remove it!
-  // virtual double InitVolume(double p, double t,
-  //     const const_parameters &cp) = 0;
   virtual void SetVolume(double p, double t) = 0;
+  /* todo: maybe remove it??? */
   virtual void SetPressure(double v, double t) = 0;
   virtual double GetVolume(double p, double t) = 0;
   virtual double GetPressure(double v, double t) = 0;
+
+  /** \brief Получить приоритет использования ОПРЕДЕЛЁННОЙ модели
+    *   в ОПРЕДЕЛЁННОЙ конфигурации.
+    * \note Потрясающая по точности модель ГОСТ вообще не
+    *   может применяться вне определённого состава смесей и макро
+    *   параметров(давление и температура). Соответственно, где
+    *   нельзя её использовать лучше взять модификацию PR или RKS
+    *   для опять же специализированных параметров смеси.
+    *   Модификаций PR вообще говоря великое множество, по-этому,
+    *   стараемся выбрать наиболее специализированное.
+    *   Итак до самых общих уравнений состояния, типо идеального газа. */
+  /* todo: я пока не представляю полностью систему учёта и
+   *   выбора этого всего, т.к. необходимо учитывать и состав смеси
+   *   и макро параметры */
+  priority_var GetPriority() const;
 
   double GetVolume() const;
   double GetPressure() const;
@@ -128,4 +147,5 @@ public:
 
   virtual ~modelGeneral();
 };
+
 #endif  // !_CORE__MODELS__MODEL_GENERAL_H_

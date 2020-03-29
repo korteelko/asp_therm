@@ -21,6 +21,7 @@ public:
   static Peng_Robinson *Init(const model_input &mi);
 
   model_str GetModelShortInfo() const override;
+  model_priority GetPriority() const override;
 
   void DynamicflowAccept(class DerivateFunctor &df) override;
   bool IsValid() const override;

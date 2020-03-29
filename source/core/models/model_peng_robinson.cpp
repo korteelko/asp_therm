@@ -35,6 +35,9 @@ static model_str peng_robinson_binary_mi(rg_model_id(rg_model_t::PENG_ROBINSON,
     MODEL_PR_SUBTYPE_BINASSOC), 1, 0,
     "Модель Пенга-Робинсона(инициализация смеси ч/з бинарные коэффициенты)");
 
+static model_priority pr_priority(DEF_PRIOR_PR);
+static model_priority pr_bin_priority(DEF_PRIOR_PR_Bin);
+
 // Брусиловский А.И.:
 //   Фазовые превращения при
 //   разработке месторождений нефти и газа
@@ -141,6 +144,12 @@ Peng_Robinson::Peng_Robinson(const model_input &mi)
     coefs_by_binary(mi);
   set_gasparameters(mi.gpi, this);
   if (!error_.GetErrorCode()) {
+    if (mi.mpri.IsSpecified()) {
+       priority_ = mi.mpri;
+    } else {
+      priority_ = (model_config_.model_type.subtype ==
+        MODEL_PR_SUBTYPE_BINASSOC) ? pr_bin_priority : pr_priority;
+    }
     //assert(0);
     set_model_coef();
     // todo: incapsulate dynamicsetup

@@ -32,10 +32,10 @@ merror_t update_debug_mode(models_configuration *mc, const std::string &val) {
   return (mc) ? set_bool(val, &mc->calc_cfg.is_debug_mode) : ERROR_INIT_ZERO_ST;
 }
 merror_t update_rk_soave_mod(models_configuration *mc, const std::string &val) {
-  return (mc) ? set_bool(val, &mc->calc_cfg.rk_is_soave_mod) : ERROR_INIT_ZERO_ST;
+  return (mc) ? set_bool(val, &mc->calc_cfg.rk_enable_soave_mod) : ERROR_INIT_ZERO_ST;
 }
 merror_t update_pr_binary_coefs(models_configuration *mc, const std::string &val) {
-  return (mc) ? set_bool(val, &mc->calc_cfg.pr_by_binary_coefs) : ERROR_INIT_ZERO_ST;
+  return (mc) ? set_bool(val, &mc->calc_cfg.pr_enable_by_binary_coefs) : ERROR_INIT_ZERO_ST;
 }
 merror_t update_enable_iso_20765(models_configuration *mc, const std::string &val) {
   return (mc) ? set_bool(val, &mc->calc_cfg.enable_iso_20765) : ERROR_INIT_ZERO_ST;
@@ -67,20 +67,30 @@ static std::map<const std::string, config_setup_fuctions> map_config_fuctions =
 
 namespace ns_ucf = update_configuration_functional;
 
+
+/* model_priority */
+model_priority::model_priority()
+  : priority(DEF_PRIOR_MINIMUM), is_specified(false) {}
+
+model_priority::model_priority(priority_var priority)
+  : priority(priority), is_specified(true) {}
+
+bool model_priority::operator<(const model_priority &s) {
+  return this->priority < s.priority;
+}
+
+
 /* calculation_configuration */
 bool calculation_configuration::IsDebug() const {
   return is_debug_mode;
 }
-bool calculation_configuration::RK_IsOriginMod() const {
-  return rk_is_origin_mod;
+bool calculation_configuration::RK_IsEnableSoaveMod() const {
+  return rk_enable_soave_mod;
 }
-bool calculation_configuration::RK_IsSoaveMod() const {
-  return rk_is_soave_mod;
+bool calculation_configuration::PR_IsEnableByBinaryCoefs() const {
+  return pr_enable_by_binary_coefs;
 }
-bool calculation_configuration::PR_ByBinaryCoefs() const {
-  return pr_by_binary_coefs;
-}
-bool calculation_configuration::EnableISO20765() const {
+bool calculation_configuration::IsEnableISO20765() const {
   return enable_iso_20765;
 }
 
@@ -106,6 +116,13 @@ ProgramState &ProgramState::Instance() {
 
 ProgramState::ProgramState()
   : error_(ERROR_SUCCESS_T), program_config_(nullptr), gasmix_file("") {}
+
+void ProgramState::CheckCurrentModel() {
+  if (current_model_) {
+    static_assert (0, "");
+  }
+  return;
+}
 
 merror_t ProgramState::ResetConfigFile(
     const std::string &config_file) {

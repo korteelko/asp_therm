@@ -53,6 +53,10 @@ double GasParameters::cgetT_K() const {
   return const_params.T_K;
 }
 
+double GasParameters::cgetAcentricFactor() const {
+  return const_params.acentricfactor;
+}
+
 double GasParameters::cgetMolecularMass() const {
   return const_params.molecularmass;
 }
@@ -61,20 +65,12 @@ double GasParameters::cgetR() const {
   return const_params.R;
 }
 
-double GasParameters::cgetAcentricFactor() const {
-  return const_params.acentricfactor;
-}
-
 double GasParameters::cgetCP() const {
   return dyn_params_.heat_cap_pres;
 }
 
 double GasParameters::cgetBeta() const {
   return dyn_params_.beta_kr;
-}
-
-mstatus_t GasParameters::cGetStatus() const {
-  return status_;
 }
 
 // current parametrs of gas

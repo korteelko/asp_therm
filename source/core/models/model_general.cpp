@@ -171,6 +171,10 @@ merror_t modelGeneral::check_input(const model_input &mi) {
   return err;
 }
 
+priority_var modelGeneral::GetPriority() const {
+  return priority_.priority;
+}
+
 double modelGeneral::GetVolume() const {
   return parameters_->cgetVolume();
 }

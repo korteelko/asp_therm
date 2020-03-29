@@ -58,17 +58,13 @@ private:
   std::string info_;
 };
 
-/* TODO: add multithread and guards
- *   UPD: see gitlab issues */
+
 /** \brief класс взаимодействия с БД */
 class DBConnectionManager {
-public:
-  // struct TransactionBody {};
+private:
   class DBConnectionCreator;
 
 public:
-  static DBConnectionManager &Instance();
-
   // API DB
   mstatus_t CheckConnection();
   // static const std::vector<std::string> &GetJSONKeys();
@@ -77,7 +73,7 @@ public:
       const db_parameters &parameters);
   bool IsTableExist(db_table dt);
   mstatus_t CreateTable(db_table dt);
-
+  /* todo: select, update methods */
 
   merror_t GetErrorCode();
   mstatus_t GetStatus();
@@ -97,13 +93,15 @@ private:
   std::unique_ptr<DBConnection> db_connection_;
 };
 
-/* TODO: static or no??? check modelsCreator */
+
+/** \brief Закрытый класс создания соединений с БД */
 class DBConnectionManager::DBConnectionCreator {
-public:
+  friend class DBConnectionManager;
+
+private:
   DBConnectionCreator();
 
   DBConnection *InitDBConnection(const db_parameters &parameters);
 };
-using DBConnectionIns = DBConnectionManager::DBConnectionCreator;
 
 #endif  // !_DATABASE__DB_CONNECTION_MANAGER_H_

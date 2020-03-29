@@ -109,8 +109,7 @@ bool is_valid_limits(const ng_gost_mix &components) {
 GasParameters_NG_Gost_dyn::GasParameters_NG_Gost_dyn(
     parameters prs, const_parameters cgp, dyn_parameters dgp, 
     ng_gost_mix components)
-  : GasParameters(prs, cgp, dgp), error_(ERROR_SUCCESS_T),
-    components_(components) {
+  : GasParameters(prs, cgp, dgp), components_(components) {
   merror_t error;
   if (init_kx())
     return;
@@ -146,6 +145,7 @@ GasParameters_NG_Gost_dyn *GasParameters_NG_Gost_dyn::Init(
     return nullptr;
   }
   // костыли-костылёчки
+  // todo: repair this!!!
   const_parameters *cgp = const_parameters::Init(
       GAS_TYPE_MIX, 1.0, 1.0, 1.0, 1.0, 1.0, 0.1);
   dyn_parameters *dgp = dyn_parameters::Init(
@@ -446,7 +446,8 @@ void GasParameters_NG_Gost_dyn::update_dynamic() {
 merror_t GasParameters_NG_Gost_dyn::check_pt_limits(double p, double t) {
   /* ckeck pressure[0.1, 30.0]MPa, temperature[250,350]K */
   return ((p >= 100000 && p <= 30000000 ) && (t >= 250 && t <= 350)) ?
-      ERROR_SUCCESS_T : error_.SetError(ERROR_INIT_T, "check ng_gost limits");
+      ERROR_SUCCESS_T : error_.SetError(
+      ERROR_CALCULATE_T, "check ng_gost limits");
 }
 
 merror_t GasParameters_NG_Gost_dyn::set_cp0r() {

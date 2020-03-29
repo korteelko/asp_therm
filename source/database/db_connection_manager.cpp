@@ -47,12 +47,6 @@ mstatus_t Transaction::ExecuteQueries() {
   return status_;
 }
 
-
-DBConnectionManager &DBConnectionManager::Instance() {
-  static DBConnectionManager db;
-  return db;
-}
-
 mstatus_t DBConnectionManager::CheckConnection() {
   if (!(error_.GetErrorCode() && status_ == STATUS_HAVE_ERROR)) {
     if (!db_connection_)
@@ -171,9 +165,9 @@ mstatus_t DBConnectionManager::tryExecuteTransaction(Transaction &tr) {
 }
 
 /* DBConnection::DBConnectionInstance */
-DBConnectionIns::DBConnectionCreator() {}
+DBConnectionManager::DBConnectionCreator::DBConnectionCreator() {}
 
-DBConnection *DBConnectionIns::InitDBConnection(
+DBConnection *DBConnectionManager::DBConnectionCreator::InitDBConnection(
     const db_parameters &parameters) {
   DBConnection *connect = nullptr;
   switch (parameters.supplier) {

@@ -60,7 +60,7 @@ double dfl_avg_acentric(const parameters_mix &components) {
     w += x.first * x.second.first.acentricfactor;
   return w;
 }
-#endif  //
+#endif  // 0
 /* todo: про критические параметры для разных уравнений состояний
  *   можно почитать в этой же книге, или у Бруссиловского.
  *   По правилу Лоренца-Бертло можно попридумывать функции и для

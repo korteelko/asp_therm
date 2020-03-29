@@ -29,9 +29,19 @@ static model_str ng_gost_mi(rg_model_id(rg_model_t::NG_GOST,
 static model_str ng_gost_iso20765_mi(rg_model_id(rg_model_t::NG_GOST,
     MODEL_GOST_SUBTYPE_ISO_20765), 1, 0, "ГОСТ 30319.1-2015 / ISO-20765");
 
+static model_priority ng_gost_priority(DEF_PRIOR_GOST);
+static model_priority ng_gost_iso_priority(DEF_PRIOR_GOST_ISO);
+
 NG_Gost::NG_Gost(const model_input &mi)
   : modelGeneral(mi.ms, mi.gm, mi.bp) {
   set_gasparameters(mi.gpi, this);
+  if (mi.mpri.IsSpecified()) {
+    priority_ = mi.mpri;
+  } else {
+    priority_ = (model_config_.model_type.subtype ==
+        MODEL_GOST_SUBTYPE_ISO_20765) ? ng_gost_iso_priority : ng_gost_priority;
+  }
+  SetVolume(mi.gpi.p, mi.gpi.t);
 }
 
 NG_Gost *NG_Gost::Init(const model_input &mi) {
@@ -63,12 +73,7 @@ void NG_Gost::update_dyn_params(dyn_parameters &prev_state,
 }
 
 bool NG_Gost::IsValid() const {
-#if defined(_DEBUG)
-  return true;
-#else
-  assert(0);
-  return false;
-#endif  // _debug
+  return (parameters_->cGetError()) ? false : true;
 }
 
 void NG_Gost::SetVolume(double p, double t) {

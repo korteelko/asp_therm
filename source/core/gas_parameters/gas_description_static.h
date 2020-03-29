@@ -23,12 +23,13 @@
  * По сути это совокупность других структур
  *   с элементами ООП
 */
-/** make abstract */
+/** todo: make abstract */
 class GasParameters {
 public:
   static ErrorWrap init_error;
 
 protected:
+  ErrorWrap error_;
   mstatus_t status_;
   state_phase sph_;
   parameters vpte_;
@@ -46,18 +47,22 @@ protected:
       const const_parameters cgp, dyn_parameters dgp);
 
 public:
-  double cgetV_K()            const;
-  double cgetP_K()            const;
-  double cgetT_K()            const;
-  double cgetMolecularMass()  const;
-  double cgetR()              const;
+  /* todo: remove it
+   *   Использование критических параметров для смесей
+   *   не рекомендуется */
+  double cgetV_K() const;
+  double cgetP_K() const;
+  double cgetT_K() const;
   double cgetAcentricFactor() const;
-  double cgetVolume()         const;
-  double cgetPressure()       const;
-  double cgetTemperature()    const;
-  dyn_setup cgetDynSetup()    const;
-  double cgetIntEnergy()      const;
-  state_phase cgetState()     const;
+
+  double cgetMolecularMass() const;
+  double cgetR() const;
+  double cgetVolume() const;
+  double cgetPressure() const;
+  double cgetTemperature() const;
+  dyn_setup cgetDynSetup() const;
+  double cgetIntEnergy() const;
+  state_phase cgetState() const;
   parameters cgetParameters() const;
   dyn_parameters cgetDynParameters() const;
   const_parameters cgetConstparameters() const;
@@ -66,6 +71,7 @@ public:
   double cgetBeta() const;
 
   mstatus_t cGetStatus() const;
+  merror_t cGetError() const;
 
   /** reset parameters of gas **/
   virtual void csetParameters(double v,
@@ -75,6 +81,11 @@ public:
   virtual ~GasParameters();
 };
 
+using gp = GasParameters;
+inline merror_t gp::cGetError() const { return error_.GetErrorCode(); }
+inline mstatus_t gp::cGetStatus() const { return status_; }
+
+/* todo: check this */
 std::ostream& operator<< (std::ostream &outstream, const GasParameters &gp);
 
 #endif  // !_CORE__GAS_PARAMETERS__GAS_DESCRIPTION_STATIC_H_

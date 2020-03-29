@@ -51,8 +51,7 @@ double GasParameters_dyn::cCalculateVolume(double p, double t) {
   return v;
 }
 
-std::ostream &operator<< (std::ostream &outstream,
-    const GasParameters_dyn &gp) {
+std::ostream &operator<<(std::ostream &outstream, const GasParameters_dyn &gp) {
   outstream << "v: " << gp.cgetVolume() << " p: " << gp.cgetPressure()
       << " t: " << gp.cgetTemperature() << "\n";
   return outstream;

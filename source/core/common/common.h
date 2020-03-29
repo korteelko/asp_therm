@@ -62,11 +62,25 @@ typedef uint32_t mstatus_t;
 #define STATUS_OK             0x00000002
 /** \brief статус неудачного результата операции */
 #define STATUS_NOT            0x00000003
-/** \brief статус yfkbxbz ошибки при выполнении операции */
+/** \brief статус наличия ошибки при выполнении операции */
 #define STATUS_HAVE_ERROR     0x00000004
 
+/*  приоритет уравнения сосотяния по умолчанию,
+ *    если не задан при инициализации */
+/** \brief целочисленный тип приоритета [-1, 127] */
+typedef int8_t priority_var;
+#define DEF_PRIOR_MINIMUM   -1
+#define DEF_PRIOR_IDEAL_GAS 0
+#define DEF_PRIOR_RK        50
+#define DEF_PRIOR_RKS       75
+#define DEF_PRIOR_PR        60
+#define DEF_PRIOR_PR_Bin    75
+#define DEF_PRIOR_GOST      100
+#define DEF_PRIOR_GOST_ISO  110
+#define DEF_PRIOR_MAXIMUM   127
 
-/** \brief дефайны из файла CMakeLists.txt */
+
+/* дефайны из файла CMakeLists.txt */
 #if defined(BYCMAKE_WITH_PUGIXML)
 #  define WITH_PUGIXML
 #endif  // BYCMAKE_WITH_PUGIXML
@@ -131,6 +145,7 @@ struct rg_model_id {
   rg_model_id() = delete;
   rg_model_id(rg_model_t t, rg_model_subtype subt);
 };
+
 
 typedef enum {
   /** \brief no messages */

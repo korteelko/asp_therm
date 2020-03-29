@@ -34,7 +34,6 @@ struct ng_gost_params {
 // const_dyn_parameters init_natural_gas(const gost_ng_components &comps);
 class GasParameters_NG_Gost_dyn : public GasParameters {
 private:
-  ErrorWrap error_;
   ng_gost_mix components_;
   parameters pseudocrit_vpte_;
   ng_gost_params ng_gost_params_;

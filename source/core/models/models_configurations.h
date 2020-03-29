@@ -12,6 +12,7 @@
 
 #include "common.h"
 #include "db_connection.h"
+#include "db_connection_manager.h"
 #include "ErrorWrap.h"
 #include "Logging.h"
 
@@ -53,10 +54,41 @@
 
 class ConfigurationByFile;
 
+/** \brief Приоритет использования модели(относительно
+  *   других моделей
+  * \note Для организации нескольких моделей в мапе */
+struct model_priority {
+  /** \brief Численное значение приоритета [-1, 127]
+    *   127 - максимальный;
+    *   0 - идеальный газ;
+    *   -1 - использование модели недопустимо - неверные
+    *     константные данные, например мольный состав. */
+  priority_var priority;
+  /** \brief приоритет не специализирован и будет задан
+    *   посредством конфигурации модели(установлен приоритет
+    *   по умлчанию) */
+  bool is_specified;
 
-/// структура идентификации модели(уравнения реального газа)
-///   параметры прописываются в классе параметров модели
-///   методом GetModelStr
+public:
+  model_priority();
+  explicit model_priority(priority_var priority);
+  /** \brief Получить числовое значение приоритета */
+  priority_var GetPriority() const;
+  /** \brief Используется значение не по умолчанию */
+  bool IsSpecified() const;
+  /** \brief Использование модели допустимо(пока не определился как
+    *   правильно использовать эту функцию) */
+  bool IsAvailableModel() const;
+
+  bool operator<(const model_priority &s);
+};
+inline priority_var model_priority::GetPriority() const { return priority; }
+inline bool model_priority::IsSpecified() const { return is_specified; }
+inline bool model_priority::IsAvailableModel() const { return priority != -1; }
+
+/** \brief структура идентификации модели(уравнения реального газа)
+  *   параметры прописываются в классе параметров модели
+  *   методом GetModelStr */
 struct model_str {
   rg_model_id model_type;
   int32_t vers_major;
@@ -69,22 +101,22 @@ public:
       const std::string &info);
 };
 
-/** \brief Конфигурация расчёта(запуска программы) */
+/** \brief Конфигурация запуска программы */
 struct calculation_configuration {
   /** \brief флаг вывода отладочной информации
     * \default true */
   bool is_debug_mode = true;
   /** \brief флаг использования классической модели Редлиха-Квонга
     * \default false */
-  bool rk_is_origin_mod = false;
+  bool rk_enable_origin_mod = false;
   /** \brief флаг использования модификации Соаве
     *   для модели Редлиха-Квонга
     * \default true */
-  bool rk_is_soave_mod = true;
+  bool rk_enable_soave_mod = true;
   /** \brief флаг инициализации модели Пенга-Робинсона через
     *   коэфициенты бинарного взаимодействия
     * \default true */
-  bool pr_by_binary_coefs = true;
+  bool pr_enable_by_binary_coefs = true;
   /** \brief флаг использования 'ISO 20665' поверх 'ГОСТ 30319-3'
     *    для ng_gost модели
     * \default true */
@@ -92,10 +124,10 @@ struct calculation_configuration {
 
 public:
   bool IsDebug() const;
-  bool RK_IsOriginMod() const;
-  bool RK_IsSoaveMod() const;
-  bool PR_ByBinaryCoefs() const;
-  bool EnableISO20765() const;
+  bool RK_IsEnableOriginMod() const;
+  bool RK_IsEnableSoaveMod() const;
+  bool PR_IsEnableByBinaryCoefs() const;
+  bool IsEnableISO20765() const;
 };
 
 /* сейчас посто заглушка
@@ -123,16 +155,22 @@ public:
   models_configuration();
   /** \brief изменить параметр(поле), соответствующий 'param_str',
     *   значение параметра соответствует переданному в строке 'param_value'
-    * \param param_str текстовый шаблон поля
+    * \param param_strtpl текстовый шаблон поля
     * \param param_value значение параметра */
   merror_t SetConfigurationParameter(const std::string &param_strtpl,
       const std::string &param_value);
 };
 
-/** строка для добавления в БД */
+/** \brief строка для добавления в БД */
 struct model_info {
+  /** \brief информация о модели */
   model_str short_info;
-  models_configuration setup_info;
+  // dyn_setup dynamic_vars;
+};
+
+/** \brief  */
+class CalculationState {
+  static_assert (0, "");
 };
 
 /// singleton of state
@@ -146,6 +184,15 @@ public:
   /** \brief Загрузить или перезагрузить параметры газовой смеси */
   merror_t ResetGasmixFile(const std::string &gasmix_file);
 
+  /* todo: лучше если сетап моделей будет инкапсулирован
+   *   в этом классе, т.е. на вход принималось бы только
+   *   имя файла с параметрами используемых моделей,
+   *   но формат я пока не разработал, и, вероятно,
+   *   он будет заметно сопряжен с динамикой */
+  /** \brief Добавить модель в список используемых */
+  merror_t AddModel(std::unique_ptr<modelGeneral> &&model);
+
+
   /** \brief Конфигурация из файла была загружена
     * \return true да, false нет */
   bool IsInitialized() const;
@@ -155,6 +202,7 @@ public:
   /** \brief Приложение работает без подключения к бд
     * \return true да, false нет */
   bool IsDryRunDBConn() const;
+  /** \brief Получить код ошибки */
   merror_t GetErrorCode() const;
   const models_configuration GetConfiguration() const;
   const calculation_configuration GetCalcConfiguration() const;
@@ -167,12 +215,22 @@ public:
 private:
   ProgramState();
 
+  /** \brief Проверить допустимость валидность используемой
+    *   модели current_model_ */
+  void CheckCurrentModel();
+
 private:
   ErrorWrap error_;
   std::unique_ptr<ProgramConfiguration> program_config_;
+  DBConnectionManager db_manager_;
+  /** \brief список используемы х моделей для расчёта */
+  std::multimap<model_priority, std::unique_ptr<modelGeneral>> models_;
+  /** \brief ссылка на текущую используемую модель */
+  modelGeneral *current_model_;
   // м.б. сразу объект хранить???
   std::string gasmix_file;
 };
+
 
 /// внктренний(nested) класс конфигурации
 ///   в классе состояния программы
@@ -203,8 +261,6 @@ public:
   models_configuration configuration;
   /** \brief Параметры коннекта к БД */
   db_parameters db_parameters_conf;
-  /** \brief Набор конфигураций уравнений состояния реального газа */
-  std::vector<model_str> models;
   /** \brief По-сути - декоратор над объектом чтения xml(или других форматов)
     *   файлов для конфигурации программы */
   std::unique_ptr<ConfigurationByFile> config_by_file;
@@ -212,4 +268,5 @@ public:
     *   конфигуции программы */
   bool is_initialized;
 };
+
 #endif  // !_CORE__MODELS__MODELS_CONFIGURATIONS_H_

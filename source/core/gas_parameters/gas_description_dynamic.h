@@ -16,6 +16,7 @@
 #include <iostream>
 
 
+/** \brief Параметры однокомпонентного газа для динамических расчётов */
 class GasParameters_dyn final: public GasParameters {
   GasParameters_dyn(parameters prs, const_parameters cgp,
       dyn_parameters dgp, modelGeneral *mg);
@@ -30,7 +31,7 @@ private:
   modelGeneral *model_;
 };
 
-std::ostream &operator<< (std::ostream &outstream,
-    const GasParameters_dyn &gp);
+/* todo: check it */
+std::ostream &operator<<(std::ostream &outstream, const GasParameters_dyn &gp);
 
 #endif  // !_CORE__GAS_PARAMETERS__GAS_DESCRIPTION_DYNAMIC_H_

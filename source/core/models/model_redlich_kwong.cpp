@@ -19,6 +19,8 @@
 static model_str redlich_kwong_mi(rg_model_id(rg_model_t::REDLICH_KWONG,
     MODEL_SUBTYPE_DEFAULT), 1, 0, "Модель Редлиха-Квонга");
 
+static model_priority rk_priority(DEF_PRIOR_RK);
+
 void Redlich_Kwong2::set_model_coef() {
   model_coef_a_ = 0.42748 * std::pow(parameters_->cgetR(), 2.0) *
       std::pow(parameters_->cgetT_K(), 2.5) / parameters_->cgetP_K();
@@ -68,6 +70,11 @@ Redlich_Kwong2::Redlich_Kwong2(const model_input &mi)
     set_model_coef();
   }
   if (!error_.GetErrorCode()) {
+    if (mi.mpri.IsSpecified()) {
+      priority_ = mi.mpri;
+    } else {
+      priority_ = rk_priority;
+    }
     if (parameters_->cgetDynSetup() & DYNAMIC_ENTALPHY)
       set_enthalpy();
     SetVolume(mi.gpi.p, mi.gpi.t);

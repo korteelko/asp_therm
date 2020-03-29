@@ -38,4 +38,5 @@ public:
   double GetVolume(double p, double t) override;
   double GetPressure(double v, double t) override;
 };
+
 #endif  // !_CORE__MODELS__MODEL_NG_GOST_H_

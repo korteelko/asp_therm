@@ -22,11 +22,18 @@
 static model_str ideal_gas_mi(rg_model_id(rg_model_t::IDEAL_GAS,
     MODEL_SUBTYPE_DEFAULT), 1, 0, "Идеальный газ");
 
+static model_priority ideal_gas_priority(DEF_PRIOR_IDEAL_GAS);
+
 Ideal_Gas::Ideal_Gas(const model_input &mi)
   : modelGeneral(mi.ms, mi.gm, mi.bp) {
   set_gasparameters(mi.gpi, this);
   if (!error_.GetErrorCode())
     set_enthalpy();
+  if (mi.mpri.IsSpecified()) {
+    priority_ = mi.mpri;
+  } else {
+    priority_ = ideal_gas_priority;
+  }
 }
 
 Ideal_Gas *Ideal_Gas::Init(const model_input &mi) {

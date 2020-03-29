@@ -25,6 +25,8 @@
 static model_str redlich_kwong_soave_mi(rg_model_id(rg_model_t::REDLICH_KWONG,
     MODEL_RK_SUBTYPE_SOAVE), 1, 0, "Модель Редлиха-Квонга модификации Соаве");
 
+static model_priority rks_priority(DEF_PRIOR_RKS);
+
 // Рид, Праусниц, Шервуд
 //   Свойства жидкости и газов
 //   стр 79
@@ -261,6 +263,11 @@ Redlich_Kwong_Soave::Redlich_Kwong_Soave(const model_input &mi)
     set_gasparameters(mi.gpi, this);
   }
   if (!error_.GetErrorCode()) {
+    if (mi.mpri.IsSpecified()) {
+      priority_ = mi.mpri;
+    } else {
+      priority_ = rks_priority;
+    }
     update_gasmix_coef_a(mi.gpi.t);
     if (parameters_->cgetDynSetup() & DYNAMIC_ENTALPHY)
       set_enthalpy();
