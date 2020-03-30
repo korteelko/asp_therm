@@ -65,6 +65,7 @@ private:
   class DBConnectionCreator;
 
 public:
+  DBConnectionManager();
   // API DB
   mstatus_t CheckConnection();
   // static const std::vector<std::string> &GetJSONKeys();
@@ -80,7 +81,6 @@ public:
   std::string GetErrorMessage();
 
 private:
-  DBConnectionManager();
   void initDBConnection();
   /** \brief провести транзакцию tr из собраных запросов(строк) */
   [[nodiscard]]

@@ -297,8 +297,27 @@ void Peng_Robinson::DynamicflowAccept(DerivateFunctor &df) {
   return df.getFunctor(*this);
 }
 
+/* todo: ну, нужно больше узнать про лимиты
+ *   РАЗНЫХ модификаций уравнения состояния Пенга-Робинсона
+ *   сейчас неверно */
 bool Peng_Robinson::IsValid() const {
-  return (parameters_->cgetState() != state_phase::LIQUID);
+  if (priority_.IsForced())
+    return true;
+  return ((parameters_->cgetState() == state_phase::GAS) ||
+      (parameters_->cgetState() == state_phase::SCF));
+}
+
+/* todo: ну, нужно больше узнать про лимиты
+ *   РАЗНЫХ модификаций уравнения состояния Пенга-Робинсона
+ *
+ * здесь вроде как можно сохранить текущие параметры,
+ *   расчитать для prs, и вернуть исходные, но это динамику порушит
+ *   нужно условие тогда на динамику, что это первый расчёт */
+bool Peng_Robinson::IsValid(parameters prs) const {
+  if (priority_.IsForced())
+    return true;
+  // assert(0 && "");
+  return false;
 }
 
 void Peng_Robinson::SetVolume(double p, double t) {

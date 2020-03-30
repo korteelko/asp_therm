@@ -21,10 +21,10 @@ public:
   static Peng_Robinson *Init(const model_input &mi);
 
   model_str GetModelShortInfo() const override;
-  model_priority GetPriority() const override;
 
   void DynamicflowAccept(class DerivateFunctor &df) override;
   bool IsValid() const override;
+  bool IsValid(parameters prs) const override;
   void SetVolume(double p, double t) override;
   void SetPressure(double v, double t) override;
   double GetVolume(double p, double t) override;

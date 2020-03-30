@@ -124,7 +124,7 @@ modelGeneral *ModelsCreator::initModel(model_str ms, binodalpoints *bp,
         "undefined calculation model in modelCreator");
   }
   if (mg) {
-    if (mg->GetErrorCode()) {
+    if (mg->GetError()) {
       delete mg;
       mg = nullptr;
     }

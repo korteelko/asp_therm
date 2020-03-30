@@ -58,16 +58,21 @@ class ConfigurationByFile;
   *   других моделей
   * \note Для организации нескольких моделей в мапе */
 struct model_priority {
+private:
   /** \brief Численное значение приоритета [-1, 127]
     *   127 - максимальный;
     *   0 - идеальный газ;
     *   -1 - использование модели недопустимо - неверные
     *     константные данные, например мольный состав. */
   priority_var priority;
-  /** \brief приоритет не специализирован и будет задан
+  /** \brief Приоритет не специализирован и будет задан
     *   посредством конфигурации модели(установлен приоритет
     *   по умлчанию) */
   bool is_specified;
+  /** \brief Проводить расчёты игнорируя ограничения модели
+    * \note необходимо, скорее из "онтологических" соображений,
+    *   поэтому по умолчанию false :) */
+  bool is_forced = false;
 
 public:
   model_priority();
@@ -76,15 +81,19 @@ public:
   priority_var GetPriority() const;
   /** \brief Используется значение не по умолчанию */
   bool IsSpecified() const;
-  /** \brief Использование модели допустимо(пока не определился как
+  /** \brief Установлен флаг игнорирования границ применения модели */
+  bool IsForced() const;
+  /* \brief Использование модели допустимо(пока не определился как
     *   правильно использовать эту функцию) */
-  bool IsAvailableModel() const;
+  // bool IsAvailableModel() const;
 
   bool operator<(const model_priority &s);
 };
 inline priority_var model_priority::GetPriority() const { return priority; }
 inline bool model_priority::IsSpecified() const { return is_specified; }
-inline bool model_priority::IsAvailableModel() const { return priority != -1; }
+inline bool model_priority::IsForced() const { return is_forced; }
+// inline bool model_priority::IsAvailableModel() const { return priority != -1; }
+
 
 /** \brief структура идентификации модели(уравнения реального газа)
   *   параметры прописываются в классе параметров модели
@@ -130,21 +139,11 @@ public:
   bool IsEnableISO20765() const;
 };
 
-/* сейчас посто заглушка
- * todo: добавить calculation configuration */
-struct calculation_info {
-  // я хз чё тут надо, но вроде как инпут прописать
-  calculation_configuration configuration;
-  model_str *model;
-  time_t time;
-};
-
-/** \brief конфигурация моделей реального газа,
-  *   информация не привязанна к конкретной модели
+/** \brief конфигурация прораммы,
   *   общая для запущенной конфигурации */
-struct models_configuration {
+struct program_configuration {
 public:
-  /** \brief информация о текущем расчёте */
+  /** \brief информация доступных моделей */
   calculation_configuration calc_cfg;
   /** \brief уровень логирования */
   io_loglvl log_level;
@@ -152,7 +151,7 @@ public:
   std::string log_file;
 
 public:
-  models_configuration();
+  program_configuration();
   /** \brief изменить параметр(поле), соответствующий 'param_str',
     *   значение параметра соответствует переданному в строке 'param_value'
     * \param param_strtpl текстовый шаблон поля
@@ -168,30 +167,97 @@ struct model_info {
   // dyn_setup dynamic_vars;
 };
 
-/** \brief  */
-class CalculationState {
-  static_assert (0, "");
+/** \brief структура содержащая данные инициализации расчёта */
+struct calculation_setup {
+  /** \brief файл иниициализации газовой смеси */
+  std::string gasmix_file;
+  /** \brief файл иниициализации используемых моделей */
+  std::string models_file;
+  /** \brief файл описывающий области расчёта,
+    *   соответствующие им модели */
+  std::string calculate_file;
 };
 
-/// singleton of state
+/** \brief информация о предыдущих расчётах */
+/* todo: сейчас это заглушка */
+struct dynamic_data {
+  /** \brief не учитывать историю предыдущих расчётов */
+  /* true если мы считаем каким-то пошаговым алгоритмом */
+  bool have_history = false;
+
+  /* \brief история расчёта */
+  // std::vector<log_calc> history;
+};
+
+
+/** \brief конфигурация расчёта */
+/* todo: remove to separate file */
+class CalculationSetup {
+public:
+  CalculationSetup();
+  CalculationSetup(const calculation_setup &cs);
+#ifdef _DEBUG
+  merror_t AddModel(std::shared_ptr<modelGeneral> &mg);
+#endif  // _DEBUG
+  merror_t SetModel(int model_key);
+  /** \brief Проверить допустимость валидность используемой
+    *   модели current_model_ */
+  mstatus_t CheckCurrentModel();
+  merror_t GetError() const;
+
+private:
+  merror_t init_setup();
+  void swap_model();
+
+private:
+  ErrorWrap error_;
+  mstatus_t status_;
+  /** \brief копия установленных параметров */
+  parameters params_copy_;
+#ifdef _DEBUG
+  /** \brief список используемых моделей для расчёта */
+  std::multimap<priority_var, std::shared_ptr<modelGeneral>> models_;
+#else
+  /** \brief список используемых моделей для расчёта */
+  std::multimap<priority_var, std::unique_ptr<modelGeneral>> models_;
+#endif  // _DEBUG
+  /** \brief ссылка на текущую используемую модель */
+  modelGeneral *current_model_;
+  /** \brief данные инициализации расчёта */
+  calculation_setup init_data_;
+  /** \brief данные расчётов динамики
+    * \note в динамике отслеживается история расчётов,
+    *   и вероятна последовательная алгоритмизация */
+  dynamic_data dyn_data_;
+};
+using Calculations = std::map<int, CalculationSetup>;
+
+/* сейчас посто заглушка
+ * todo: добавить calculation configuration */
+struct calculation_info {
+  // я хз чё тут надо, но вроде как инпут прописать
+  const calculation_configuration &configuration;
+  model_str *model;
+  time_t time;
+};
+
+/** \brief Класс состояния программы:
+  *   конфигурация программы, информация о моделях, подключение к БД,
+  *   конфигурации расчётов(области, используемые модели etc) */
 class ProgramState {
 public:
   /** \brief синглетончик инст */
   static ProgramState &Instance();
 
   /** \brief Загрузить или перезагрузить конфигурацию программы */
-  merror_t ResetConfigFile(const std::string &config_file);
-  /** \brief Загрузить или перезагрузить параметры газовой смеси */
-  merror_t ResetGasmixFile(const std::string &gasmix_file);
-
-  /* todo: лучше если сетап моделей будет инкапсулирован
-   *   в этом классе, т.е. на вход принималось бы только
-   *   имя файла с параметрами используемых моделей,
-   *   но формат я пока не разработал, и, вероятно,
-   *   он будет заметно сопряжен с динамикой */
-  /** \brief Добавить модель в список используемых */
-  merror_t AddModel(std::unique_ptr<modelGeneral> &&model);
-
+  merror_t ReloadConfiguration(const std::string &config_file);
+  /** \brief Добавить сетап расчёта
+    * \return id расчётных параметров или -1 в случае ошибки */
+  int AddCalculationSetup(const calculation_setup &calc_setup);
+#ifdef _DEBUG
+  /** \brief Добавить сэтап расчёта в список используемых */
+  int AddCalculationSetup(CalculationSetup &&setup);
+#endif  // _DEBUG
 
   /** \brief Конфигурация из файла была загружена
     * \return true да, false нет */
@@ -204,7 +270,7 @@ public:
   bool IsDryRunDBConn() const;
   /** \brief Получить код ошибки */
   merror_t GetErrorCode() const;
-  const models_configuration GetConfiguration() const;
+  const program_configuration GetConfiguration() const;
   const calculation_configuration GetCalcConfiguration() const;
   const db_parameters GetDatabaseConfiguration() const;
 
@@ -215,25 +281,21 @@ public:
 private:
   ProgramState();
 
-  /** \brief Проверить допустимость валидность используемой
-    *   модели current_model_ */
-  void CheckCurrentModel();
-
 private:
+  static int calc_key;
   ErrorWrap error_;
+  /** \brief набор данных для проведения расчётов */
+  /* они не связаны между собой, можно распараллелить */
+  Calculations calc_setups_;
+  /** \brief конфигурация программы - модели, бд, опции */
   std::unique_ptr<ProgramConfiguration> program_config_;
+  /** \brief объект подключения к БД */
   DBConnectionManager db_manager_;
-  /** \brief список используемы х моделей для расчёта */
-  std::multimap<model_priority, std::unique_ptr<modelGeneral>> models_;
-  /** \brief ссылка на текущую используемую модель */
-  modelGeneral *current_model_;
-  // м.б. сразу объект хранить???
-  std::string gasmix_file;
 };
 
 
-/// внктренний(nested) класс конфигурации
-///   в классе состояния программы
+/** \brief внктренний(nested) класс конфигурации
+  *   в классе состояния программы */
 class ProgramState::ProgramConfiguration {
 public:
   ProgramConfiguration();
@@ -258,7 +320,7 @@ public:
   /** \brief Текущий файл конфигурации */
   std::string config_filename;
   /** \brief Конфигурация программы */
-  models_configuration configuration;
+  program_configuration configuration;
   /** \brief Параметры коннекта к БД */
   db_parameters db_parameters_conf;
   /** \brief По-сути - декоратор над объектом чтения xml(или других форматов)

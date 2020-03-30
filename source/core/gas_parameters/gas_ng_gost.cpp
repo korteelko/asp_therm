@@ -21,6 +21,12 @@
 #include <assert.h>
 #include <math.h>
 
+
+/** \brief параметры давления и температуры в пределах допустимости
+  *   для ГОСТ 30319-2015 */
+#define gost_30319_within(p, t) \
+    ((p >= 100000 && p <= 30000000) && (t >= 250 && t <= 350))
+
 // ErrorWrap GasParameters_NG_Gost_dyn::init_error;
 
 namespace {
@@ -445,9 +451,12 @@ void GasParameters_NG_Gost_dyn::update_dynamic() {
 
 merror_t GasParameters_NG_Gost_dyn::check_pt_limits(double p, double t) {
   /* ckeck pressure[0.1, 30.0]MPa, temperature[250,350]K */
-  return ((p >= 100000 && p <= 30000000 ) && (t >= 250 && t <= 350)) ?
+  return gost_30319_within(p, t) ?
       ERROR_SUCCESS_T : error_.SetError(
       ERROR_CALCULATE_T, "check ng_gost limits");
+  // return ((p >= 100000 && p <= 30000000) && (t >= 250 && t <= 350)) ?
+  //    ERROR_SUCCESS_T : error_.SetError(
+  //     ERROR_CALCULATE_T, "check ng_gost limits");
 }
 
 merror_t GasParameters_NG_Gost_dyn::set_cp0r() {
@@ -556,4 +565,12 @@ double GasParameters_NG_Gost_dyn::cCalculateVolume(double p, double t) {
   double v = vpte_.volume;
   csetParameters(0.0, bpars.pressure, bpars.volume, state_phase::GAS);
   return v;
+}
+
+bool GasParameters_NG_Gost_dyn::IsValid() {
+  return (error_.GetErrorCode()) ? false : true;
+}
+
+bool GasParameters_NG_Gost_dyn::IsValid(parameters prs) {
+  return gost_30319_within(prs.pressure, prs.temperature);
 }

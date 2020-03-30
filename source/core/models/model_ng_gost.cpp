@@ -41,6 +41,11 @@ NG_Gost::NG_Gost(const model_input &mi)
     priority_ = (model_config_.model_type.subtype ==
         MODEL_GOST_SUBTYPE_ISO_20765) ? ng_gost_iso_priority : ng_gost_priority;
   }
+  ng_pars = dynamic_cast<GasParameters_NG_Gost_dyn *>(parameters_.get());
+  if (!ng_pars) {
+    error_.SetError(ERROR_INIT_T, "Ошибка инициализации ГОСТ модели");
+    error_.LogIt(io_loglvl::err_logs);
+  }
   SetVolume(mi.gpi.p, mi.gpi.t);
 }
 
@@ -73,7 +78,11 @@ void NG_Gost::update_dyn_params(dyn_parameters &prev_state,
 }
 
 bool NG_Gost::IsValid() const {
-  return (parameters_->cGetError()) ? false : true;
+  return ng_pars->IsValid();
+}
+
+bool NG_Gost::IsValid(parameters prs) const {
+  return ng_pars->IsValid(prs);
 }
 
 void NG_Gost::SetVolume(double p, double t) {

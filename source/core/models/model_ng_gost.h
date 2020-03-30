@@ -11,6 +11,7 @@
 #define _CORE__MODELS__MODEL_NG_GOST_H_
 
 #include "common.h"
+#include "gas_ng_gost.h"
 #include "gasmix_init.h"
 #include "model_general.h"
 
@@ -33,10 +34,19 @@ public:
 
   void DynamicflowAccept(class DerivateFunctor &df) override;
   bool IsValid() const override;
+  bool IsValid(parameters pars) const override;
   void SetVolume(double p, double t) override;
   void SetPressure(double v, double t) override;
   double GetVolume(double p, double t) override;
   double GetPressure(double v, double t) override;
+
+private:
+  /** \brief ссылка на параметры газа(GasParameters)
+    *   для работы по методологии ГОСТа 30319
+    * \note просто dynamic_cast<GasParameters_NG_Gost_dyn>
+    *   чтобы не делать тонну перегрузок базового класса,
+    *   т.к. для случая этой модели разница методологическая */
+  GasParameters_NG_Gost_dyn *ng_pars;
 };
 
 #endif  // !_CORE__MODELS__MODEL_NG_GOST_H_

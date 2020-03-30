@@ -168,6 +168,7 @@ void Redlich_Kwong_Soave::update_gasmix_coef_a(double t) {
   }
   i = 0;
   for (const auto &x: prs) {
+    j = 0;
     for (const auto &y: prs) {
       model_coef_a_ += (1.0 - get_binary_associate_coef_SRK(
           x.second.first.gas_name, y.second.first.gas_name)) *
@@ -326,11 +327,17 @@ void Redlich_Kwong_Soave::DynamicflowAccept(DerivateFunctor &df) {
   df.getFunctor(*this);
 }
 
+// todo: replace
 bool Redlich_Kwong_Soave::IsValid() const {
-  // todo: replace
   // assert(0);
   return (parameters_->cgetPressure()/parameters_->cgetP_K() <
       0.5*parameters_->cgetTemperature()/parameters_->cgetT_K());
+}
+
+bool Redlich_Kwong_Soave::IsValid(parameters prs) const {
+  // assert(0);
+  return (prs.pressure/parameters_->cgetP_K() <
+      0.5*prs.pressure/parameters_->cgetT_K());
 }
 
 void Redlich_Kwong_Soave::SetVolume(double p, double t) {

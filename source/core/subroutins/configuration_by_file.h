@@ -25,7 +25,7 @@ class ConfigurationByFile {
 public:
   static ConfigurationByFile *Init(const std::string &filename);
 
-  models_configuration GetConfiguration() const;
+  program_configuration GetConfiguration() const;
   db_parameters GetDBConfiguration() const;
   const ErrorWrap &GetErrorWrap() const;
 
@@ -37,7 +37,7 @@ private:
 private:
   ErrorWrap error_;
   std::unique_ptr<XMLReader<config_node>> xml_doc_;
-  models_configuration configuration_;
+  program_configuration configuration_;
   db_parameters db_parameters_;
 };
 

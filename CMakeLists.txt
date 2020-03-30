@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-# CXX 17 available for cmake version > 3.8
+# CXX17 for gcc available for cmake version > 3.8
 
 set(PROJECT_NAME asp_therm)
 set(RESULT_LIB atherm)
@@ -11,6 +11,22 @@ add_definitions(-D_DEBUG)
 set(CMAKE_BUILD_TYPE Debug)
 
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+
+# BUILD OPTIONS
+list(APPEND
+  MODULES_LIST
+
+  # use pugixml
+  #   now pugi is necessarily, not comment it
+  WITH_PUGIXML
+  # use rapidjson
+  WITH_RAPIDJSON
+  # build postgresql module and link pqxx library
+  WITH_POSTGRESQL
+  # enable tests
+  TESTS_ENABLED
+)
+
 
 # set compiler requirements, source subdirectories
 #   file of error codes
@@ -39,8 +55,7 @@ link_directories(${LIBS_DIR})
 
 
 # todo: maybe split in separate asp_therm_modules.cmake ???
-
-# todo: rename to 'setup' 'modules'? something like this
+# todo: rename function to 'setup' 'modules'? something like this
 function(iterate_modules_list)
   message(STATUS "\t${PROJECT_NAME} build configuration:")
   foreach(mod ${ARGN})
@@ -53,22 +68,8 @@ function(iterate_modules_list)
   endforeach()
 endfunction()
 
-# setup build options
-list(APPEND
-  MODULES_LIST
-
-  # use pugixml
-  #   now pugi is necessarily, not comment it
-  WITH_PUGIXML
-  # use rapidjson
-  WITH_RAPIDJSON
-  # build postgresql module and link pqxx library
-  WITH_POSTGRESQL
-  # enable test
-  TESTS_ENABLED
-)
-
 iterate_modules_list("${MODULES_LIST}")
+
 
 # modules
 #   pugixml

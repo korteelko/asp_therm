@@ -215,6 +215,13 @@ bool Redlich_Kwong2::IsValid() const {
       0.5*parameters_->cgetTemperature()/parameters_->cgetT_K());
 }
 
+/* todo: а что насчёт смесей? для них критические параметры
+ *   не особо показательны */
+bool Redlich_Kwong2::IsValid(parameters prs) const {
+  return (prs.pressure/parameters_->cgetP_K() <
+      0.5*prs.pressure/parameters_->cgetT_K());
+}
+
 void Redlich_Kwong2::SetVolume(double p, double t) {
   set_parameters(GetVolume(p, t), p, t);
 }

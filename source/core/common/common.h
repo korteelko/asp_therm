@@ -174,7 +174,11 @@ std::string trim_str(const std::string &str);
 bool is_exist(const std::string &path);
 /** \brief Вернуть путь к директории содержащей файл */
 std::string dir_by_path(const std::string &path);
+
+/* todo encapsulate status stuff */
 /** \brief Проверить допустимость текущего состояния статуса */
 bool is_status_aval(mstatus_t status);
+/** \brief Проверить валидность статуса */
+bool is_status_ok(mstatus_t status);
 
 #endif  // !_CORE__COMMON__COMMON_H_

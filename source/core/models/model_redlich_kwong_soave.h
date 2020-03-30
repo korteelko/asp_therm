@@ -31,6 +31,7 @@ public:
 
   void DynamicflowAccept(class DerivateFunctor &df) override;
   bool IsValid() const override;
+  bool IsValid(parameters prs) const override;
   void SetVolume(double p, double t) override;
   void SetPressure(double v, double t) override;
   double GetVolume(double p, double t) override;
@@ -117,4 +118,5 @@ protected:
   double model_coef_a_;
   double model_coef_b_;
 };
+
 #endif  // !_CORE__MODELS__MODEL_REDLICH_KWONG_H_

@@ -70,6 +70,12 @@ bool Ideal_Gas::IsValid() const {
   return parameters_->cgetState() == state_phase::GAS;
 }
 
+bool Ideal_Gas::IsValid(parameters pars) const {
+  // модель идеального газа на практике особо
+  //   не применяется, так что всегда можно говорить да
+  return true;
+}
+
 void Ideal_Gas::SetVolume(double p, double t) {
   set_parameters(GetVolume(p, t), p, t);
 }

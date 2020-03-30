@@ -31,7 +31,9 @@ struct ng_gost_params {
          mu;    // динамическая вязкость
 };
 
+
 // const_dyn_parameters init_natural_gas(const gost_ng_components &comps);
+/* todo: уродское название */
 class GasParameters_NG_Gost_dyn : public GasParameters {
 private:
   ng_gost_mix components_;
@@ -85,6 +87,12 @@ public:
   static GasParameters_NG_Gost_dyn *Init(gas_params_input gpi);
   void csetParameters(double v, double p, double t, state_phase) override;
   double cCalculateVolume(double p, double t) override;
+
+  /** \brief Проверить текущие параметры смеси */
+  bool IsValid();
+  /** \brief Проверить допустимость использования
+    *   параметров prs */
+  bool IsValid(parameters prs);
 };
 
 #endif  // !_CORE__GAS_PARAMETERS__GAS_NG_GOST_H_

@@ -89,7 +89,7 @@ merror_t ConfigurationByFile::init_dbparameters() {
   return error;
 }
 
-models_configuration ConfigurationByFile::GetConfiguration() const {
+program_configuration ConfigurationByFile::GetConfiguration() const {
   return configuration_;
 }
 

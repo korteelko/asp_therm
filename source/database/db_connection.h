@@ -252,6 +252,9 @@ public:
   void LogError();
 
 protected:
+  /* todo: add to parameters of constructor link to class
+   *   DBConnectionCreator for closing all
+   *   DBConnection inheritance classes */
   DBConnection(const db_parameters &parameters);
 
 protected:

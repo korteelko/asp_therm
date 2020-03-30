@@ -105,6 +105,11 @@ public:
     *   для данной конфигурации газа(смеси газов) при
     *   текущих параметрах p, t */
   virtual bool IsValid() const = 0;
+  /** \brief Проверить допустимость исходных макропараметров
+    *   для использования данной модели
+    * \note Вызывается при выбооре наилучшей модели из
+    *   возможных в наборе сетапа расчёта */
+  virtual bool IsValid(parameters par) const = 0;
   virtual void DynamicflowAccept(DerivateFunctor &df) = 0;
   virtual void SetVolume(double p, double t) = 0;
   /* todo: maybe remove it??? */
@@ -138,7 +143,7 @@ public:
   parameters GetParametersCopy() const;
   const_parameters GetConstParameters() const;
   calculation_state_log GetStateLog() const;
-  merror_t GetErrorCode() const;
+  merror_t GetError() const;
 
   // todo: maybe remove it in another class
   std::string ParametersString() const;

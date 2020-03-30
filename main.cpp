@@ -22,18 +22,13 @@
 
 #include <assert.h>
 
+
 #if defined (_OS_NIX)
 #  include <unistd.h>
 #elif defined(_OS_WIN)
 #  include <direct.h>
 #  define getcwd _getcwd
 #endif  // _OS
-
-/// gas example input
-///  gas   |vol,m^3/kg| p,Pa*10^7 |  T,K  |molmass,kg/mol| adiabat,1| cv, J/(kg*K)| acentric factor,1
-/// methan  0.00617     4.641       190.66     16.043       ~1.3      ~1750           0.011
-/// ethane  0.004926    4.871       305.33     30.07        ~1.22     ~1750           0.089
-/// propane 0.004545    4.255       369.9      44.097       ~1.13     ~1750           0.153
 
 #define RK2_TEST
 // #define PR_TEST  // доделать для смесей
@@ -71,7 +66,7 @@ int test_database() {
   // if (err)
   //   std::cerr << "update config error: " << hex2str(err) << std::endl;
   // db_parameters p = ps.GetDatabaseConfiguration();
-  DBConnectionManager &dbm = DBConnectionManager::Instance();
+  DBConnectionManager dbm;
   dbm.ResetConnectionParameters(
       ps.GetDatabaseConfiguration());
   auto st = dbm.CheckConnection();
@@ -102,7 +97,7 @@ int test_program_configuration() {
   }
   std::cerr << "test_program_configuration start\n";
   ProgramState &ps = ProgramState::Instance();
-  ps.ResetConfigFile(std::string(cwd) + xml_path + xml_configuration);
+  ps.ReloadConfiguration(std::string(cwd) + xml_path + xml_configuration);
   merror_t e = ps.GetErrorCode();
   if (e)
     std::cerr << "program state bida " << e;

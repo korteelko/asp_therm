@@ -172,7 +172,7 @@ merror_t modelGeneral::check_input(const model_input &mi) {
 }
 
 priority_var modelGeneral::GetPriority() const {
-  return priority_.priority;
+  return priority_.GetPriority();
 }
 
 double modelGeneral::GetVolume() const {
@@ -218,7 +218,7 @@ calculation_state_log modelGeneral::GetStateLog() const {
       stateToString[(uint32_t)parameters_->cgetState()]};
 }
 
-merror_t modelGeneral::GetErrorCode() const {
+merror_t modelGeneral::GetError() const {
   return error_.GetErrorCode();
 }
 

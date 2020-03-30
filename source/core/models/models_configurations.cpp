@@ -12,6 +12,7 @@
 #include "configuration_by_file.h"
 #include "configuration_strtpl.h"
 #include "file_structs.h"
+#include "model_general.h"
 
 #include <functional>
 #include <map>
@@ -25,25 +26,25 @@ model_str::model_str(rg_model_id mn, int32_t vmaj, int32_t vmin,
     vers_minor(vmin), short_info(info) {}
 
 namespace update_configuration_functional {
-typedef std::function<merror_t(models_configuration *,
+typedef std::function<merror_t(program_configuration *,
     const std::string &value)> update_models_config_f;
 
-merror_t update_debug_mode(models_configuration *mc, const std::string &val) {
+merror_t update_debug_mode(program_configuration *mc, const std::string &val) {
   return (mc) ? set_bool(val, &mc->calc_cfg.is_debug_mode) : ERROR_INIT_ZERO_ST;
 }
-merror_t update_rk_soave_mod(models_configuration *mc, const std::string &val) {
+merror_t update_rk_soave_mod(program_configuration *mc, const std::string &val) {
   return (mc) ? set_bool(val, &mc->calc_cfg.rk_enable_soave_mod) : ERROR_INIT_ZERO_ST;
 }
-merror_t update_pr_binary_coefs(models_configuration *mc, const std::string &val) {
+merror_t update_pr_binary_coefs(program_configuration *mc, const std::string &val) {
   return (mc) ? set_bool(val, &mc->calc_cfg.pr_enable_by_binary_coefs) : ERROR_INIT_ZERO_ST;
 }
-merror_t update_enable_iso_20765(models_configuration *mc, const std::string &val) {
+merror_t update_enable_iso_20765(program_configuration *mc, const std::string &val) {
   return (mc) ? set_bool(val, &mc->calc_cfg.enable_iso_20765) : ERROR_INIT_ZERO_ST;
 }
-merror_t update_log_level(models_configuration *mc, const std::string &val) {
+merror_t update_log_level(program_configuration *mc, const std::string &val) {
   return (mc) ? set_loglvl(val, &mc->log_level) : ERROR_INIT_ZERO_ST;
 }
-merror_t update_log_file(models_configuration *mc, const std::string &val) {
+merror_t update_log_file(program_configuration *mc, const std::string &val) {
   mc->log_file = trim_str(val);
   return ERROR_SUCCESS_T;
 }
@@ -94,7 +95,7 @@ bool calculation_configuration::IsEnableISO20765() const {
   return enable_iso_20765;
 }
 
-merror_t models_configuration::SetConfigurationParameter(
+merror_t program_configuration::SetConfigurationParameter(
     const std::string &param_strtpl, const std::string &param_value) {
   if (param_strtpl.empty())
     return ERROR_STRTPL_TPLNULL;
@@ -105,9 +106,85 @@ merror_t models_configuration::SetConfigurationParameter(
   return error;
 }
 
-models_configuration::models_configuration()
+program_configuration::program_configuration()
   : calc_cfg(calculation_configuration()),
     log_level(io_loglvl::debug_logs), log_file("") {}
+
+
+CalculationSetup::CalculationSetup()
+  : status_(STATUS_DEFAULT) {}
+
+CalculationSetup::CalculationSetup(const calculation_setup &cs)
+  : status_(STATUS_DEFAULT), init_data_(cs) {
+  merror_t error = init_setup();
+  if (!error) {
+    // установить модель с наибольшим приоритетом
+    swap_model();
+  }
+}
+
+#ifdef _DEBUG
+merror_t CalculationSetup::AddModel(std::shared_ptr<modelGeneral> &mg) {
+  merror_t error = ERROR_INIT_T;
+  if (mg && is_status_ok(status_)) {
+    error = mg->GetError();
+    if (!error) {
+      models_.emplace(mg->GetPriority(), mg);
+    }
+  }
+  return error;
+}
+#endif  // _DEBUG
+
+merror_t CalculationSetup::SetModel(int model_key) {
+  merror_t error = ERROR_SUCCESS_T;
+  const auto it = models_.find(model_key);
+  if (it != models_.end()) {
+    current_model_ = it->second.get();
+    error = ERROR_SUCCESS_T;
+  }
+}
+
+mstatus_t CalculationSetup::CheckCurrentModel() {
+  if (current_model_ && is_status_ok(status_)) {
+    /* todo прописать этот свап */
+    // если использование выбранной модели не допустимо
+    //   переключиться на другую
+    if (!current_model_->IsValid()) {
+      params_copy_ = current_model_->GetParametersCopy();
+      swap_model();
+    }
+  }
+  return status_;
+}
+
+merror_t CalculationSetup::GetError() const {
+  return error_.GetErrorCode();
+}
+
+merror_t CalculationSetup::init_setup() {
+  // todo: read files, init config
+  // assert(0);
+  // ради дебага
+  params_copy_ = {0.004, 3000000, 350};
+  status_ = STATUS_OK;
+  return ERROR_SUCCESS_T;
+}
+
+void CalculationSetup::swap_model() {
+  status_ = STATUS_NOT;
+  auto const model_it = models_.cbegin();
+  while (model_it != models_.cend()) {
+    // первая модель для которой допустимы макропараметры
+    if (model_it->second->IsValid(params_copy_)) {
+      status_ = STATUS_OK;
+    }
+  }
+}
+
+
+/* ProgramState */
+int ProgramState::calc_key = 0;
 
 ProgramState &ProgramState::Instance() {
   static ProgramState state;
@@ -115,16 +192,9 @@ ProgramState &ProgramState::Instance() {
 }
 
 ProgramState::ProgramState()
-  : error_(ERROR_SUCCESS_T), program_config_(nullptr), gasmix_file("") {}
+  : error_(ERROR_SUCCESS_T), program_config_(nullptr) {}
 
-void ProgramState::CheckCurrentModel() {
-  if (current_model_) {
-    static_assert (0, "");
-  }
-  return;
-}
-
-merror_t ProgramState::ResetConfigFile(
+merror_t ProgramState::ReloadConfiguration(
     const std::string &config_file) {
   program_config_ = std::unique_ptr<ProgramConfiguration>(
       new ProgramConfiguration(config_file));
@@ -138,10 +208,23 @@ merror_t ProgramState::ResetConfigFile(
   return error_.GetErrorCode();
 }
 
-merror_t ProgramState::ResetGasmixFile(
-    const std::string &gasmix_file) {
-  // assert(0);
+int ProgramState::AddCalculationSetup(const calculation_setup &calc_setup) {
+  int key = ProgramState::calc_key++;
+  calc_setups_.emplace(key, CalculationSetup(calc_setup));
+  if (calc_setups_[key].GetError()) {
+    calc_setups_.erase(key);
+    key = -1;
+  }
+  return key;
 }
+
+#ifdef _DEBUG
+int ProgramState::AddCalculationSetup(CalculationSetup &&setup) {
+  int key = ProgramState::calc_key++;
+  calc_setups_.emplace(key, setup);
+  return key;
+}
+#endif  // _DEBUG
 
 bool ProgramState::IsInitialized() const {
   return (program_config_) ? program_config_->is_initialized : false;
@@ -161,9 +244,9 @@ merror_t ProgramState::GetErrorCode() const {
   return error_.GetErrorCode();
 }
 
-const models_configuration ProgramState::GetConfiguration() const {
+const program_configuration ProgramState::GetConfiguration() const {
   return (program_config_) ?
-      program_config_->configuration : models_configuration();
+      program_config_->configuration : program_configuration();
 }
 
 const calculation_configuration ProgramState::GetCalcConfiguration() const {
@@ -217,7 +300,7 @@ merror_t PSConfiguration::ResetConfigFile(
 
 void PSConfiguration::setDefault() {
   /* конфигурация программы */
-  configuration = models_configuration();
+  configuration = program_configuration();
   /* конфигурация базы данных */
   db_parameters_conf = db_parameters();
 }
