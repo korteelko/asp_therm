@@ -18,17 +18,11 @@
 #include "models_creator.h"
 #include "xml_reader.h"
 
+#include <filesystem>
 #include <vector>
 
 #include <assert.h>
 
-
-#if defined (_OS_NIX)
-#  include <unistd.h>
-#elif defined(_OS_WIN)
-#  include <direct.h>
-#  define getcwd _getcwd
-#endif  // _OS
 
 #define RK2_TEST
 // #define PR_TEST  // доделать для смесей
@@ -39,13 +33,15 @@
 #define INPUT_P_T  3000000, 350
 #define NEW_PARAMS 500000, 250
 
-const std::string xml_path = "/../../asp_therm/data/gases/";
-const std::string xml_methane = "methane.xml";
-const std::string xml_ethane  = "ethane.xml";
-const std::string xml_propane = "propane.xml";
+namespace fs = std::filesystem;
 
-const std::string xml_gasmix = "../gasmix_inp_example.xml";
-const std::string xml_configuration = "../../configuration.xml";
+const fs::path xml_path = "../../asp_therm/data/gases";
+const fs::path xml_methane = "methane.xml";
+const fs::path xml_ethane  = "ethane.xml";
+const fs::path xml_propane = "propane.xml";
+
+const fs::path xml_gasmix = "../gasmix_inp_example.xml";
+const fs::path xml_configuration = "../../configuration.xml";
 
 static model_str rk2_str(rg_model_id(rg_model_t::REDLICH_KWONG,
     MODEL_SUBTYPE_DEFAULT), 1, 0, "debugi rk2");
@@ -54,13 +50,10 @@ static model_str rks_str(rg_model_id(rg_model_t::REDLICH_KWONG,
 static model_str pr_str(rg_model_id(rg_model_t::PENG_ROBINSON,
     MODEL_SUBTYPE_DEFAULT), 1, 0, "debugi pr");
 
+static std::filesystem::path cwd;
+
 int test_database() {
-  char cwd[512] = {0};
-  if (!getcwd(cwd, (sizeof(cwd)))) {
-    std::cerr << "cann't get current dir";
-    return 1;
-  }
-  std::string filename = std::string(cwd) + xml_path + xml_configuration;
+  std::string filename = (cwd / xml_path / xml_configuration).string();
   ProgramState &ps = ProgramState::Instance();
   // merror_t err = ps.ResetConfigFile(filename);
   // if (err)
@@ -90,28 +83,20 @@ int test_database() {
 }
 
 int test_program_configuration() {
-  char cwd[512] = {0};
-  if (!getcwd(cwd, (sizeof(cwd)))) {
-    std::cerr << "cann't get current dir";
-    return 1;
-  }
   std::cerr << "test_program_configuration start\n";
   ProgramState &ps = ProgramState::Instance();
-  ps.ReloadConfiguration(std::string(cwd) + xml_path + xml_configuration);
+  ps.ReloadConfiguration((cwd / xml_path / xml_configuration).string());
   merror_t e = ps.GetErrorCode();
-  if (e)
-    std::cerr << "program state bida " << e;
+  if (e) {
+    std::cerr << "program state bida " << e << std::endl;
+    std::cerr << "Current dir is " << cwd << std::endl;
+  }
   return e;
 }
 
 int test_models() {
-  char cwd[512] = {0};
-  if (!getcwd(cwd, (sizeof(cwd)))) {
-    std::cerr << "cann't get current dir";
-    return 1;
-  }
   std::vector<std::unique_ptr<modelGeneral>> test_vec;
-  std::string filename = std::string(cwd) + xml_path + xml_gasmix;
+  std::string filename = (cwd / xml_path / xml_gasmix).string();
 #if defined(RK2_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(rk2_str, filename, INPUT_P_T)));
@@ -162,17 +147,12 @@ int test_models() {
 }
 
 int test_models_mix() {
-  char cwd[512] = {0};
-  if (!getcwd(cwd, (sizeof(cwd)))) {
-    std::cerr << "cann't get current dir";
-    return 1;
-  }
   std::vector<std::unique_ptr<modelGeneral>> test_vec;
   std::vector<gasmix_file> xml_files = std::vector<gasmix_file> {
-    gasmix_file("metane", std::string(cwd) + xml_path + xml_methane, 0.988),
+    gasmix_file("metane", (cwd / xml_path / xml_methane).string(), 0.988),
     // add more (summ = 1.00)
-    gasmix_file("ethane", std::string(cwd) + xml_path + xml_ethane, 0.009),
-    gasmix_file("propane", std::string(cwd) + xml_path + xml_propane, 0.003)
+    gasmix_file("ethane", (cwd / xml_path / xml_ethane).string(), 0.009),
+    gasmix_file("propane", (cwd / xml_path / xml_propane).string(), 0.003)
   };
 #if defined(RK2_TEST)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
@@ -208,7 +188,9 @@ int test_models_mix() {
   return 0;
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+  cwd = fs::path(argv[0]).parent_path();
+  fs::current_path(cwd);
   if (!test_program_configuration()) {
     Logging::Append(io_loglvl::debug_logs, "Запускаю тесты сборки");
     //*

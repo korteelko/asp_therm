@@ -14,7 +14,7 @@ set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 
 # BUILD OPTIONS
 list(APPEND
-  MODULES_LIST
+  BUILD_OPTIONS
 
   # use pugixml
   #   now pugi is necessarily, not comment it
@@ -27,20 +27,9 @@ list(APPEND
   TESTS_ENABLED
 )
 
-
 # set compiler requirements, source subdirectories
 #   file of error codes
 include(${ASP_THERM_ROOT}/atherm_setup.cmake)
-
-if(UNIX)
-  add_definitions(-DOS_NIX)
-  include_directories("include/target_sys/_nix")
-elseif(MSVC)
-  add_definitions(-D_CRT_SECURE_NO_WARNINGS -DOS_WIN)
-  include_directories("include/target_sys/win")
-else()
-  message(SEND_ERROR "UNDEFINED SYSTEM ${CMAKE_SYSTEM_NAME}")
-endif(UNIX)
 
 # setup utils
 # LIBS_DIR - для библиотеки atherm
@@ -68,33 +57,6 @@ function(iterate_modules_list)
   endforeach()
 endfunction()
 
-iterate_modules_list("${MODULES_LIST}")
-
-
-# modules
-#   pugixml
-#   http://pugixml.org
-if(WITH_PUGIXML IN_LIST MODULES_LIST)
-  set(PUGIXML_DIR "${MODULES_DIR}/pugixml")
-  add_subdirectory(${PUGIXML_DIR})
-  include_directories(${PUGIXML_DIR}/src)
-  set(PUGIXML_LIB "pugixml")
-endif()
-
-#   rapidjson
-#   https://github.com/Tencent/rapidjson
-if(WITH_RAPIDJSON IN_LIST MODULES_LIST)
-  # rapidjson header-only
-  set(RAPIDJSON_DIR "${MODULES_DIR}/rapidjson")
-  add_subdirectory(${RAPIDJSON_DIR})
-  include_directories(${RAPIDJSON_DIR}/include)
-endif()
-
-#   pqxx
-#   http://pqxx.org/development/libpqxx/
-if(WITH_POSTGRESQL IN_LIST MODULES_LIST)
-  set(PQXX_LIBS pqxx pq)
-endif()
 
 message(STATUS "asp_therm cmake build info:")
 message(STATUS "\t\tSystem info: ${CMAKE_SYSTEM_NAME}")
@@ -167,10 +129,37 @@ if(INCLUDE_ERRORCODES)
       ${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp)
 endif()
 
-if(WITH_POSTGRESQL IN_LIST MODULES_LIST)
-  LIST(APPEND MODELS_SRC
+
+# SETUP BUILD_OPTIONS
+iterate_modules_list("${BUILD_OPTIONS}")
+
+# modules
+#   pugixml
+#   http://pugixml.org
+if(WITH_PUGIXML IN_LIST BUILD_OPTIONS)
+  set(PUGIXML_DIR "${MODULES_DIR}/pugixml")
+  add_subdirectory(${PUGIXML_DIR})
+  include_directories(${PUGIXML_DIR}/src)
+  set(PUGIXML_LIB "pugixml")
+endif()
+
+#   rapidjson
+#   https://github.com/Tencent/rapidjson
+if(WITH_RAPIDJSON IN_LIST BUILD_OPTIONS)
+  # rapidjson header-only
+  set(RAPIDJSON_DIR "${MODULES_DIR}/rapidjson")
+  add_subdirectory(${RAPIDJSON_DIR})
+  include_directories(${RAPIDJSON_DIR}/include)
+endif()
+
+#   pqxx
+#   http://pqxx.org/development/libpqxx/
+if(WITH_POSTGRESQL IN_LIST BUILD_OPTIONS)
+  set(PQXX_LIBS pqxx pq)
+  list(APPEND MODELS_SRC
       ${THERMDB_SOURCE_DIR}/db_connection_postgre.cpp)
 endif()
+
 
 # build result library
 add_library(${RESULT_LIB} STATIC ${MODELS_SRC})
@@ -199,6 +188,6 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 # run tests
-if(ENABLE_TESTS IN_LIST MODULES_LIST)
+if(ENABLE_TESTS IN_LIST BUILD_OPTIONS)
   add_subdirectory(${ASP_THERM_ROOT}/tests/full)
 endif()
