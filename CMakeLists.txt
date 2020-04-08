@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.9)
-# CXX17 for gcc available for cmake version > 3.8
 
 set(PROJECT_NAME asp_therm)
 set(RESULT_LIB atherm)
@@ -12,7 +11,20 @@ set(CMAKE_BUILD_TYPE Debug)
 
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 
-# BUILD OPTIONS
+# todo: maybe split in separate asp_therm_modules.cmake ???
+# todo: add full clear step(ninja cannot clear
+#   rapidjson 'doc/html' dir by yourself)
+#======================================================
+# SET BUILD OPTIONS
+#======================================================
+function(set_build_options)
+  message(STATUS "\t${PROJECT_NAME} build configuration:")
+  foreach(mod ${ARGN})
+    message(STATUS "\t\t${mod}")
+    add_definitions(-DBYCMAKE_${mod})
+  endforeach()
+endfunction()
+
 list(APPEND
   BUILD_OPTIONS
 
@@ -20,13 +32,20 @@ list(APPEND
   #   now pugi is necessarily, not comment it
   WITH_PUGIXML
   # use rapidjson
-  WITH_RAPIDJSON
+  #WITH_RAPIDJSON
   # build postgresql module and link pqxx library
   WITH_POSTGRESQL
   # enable tests
-  TESTS_ENABLED
+  # TESTS_ENABLED
 )
 
+# SETUP BUILD_OPTIONS
+set_build_options("${BUILD_OPTIONS}")
+
+
+#======================================================
+# PLATFORM
+#======================================================
 # set compiler requirements, source subdirectories
 #   file of error codes
 include(${ASP_THERM_ROOT}/atherm_setup.cmake)
@@ -41,22 +60,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(LIBS_DIR "${LIBS_DIR}/debug")
 endif()
 link_directories(${LIBS_DIR})
-
-
-# todo: maybe split in separate asp_therm_modules.cmake ???
-# todo: rename function to 'setup' 'modules'? something like this
-function(iterate_modules_list)
-  message(STATUS "\t${PROJECT_NAME} build configuration:")
-  foreach(mod ${ARGN})
-    message(STATUS "\t\t${mod}")
-    # todo: eto ne rabotaet, no vyglyadit interesno
-    # set(${mod} TRUE)
-    # В общем, чтобы не искать в коде С++ дефайны заданные
-    #   в cmake-файле сгруппируем их там и тут)
-    add_definitions(-DBYCMAKE_${mod})
-  endforeach()
-endfunction()
-
 
 message(STATUS "asp_therm cmake build info:")
 message(STATUS "\t\tSystem info: ${CMAKE_SYSTEM_NAME}")
@@ -76,10 +79,13 @@ include_directories(
   ${THERMDB_SOURCE_DIR}
 )
 
+#======================================================
+# SOURCE
+#======================================================
 set(MODELS_SRC
-
 # common sources
   ${THERMCORE_SOURCE_DIR}/common/common.cpp
+  ${THERMCORE_SOURCE_DIR}/common/program_state.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 
 # gas_parameters sources
@@ -95,9 +101,6 @@ set(MODELS_SRC
   ${THERMCORE_SOURCE_DIR}/phase_diagram/phase_diagram_models.cpp
 
 # subroutins sources
-  ${THERMCORE_SOURCE_DIR}/subroutins/configuration_by_file.cpp
-  ${THERMCORE_SOURCE_DIR}/subroutins/gas_by_file.cpp
-  ${THERMCORE_SOURCE_DIR}/subroutins/gasmix_by_file.cpp
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
 
 # models sources
@@ -130,9 +133,9 @@ if(INCLUDE_ERRORCODES)
 endif()
 
 
-# SETUP BUILD_OPTIONS
-iterate_modules_list("${BUILD_OPTIONS}")
-
+#======================================================
+# LIBRARIES AND MODULES
+#======================================================
 # modules
 #   pugixml
 #   http://pugixml.org
@@ -161,6 +164,9 @@ if(WITH_POSTGRESQL IN_LIST BUILD_OPTIONS)
 endif()
 
 
+#======================================================
+# OUTPUT SETUP
+#======================================================
 # build result library
 add_library(${RESULT_LIB} STATIC ${MODELS_SRC})
 set_target_properties(${RESULT_LIB} PROPERTIES
@@ -188,6 +194,6 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 # run tests
-if(ENABLE_TESTS IN_LIST BUILD_OPTIONS)
+if(TESTS_ENABLED IN_LIST BUILD_OPTIONS)
   add_subdirectory(${ASP_THERM_ROOT}/tests/full)
 endif()

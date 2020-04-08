@@ -16,7 +16,7 @@
 #include "model_peng_robinson.h"
 #include "models_configurations.h"
 #include "models_creator.h"
-#include "xml_reader.h"
+#include "program_state.h"
 
 #include <filesystem>
 #include <vector>

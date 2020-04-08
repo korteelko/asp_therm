@@ -13,7 +13,7 @@
 #include "gas_description.h"
 #include "model_general.h"
 #include "phase_diagram.h"
-#include "xml_reader.h"
+#include "ErrorWrap.h"
 
 class ModelsCreator {
 /* TODO:

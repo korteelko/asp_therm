@@ -23,6 +23,8 @@
 #define GASMIX_PERSENT_AVR  0.99
 #define GASMIX_PERCENT_EPS  0.02
 
+/** \brief параметры компонента газовой смеси описанные
+  *   в файле ининициализации смеси */
 struct gasmix_file {
   std::string name;
   std::string path;

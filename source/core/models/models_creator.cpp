@@ -9,8 +9,6 @@
  */
 #include "models_creator.h"
 
-#include "ErrorWrap.h"
-
 #include "gas_by_file.h"
 #include "gasmix_by_file.h"
 #include "model_ideal_gas.h"
@@ -19,6 +17,7 @@
 #include "model_redlich_kwong.h"
 #include "model_redlich_kwong_soave.h"
 #include "models_configurations.h"
+#include "XMLReader.h"
 
 // #include "dynamic_modeling.h"
 // #include "models_output.h"
@@ -62,7 +61,11 @@ model_input ModelsCreator::set_input(model_str ms, binodalpoints *bp,
 
 modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
     std::vector<gasmix_file> components, double p, double t) {
-  std::unique_ptr<GasMixByFiles> gm(GasMixByFiles::Init(components));
+  /* todo: remove implementation! */
+  #ifdef _DEBUG
+  std::unique_ptr<GasMixByFiles<XMLReader>> gm(
+      GasMixByFiles<XMLReader>::Init(components));
+  #endif  // _DEBUG
   return (gm) ? getModel(ms, gm.get(), p, t) : nullptr;
 }
 
@@ -74,8 +77,8 @@ modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
 
 modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
     const std::string &gasmix_xml, double p, double t) {
-  std::unique_ptr<GasMixComponentsFile> gm(
-      GasMixComponentsFile::Init(ms.model_type.type, gasmix_xml));
+  std::unique_ptr<GasMixComponentsFile<XMLReader>> gm(
+      GasMixComponentsFile<XMLReader>::Init(ms.model_type.type, gasmix_xml));
   return (gm) ? getModel(ms, gm.get(), p, t) : nullptr;
 }
 

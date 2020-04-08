@@ -13,6 +13,7 @@
 #include "db_query.h"
 #include "file_structs.h"
 #include "models_configurations.h"
+#include "program_state.h"
 #include "Logging.h"
 
 #include <map>

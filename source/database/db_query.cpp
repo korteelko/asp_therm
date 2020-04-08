@@ -10,8 +10,9 @@
 #include "db_query.h"
 
 #include "db_connection.h"
-#include "Logging.h"
 #include "models_configurations.h"
+#include "program_state.h"
+#include "Logging.h"
 
 DBQuery::DBQuery(DBConnection *db_ptr)
   : status_(STATUS_DEFAULT), db_ptr_(db_ptr), is_performed_(false) {}
