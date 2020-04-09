@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<test_root name="test">
+  <group name="first">
+    <parameter name="f"> sda </parameter>
+    <parameter name="s"> sdsa </parameter>
+    <parameter name="t"> 116.2 </parameter>
+    <parameter name="ff">  </parameter>
+  </group>
+  <group name="second">
+    <parameter name="f"> asd </parameter>        
+    <parameter name="s"> 32 </parameter>
+    <parameter name="t"> 12 </parameter>
+  </group>
+</test_root>

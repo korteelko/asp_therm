@@ -1,19 +1,19 @@
-message(STATUS "\t\tRun gasmix test")
+message(STATUS "\t\tRun Readers test")
 
-add_definitions(-DGASMIX_TEST)
+add_definitions(-DREADERS_TEST)
 add_executable(
-  test_gasmix
+  test_readers
 
-  ${ASP_THERM_FULLTEST_DIR}/core/gas_parameters/test_gasmix.cpp
+  # тестинг json парсера
+  #${ASP_THERM_FULLTEST_DIR}/utils/test_json.cpp
+  # тестинг xml парсера
+  ${ASP_THERM_FULLTEST_DIR}/utils/test_xml.cpp
+  # сравниваем результаты парсинга
+  #${ASP_THERM_FULLTEST_DIR}/utils/test_readers.cpp
 
   ${THERMCORE_SOURCE_DIR}/common/common.cpp
   ${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
-
-  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description.cpp
-  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_dynamic.cpp
-  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_static.cpp
-  ${THERMCORE_SOURCE_DIR}/gas_parameters/gasmix_init.cpp
 
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
 
@@ -26,11 +26,11 @@ include_directories(${PUGIXML_DIR}/src)
 link_directories(${ASP_THERM_ROOT}/build/lib/pugixml)
 set(PUGIXML_LIB "pugixml")
 
-target_link_libraries(test_gasmix
+target_link_libraries(test_readers
 
   ${GTEST_LIBRARIES}
   ${PUGIXML_LIB}
   Threads::Threads
 )
 
-add_test(test_gasmix "core/test_gasmix")
+add_test(test_readers "utils")

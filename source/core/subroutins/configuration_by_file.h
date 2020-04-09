@@ -27,23 +27,19 @@ class ConfigurationByFile {
   ConfigurationByFile &operator= (const ConfigurationByFile &) = delete;
 
 private:
-  std::set<std::string> config_params = std::set<std::string> {
-      STRTPL_CONFIG_DEBUG_MODE, STRTPL_CONFIG_RK_SOAVE_MOD,
-      STRTPL_CONFIG_PR_BINARYCOEFS, STRTPL_CONFIG_INCLUDE_ISO_20765,
-      STRTPL_CONFIG_LOG_LEVEL, STRTPL_CONFIG_LOG_FILE, STRTPL_CONFIG_DATABASE
-  };
-  std::set<std::string> config_database = std::set<std::string> {
-      STRTPL_CONFIG_DB_DRY_RUN, STRTPL_CONFIG_DB_CLIENT, STRTPL_CONFIG_DB_NAME,
-      STRTPL_CONFIG_DB_USERNAME, STRTPL_CONFIG_DB_PASSWORD, STRTPL_CONFIG_DB_HOST,
-      STRTPL_CONFIG_DB_PORT
-  };
+  /** \brief строковые идентификаторы параметров
+    *   конфигурации программы */
+  static std::set<std::string> config_params;
+  /** \brief строковые идентификаторы параметров
+    *   конфигурации подключения к БД */
+  static std::set<std::string> config_database;
 
 public:
   static ConfigurationByFile *Init(const std::string &filename) {
-    ConfigReader<config_node> *xml_doc = ConfigReader<config_node>::Init(filename);
-    if (xml_doc == nullptr)
+    ConfigReader<config_node> *cr = ConfigReader<config_node>::Init(filename);
+    if (cr == nullptr)
       return nullptr;
-    return new ConfigurationByFile(xml_doc);
+    return new ConfigurationByFile(cr);
   }
 
   program_configuration GetConfiguration() const { return configuration_; }
@@ -53,9 +49,9 @@ public:
   const ErrorWrap &GetErrorWrap() const { return error_; }
 
 private:
-  ConfigurationByFile(ConfigReader<config_node> *xml_doc)
-    : xml_doc_(xml_doc) {
-    if (xml_doc) {
+  ConfigurationByFile(ConfigReader<config_node> *config_doc)
+    : config_doc_(config_doc) {
+    if (config_doc) {
       init_parameters();
     } else {
       error_.SetError(ERROR_INIT_T,
@@ -67,14 +63,14 @@ private:
   /** \brief Инициализировать общую конфигурацию программы */
   merror_t init_parameters() {
     merror_t error = ERROR_SUCCESS_T;
-    std::vector<std::string> xml_path(1);
+    std::vector<std::string> param_path(1);
     std::string tmp_str = "";
     for (const auto &param : config_params) {
-      xml_path[0] = param;
+      param_path[0] = param;
       if (param == STRTPL_CONFIG_DATABASE) {
         error = init_dbparameters();
       } else {
-        xml_doc_->GetValueByPath(xml_path, &tmp_str);
+        config_doc_->GetValueByPath(param_path, &tmp_str);
         error = configuration_.SetConfigurationParameter(param, tmp_str);
       }
       if (error)
@@ -82,7 +78,7 @@ private:
     }
     if (error) {
       error_.SetError(error,
-          "Error during configfile reading: " + xml_path[0]);
+          "Error during configfile reading: " + param_path[0]);
       error_.LogIt();
     }
     return error;
@@ -91,19 +87,19 @@ private:
   /** \brief Инициализировать конфигурацию подключения к БД */
   merror_t init_dbparameters() {
     merror_t error = ERROR_SUCCESS_T;
-    std::vector<std::string> xml_path = std::vector<std::string> {
+    std::vector<std::string> param_path = std::vector<std::string> {
         STRTPL_CONFIG_DATABASE, ""};
     std::string tmp_str = "";
     for (const auto &param : config_database) {
-      xml_path[1] = param;
-      xml_doc_->GetValueByPath(xml_path, &tmp_str);
+      param_path[1] = param;
+      config_doc_->GetValueByPath(param_path, &tmp_str);
       error = db_parameters_.SetConfigurationParameter(param, tmp_str);
       if (error)
         break;
     }
     if (error) {
       error_.SetError(error,
-          "Ошибка обработки параметра файла конфигурации БД: " + xml_path[1]);
+          "Ошибка обработки параметра файла конфигурации БД: " + param_path[1]);
       error_.LogIt();
     }
     return error;
@@ -111,9 +107,24 @@ private:
 
 private:
   ErrorWrap error_;
-  std::unique_ptr<ConfigReader<config_node>> xml_doc_;
+  std::unique_ptr<ConfigReader<config_node>> config_doc_;
   program_configuration configuration_;
   db_parameters db_parameters_;
+};
+
+template <template<class config_node> class ConfigReader>
+std::set<std::string> ConfigurationByFile<ConfigReader>::config_params =
+    std::set<std::string> {
+    STRTPL_CONFIG_DEBUG_MODE, STRTPL_CONFIG_RK_SOAVE_MOD,
+    STRTPL_CONFIG_PR_BINARYCOEFS, STRTPL_CONFIG_INCLUDE_ISO_20765,
+    STRTPL_CONFIG_LOG_LEVEL, STRTPL_CONFIG_LOG_FILE, STRTPL_CONFIG_DATABASE
+};
+template <template<class config_node> class ConfigReader>
+std::set<std::string> ConfigurationByFile<ConfigReader>::config_database =
+    std::set<std::string> {
+    STRTPL_CONFIG_DB_DRY_RUN, STRTPL_CONFIG_DB_CLIENT, STRTPL_CONFIG_DB_NAME,
+    STRTPL_CONFIG_DB_USERNAME, STRTPL_CONFIG_DB_PASSWORD, STRTPL_CONFIG_DB_HOST,
+    STRTPL_CONFIG_DB_PORT
 };
 
 #endif  // !_CORE__SUBROUTINS__CONFIGURATION_BY_FILE_H_

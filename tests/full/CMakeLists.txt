@@ -7,6 +7,7 @@ project(asp_therm-fulltests)
 
 include(gtest_setup.cmake)
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../)
+set(MODULES_DIR ${ASP_THERM_ROOT}/lib)
 
 if(${GTEST_FOUND})
   include(${ASP_THERM_ROOT}/atherm_setup.cmake)
@@ -34,4 +35,6 @@ if(${GTEST_FOUND})
   include(${ASP_THERM_FULLTEST_DIR}/core/common/common_tests.cmake)
   #   gasmix
   include(${ASP_THERM_FULLTEST_DIR}/core/gas_parameters/gas_parameters_tests.cmake)
+  #   xml and json reader
+  include(${ASP_THERM_FULLTEST_DIR}/utils/readers_tests.cmake)
 endif(${GTEST_FOUND})

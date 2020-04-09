@@ -47,10 +47,10 @@ public:
       if (first_child->GetName() == name) {
         child = first_child.get();
       } else {
-    #if defined (_DEBUG_SUBROUTINS)
+    #if defined(READERS_TEST)
         Logging::Append(io_loglvl::debug_logs, "Search for " + name +
             " but get %s" + first_child->GetName());
-    #endif  // _DEBUG_SUBROUTINS
+    #endif  // READERS_TEST
         for (const auto &x : first_child->siblings)
           if (x->GetName() == name) {
             child = x.get();
@@ -78,12 +78,13 @@ public:
   }
 };
 
-template <class xml_node_t>
+/** \brief Класс парсинга xml файлов */
+template <class node_t>
 class XMLReader {
 public:
-  static XMLReader<xml_node_t> *Init(std::string gas_xml_file) {
+  static XMLReader<node_t> *Init(std::string gas_xml_file) {
     merror_t err = ERROR_SUCCESS_T;
-    XMLReader<xml_node_t> *reader = nullptr;
+    XMLReader<node_t> *reader = nullptr;
     if (gas_xml_file.empty()) {
       err = ERROR_INIT_NULLP_ST;
       Logging::Append(err, "имя xml-файла пусто");
@@ -94,7 +95,7 @@ public:
         Logging::Append(err, std::string(
             std::string("cannot open file: ") + gas_xml_file).c_str());
       } else {
-        reader = new XMLReader<xml_node_t>(gas_xml_file);
+        reader = new XMLReader<node_t>(gas_xml_file);
         if (reader) {
           if (reader->GetErrorCode() != ERROR_SUCCESS_T) {
             Logging::Append(io_loglvl::debug_logs, reader->GetErrorMessage());
@@ -105,6 +106,10 @@ public:
       }
     }
     return reader;
+  }
+
+  static std::string GetFilenameExtension() {
+    return ".xml";
   }
 
   std::string GetFileName() const {
@@ -122,26 +127,29 @@ public:
   std::string GetRootName() const {
     return gas_root_node_->GetName();
   }
-
+  /**  \brief Получить параметр по переданному пути
+    * \note Функция обобщённого обхода
+    * \warning outstr придёт с пробелами, если они есть в xml */
   merror_t GetValueByPath(const std::vector<std::string> &xml_path,
       std::string *outstr) const {
-    const gasxml_node<xml_node_t> *tmp_gas_node = gas_root_node_.get();
+    const gasxml_node<node_t> *tmp_gas_node = gas_root_node_.get();
     for (const auto &x : xml_path) {
       // check ypuself and sublings
       tmp_gas_node = tmp_gas_node->search_child_by_name(x);
       if (!tmp_gas_node) {
-    #if defined (_DEBUG_SUBROUTINS)
+    #if defined(READERS_TEST)
         std::string strpath = "";
         for (const auto &strnode : xml_path)
           strpath += strnode + " --> ";
         Logging::Append(io_loglvl::debug_logs, strpath);
-    #endif  // _DEBUG_SUBROUTINS
+    #endif  // READERS_TEST
         return XML_LAST_STRING;
       }
     }
     *outstr = tmp_gas_node->GetValue();
     return ERROR_SUCCESS_T;
   }
+
 private:
   XMLReader(std::string gas_xml_file)
     : error_(ERROR_SUCCESS_T), gas_xml_file_(gas_xml_file),
@@ -149,11 +157,11 @@ private:
     xml_doc_.load_file(gas_xml_file.c_str());
     xml_root_node_ = std::unique_ptr<pugi::xml_node>(
         new pugi::xml_node());
-    std::string root_node_name = xml_node_t::get_root_name();
+    std::string root_node_name = node_t::get_root_name();
     *xml_root_node_ = xml_doc_.child(root_node_name.c_str());
-    gas_root_node_  = std::unique_ptr<gasxml_node<xml_node_t>>(
-        new gasxml_node<xml_node_t>(
-        xml_node_t(NODE_T_ROOT, root_node_name.c_str())));
+    gas_root_node_  = std::unique_ptr<gasxml_node<node_t>>(
+        new gasxml_node<node_t>(
+        node_t(NODE_T_ROOT, root_node_name.c_str())));
     tree_traversal(xml_root_node_.get(), gas_root_node_.get());
   }
 /** \brief Обход ноды дерева
@@ -161,7 +169,7 @@ private:
   * \param gasxml_nd - соответствующая нода в gas_tree(class XMLReader)
   */
   void tree_traversal(pugi::xml_node *xml_nd,
-      gasxml_node<xml_node_t> *gasxml_nd) {
+      gasxml_node<node_t> *gasxml_nd) {
     if (!is_leafnode(xml_nd)) {
       init_subnode(xml_nd, gasxml_nd);
     } else {
@@ -172,28 +180,28 @@ private:
   * \param xml_nd - нода xml файла в реализации pugixml
   * \param gasxml_nd - соответствующая нода в gas_tree(class XMLReader)
   */
-  void init_subnode(pugi::xml_node *xml_nd,
-      gasxml_node<xml_node_t> *gasxml_nd) {
-    pugi::xml_node nx_xml_nd = xml_nd->first_child();
-    node_type nt = xml_node_t::get_node_type(nx_xml_nd.name());
+  void init_subnode(pugi::xml_node *pugi_nd,
+      gasxml_node<node_t> *gasxml_nd) {
+    pugi::xml_node nx_xml_nd = pugi_nd->first_child();
+    node_type nt = node_t::get_node_type(nx_xml_nd.name());
     if (nt == NODE_T_UNDEFINED) {
       std::string estr = "get undefined xml node while parsing, node name: "
           + std::string(nx_xml_nd.name()) + "\n";
       error_.SetError(ERROR_FILE_IN_ST, estr);
       return;
     }
-    gasxml_nd->first_child = std::unique_ptr<gasxml_node<xml_node_t>>(
-        new gasxml_node<xml_node_t>(xml_node_t(nt,
+    gasxml_nd->first_child = std::unique_ptr<gasxml_node<node_t>>(
+        new gasxml_node<node_t>(node_t(nt,
         nx_xml_nd.attribute("name").value())));
     tree_traversal(&nx_xml_nd, gasxml_nd->first_child.get());
     while (true) {
-      if (nx_xml_nd == xml_nd->last_child())
+      if (nx_xml_nd == pugi_nd->last_child())
         break;
       nx_xml_nd = nx_xml_nd.next_sibling();
-      nt = xml_node_t::get_node_type(nx_xml_nd.name());
+      nt = node_t::get_node_type(nx_xml_nd.name());
       gasxml_nd->first_child->siblings.push_back(
-         std::unique_ptr<gasxml_node<xml_node_t>>(new gasxml_node<xml_node_t>(
-         xml_node_t(nt, nx_xml_nd.attribute("name").value()))));
+         std::unique_ptr<gasxml_node<node_t>>(new gasxml_node<node_t>(
+         node_t(nt, nx_xml_nd.attribute("name").value()))));
       tree_traversal(&nx_xml_nd, gasxml_nd->first_child->siblings.back().get());
     }
   }
@@ -202,7 +210,7 @@ private:
   * \param gasxml_nd - соответствующая нода в gas_tree(class XMLReader)
   */
   void init_leafnode(pugi::xml_node *&xml_nd,
-      gasxml_node<xml_node_t> *gasxml_nd) {
+      gasxml_node<node_t> *gasxml_nd) {
     gasxml_nd->SetValue(xml_nd->text().as_string());
     gasxml_nd->SetName(xml_nd->attribute("name").value());
     gasxml_nd->first_child = nullptr;
@@ -216,10 +224,11 @@ private:
 
 private:
   ErrorWrap error_;
+  /* todo: свапнуть стрингу на урл */
   /** \brief имя xml файла */
   std::string gas_xml_file_;
   /** \brief корень дерева из обёрток над классом-параметром xml_node_t */
-  std::unique_ptr<gasxml_node<xml_node_t>> gas_root_node_;
+  std::unique_ptr<gasxml_node<node_t>> gas_root_node_;
   /** \brief pugi интерпретация документа */
   pugi::xml_document xml_doc_;
   /** \brief корень pugi дерева элементов */

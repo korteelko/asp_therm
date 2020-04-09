@@ -20,13 +20,13 @@
 
 #include <stdint.h>
 
+
 typedef uint32_t node_type;
 #define CONFIG_NODE_COUNT   3
 #define GAS_NODE_COUNT      5
 #define GASMIX_NODE_COUNT   3
 #define NODE_T_ROOT         0
 #define NODE_T_UNDEFINED    0xff
-
 
 /// class for initializing program configuration
 class config_node {

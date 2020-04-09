@@ -109,13 +109,13 @@ private:
         std::shared_ptr<dyn_parameters>> ret_val{nullptr, nullptr};
     gas_t gost_mix_component;
     if (xf == nullptr) {
-      error_.SetError(ERROR_FILEIO_T | ERROR_FILE_IN_ST, "gas xml init\n");
+      error_.SetError(ERROR_FILEIO_T | ERROR_FILE_IN_ST, "gas config init\n");
     } else {
       // unique_ptrs
       auto cp = xf->GetConstParameters();
       auto dp = xf->GetDynParameters();
       if ((cp == nullptr) || (dp == nullptr)) {
-        error_.SetError(ERROR_INIT_T, "xml format and const/dyn -parameters\n");
+        error_.SetError(ERROR_INIT_T, "config format and const/dyn -parameters\n");
       } else {
         ret_val = {cp, dp};
       }
@@ -131,7 +131,8 @@ private:
   * путь к дефолтному файлу параметров
   * \param path путь к дефолтному файлу параметров компонентов */
   static std::string gasname_by_path(const std::string &path) {
-     auto x = path.rfind(".xml");
+    std::string reader_ext = ConfigReader<gas_node>::GetFilenameExtension();
+    auto x = path.rfind(reader_ext);
     return (x != std::string::npos) ? std::string(path.begin() +
         path.rfind(PATH_SEPARATOR, x) + 1, path.begin() + x) : "";
   }
@@ -194,19 +195,19 @@ public:
   }
 
 private:
-  GasMixComponentsFile(rg_model_t mn, ConfigReader<gasmix_node> *xml_doc)
-    : xml_doc_(xml_doc), files_handler_(nullptr),
+  GasMixComponentsFile(rg_model_t mn, ConfigReader<gasmix_node> *config_doc)
+    : config_doc_(config_doc), files_handler_(nullptr),
       model_t_(mn), error_(ERROR_SUCCESS_T) {
     init_components();
   }
   /** \brief */
   void init_components() {
-    std::string gasmix_file_dir = (xml_doc_) ?
-        dir_by_path(xml_doc_->GetFileName()) : "";
+    std::string gasmix_file_dir = (config_doc_) ?
+        dir_by_path(config_doc_->GetFileName()) : "";
     merror_t error = ERROR_SUCCESS_T;
     if (gasmix_file_dir.empty() || !is_exist(gasmix_file_dir)) {
       std::string error_str = "ошибка инициализации директории файла"
-          "описывающего газовую смесь:\n  файл:" + xml_doc_->GetFileName() +
+          "описывающего газовую смесь:\n  файл:" + config_doc_->GetFileName() +
           "\n  директория:" + gasmix_file_dir;
       error_.SetError(ERROR_FILEIO_T | ERROR_FILE_IN_ST, error_str);
       error_.LogIt();
@@ -217,19 +218,19 @@ private:
       std::string gaspath;
       std::string part_str = "";
       double part = 0.0;
-      std::vector<std::string> xml_path(2);
+      std::vector<std::string> param_path(2);
       for (int i = 0; i < GASMIX_MAX_COUNT; ++i) {
         gasname = "";
         part = 0.0;
         memset(buf, 0, sizeof(buf));
         sprintf(buf, "%s%d", gasmix_component.c_str(), i+1);
-        xml_path[0] = std::string(buf);
-        xml_path[1] = gasmix_parameter_name;
-        error = xml_doc_->GetValueByPath(xml_path, &gasname);
-        xml_path[1] = gasmix_parameter_path;
-        error = xml_doc_->GetValueByPath(xml_path, &gaspath);
-        xml_path[1] = gasmix_parameter_part;
-        error |= xml_doc_->GetValueByPath(xml_path, &part_str);
+        param_path[0] = std::string(buf);
+        param_path[1] = gasmix_parameter_name;
+        error = config_doc_->GetValueByPath(param_path, &gasname);
+        param_path[1] = gasmix_parameter_path;
+        error = config_doc_->GetValueByPath(param_path, &gaspath);
+        param_path[1] = gasmix_parameter_part;
+        error |= config_doc_->GetValueByPath(param_path, &part_str);
         if (error)
           break;
         try {
@@ -275,7 +276,7 @@ private:
   // void setup_gost_mix();
 
 private:
-  std::unique_ptr<ConfigReader<gasmix_node>> xml_doc_;
+  std::unique_ptr<ConfigReader<gasmix_node>> config_doc_;
   /* maybe remove files_handler_ */
   std::unique_ptr<GasMixByFiles<ConfigReader>> files_handler_;
   /* containers

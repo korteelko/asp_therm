@@ -35,6 +35,8 @@
 
 namespace fs = std::filesystem;
 
+// maybe set to:
+// const fs::path xml_path = "../data/gases";
 const fs::path xml_path = "../../asp_therm/data/gases";
 const fs::path xml_methane = "methane.xml";
 const fs::path xml_ethane  = "ethane.xml";
