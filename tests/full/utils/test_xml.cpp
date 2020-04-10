@@ -1,9 +1,5 @@
-#include "XMLReader.h"
-
 #include "common.h"
 #include "file_structs.h"
-#include "gas_by_file.h"
-#include "gasmix_by_file.h"
 #include "XMLReader.h"
 
 #include "gtest/gtest.h"
@@ -14,14 +10,11 @@
 #include <string>
 #include <vector>
 
-#include <assert.h>
-#include <stdio.h>
-
 
 namespace fs = std::filesystem;
 
 static fs::path cwd;
-static fs::path testdir = "../../../tests/full/utils/";
+static fs::path testdir = "../../../tests/full/utils/data/";
 static fs::path tf = "test_xml.xml";
 
 /* в тестовом файле прописано:

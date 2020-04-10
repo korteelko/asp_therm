@@ -1,0 +1,23 @@
+{
+  "name": "test",
+  "data": [
+    {
+      "name": "first",
+      "data": {
+        "f": "sda",
+        "s": "sdsa",
+        "t": 116.2,
+        "ff": ""
+      }
+    },
+    {
+      "name": "second",
+      "parameters": {
+        "f": "asd",
+        "s": 32,
+        "t": 12
+      }
+    }
+  ]
+}
+

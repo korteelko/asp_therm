@@ -29,27 +29,28 @@
 
 template <class xml_node_t>
 class gasxml_node {
-  typedef std::vector<std::unique_ptr<gasxml_node<xml_node_t>>> vec_sibling;
+  typedef std::unique_ptr<gasxml_node<xml_node_t>> xml_node_ptr;
+  typedef std::vector<xml_node_ptr> sibling_vec;
   
 public:
   std::unique_ptr<gasxml_node<xml_node_t>> first_child;
-  vec_sibling siblings;
+  sibling_vec siblings;
   xml_node_t node;
               
 public:
   gasxml_node(xml_node_t node)
     : node(node) {}
   
-  const gasxml_node<xml_node_t> *search_child_by_name(
-      std::string name) const {
+  const gasxml_node<xml_node_t> *ChildByName(
+      const std::string &name) const {
     gasxml_node<xml_node_t> *child = nullptr;
     if (first_child != nullptr) {
       if (first_child->GetName() == name) {
         child = first_child.get();
       } else {
     #if defined(READERS_TEST)
-        Logging::Append(io_loglvl::debug_logs, "Search for " + name +
-            " but get %s" + first_child->GetName());
+        Logging::Append(io_loglvl::debug_logs, "Search for " +
+            name + " but get %s" + first_child->GetName());
     #endif  // READERS_TEST
         for (const auto &x : first_child->siblings)
           if (x->GetName() == name) {
@@ -78,6 +79,7 @@ public:
   }
 };
 
+/* todo: не игнорировать рутноду, передавать вектор с ней */
 /** \brief Класс парсинга xml файлов */
 template <class node_t>
 class XMLReader {
@@ -112,6 +114,7 @@ public:
     return ".xml";
   }
 
+  /* todo: remove(replace with GetSource()) */
   std::string GetFileName() const {
     return gas_xml_file_;
   }
@@ -120,22 +123,27 @@ public:
     return error_.GetErrorCode();
   }
 
+  /* todo: remove(replace with LogError()) */
   std::string GetErrorMessage() const {
     return error_.GetMessage();
   }
 
+  /* todo: remove it */
   std::string GetRootName() const {
     return gas_root_node_->GetName();
   }
-  /**  \brief Получить параметр по переданному пути
+  /** \brief Получить параметр по переданному пути
     * \note Функция обобщённого обхода
-    * \warning outstr придёт с пробелами, если они есть в xml */
+    * \warning outstr придёт с пробелами, если они есть в xml,
+    *   алсо путь принимается без рут ноды */
   merror_t GetValueByPath(const std::vector<std::string> &xml_path,
       std::string *outstr) const {
     const gasxml_node<node_t> *tmp_gas_node = gas_root_node_.get();
+    if (!tmp_gas_node)
+      return ERROR_SUCCESS_T;
     for (const auto &x : xml_path) {
       // check ypuself and sublings
-      tmp_gas_node = tmp_gas_node->search_child_by_name(x);
+      tmp_gas_node = tmp_gas_node->ChildByName(x);
       if (!tmp_gas_node) {
     #if defined(READERS_TEST)
         std::string strpath = "";
@@ -143,7 +151,7 @@ public:
           strpath += strnode + " --> ";
         Logging::Append(io_loglvl::debug_logs, strpath);
     #endif  // READERS_TEST
-        return XML_LAST_STRING;
+        return FILE_LAST_OBJECT;
       }
     }
     *outstr = tmp_gas_node->GetValue();

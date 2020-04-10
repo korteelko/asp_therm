@@ -25,11 +25,12 @@ set(PUGIXML_DIR "${MODULES_DIR}/pugixml")
 include_directories(${PUGIXML_DIR}/src)
 link_directories(${ASP_THERM_ROOT}/build/lib/pugixml)
 set(PUGIXML_LIB "pugixml")
+#find_library(${ASP_THERM_ROOT}/build/lib/pugixml ${PUGIXML_LIB})
 
 target_link_libraries(test_gasmix
 
-  ${GTEST_LIBRARIES}
   ${PUGIXML_LIB}
+  ${GTEST_LIBRARIES}
   Threads::Threads
 )
 

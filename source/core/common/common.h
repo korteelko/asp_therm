@@ -66,7 +66,7 @@ typedef uint32_t mstatus_t;
 #define STATUS_HAVE_ERROR     0x00000004
 
 /* todo: rename, remove */
-#define XML_LAST_STRING       0x1000
+#define FILE_LAST_OBJECT       0x1000
 
 /*  приоритет уравнения сосотяния по умолчанию,
  *    если не задан при инициализации */
@@ -149,7 +149,6 @@ struct rg_model_id {
   rg_model_id(rg_model_t t, rg_model_subtype subt);
 };
 
-
 typedef enum {
   /** \brief no messages */
   no_log = 0,
@@ -170,6 +169,22 @@ std::string hex2str(Integer hex) {
   return hex_stream.str();
 }
 
+/** \brief Проверить допустимость текущего состояния статуса
+  * \return true если st == STATUS_DEFAULT или st == STATUS_OK */
+inline bool is_status_aval(mstatus_t status) {
+  return status == STATUS_DEFAULT || status == STATUS_OK;
+}
+/** \brief Проверить валидность статуса
+  * \return true если st == STATUS_OK */
+inline bool is_status_ok(mstatus_t status) {
+  return status == STATUS_OK;
+}
+/** \brief Строка str заканчивается подстрокой ending */
+inline bool ends_with(const std::string &str, const std::string &ending) {
+  if (ending.size() > str.size())
+    return false;
+  return std::equal(ending.rbegin(), ending.rend(), str.rbegin());
+}
 /** \brief Обрезать пробелы с обоих концов */
 std::string trim_str(const std::string &str);
 /** \brief Проверить что объект файловой системы(файл, директория, соккет,
@@ -177,11 +192,5 @@ std::string trim_str(const std::string &str);
 bool is_exist(const std::string &path);
 /** \brief Вернуть путь к директории содержащей файл */
 std::string dir_by_path(const std::string &path);
-
-/* todo encapsulate status stuff */
-/** \brief Проверить допустимость текущего состояния статуса */
-bool is_status_aval(mstatus_t status);
-/** \brief Проверить валидность статуса */
-bool is_status_ok(mstatus_t status);
 
 #endif  // !_CORE__COMMON__COMMON_H_

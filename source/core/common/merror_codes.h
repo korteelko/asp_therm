@@ -12,10 +12,10 @@
 
 
 #if not defined(ERROR_SUCCESS_T)
-#  define ERROR_SUCCESS_T       0x00000000
+#  define ERROR_SUCCESS_T     0x0000
 #endif  // !ERROR_SUCCESS_T
 #if not defined(ERROR_GENERAL_T)
-#  define ERROR_GENERAL_T       0x00000001
+#  define ERROR_GENERAL_T     0x0001
 #endif  // !ERROR_GENERAL_T
 
 // error type
@@ -44,24 +44,33 @@
 
 // error subtype
 #define ERROR_MASK_SUBTYPE    0x0f00
-// fileio errors
+//   fileio errors
+/** \brief ошибка чтения файла */
 #define ERROR_FILE_IN_ST      (0x0100 | ERROR_FILEIO_T)
+/** \brief ошибка записи в файл */
 #define ERROR_FILE_OUT_ST     (0x0200 | ERROR_FILEIO_T)
+/** \brief ошибка операции с файлом логирования */
 #define ERROR_FILE_LOGGING_ST (0x0300 | ERROR_FILEIO_T)
+/** \brief ошибка существования файла */
+#define ERROR_FILE_EXISTS_ST  (0x0400 | ERROR_FILEIO_T)
+/** \brief ошибка парсинга json файла */
+#define ERROR_JSON_PARSE_ST   (0x0500 | ERROR_FILEIO_T)
+/** \brief ошибка несоответствия форматов в json файле */
+#define ERROR_JSON_FORMAT_ST  (0x0600 | ERROR_FILEIO_T)
 
-// calculate errors
+//   calculate errors
 #define ERROR_CALC_GAS_P_ST   (0x0100 | ERROR_CALCULATE_T)
 #define ERROR_CALC_PHASE_ST   (0x0200 | ERROR_CALCULATE_T)
 #define ERROR_CALC_MODEL_ST   (0x0300 | ERROR_CALCULATE_T)
 #define ERROR_CALC_MIX_ST     (0x0400 | ERROR_CALCULATE_T)
 
-// string errors
+//   string errors
 #define ERROR_STR_MAX_LEN_ST  (0x0100 | ERROR_STRING_T)
 #define ERROR_STR_PARSE_ST    (0x0200 | ERROR_STRING_T)
 #define ERROR_STR_NULL_ST     (0x0300 | ERROR_STRING_T)
 #define ERROR_STR_TOINT_ST    (0x0400 | ERROR_STRING_T)
 
-// init errors
+//   init errors
 #define ERROR_INIT_ZERO_ST    (0x0100 | ERROR_INIT_T)
 #define ERROR_INIT_NULLP_ST   (0x0200 | ERROR_INIT_T)
 

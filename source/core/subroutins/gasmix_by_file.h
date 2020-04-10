@@ -240,7 +240,7 @@ private:
         }
         gasmix_files_.emplace_back(gasmix_file(trim_str(gasname), gaspath, part));
       }
-      if (error == XML_LAST_STRING) {
+      if (error == FILE_LAST_OBJECT) {
         error = ERROR_SUCCESS_T;
         setup_gasmix_files(gasmix_file_dir);
       }

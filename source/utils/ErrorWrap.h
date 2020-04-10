@@ -11,6 +11,8 @@
 #define UTILS__ERRORWRAP_H
 
 #include "common.h"
+/** \note Для разных проектов разные коды ошибок,
+  *   поэтому дефайны вынесены в отдельный файл */
 #if defined(INCLUDE_ERRORCODES)
 #  include "merror_codes.h"
 #endif  // INCLUDE_ERRORCODES
@@ -19,8 +21,8 @@
 
 #include <stdint.h>
 
-#define ERROR_SUCCESS_T    0x00000000
-#define ERROR_GENERAL_T    0x00000001
+#define ERROR_SUCCESS_T    0x0000
+#define ERROR_GENERAL_T    0x0001
 
 /* just for lulz */
 #if defined(_DEBUG)

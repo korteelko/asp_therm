@@ -50,10 +50,3 @@ std::string dir_by_path(const std::string &path) {
   return std::filesystem::path(path).parent_path();
 }
 
-bool is_status_aval(mstatus_t status) {
-  return status == STATUS_DEFAULT || status == STATUS_OK;
-}
-
-bool is_status_ok(mstatus_t status) {
-  return status == STATUS_OK;
-}
