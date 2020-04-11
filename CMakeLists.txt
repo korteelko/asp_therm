@@ -32,7 +32,7 @@ list(APPEND
   #   now pugi is necessarily, not comment it
   WITH_PUGIXML
   # use rapidjson
-  #WITH_RAPIDJSON
+  WITH_RAPIDJSON
   # build postgresql module and link pqxx library
   WITH_POSTGRESQL
   # enable tests
@@ -116,6 +116,7 @@ set(MODELS_SRC
 
 # utils sources
   ${THERMUTILS_SOURCE_DIR}/ErrorWrap.cpp
+  ${THERMUTILS_SOURCE_DIR}/FileURL.cpp
   ${THERMUTILS_SOURCE_DIR}/Logging.cpp
 
 # database sources

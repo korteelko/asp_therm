@@ -66,7 +66,6 @@ target_link_libraries(test_xml
 )
 target_link_libraries(test_json
 
-  ${PUGIXML_LIB}
   ${GTEST_LIBRARIES}
   Threads::Threads
 )

@@ -36,7 +36,7 @@ if(${GTEST_FOUND})
   #   gasmix
   include(${ASP_THERM_FULLTEST_DIR}/core/gas_parameters/gas_parameters_tests.cmake)
   #   xml and json reader
-  # include(${ASP_THERM_FULLTEST_DIR}/utils/fileurl_tests.cmake)
+  include(${ASP_THERM_FULLTEST_DIR}/utils/fileurl_tests.cmake)
   #   xml and json reader
   include(${ASP_THERM_FULLTEST_DIR}/utils/readers_tests.cmake)
 endif(${GTEST_FOUND})

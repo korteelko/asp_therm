@@ -165,7 +165,7 @@ template <typename Integer,
     typename = std::enable_if_t<std::is_integral<Integer>::value>>
 std::string hex2str(Integer hex) {
   std::stringstream hex_stream;
-  hex_stream << hex;
+  hex_stream << "0x" << std::hex << hex;
   return hex_stream.str();
 }
 

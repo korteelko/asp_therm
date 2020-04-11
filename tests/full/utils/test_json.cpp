@@ -18,10 +18,10 @@ static fs::path tf = "test_json.json";
 
 /* в тестовом файле прописано:
 {
-  "name": "test",
-  "data": [
-    {
-      "name": "first",
+  "type": "test",
+  "data": {
+    "d1": {
+      "type": "first",
       "data": {
         "f": "sda",
         "s": "sdsa",
@@ -29,15 +29,15 @@ static fs::path tf = "test_json.json";
         "ff": ""
       }
     },
-    {
-      "name": "second",
-      "parameters": {
+    "d2": {
+      "type": "second",
+      "data": {
         "f": "asd",
         "s": 32,
         "t": 12
       }
     }
-  ]
+  }
 }
 */
 
@@ -54,7 +54,7 @@ struct test_node {
   };
 public:
   // node_type config_node_type;
-  rj::Value source;
+  rj::Value *source;
   std::string parent_name;
   std::string name;
   std::vector<std::string> subnodes;
@@ -75,10 +75,10 @@ public:
   merror_t InitData(rj::Value *src) {
     if (!src)
       return ERROR_INIT_NULLP_ST;
-    source = *src;
+    source = src;
     merror_t error = ERROR_SUCCESS_T;
-    if (source.HasMember("name")) {
-      rj::Value &tmp_nd = source["name"];
+    if (source->HasMember("type")) {
+      rj::Value &tmp_nd = source->operator[]("type");
       name = tmp_nd.GetString();
       set_subnodes();
     }
@@ -89,15 +89,22 @@ public:
   }
 
   std::string GetParameter(const std::string &name) {
-    std::string par = "";
-    rj::Value::MemberIterator it = source.FindMember("data");
-    if (it != source.MemberEnd()) {
+    std::string value = "";
+    rj::Value::MemberIterator it = source->FindMember("data");
+    if (it != source->MemberEnd()) {
       rj::Value &data = it->value;
       if (data.HasMember(name.c_str())) {
-        par = data[name.c_str()].GetString();
+        rj::Value &par = data[name.c_str()];
+        if (par.IsString()) {
+          value = par.GetString();
+        } else if (par.IsInt()) {
+          value = std::to_string(par.GetInt());
+        } else if (par.IsDouble()) {
+          value = std::to_string(par.GetDouble());
+        }
       }
     }
-    return par;
+    return value;
   }
 
   merror_t GetFirst(first *f) {
@@ -121,6 +128,8 @@ public:
     return ERROR_GENERAL_T;
   }
 
+  /** \brief Записать имена узлов, являющихся
+    *   контейнерами других объектов */
   void SetContent(std::vector<std::string> *s) {
     s->clear();
     s->insert(s->end(), subnodes.cbegin(), subnodes.cend());
@@ -147,6 +156,10 @@ private:
     if (name == "test") {
       have_subnodes = true;
       subnodes.push_back("data");
+    } if (name == "first") {
+      have_subnodes = true;
+    } if (name == "second") {
+      have_subnodes = true;
     } else {
       have_subnodes = false;
     }
@@ -161,6 +174,7 @@ protected:
    : file_c(file_utils::SetupURL(file_utils::url_t::fs_path, testdir.string())) {
     EXPECT_TRUE(file_c.IsInitialized());
     auto path =  file_c.CreateFileURL(tf.string());
+    EXPECT_TRUE(fs::exists(path.GetURL()));
     JSONReader_ = std::unique_ptr<JSONReader<test_node>>(
         JSONReader<test_node>::Init(&path));
     EXPECT_TRUE(JSONReader_ != nullptr);
@@ -169,16 +183,24 @@ protected:
   ~JSONReaderTest() override {}
 
 protected:
+  file_utils::FileURLRoot file_c;
   std::unique_ptr<JSONReader<test_node>> JSONReader_;
-  file_utils::FileURLCreator file_c;
 };
 
 TEST_F(JSONReaderTest, ReadFile) {
   ASSERT_TRUE(JSONReader_ != nullptr);
+  merror_t error = JSONReader_->GetErrorCode();
+  /* проверить инициализацию */
+  if (error) {
+    std::cerr << "\t" << hex2str(error) << std::endl;
+    std::cerr << JSONReader_->GetFileName() << std::endl;
+    ASSERT_EQ(error, ERROR_SUCCESS_T);
+  }
+}
+
+TEST_F(JSONReaderTest, ValueByPath) {
   std::vector<std::string> path_emp;
   std::string res = "";
-  /* проверить инициализацию */
-  ASSERT_EQ(JSONReader_->GetErrorCode(), ERROR_SUCCESS_T);
   /* вытянуть рут */
   EXPECT_EQ(JSONReader_->GetValueByPath(path_emp, &res), ERROR_SUCCESS_T);
   EXPECT_EQ(res, "");
@@ -195,6 +217,7 @@ TEST_F(JSONReaderTest, ReadFile) {
   /* попытаться вытянуть то чего там нет */
   path_f[0] = "wrong name";
   EXPECT_NE(JSONReader_->GetValueByPath(path_f, &res), ERROR_SUCCESS_T);
+
 }
 
 int main(int argc, char **argv) {

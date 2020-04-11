@@ -7,6 +7,7 @@
 #include "Logging.h"
 
 #include "rapidjson/document.h"
+#include "rapidjson/error/en.h"
 
 #include <memory>
 #include <fstream>
@@ -15,8 +16,6 @@
 
 
 namespace rj = rapidjson;
-
-
 
 /** \brief шаблон класса дерева json файла, стандартная обёртка
   *   над инициализируемой нодой
@@ -40,7 +39,7 @@ public:
     *   в класс node_t, чтобы тонкости реализации выполнял он
     *   Ну и пока не ясно что делать с иерархичностью */
   json_node(rj::Value *src)
-    : source_(src) {
+    : value_(src) {
       // инициализировать шаблон-параметр node_data и
       //   дочерние элементы(в глубину обойти)
       initData();
@@ -75,14 +74,13 @@ public:
     }
     return child;
   }
-
   /** \brief Инициализировать иерархичные данные
     * \note тут такое, я пока неопределился id ноды тащить
     *   из файла конфигурации или выдавать здесь, так как без
     *   id не связываются структуры стилей из отдельного файла
     *   с базовой иерархией из основного файла */
   void SetParentData() {
-    for (auto x: childs) {
+    for (auto &x: childs) {
       x->node_data.SetParentData(&node_data);
       x->SetParentData();
     }
@@ -94,7 +92,7 @@ public:
   }
   /** \brief Получить json исходник */
   rj::Value *GetSource() const {
-    return source_;
+    return value_;
   }
   /** \brief Получить код ошибки */
   merror_t GetError() const {
@@ -106,9 +104,9 @@ public:
 private:
   /** \brief Инициализировать данные ноды */
   void initData() {
-    if (source_) {
+    if (value_) {
       /* инициализировать */
-      error_.SetError(node_data.InitData(source_));
+      error_.SetError(node_data.InitData(value_));
       if (!error_.GetErrorCode())
         initChilds();
     }
@@ -128,21 +126,14 @@ private:
     node_data.SetContent(&subtrees);
     // если вложенные поддеревья есть - обойдём
     for (const auto &st_name: subtrees) {
-      //rj::Document::MemberIterator it = source_->FindMember(st_name.c_str());
-      //if (it != source_->MemberEnd()) {
-      if (source_->HasMember(st_name.c_str())) {
-        rj::Value &chs = (*source_)[st_name.c_str()];
-        if (chs.IsArray()) {
-          rj::Value::Array ar = chs.GetArray();
-          //rj::GenericArray = chs.Ge
-          // если это массив(а мы его и ищем),
-          //   инициализируем подузлы()
-          for (rj::SizeType i = 0; i < chs.Size(); ++i)
-            childs.emplace_back(json_node_ptr(new json_node<node_t>(&chs[i])));
-        } /*else {
-          error_.SetError(ERROR_JSON_FORMAT_ST, "Не соответствующий формат "
-              "json файла для узла компонентов: " + st_name);
-        }*/
+      //rj::Document::MemberIterator it = value_->FindMember(st_name.c_str());
+      //if (it != value_->MemberEnd()) {
+      if (value_->HasMember(st_name.c_str())) {
+        rj::Value &chs = value_->operator[](st_name.c_str());
+        for (rj::Value::MemberIterator it = chs.MemberBegin(); it < chs.MemberEnd(); ++it) {
+          if (it->value.IsObject())
+            childs.emplace_back(json_node_ptr(new json_node<node_t>(&it->value)));
+        }
       }
     }
   }
@@ -150,7 +141,7 @@ private:
 private:
   ErrorWrap error_;
   /** \brief ссылка на представление ноды в rj */
-  rj::Value *source_;
+  rj::Value *value_;
   /** \brief узел массив */
   // bool is_array_;
 
@@ -209,6 +200,10 @@ public:
     return ".json";
   }
 
+  std::string GetFileName() {
+    return source_.GetURL();
+  }
+
   merror_t GetErrorCode() const {
     return error_.GetErrorCode();
   }
@@ -225,7 +220,7 @@ public:
     std::string param = "";
     if (!json_path.empty()) {
       param = json_path.back();
-      for (auto i = json_path.begin(); i != json_path.end(); ++i) {
+      for (auto i = json_path.begin(); i != json_path.end() - 1; ++i) {
         if (tmp_node)
           tmp_node = tmp_node->ChildByName(*i);
         else
@@ -252,9 +247,15 @@ private:
       document_.Parse(file_mem_);
       // проверить рут
       if (document_.IsObject()) {
+        if (document_.HasParseError()) {
+          error_.SetError(ERROR_JSON_FORMAT_ST,
+              std::string("RapidJSON parse error: ") +
+              std::string(rj::GetParseError_En(document_.GetParseError())));
+        }
         root_node_ = std::unique_ptr<json_node<node_t>>(
             new json_node<node_t>(&document_));
         tree_traversal(root_node_.get());
+        root_node_->SetParentData();
         if (!error_.GetErrorCode())
           status_ = STATUS_OK;
       } else {
@@ -323,4 +324,4 @@ private:
   std::unique_ptr<json_node<node_t>> root_node_;
 };
 
-#endif  // UTILS__JSONREADER_H
+#endif  // !UTILS__JSONREADER_H

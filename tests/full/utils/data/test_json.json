@@ -1,8 +1,8 @@
 {
-  "name": "test",
-  "data": [
-    {
-      "name": "first",
+  "type": "test",
+  "data": {
+    "d1": {
+      "type": "first",
       "data": {
         "f": "sda",
         "s": "sdsa",
@@ -10,14 +10,14 @@
         "ff": ""
       }
     },
-    {
-      "name": "second",
-      "parameters": {
+    "d2": {
+      "type": "second",
+      "data": {
         "f": "asd",
         "s": 32,
         "t": 12
       }
     }
-  ]
+  }
 }
 
