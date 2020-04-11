@@ -16,7 +16,7 @@
 
 
 namespace file_utils {
-class FileURLCreator;
+class FileURLRoot;
 
 /** \brief тип задания адреса файла, буффера памяти и т.п. */
 enum class url_t {
@@ -25,6 +25,8 @@ enum class url_t {
   fs_path = 1
 };
 
+/* todo: replace 'root' type with struct wth overloaded operator[]
+ *   for c++17 comp */
 /** \brief сетап URL - хост, юзер и т.п.
   * \note сейчас то это просто для красоты */
 struct SetupURL {
@@ -55,7 +57,7 @@ inline url_t SetupURL::GetURLType() { return url_type; }
   *     структуру хранящую все параметры подключения(хост, юзер с поролем),
   *     которую будем хранить в фабрике */
 class FileURL {
-  friend class FileURLCreator;
+  friend class FileURLRoot;
 
 public:
   /** \brief Полный путь к файлу, области памяти */
@@ -89,9 +91,9 @@ inline merror_t FileURL::GetError() const { return error_.GetErrorCode(); }
 
 
 /** \brief фабрика инициализации файловых адресов */
-class FileURLCreator {
+class FileURLRoot {
 public:
-  FileURLCreator(const SetupURL &setup);
+  FileURLRoot(const SetupURL &setup);
 
   /** \brief Инициализация прошла успешно */
   bool IsInitialized();

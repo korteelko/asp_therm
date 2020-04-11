@@ -12,24 +12,35 @@ set (COMMON_SRC
   ${THERMUTILS_SOURCE_DIR}/FileURL.cpp
   ${THERMUTILS_SOURCE_DIR}/Logging.cpp
 )
+# test fileurl
 add_executable(
-  #test_readers
-  test_xml
+  test_fileurl
 
-  # тестинг json парсера
-  ${ASP_THERM_FULLTEST_DIR}/utils/test_json.cpp
-
+  ${ASP_THERM_FULLTEST_DIR}/utils/test_fileurl.cpp
   ${COMMON_SRC}
 )
+# test xml parser
+add_executable(
+  test_xml
+
+  ${ASP_THERM_FULLTEST_DIR}/utils/test_xml.cpp
+  ${COMMON_SRC}
+)
+# test json parser
 add_executable(
   test_json
 
-  # тестинг xml парсера
-  ${ASP_THERM_FULLTEST_DIR}/utils/test_xml.cpp
-  # сравниваем результаты парсинга
-  #${ASP_THERM_FULLTEST_DIR}/utils/test_readers.cpp
+  ${ASP_THERM_FULLTEST_DIR}/utils/test_json.cpp
   ${COMMON_SRC}
 )
+
+#add_executable(
+#  test_readers
+
+  # сравниваем результаты парсинга
+#  ${ASP_THERM_FULLTEST_DIR}/utils/test_readers.cpp
+#  ${COMMON_SRC}
+#)
 
 # link pugixml library
 set(PUGIXML_DIR "${MODULES_DIR}/pugixml")
@@ -40,6 +51,12 @@ set(PUGIXML_LIB "pugixml")
 # include rapidjson directory
 set(RAPIDJSON_DIR "${MODULES_DIR}/rapidjson")
 include_directories(${RAPIDJSON_DIR}/include)
+
+target_link_libraries(test_fileurl
+
+  ${GTEST_LIBRARIES}
+  Threads::Threads
+)
 
 target_link_libraries(test_xml
 
@@ -54,5 +71,7 @@ target_link_libraries(test_json
   Threads::Threads
 )
 
-add_test(test_xml "utils")
-add_test(test_json "utils")
+add_test(test_fileurl "utils fileurl")
+add_test(test_xml "utils xml")
+add_test(test_json "utils json")
+# add_test(test_readers "utils readers")

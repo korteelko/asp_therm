@@ -15,7 +15,7 @@ FileURL::FileURL()
   : status_(STATUS_NOT), url_type_(url_t::empty) {}
 
 bool FileURL::IsInvalidPath() const {
-  return is_status_aval(status_);
+  return !is_status_aval(status_);
 }
 
 void FileURL::SetError(merror_t error) {
@@ -34,17 +34,17 @@ void FileURL::LogError() {
 
 
 /* FileURLCreator */
-FileURLCreator::FileURLCreator(const SetupURL &setup)
+FileURLRoot::FileURLRoot(const SetupURL &setup)
   : status_(STATUS_DEFAULT), setup_(setup) {
   if (setup_.GetURLType() == url_t::fs_path)
     check_fs_root();
 }
 
-bool FileURLCreator::IsInitialized() {
+bool FileURLRoot::IsInitialized() {
   return is_status_ok(status_);
 }
 
-FileURL FileURLCreator::CreateFileURL(const std::string &relative_path) {
+FileURL FileURLRoot::CreateFileURL(const std::string &relative_path) {
   switch (setup_.GetURLType()) {
     case url_t::fs_path:
       return set_fs_path(relative_path);
@@ -54,7 +54,7 @@ FileURL FileURLCreator::CreateFileURL(const std::string &relative_path) {
   return FileURL();
 }
 
-void FileURLCreator::check_fs_root() {
+void FileURLRoot::check_fs_root() {
   // если строка пути к руту не пустая, проверить
   //   чем она закансивается
   /* todo:  */
@@ -64,7 +64,7 @@ void FileURLCreator::check_fs_root() {
   status_ = STATUS_OK;
 }
 
-FileURL FileURLCreator::set_fs_path(const std::string &relative_path) {
+FileURL FileURLRoot::set_fs_path(const std::string &relative_path) {
   return FileURL(setup_.GetURLType(), setup_.GetFullPrefix() + relative_path);
 }
 }  // namespace file_urls
