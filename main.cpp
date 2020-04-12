@@ -12,6 +12,7 @@
 #include "db_connection_manager.h"
 #include "gas_by_file.h"
 #include "gasmix_by_file.h"
+#include "inode_imp.h"
 #include "model_redlich_kwong.h"
 #include "model_peng_robinson.h"
 #include "models_configurations.h"
@@ -58,137 +59,13 @@ static model_str pr_str(rg_model_id(rg_model_t::PENG_ROBINSON,
 
 static fs::path cwd;
 
-/** \brief тестовая структура-параметр шаблона XMLReader */
-struct test_node {
-  // static const std::array<std::string, 3> node_t_list;
-  struct first {
-    std::string f, s, ff;
-    float t;
-  };
-  struct second {
-    std::string f;
-    int s, t;
-  };
-public:
-  // node_type config_node_type;
-  rj::Value *source;
-  std::string parent_name;
-  std::string name;
-  std::vector<std::string> subnodes;
-  bool have_subnodes;
-
-public:
-  test_node()
-    : name("") {}
-
-  std::string GetName() const { return name; }
-
-  bool IsLeafNode() const { return have_subnodes; }
-
-  void SetParentData(test_node *parent) {
-    parent_name = parent->GetName();
-  }
-
-  merror_t InitData(rj::Value *src) {
-    if (!src)
-      return ERROR_INIT_NULLP_ST;
-    source = src;
-    merror_t error = ERROR_SUCCESS_T;
-    if (source->HasMember("type")) {
-      rj::Value &tmp_nd = source->operator[]("type");
-      name = tmp_nd.GetString();
-      set_subnodes();
-    }
-    if (name.empty()) {
-      error = ERROR_JSON_FORMAT_ST;
-    }
-    return error;
-  }
-
-  std::string GetParameter(const std::string &name) {
-    std::string value = "";
-    rj::Value::MemberIterator it = source->FindMember("data");
-    if (it != source->MemberEnd()) {
-      rj::Value &data = it->value;
-      if (data.HasMember(name.c_str())) {
-        rj::Value &par = data[name.c_str()];
-        if (par.IsString()) {
-          value = par.GetString();
-        } else if (par.IsInt()) {
-          value = std::to_string(par.GetInt());
-        } else if (par.IsDouble()) {
-          value = std::to_string(par.GetDouble());
-        }
-      }
-    }
-    return value;
-  }
-
-  merror_t GetFirst(first *f) {
-    if (name == "first" && f) {
-      f->f = GetParameter("f");
-      f->s = GetParameter("s");
-      f->ff = GetParameter("ff");
-      f->t = std::stof(GetParameter("t"));
-      return ERROR_SUCCESS_T;
-    }
-    return ERROR_GENERAL_T;
-  }
-
-  merror_t GetSecond(second *s) {
-    if (name == "second" && s) {
-      s->f = GetParameter("f");
-      s->s = std::atoi(GetParameter("s").c_str());
-      s->t = std::atoi(GetParameter("t").c_str());
-      return ERROR_SUCCESS_T;
-    }
-    return ERROR_GENERAL_T;
-  }
-
-  /** \brief Записать имена узлов, являющихся
-    *   контейнерами других объектов */
-  void SetContent(std::vector<std::string> *s) {
-    s->clear();
-    s->insert(s->end(), subnodes.cbegin(), subnodes.cend());
-  }
-
-  static std::string get_root_name() {
-    // return node_t_list[NODE_T_ROOT];
-    return "test";
-  }
-  static node_type get_node_type(std::string type) {
-    (void) type;
-    //for (uint32_t i = 0; i < node_t_list.size(); ++i)
-    //  if (node_t_list[i] == type)
-    //    return i;
-    return NODE_T_UNDEFINED;
-  }
-
-private:
-  /** \brief проверить наличие подузлов
-    * \note просто посмотрим тип этого узла,
-    *   а для случая придумаю что-нибудь */
-  void set_subnodes() {
-    subnodes.clear();
-    if (name == "test") {
-      have_subnodes = true;
-      subnodes.push_back("data");
-    } if (name == "first") {
-      have_subnodes = true;
-    } if (name == "second") {
-      have_subnodes = true;
-    } else {
-      have_subnodes = false;
-    }
-  }
-};
-
 
 int test_json() {
   file_utils::FileURLRoot file_c(file_utils::SetupURL(
       file_utils::url_t::fs_path, cwd / xml_path));
   auto path =  file_c.CreateFileURL(json_test.string());
-  std::unique_ptr<JSONReader<test_node>> jr(JSONReader<test_node>::Init(&path));
+  std::unique_ptr<JSONReader<json_test_node>> jr(
+    JSONReader<json_test_node>::Init(&path));
   if (jr) {
     if (!jr->GetErrorCode()) {
       std::vector<std::string> path_emp;
@@ -199,11 +76,18 @@ int test_json() {
       std::vector<std::string> path_f = {"first", "t"};
       if (jr->GetValueByPath(path_f, &res))
         std::cerr << "vector of paths error";
+      if (!res.empty()) {
+        std::cerr << "On json path:";
+        for (const auto &x : path_f)
+          std::cerr << " " << x;
+        std::cerr << "\nwe have: " << res << std::endl;
+      }
     }
   } else {
-    std::cerr << "bad init";
+    std::cerr << "bad init" << std::endl;
     return ERROR_GENERAL_T;
   }
+  std::cerr << "JSON test finish succesfully\n";
   return ERROR_SUCCESS_T;
 }
 

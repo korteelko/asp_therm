@@ -183,8 +183,15 @@ foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
   )
 endforeach()
 
-# build test executable
-add_executable(${PROJECT_NAME} ${MODELS_SRC} main.cpp)
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+  include_directories(${ASP_THERM_ROOT}/tests/full/utils)
+  # build test executable
+  add_executable(${PROJECT_NAME}
+    ${MODELS_SRC}
+    ${ASP_THERM_ROOT}/tests/full/utils/inode_imp.cpp
+    main.cpp
+  )
+endif()
 
 target_link_libraries(${PROJECT_NAME}
   # ${RESULT_LIB}

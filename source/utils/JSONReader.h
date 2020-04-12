@@ -5,6 +5,7 @@
 #include "ErrorWrap.h"
 #include "FileURL.h"
 #include "Logging.h"
+#include "INode.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
@@ -21,10 +22,13 @@ namespace rj = rapidjson;
   *   над инициализируемой нодой
   * \note такс, для базы это структура 'control_base' или
   *   обёртка над ней: control_base_creator, а скорее всего GUIBase */
-template <class node_t>
+//template <class Initializer, typename = std::enable_if_t<
+//    std::is_base_of<INodeInitializer, Initializer>::value>>
+template <class Initializer, typename = std::enable_if_t<
+    std::is_base_of<INodeInitializer, Initializer>::value>>
 class json_node {
   /** \brief умный указатель на имплементацию json_node */
-  typedef std::unique_ptr<json_node<node_t>> json_node_ptr;
+  typedef std::unique_ptr<json_node<Initializer>> json_node_ptr;
   /** \brief вектор указателей на дочерние элементы */
   typedef std::vector<json_node_ptr> childs_vec;
 
@@ -57,13 +61,13 @@ public:
   // bool IsLeafNode() const { return node_data.IsLeafNode(); }
 
   /** \brief Проверить наличие дочерних элементов ноды */
-  json_node<node_t> *NextChild() {
+  json_node<Initializer> *NextChild() {
     return (child_it != childs.end()) ?
         child_it++->get() : nullptr;
   }
   /** \brief Поиск по дочерним элементам */
-  json_node<node_t> *ChildByName(const std::string &name) const {
-    json_node<node_t> *child = nullptr;
+  json_node<Initializer> *ChildByName(const std::string &name) const {
+    json_node<Initializer> *child = nullptr;
     if (!node_data.IsLeafNode()) {
       for (const json_node_ptr &ch: childs) {
         if (ch->node_data.GetName() == name) {
@@ -123,7 +127,7 @@ private:
     std::vector<std::string> subtrees;
     // в зависимости от типа узла название составляющих(подузлов)
     //   отличается получим их названия
-    node_data.SetContent(&subtrees);
+    node_data.SetSubnodesNames(&subtrees);
     // если вложенные поддеревья есть - обойдём
     for (const auto &st_name: subtrees) {
       //rj::Document::MemberIterator it = value_->FindMember(st_name.c_str());
@@ -132,7 +136,7 @@ private:
         rj::Value &chs = value_->operator[](st_name.c_str());
         for (rj::Value::MemberIterator it = chs.MemberBegin(); it < chs.MemberEnd(); ++it) {
           if (it->value.IsObject())
-            childs.emplace_back(json_node_ptr(new json_node<node_t>(&it->value)));
+            childs.emplace_back(json_node_ptr(new json_node<Initializer>(&it->value)));
         }
       }
     }
@@ -155,7 +159,7 @@ public:
   // такс, все необходимые для JSONReader операции
   //   реализуем здесь
   /** \brief инициализируемая структура */
-  node_t node_data;
+  Initializer node_data;
 };
 
 
@@ -164,7 +168,7 @@ public:
   *   позволяет вытащить весь скелет структур с++ привязанных
   *   json нодам(кстати)
   *   Для случая нашего в рут нодах храняться id родительских элементов */
-template <class node_t>
+template <class Initializer>
 class JSONReader {
 public:
   /** \brief callback функция инициализации элементов
@@ -174,11 +178,11 @@ public:
   //    std::vector<std::string> &(const rj::Value &, node_t *)> callback_f;
 
 public:
-  static JSONReader<node_t> *Init(file_utils::FileURL *source) {
-    JSONReader<node_t> *reader = nullptr;
+  static JSONReader<Initializer> *Init(file_utils::FileURL *source) {
+    JSONReader<Initializer> *reader = nullptr;
     if (source) {
       if (is_exist(source->GetURL())) {
-        reader = new JSONReader<node_t>(*source);
+        reader = new JSONReader<Initializer>(*source);
       } else {
         source->SetError(ERROR_FILE_EXISTS_ST, "File '" +
             source->GetURL() + "' doesn't exists");
@@ -216,7 +220,7 @@ public:
     if (!root_node_)
       return ERROR_GENERAL_T;
     /* todo: добавить const квалификатор */
-    json_node<node_t> *tmp_node = root_node_.get();
+    json_node<Initializer> *tmp_node = root_node_.get();
     std::string param = "";
     if (!json_path.empty()) {
       param = json_path.back();
@@ -252,8 +256,8 @@ private:
               std::string("RapidJSON parse error: ") +
               std::string(rj::GetParseError_En(document_.GetParseError())));
         }
-        root_node_ = std::unique_ptr<json_node<node_t>>(
-            new json_node<node_t>(&document_));
+        root_node_ = std::unique_ptr<json_node<Initializer>>(
+            new json_node<Initializer>(&document_));
         tree_traversal(root_node_.get());
         root_node_->SetParentData();
         if (!error_.GetErrorCode())
@@ -272,8 +276,8 @@ private:
     * \note вынесено в отдельный метод потому-что можно
     *   держать лополнительное состояние, например,
     *   глубину обхода(см питоновский скрипт в asp_therm) */
-  void tree_traversal(json_node<node_t> *jnode) {
-    json_node<node_t> *child;
+  void tree_traversal(json_node<Initializer> *jnode) {
+    json_node<Initializer> *child;
     // rj::Value *child_src;
     // обход дочерних элементов
     while ((child = jnode->NextChild()) != nullptr) {
@@ -321,7 +325,7 @@ private:
   rj::Document document_;
   /** \brief корень json дерева
     * \note а в этом сетапе он наверное и не обязателен */
-  std::unique_ptr<json_node<node_t>> root_node_;
+  std::unique_ptr<json_node<Initializer>> root_node_;
 };
 
 #endif  // !UTILS__JSONREADER_H
