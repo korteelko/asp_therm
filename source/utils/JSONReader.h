@@ -50,8 +50,9 @@ public:
     * \note Здесь надо вытащить имя(тип) ноды и прокинуть его
     *   в класс node_t, чтобы тонкости реализации выполнял он
     *   Ну и пока не ясно что делать с иерархичностью */
-  json_node_sample(rj::Value *src, const std::string &name)
-    : value_(src) {
+  json_node_sample(rj::Value *src, const std::string &name,
+      InitializerFactory *factory)
+    : value_(src), factory(factory) {
       if (factory) {
         node_data_ptr = std::unique_ptr<Initializer>(
             factory->GetNodeInitializer());
@@ -145,7 +146,7 @@ private:
         for (auto it = chs.MemberBegin(); it < chs.MemberEnd(); ++it) {
           if (it->value.IsObject())
             childs.emplace_back(json_node_ptr(
-                new json_node(&it->value, it->name.GetString())));
+                new json_node(&it->value, it->name.GetString(), factory)));
         }
       }
     }
@@ -184,6 +185,7 @@ template <class Initializer, class InitializerFactory = SimpleInitializerFactory
     std::is_base_of<INodeInitializer, Initializer>::value>::type>
 class JSONReaderSample {
   typedef JSONReaderSample<Initializer, InitializerFactory> JSONReader;
+  typedef json_node_sample<Initializer, InitializerFactory> json_node;
 
 public:
   /** \brief callback функция инициализации элементов
@@ -243,8 +245,8 @@ public:
               std::string("RapidJSON parse error: ") +
               std::string(rj::GetParseError_En(document_.GetParseError())));
         }
-        root_node_ = std::unique_ptr<json_node_sample<Initializer, InitializerFactory>>(
-            new json_node_sample<Initializer, InitializerFactory>(&document_, ""));
+        root_node_ = std::unique_ptr<json_node>(
+            new json_node(&document_, "", factory_));
         tree_traversal(root_node_.get());
         root_node_->SetParentData();
         if (!error_.GetErrorCode())
@@ -261,17 +263,6 @@ public:
     return error_.GetErrorCode();
   }
 
-  std::string GetFileName() {
-    return (source_) ? source_->GetURL() : "";
-  }
-
-  merror_t GetErrorCode() const {
-    return error_.GetErrorCode();
-  }
-
-  void LogError() {
-    error_.LogIt();
-  }
   /** \brief Получить параметр по переданному пути
     * \note Функция обобщённого обхода
     * \warning outstr придёт с пробелами, если они есть в xml,
@@ -281,7 +272,7 @@ public:
     if (!root_node_)
       return ERROR_GENERAL_T;
     /* todo: добавить const квалификатор */
-    json_node_sample<Initializer, InitializerFactory> *tmp_node = root_node_.get();
+    json_node *tmp_node = root_node_.get();
     std::string param = "";
     if (!json_path.empty()) {
       param = json_path.back();
@@ -297,6 +288,36 @@ public:
     }
     *outstr = tmp_node->GetParameter(param);
     return ERROR_SUCCESS_T;
+  }
+
+  Initializer *GetNodeByPath(const std::vector<std::string> &json_path) {
+    if (!root_node_)
+      return nullptr;
+    /* todo: добавить const квалификатор */
+    json_node *tmp_node = root_node_.get();
+    std::string param = "";
+    param = json_path.back();
+    for (auto i = json_path.begin(); i != json_path.end(); ++i) {
+      if (tmp_node)
+        tmp_node = tmp_node->ChildByName(*i);
+      else
+        break;
+    }
+    if (!tmp_node)
+      return nullptr;
+    return tmp_node->node_data_ptr.get();
+  }
+
+  std::string GetFileName() {
+    return (source_) ? source_->GetURL() : "";
+  }
+
+  merror_t GetErrorCode() const {
+    return error_.GetErrorCode();
+  }
+
+  void LogError() {
+    error_.LogIt();
   }
 
   // typedef std::vector<std::string> TreePath;

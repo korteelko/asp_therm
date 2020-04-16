@@ -91,9 +91,8 @@ public:
     }
     return value;
   }
-  /** \brief инициализировать параметры тестовой структуры first */
-
   /* jfl */
+  /** \brief инициализировать параметры тестовой структуры first */
   merror_t GetFirst(first *f) {
     if (name_ == "first" && f) {
       f->f = GetParameter("f");

@@ -67,6 +67,7 @@ protected:
 
   void initJRF() {
     auto path = file_c.CreateFileURL(tf.string());
+    node_factory.factory_num = 8800;
     JSONReaderF_ = std::unique_ptr<JSONReaderSample<json_test_node<>, json_test_factory>>(
         JSONReaderSample<json_test_node<>, json_test_factory>::Init(&path, &node_factory));
     if (JSONReaderF_ != nullptr)
@@ -145,7 +146,10 @@ TEST_F(JSONReaderTest, ValueByPath) {
 }
 
 TEST_F(JSONReaderTest, Factory) {
-  // JSONReaderF_->
+  std::vector<std::string> path_f = {"first"};
+  auto x = JSONReaderF_->GetNodeByPath(path_f);
+  ASSERT_TRUE(x != nullptr);
+  EXPECT_EQ(x->data.factory_num, node_factory.factory_num);
 }
 
 int main(int argc, char **argv) {
