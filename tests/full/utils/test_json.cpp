@@ -1,7 +1,7 @@
 #include "common.h"
 #include "file_structs.h"
-#include "JSONReader.h"
 #include "inode_imp.h"
+#include "JSONReader.h"
 
 #include "gtest/gtest.h"
 
@@ -18,7 +18,7 @@ static fs::path testdir = "../../../tests/full/utils/data/";
 static fs::path tf = "test_json.json";
 
 /* в тестовом файле прописано:
-{
+ {
   "type": "test",
   "data": {
     "d1": {
@@ -51,16 +51,19 @@ protected:
     EXPECT_TRUE(file_c.IsInitialized());
     auto path =  file_c.CreateFileURL(tf.string());
     EXPECT_TRUE(fs::exists(path.GetURL()));
-    JSONReader_ = std::unique_ptr<JSONReader<json_test_node>>(
-        JSONReader<json_test_node>::Init(&path));
-    EXPECT_TRUE(JSONReader_ != nullptr);
+    JSONReader_ = std::unique_ptr<JSONReaderSample<json_test_node>>(
+        JSONReaderSample<json_test_node>::Init(&path));
+    if (JSONReader_ != nullptr)
+      JSONReader_->InitData();
+    else
+      EXPECT_TRUE(false);
   }
 
   ~JSONReaderTest() override {}
 
 protected:
   file_utils::FileURLRoot file_c;
-  std::unique_ptr<JSONReader<json_test_node>> JSONReader_;
+  std::unique_ptr<JSONReaderSample<json_test_node>> JSONReader_;
 };
 
 TEST_F(JSONReaderTest, ReadFile) {

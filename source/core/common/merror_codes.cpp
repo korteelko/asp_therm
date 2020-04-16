@@ -29,7 +29,8 @@ static const char *custom_msg_fileio[] {
   "output to file error ",
   "error with logging file ",
   "parse json error ",
-  "json format error "
+  "json format error ",
+  "error child node search "
 };
 
 static const char *custom_msg_calculate[]= {

@@ -5,20 +5,23 @@ json_test_node::json_test_node() {
   name_ = "";
 }
 
-void json_test_node::SetParentData(INodeInitializer *parent) {
+void json_test_node::SetParentData(json_test_node &parent) {
   // there is dynamic_cast<>
-  parent_name = parent->GetName();
+  parent_name = parent.GetName();
 }
 
-merror_t json_test_node::InitData(rj::Value *src) {
+merror_t json_test_node::InitData(rj::Value *src, const std::string &_name) {
   if (!src)
     return ERROR_INIT_NULLP_ST;
+  name = _name;
   source = src;
   merror_t error = ERROR_SUCCESS_T;
   /* type is magic word for json test files */
   if (source->HasMember("type")) {
     rj::Value &tmp_nd = source->operator[]("type");
     name_ = tmp_nd.GetString();
+    // инициализировать данные инициализируемой структуры
+    data.name = name_;
     set_subnodes();
   }
   if (name_.empty()) {

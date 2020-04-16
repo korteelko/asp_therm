@@ -64,10 +64,11 @@ int test_json() {
   file_utils::FileURLRoot file_c(file_utils::SetupURL(
       file_utils::url_t::fs_path, cwd / xml_path));
   auto path =  file_c.CreateFileURL(json_test.string());
-  std::unique_ptr<JSONReader<json_test_node>> jr(
-    JSONReader<json_test_node>::Init(&path));
+  std::unique_ptr<JSONReaderSample<json_test_node>> jr(
+    JSONReaderSample<json_test_node>::Init(&path));
   if (jr) {
     if (!jr->GetErrorCode()) {
+      jr->InitData();
       std::vector<std::string> path_emp;
       std::string res = "";
       if (jr->GetValueByPath(path_emp, &res))

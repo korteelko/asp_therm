@@ -57,6 +57,8 @@
 #define ERROR_JSON_PARSE_ST   (0x0500 | ERROR_FILEIO_T)
 /** \brief ошибка несоответствия форматов в json файле */
 #define ERROR_JSON_FORMAT_ST  (0x0600 | ERROR_FILEIO_T)
+/** \brief ошибка поиска подузла в какой-либо подноде */
+#define ERROR_SEARCH_CHILD_ST (0x0700 | ERROR_FILEIO_T)
 
 //   calculate errors
 #define ERROR_CALC_GAS_P_ST   (0x0100 | ERROR_CALCULATE_T)

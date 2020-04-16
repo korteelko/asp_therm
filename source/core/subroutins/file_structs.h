@@ -13,6 +13,7 @@
 #include "common.h"
 #include "db_connection.h"
 #include "ErrorWrap.h"
+#include "INode.h"
 
 #include <array>
 #include <map>

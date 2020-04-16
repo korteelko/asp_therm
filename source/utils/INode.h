@@ -10,6 +10,8 @@
 
 
 // typedef int32_t node_id;
+/** \brief вектор имён дочерних элементов */
+typedef std::vector<std::string> inodes_vec;
 
 /* todo: можно бы шаблонный параметр добавить */
 /** \brief Интерфейс узла для составления параметров шаблона
@@ -18,27 +20,28 @@
   *   инициализировать парсером  */
 class INodeInitializer {
 public:
-  /** \brief вектор имён дочерних элементов */
-  typedef std::vector<std::string> inodes_vec;
-
-public:
   INodeInitializer() = default;
   virtual ~INodeInitializer() = default;
 
   // node_id GetId() const { return id_; }
   /* maybe virtual... ??? */
   std::string GetName() const { return name_; }
+  mstatus_t GetStatus() const { return status_; }
 
   /** \brief Узел является простым - не содержит подузлов
     *   и вложенных параметров */
   virtual bool IsLeafNode() const { return have_subnodes_; }
-  /** \brief Инициализировать данные родительского узла */
-  virtual void SetParentData(INodeInitializer *parent) = 0;
+  /** \brief Получить параметр по имени */
+  virtual std::string GetParameter(const std::string &name) = 0;
   /** \brief Записать имена узлов, являющихся
     *   контейнерами других объектов */
   virtual void SetSubnodesNames(inodes_vec *subnodes) = 0;
 
+  /** \brief Инициализировать данные родительского узла */
+  void SetParentData(INodeInitializer &parent) { (void) parent; }
+
 protected:
+  mstatus_t status_ = STATUS_DEFAULT;
   /** \brief уникальный идентификатор ноды */
   // node_id id_;
   /** \brief собственное имя ноды */

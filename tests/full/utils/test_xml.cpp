@@ -78,7 +78,7 @@ protected:
   std::unique_ptr<XMLReader<test_node>> XMLReader_;
 };
 
-TEST_F(XMLReaderTest, ReadFile) {
+TEST_F(XMLReaderTest, ReadFileClassic) {
   ASSERT_TRUE(XMLReader_ != nullptr);
   std::vector<std::string> xml_path_emp;
   std::string res = "";
@@ -101,6 +101,10 @@ TEST_F(XMLReaderTest, ReadFile) {
   /* попытаться вытянуть то чего там нет */
   xml_path_f[0] = "wrong name";
   EXPECT_NE(XMLReader_->GetValueByPath(xml_path_f, &res), ERROR_SUCCESS_T);
+}
+
+TEST_F(XMLReaderTest, DISABLED_ReadFileNew) {
+  ASSERT_TRUE(false);
 }
 
 int main(int argc, char **argv) {
