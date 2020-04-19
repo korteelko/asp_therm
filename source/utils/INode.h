@@ -30,7 +30,7 @@ public:
 
   /** \brief Узел является простым - не содержит подузлов
     *   и вложенных параметров */
-  virtual bool IsLeafNode() const { return have_subnodes_; }
+  virtual bool IsLeafNode() const { return subnodes_.empty(); }
   /** \brief Получить параметр по имени */
   virtual std::string GetParameter(const std::string &name) = 0;
   /** \brief Записать имена узлов, являющихся
@@ -49,8 +49,6 @@ protected:
   /** \brief вектор имён поднод(подузлов)
     * \note по ним из класса парсера их можно инициализировать */
   inodes_vec subnodes_;
-  /** \brief собственные данные ноды */
-  bool have_subnodes_;
 };
 
 #endif  // !UTILS__INODE_H

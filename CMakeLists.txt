@@ -6,7 +6,8 @@ project(${PROJECT_NAME})
 
 add_compile_options(-Wall)
 
-add_definitions(-D_DEBUG)
+add_definitions(-DBYCMAKE_DEBUG)
+add_definitions(-DBYCMAKE_CXX17)
 set(CMAKE_BUILD_TYPE Debug)
 
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
@@ -164,6 +165,10 @@ if(WITH_POSTGRESQL IN_LIST BUILD_OPTIONS)
       ${THERMDB_SOURCE_DIR}/db_connection_postgre.cpp)
 endif()
 
+#   thread
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 
 #======================================================
 # OUTPUT SETUP
@@ -199,6 +204,7 @@ target_link_libraries(${PROJECT_NAME}
   stdc++fs
   ${PUGIXML_LIB}
   ${PQXX_LIBS}
+  Threads::Threads
 )
 
 # run tests

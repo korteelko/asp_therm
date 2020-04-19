@@ -5,7 +5,7 @@
 #include "ErrorWrap.h"
 #include "INode.h"
 #include "JSONReader.h"
-#include "XMLReader.h"
+//#include "XMLReader.h"
 
 #include <string>
 #include <vector>
@@ -33,6 +33,7 @@ public:
   rj::Value *source;
   std::string name, parent_name;
   example_node data;
+  bool have_subnodes_;
 
 public:
   json_test_node() {
@@ -68,6 +69,10 @@ public:
   }
 
   // override
+  bool IsLeafNode() const override {
+    return have_subnodes_;
+  }
+  /** \brief получить поле узла структуры */
   void SetSubnodesNames(inodes_vec *s) override {
     s->clear();
     s->insert(s->end(), subnodes_.cbegin(), subnodes_.cend());

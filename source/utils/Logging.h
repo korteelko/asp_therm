@@ -12,10 +12,11 @@
 
 #include "common.h"
 #include "ErrorWrap.h"
+#include "ThreadWrap.h"
 
 #include <fstream>
-#include <sstream>
 #include <string>
+#include <sstream>
 
 #ifdef OS_NIX
 #  include <sys/param.h>
@@ -41,19 +42,6 @@ typedef std::ofstream mlog_fostream;
 /* TODO может и эти дефайны переопределить в файле конфигурации */
 /** \brief класс логирования сообщений */
 class Logging {
-  static mlog_fostream output_;
-  static logging_cfg li_;
-  static ErrorWrap error_;
-  static bool is_aval_;
-
-private:
-  /** \brief check logfile exist, check length of file */
-  static merror_t checkInstance();
-  /** \brief check instance and set variables */
-  static merror_t initInstance();
-  /** \brief append log */
-  static void append(const char *msg);
-
 public:
   /** \brief init class with default parameters **/
   static merror_t InitDefault();
@@ -85,6 +73,23 @@ public:
   // TODO: how about:
   // static void Append(ErrorWrap err, const std::string &msg);
 
+private:
+  static mlog_fostream output_;
+  static logging_cfg li_;
+  static ErrorWrap error_;
+  static Mutex logfile_mutex_;
+  // static RecursiveMutex append_mutex_;
+  static bool is_aval_;
+
+private:
+  /** \brief check logfile exist, check length of file */
+  static merror_t checkInstance();
+  /** \brief check instance and set variables */
+  static merror_t initInstance(const logging_cfg *li);
+  /** \brief append log */
+  static void append(const char *msg);
+  /** \brief reset logging configuration(filename, log level) */
+  static void set_cfg(const logging_cfg *li);
 };
 
 #endif  // !UTILS__LOGGING_H

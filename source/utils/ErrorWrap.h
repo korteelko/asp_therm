@@ -11,6 +11,7 @@
 #define UTILS__ERRORWRAP_H
 
 #include "common.h"
+#include "ThreadWrap.h"
 /** \note Для разных проектов разные коды ошибок,
   *   поэтому дефайны вынесены в отдельный файл */
 #if defined(INCLUDE_ERRORCODES)
@@ -40,7 +41,7 @@
 #endif  // _DEBUG
 
 
-typedef size_t merror_t;
+typedef uint32_t merror_t;
 
 /** \brief класс, в котором инкапсулирована ошибка(код, сообщение,
   *   логирована ли, выведелена ли и т.п.) */
@@ -52,11 +53,10 @@ public:
   /** \brief установить(хранить) код ошибки 'error'
     * \param error код ошибки
     * \param(optional) msg сопроводительное сообщение */
-   merror_t SetError(merror_t error);
-   merror_t SetError(merror_t error, const std::string &msg);
-  /** \brief заменить сообщение об ошибке 'msg_' на 'new_msg'
-    * \param new_msg новое сообщение(инфо) об ошибке */
-  void ChangeMessage(const std::string &new_msg);
+  merror_t SetError(merror_t error);
+  merror_t SetError(merror_t error, const std::string &msg);
+  /** \brief заменить сообщение об ошибке 'msg_' на 'msg' */
+  void SetErrorMessage(const std::string &msg);
   /** \brief залогировать текущее состояние(если есть ошибка)
     *   установить 'is_logged_' в true
     * \param lvl(optional) особый логлевел для данного сообщения
@@ -83,8 +83,11 @@ private:
   merror_t error_;
   /** \brief сообщение к ошибке */
   std::string msg_;
+  /** \brief мьютекс на обновление данных, на логирование */
+  Mutex update_mutex_;
   /** \brief переменная отслеживающая выводилось ли уже
-    *   информация об этой ошибке */
+    *   информация об этой ошибке
+    * \note скидываем на false при обновлении ошибки(SetError) */
   bool is_logged_;
 };
 

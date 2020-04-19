@@ -27,7 +27,8 @@ enum class url_t {
 
 /* todo: replace 'root' type with struct wth overloaded operator[]
  *   for c++17 comp */
-/** \brief сетап URL - хост, юзер и т.п.
+/** \brief сетап URL - хост, юзер и т.п., все входные
+  *   данные для фабрики URL объектов короч
   * \note сейчас то это просто для красоты */
 struct SetupURL {
 public:
@@ -90,7 +91,7 @@ inline std::string FileURL::GetURL() const { return absolute_path_; }
 inline merror_t FileURL::GetError() const { return error_.GetErrorCode(); }
 
 
-/** \brief фабрика инициализации файловых адресов */
+/** \brief Фабрика инициализации файловых адресов */
 class FileURLRoot {
 public:
   FileURLRoot(const SetupURL &setup);

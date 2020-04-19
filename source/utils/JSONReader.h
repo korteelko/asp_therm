@@ -1,18 +1,27 @@
+/**
+ * asp_therm - implementation of real gas equations of state
+ *
+ *
+ * Copyright (c) 2020 Mishutinski Yurii
+ *
+ * This library is distributed under the MIT License.
+ * See LICENSE file in the project root for full license information.
+ */
 #ifndef UTILS__JSONREADER_H
 #define UTILS__JSONREADER_H
 
 #include "common.h"
 #include "ErrorWrap.h"
 #include "FileURL.h"
-#include "Logging.h"
 #include "INode.h"
+#include "Logging.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
 
-#include <memory>
 #include <fstream>
 #include <functional>
+#include <memory>
 #include <vector>
 
 
@@ -87,17 +96,6 @@ public:
     }
     return child;
   }
-  /** \brief Инициализировать иерархичные данные
-    * \note тут такое, я пока неопределился id ноды тащить
-    *   из файла конфигурации или выдавать здесь, так как без
-    *   id не связываются структуры стилей из отдельного файла
-    *   с базовой иерархией из основного файла */
-  void SetParentData() {
-    for (auto &x: childs) {
-      x->node_data_ptr->SetParentData(*node_data_ptr);
-      x->SetParentData();
-    }
-  }
   /** \brief Получить строковое представление параметра
     * \note Так-то актуально только для параметров */
   std::string GetParameter(const std::string &name) {
@@ -120,8 +118,11 @@ private:
     if (value_) {
       /* инициализировать */
       error_.SetError(node_data_ptr->InitData(value_, name_));
-      if (!error_.GetErrorCode())
+      if (!error_.GetErrorCode()) {
         initChilds();
+      } else {
+        error_.SetErrorMessage("InitData finished with error");
+      }
     }
   }
   /** \brief Получить список имён подузлов узла
@@ -149,6 +150,18 @@ private:
                 new json_node(&it->value, it->name.GetString(), factory)));
         }
       }
+    }
+    setParentData();
+  }
+  /** \brief Инициализировать иерархичные данные
+    * \note тут такое, я пока неопределился id ноды тащить
+    *   из файла конфигурации или выдавать здесь, так как без
+    *   id не связываются структуры стилей из отдельного файла
+    *   с базовой иерархией из основного файла */
+  void setParentData() {
+    for (auto &x: childs) {
+      x->node_data_ptr->SetParentData(*node_data_ptr);
+      // x->SetParentData();
     }
   }
 
@@ -238,22 +251,22 @@ public:
     if (!error_.GetErrorCode()) {
       // распарсить json файл
       document_.Parse(memory_);
-      // проверить рут
-      if (document_.IsObject()) {
-        if (document_.HasParseError()) {
-          error_.SetError(ERROR_JSON_FORMAT_ST,
-              std::string("RapidJSON parse error: ") +
-              std::string(rj::GetParseError_En(document_.GetParseError())));
-        }
-        root_node_ = std::unique_ptr<json_node>(
-            new json_node(&document_, "", factory_));
-        tree_traversal(root_node_.get());
-        root_node_->SetParentData();
-        if (!error_.GetErrorCode())
-          status_ = STATUS_OK;
+      if (document_.HasParseError()) {
+        error_.SetError(ERROR_JSON_FORMAT_ST,
+            std::string("RapidJSON parse error: ") +
+            std::string(rj::GetParseError_En(document_.GetParseError())));
       } else {
-        error_.SetError(ERROR_JSON_PARSE_ST, "ошибка инициализации "
-            "корневого элемента json файла " + source_->GetURL());
+        // проверить рут
+        if (document_.IsObject()) {
+          root_node_ = std::unique_ptr<json_node>(
+              new json_node(&document_, "", factory_));
+          // tree_traversal(root_node_.get());
+          if (!error_.GetErrorCode())
+            status_ = STATUS_OK;
+        } else {
+          error_.SetError(ERROR_JSON_PARSE_ST, "ошибка инициализации "
+              "корневого элемента json файла " + source_->GetURL());
+        }
       }
     }
     if (error_.GetErrorCode()) {

@@ -27,7 +27,7 @@
 
 
 #define JSON_READER_DEBUG
-//#define MODELS_DEBUG
+#define MODELS_DEBUG
 #define RK2_DEBUG
 //#define PR_DEBUG  // доделать для смесей
 #define RKS_DEBUG

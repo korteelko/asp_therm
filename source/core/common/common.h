@@ -84,6 +84,9 @@ typedef int8_t priority_var;
 
 
 /* дефайны из файла CMakeLists.txt */
+#if defined(BYCMAKE_DEBUG)
+#  define _DEBUG
+#endif  // BYCMAKE_DEBUG
 #if defined(BYCMAKE_WITH_PUGIXML)
 #  define WITH_PUGIXML
 #endif  // BYCMAKE_WITH_PUGIXML
@@ -96,6 +99,9 @@ typedef int8_t priority_var;
 #if defined(BYCMAKE_TESTS_ENABLED)
 #  define TESTS_ENABLED
 #endif  // BYCMAKE_TESTS_ENABLED
+#if defined(BYCMAKE_CXX17)
+#  define CXX17
+#endif  // BYCMAKE_CXX17
 
 
 #if defined(OS_WIN)

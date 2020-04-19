@@ -22,19 +22,25 @@ ErrorWrap::ErrorWrap(merror_t error, const std::string &msg)
   : error_(error), msg_(msg), is_logged_(false) {}
 
 merror_t ErrorWrap::SetError(merror_t error) {
-  return error_ = error;
+  return SetError(error, "");
 }
 
 merror_t ErrorWrap::SetError(merror_t error, const std::string &msg) {
+  if (error_ && !is_logged_)
+    LogIt();
+  const std::lock_guard<Mutex> up_lock(update_mutex_);
   msg_ = msg;
+  is_logged_ = false;
   return error_ = error;
 }
 
-void ErrorWrap::ChangeMessage(const std::string &new_msg) {
-  msg_ = new_msg;
+void ErrorWrap::SetErrorMessage(const std::string &msg) {
+  if (error_)
+    msg_ = msg;
 }
 
 void ErrorWrap::LogIt(io_loglvl lvl) {
+  const std::lock_guard<Mutex> up_lock(update_mutex_);
   if (error_ != ERROR_SUCCESS_T && !is_logged_) {
     if (!msg_.empty()) {
       Logging::Append(lvl, "Error occurred.\n  err_msg:" + msg_ +
@@ -67,6 +73,7 @@ bool ErrorWrap::IsLogged() const {
 }
 
 void ErrorWrap::Reset() {
+  const std::lock_guard<Mutex> lock(update_mutex_);
   error_ = ERROR_SUCCESS_T;
   msg_ = "";
   is_logged_ = false;
