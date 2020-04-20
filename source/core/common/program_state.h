@@ -10,6 +10,14 @@
 
 #include <memory>
 
+
+// Для тестов,
+//   алсо можно для других функций макросы прописать
+#if defined(DATABASE_TEST)
+#  define IS_DEBUG_MODE true
+#else
+#  define IS_DEBUG_MODE (ProgramState::Instance().IsDebugMode())
+#endif
 /** \brief Класс состояния программы:
   *   конфигурация программы, информация о моделях, подключение к БД,
   *   конфигурации расчётов(области, используемые модели etc) */

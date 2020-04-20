@@ -16,7 +16,6 @@
 #include "ErrorWrap.h"
 
 #include <string>
-#include <variant>
 #include <vector>
 
 #include <assert.h>

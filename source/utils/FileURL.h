@@ -1,10 +1,11 @@
 /**
- * GuiApi library - alpha
- * ----------------------------------------------------
+ * asp_therm - implementation of real gas equations of state
  *
- * Peleng GUILib - graphics API library
- * "ALTEK"
- * Saint Petersburg 2020
+ *
+ * Copyright (c) 2020 Mishutinski Yurii
+ *
+ * This library is distributed under the MIT License.
+ * See LICENSE file in the project root for full license information.
  */
 #ifndef UTILS__FILEURL_H
 #define UTILS__FILEURL_H

@@ -132,6 +132,7 @@ std::string DBConnectionManager::GetErrorMessage() {
 DBConnectionManager::DBConnectionManager() {}
 
 void DBConnectionManager::initDBConnection() {
+  std::unique_lock<SharedMutex> lock(connect_init_lock_);
   db_connection_ = std::unique_ptr<DBConnection>(
       DBConnectionCreator().InitDBConnection(parameters_));
   if (!db_connection_) {
@@ -142,6 +143,7 @@ void DBConnectionManager::initDBConnection() {
 }
 
 mstatus_t DBConnectionManager::tryExecuteTransaction(Transaction &tr) {
+  std::shared_lock<SharedMutex> lock(connect_init_lock_);
   try {
     status_ = tr.ExecuteQueries();
   } catch (const std::exception &e) {
@@ -173,11 +175,11 @@ DBConnection *DBConnectionManager::DBConnectionCreator::InitDBConnection(
   switch (parameters.supplier) {
     case db_client::NOONE:
       break;
-    #if defined(WITH_POSTGRESQL)
+  #if defined(WITH_POSTGRESQL)
     case db_client::POSTGRESQL:
       connect = new DBConnectionPostgre(parameters);
       break;
-    #endif  //
+  #endif  // WITH_POSTGRESQL
     // TODO: можно тут ошибку установить
     default:
       break;

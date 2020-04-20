@@ -25,7 +25,6 @@
 
 /* todo: в итоге здесь перемешаны модуль конфигурации бд,
  *   и модуль инициализации полей таблиц бд */
-
 namespace update_configuration_functional {
 typedef std::function<merror_t(db_parameters *,
     const std::string &value)> update_dbconfig_f;
@@ -56,15 +55,15 @@ merror_t update_db_port(db_parameters *dbp, const std::string &val) {
   return (dbp) ? set_int(val, &dbp->port) : ERROR_INIT_ZERO_ST;
 }
 
-struct dbconfig_fuctions {
+struct dbconfig_functions {
   /** \brief функция обновляющая параметр */
   update_dbconfig_f update;
   // /** \brief функция возвращающая строковые значения */
   // get_strtpl get_str_tpl;
 };
 
-static std::map<const std::string, dbconfig_fuctions> map_dbconfig_fuctions =
-    std::map<const std::string, dbconfig_fuctions> {
+static std::map<const std::string, dbconfig_functions> map_dbconfig_fuctions =
+    std::map<const std::string, dbconfig_functions> {
   {STRTPL_CONFIG_DB_DRY_RUN, {update_db_dry_run}},
   {STRTPL_CONFIG_DB_CLIENT, {update_db_client}},
   {STRTPL_CONFIG_DB_NAME, {update_db_name}},
@@ -75,7 +74,9 @@ static std::map<const std::string, dbconfig_fuctions> map_dbconfig_fuctions =
 };
 }  // namespace update_configuration_functional
 
+
 namespace table_fields_setup {
+/** \brief Сетап таблицы БД хранения данных о модели */
 /* SQL_QUERY:
 TABLE MODEL_INFO (
   model_id autoinc,
@@ -165,6 +166,7 @@ static const db_table_create_setup calculation_state_log_create_setup(
 }  // namespace table_fields_setup
 
 
+/* db_variable */
 db_variable::db_variable(std::string fname, db_var_type type,
     db_variable_flags flags, int len)
   : fname(fname), type(type), flags(flags), len(len) {}
@@ -187,6 +189,7 @@ merror_t db_variable::CheckYourself() const {
 
 namespace ns_tfs = table_fields_setup;
 
+/* db_table_create_setup */
 db_table_create_setup::db_table_create_setup(db_table table,
     const db_fields_collection &fields)
   : table(table), fields(fields), ref_strings(nullptr) {
@@ -385,7 +388,12 @@ std::string db_parameters::GetInfo() const {
 /* DBConnection */
 DBConnection::DBConnection(const db_parameters &parameters)
   : status_(STATUS_DEFAULT), parameters_(parameters), is_connected_(false),
-    is_dry_run_(ProgramState::Instance().IsDryRunDBConn()) {}
+    is_dry_run_(true) {
+  // дефайн на гугло десты БД
+#if !defined(DATABASE_TEST)
+  is_dry_run_ = ProgramState::Instance().IsDryRunDBConn();
+#endif  // !DATABASE_TEST
+}
 
 DBConnection::~DBConnection() {}
 

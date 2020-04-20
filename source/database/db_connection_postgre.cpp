@@ -18,6 +18,9 @@
 
 #include <map>
 #include <sstream>
+#ifdef _DEBUG
+#  include <iostream>
+#endif  // !_DEBUG
 
 #include <assert.h>
 
@@ -58,7 +61,7 @@ mstatus_t DBConnectionPostgre::CreateTable(
         pqxx::work tr(*pconnect_);
         tr.exec(create_ss.str());
         tr.commit();
-        if (ProgramState::Instance().IsDebugMode())
+        if (IS_DEBUG_MODE)
           Logging::Append(io_loglvl::debug_logs, "Запрос БД на создание таблицы:"
               + create_ss.str() + "\n\t");
       } catch (const pqxx::integrity_constraint_violation &e) {
@@ -135,7 +138,7 @@ mstatus_t DBConnectionPostgre::SetupConnection() {
         if (pconnect_->is_open()) {
           status_ = STATUS_OK;
           is_connected_ = true;
-          if (ProgramState::Instance().IsDebugMode())
+          if (IS_DEBUG_MODE)
             Logging::Append(io_loglvl::debug_logs, "Подключение к БД "
                 + parameters_.name);
         } else {
@@ -164,7 +167,7 @@ void DBConnectionPostgre::CloseConnection() {
   if (pconnect_) {
     pconnect_->disconnect();
     is_connected_ = false;
-    if (ProgramState::Instance().IsDebugMode())
+    if (IS_DEBUG_MODE)
       Logging::Append(io_loglvl::debug_logs, "Закрытие соединения c БД "
           + parameters_.name);
   }
@@ -175,7 +178,9 @@ void DBConnectionPostgre::CloseConnection() {
 
 mstatus_t DBConnectionPostgre::IsTableExists(db_table t, bool *is_exists) {
   std::stringstream select_ss;
-  select_ss << "SELECT * FROM " << get_table_name(t) << ";";
+  select_ss << "SELECT EXISTS ( SELECT 1 FROM information_schema.tables "
+      "WHERE table_schema = 'public' AND table_name = '" <<
+      get_table_name(t) << "');";
   if (is_connected_ && pconnect_) {
     if (pconnect_->is_open()) {
       try {
@@ -185,11 +190,12 @@ mstatus_t DBConnectionPostgre::IsTableExists(db_table t, bool *is_exists) {
         tr.commit();
 
         if (!trres.empty()) {
-          *is_exists = true;
+          std::string ex = trres.begin()[0].as<std::string>();
+          *is_exists = (ex == "t") ? true : false;
           // неплохо бы залогировать результат
           // for example:
           //   std::cout << qres.begin()[0].as<std::string>() << std::endl;
-          if (ProgramState::Instance().IsDebugMode())
+          if (IS_DEBUG_MODE)
             Logging::Append(io_loglvl::debug_logs, "Ответ на запрос БД:"
                 + select_ss.str() + "\n\t" + trres.begin()[0].as<std::string>());
         }
@@ -282,7 +288,7 @@ std::string DBConnectionPostgre::db_reference_to_string(
   if (!ew) {
     if (ref.is_foreign_key)
       str += "FOREIGN KEY ";
-    str += "(" + ref.fname + ") REFERENCE " + get_table_name(ref.foreign_table) +
+    str += "(" + ref.fname + ") REFERENCES " + get_table_name(ref.foreign_table) +
         " (" + ref.foreign_fname + ")";
     if (ref.has_on_delete)
       str += " ON DELETE " + ref.GetReferenceActString(ref.delete_method);

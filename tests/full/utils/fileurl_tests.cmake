@@ -1,6 +1,6 @@
-message(STATUS "\t\tRun FileUrls test")
+message(STATUS "\t\tRun FileUrls tests")
 
-add_definitions(-DREADERS_TEST)
+add_definitions(-DFILEURLS_TEST)
 set (COMMON_SRC
   ${THERMCORE_SOURCE_DIR}/common/common.cpp
   ${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp

@@ -35,7 +35,7 @@ mstatus_t DBQuerySetupConnection::Execute() {
       status_ = db_ptr_->SetupConnection();
       is_performed_ = true;
     } else {
-      if (ProgramState::Instance().IsDebugMode())
+      if (IS_DEBUG_MODE)
         Logging::Append("not default status of tableExist query");
     }
   } else {
@@ -79,7 +79,7 @@ mstatus_t DBQueryIsTableExist::Execute() {
       status_ = db_ptr_->IsTableExists(table_, &is_exists_);
       is_performed_ = true;
     } else {
-      if (ProgramState::Instance().IsDebugMode())
+      if (IS_DEBUG_MODE)
         Logging::Append("not default status of tableExist query");
     }
   } else {
@@ -103,7 +103,7 @@ mstatus_t DBQueryCreateTable::Execute() {
       status_ = db_ptr_->CreateTable(create_setup);
       is_performed_ = true;
     } else {
-      if (ProgramState::Instance().IsDebugMode())
+      if (IS_DEBUG_MODE)
         Logging::Append("not default status of tableExist query");
     }
   } else {

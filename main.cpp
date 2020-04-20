@@ -26,13 +26,13 @@
 #include <assert.h>
 
 
-#define JSON_READER_DEBUG
-#define MODELS_DEBUG
+// #define JSON_READER_DEBUG
+// #define MODELS_DEBUG
 #define RK2_DEBUG
 //#define PR_DEBUG  // доделать для смесей
 #define RKS_DEBUG
 //#define NG_GOST_DEBUG
-//#define DATABASE_DEBUG
+#define DATABASE_DEBUG
 
 #define INPUT_P_T  3000000, 350
 #define NEW_PARAMS 500000, 250
@@ -110,10 +110,16 @@ int test_database() {
     return 1;
   }
   bool exists = false;
-  std::cerr << " table model info exists: " <<
-      (exists = dbm.IsTableExist(db_table::table_model_info)) << std::endl;
-  if (!exists) {
-    st = dbm.CreateTable(db_table::table_model_info);
+  std::vector<db_table> tables { db_table::table_model_info,
+      db_table::table_calculation_info, db_table::table_calculation_state_log };
+  for (const auto &x : tables) {
+    if (!dbm.IsTableExist(x)) {
+      if (dbm.GetErrorCode())
+        std::cerr << "\nerror ocurred for tableExist command #" << int(x);
+      dbm.CreateTable(x);
+      if (dbm.GetErrorCode())
+        std::cerr << "\nerror ocurred for tableCreate command #" << int(x);
+    }
   }
   if (st == STATUS_HAVE_ERROR) {
     std::cerr << "error during create table: "

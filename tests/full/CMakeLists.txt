@@ -39,4 +39,6 @@ if(${GTEST_FOUND})
   include(${ASP_THERM_FULLTEST_DIR}/utils/fileurl_tests.cmake)
   #   xml and json reader
   include(${ASP_THERM_FULLTEST_DIR}/utils/readers_tests.cmake)
+  #   database tests
+  include(${ASP_THERM_FULLTEST_DIR}/database/database_tests.cmake)
 endif(${GTEST_FOUND})
