@@ -48,6 +48,10 @@ TEST_F(DatabaseTablesTest, TableExists) {
   }
 }
 
+/** \brief Тест на добавлени строки к таблице моделей */
+TEST_F(DatabaseTablesTest, InsertModelInfo) {
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

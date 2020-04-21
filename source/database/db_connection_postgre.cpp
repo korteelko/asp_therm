@@ -10,17 +10,16 @@
 #include "db_connection_postgre.h"
 
 #include "common.h"
+#include "db_queries_setup.h"
 #include "db_query.h"
 #include "file_structs.h"
 #include "models_configurations.h"
 #include "program_state.h"
 #include "Logging.h"
 
+#include <algorithm>
 #include <map>
 #include <sstream>
-#ifdef _DEBUG
-#  include <iostream>
-#endif  // !_DEBUG
 
 #include <assert.h>
 
@@ -42,7 +41,6 @@ static std::map<db_type, std::string> str_db_types =
   {db_type::type_char_array, "CHAR"},
   {db_type::type_text, "TEXT"},
 };
-
 }  // namespace postgresql_impl
 
 DBConnectionPostgre::DBConnectionPostgre(const db_parameters &parameters)
@@ -60,6 +58,7 @@ mstatus_t DBConnectionPostgre::CreateTable(
       try {
         pqxx::work tr(*pconnect_);
         tr.exec(create_ss.str());
+        // без commit не отрабатывает
         tr.commit();
         if (IS_DEBUG_MODE)
           Logging::Append(io_loglvl::debug_logs, "Запрос БД на создание таблицы:"
@@ -95,19 +94,22 @@ mstatus_t DBConnectionPostgre::CreateTable(
 }
 
 void DBConnectionPostgre::UpdateTable(db_table t,
-    const db_table_select_setup &vals) {
+    const db_table_update_setup &vals) {
   (void) t;
   (void) vals;
   assert(0);
 }
 
-void DBConnectionPostgre::InsertModelInfo(const model_info &mi) {
-  (void) mi;
+void DBConnectionPostgre::InsertRow(const db_table_update_setup &insert_data) {
+  assert(0);
+}
+
+void DBConnectionPostgre::DeleteRow(const db_table_update_setup &delete_data) {
   assert(0);
 }
 
 void DBConnectionPostgre::SelectModelInfo(
-    const db_table_select_setup &mip) {
+    const db_table_update_setup &mip) {
   (void) mip;
   assert(0);
 }
@@ -119,7 +121,7 @@ void DBConnectionPostgre::InsertCalculationInfo(
 }
 
 void DBConnectionPostgre::InsertCalculationStateLog(
-    const calculation_state_log &sl) {
+    const calculation_state_info &sl) {
   (void) sl;
   assert(0);
 }
@@ -187,17 +189,15 @@ mstatus_t DBConnectionPostgre::IsTableExists(db_table t, bool *is_exists) {
         pqxx::work tr(*pconnect_);
         pqxx::result trres(tr.exec(select_ss.str()));
         // в примерах коммитят после запроса
-        tr.commit();
+        // tr.commit();
 
         if (!trres.empty()) {
           std::string ex = trres.begin()[0].as<std::string>();
           *is_exists = (ex == "t") ? true : false;
-          // неплохо бы залогировать результат
-          // for example:
-          //   std::cout << qres.begin()[0].as<std::string>() << std::endl;
           if (IS_DEBUG_MODE)
             Logging::Append(io_loglvl::debug_logs, "Ответ на запрос БД:"
-                + select_ss.str() + "\n\t" + trres.begin()[0].as<std::string>());
+                + select_ss.str() + "\t'" + trres.begin()[0].as<std::string>() +
+                "'\n") ;
         }
       } catch (const pqxx::undefined_table &) {
         *is_exists = false;
@@ -314,4 +314,30 @@ std::string DBConnectionPostgre::db_primarykey_to_string(
         "для таблицы не задано");
   }
   return str;
+}
+
+std::string DBConnectionPostgre::dateToPostgreDate(const std::string &date) {
+  // postgres need
+  char s[16] = {0};
+  int i = 0;
+  for_each (date.begin(), date.end(),
+      [&s, &i](char c) { s[i++] = (c == '/') ? '-' : c;});
+  return s;
+}
+
+std::string DBConnectionPostgre::timeToPostgreTime(const std::string &time) {
+  // format postgresql is same as 'hh:mm:ss'
+  return time;
+}
+
+std::string DBConnectionPostgre::postgreDateToDate(const std::string &pdate) {
+  char s[16] = {0};
+  int i = 0;
+  for_each (pdate.begin(), pdate.end(),
+      [&s, &i](char c) { s[i++] = (c == '-') ? '/' : c;});
+  return s;
+}
+
+std::string DBConnectionPostgre::postgreTimeToTime(const std::string &ptime) {
+  return ptime;
 }

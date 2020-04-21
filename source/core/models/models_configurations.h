@@ -10,8 +10,8 @@
 #ifndef _CORE__MODELS__MODELS_CONFIGURATIONS_H_
 #define _CORE__MODELS__MODELS_CONFIGURATIONS_H_
 
+#include "calculation_info.h"
 #include "common.h"
-#include "db_connection.h"
 #include "ErrorWrap.h"
 
 #include <ctime>
@@ -91,48 +91,22 @@ inline bool model_priority::IsForced() const { return is_forced; }
 // inline bool model_priority::IsAvailableModel() const { return priority != -1; }
 
 
-/** \brief структура идентификации модели(уравнения реального газа)
+/** \brief Структура идентификации модели(уравнения реального газа)
   *   параметры прописываются в классе параметров модели
   *   методом GetModelStr */
 struct model_str {
+  /** \brief Тип модели */
   rg_model_id model_type;
+  /** \brief Мажорная версия модели */
   int32_t vers_major;
+  /** \brief Минорная версия */
   int32_t vers_minor;
-  /** \brief информация о модели */
+  /** \brief Короткая информация о модели */
   std::string short_info;
 
 public:
   model_str(rg_model_id ml, int32_t vmaj, int32_t vmin,
       const std::string &info);
-};
-
-/** \brief Конфигурация запуска программы */
-struct calculation_configuration {
-  /** \brief флаг вывода отладочной информации
-    * \default true */
-  bool is_debug_mode = true;
-  /** \brief флаг использования классической модели Редлиха-Квонга
-    * \default false */
-  bool rk_enable_origin_mod = false;
-  /** \brief флаг использования модификации Соаве
-    *   для модели Редлиха-Квонга
-    * \default true */
-  bool rk_enable_soave_mod = true;
-  /** \brief флаг инициализации модели Пенга-Робинсона через
-    *   коэфициенты бинарного взаимодействия
-    * \default true */
-  bool pr_enable_by_binary_coefs = true;
-  /** \brief флаг использования 'ISO 20665' поверх 'ГОСТ 30319-3'
-    *    для ng_gost модели
-    * \default true */
-  bool enable_iso_20765 = true;
-
-public:
-  bool IsDebug() const;
-  bool RK_IsEnableOriginMod() const;
-  bool RK_IsEnableSoaveMod() const;
-  bool PR_IsEnableByBinaryCoefs() const;
-  bool IsEnableISO20765() const;
 };
 
 /** \brief конфигурация прораммы,
@@ -158,83 +132,21 @@ public:
 
 /** \brief строка для добавления в БД */
 struct model_info {
-  /** \brief информация о модели */
+  enum model_info_flags {
+    f_empty = 0x00,
+    f_model_type = 0x01,
+    f_vers_major = 0x02,
+    f_vers_minor = 0x04,
+    f_short_info = 0x08,
+    f_full = 0x0F
+  };
+  /** \brief Уникальный id строки из базы данных */
+  int32_t id = -1;
+  /** \brief Информация о модели */
   model_str short_info;
   // dyn_setup dynamic_vars;
-};
-
-/** \brief структура содержащая данные инициализации расчёта */
-struct calculation_setup {
-  /** \brief файл иниициализации газовой смеси */
-  std::string gasmix_file;
-  /** \brief файл иниициализации используемых моделей */
-  std::string models_file;
-  /** \brief файл описывающий области расчёта,
-    *   соответствующие им модели */
-  std::string calculate_file;
-};
-
-/** \brief информация о предыдущих расчётах */
-/* todo: сейчас это заглушка */
-struct dynamic_data {
-  /** \brief не учитывать историю предыдущих расчётов */
-  /* true если мы считаем каким-то пошаговым алгоритмом */
-  bool have_history = false;
-
-  /* \brief история расчёта */
-  // std::vector<log_calc> history;
-};
-
-
-/** \brief конфигурация расчёта */
-/* todo: remove to separate file */
-class CalculationSetup {
-public:
-  CalculationSetup();
-  CalculationSetup(const calculation_setup &cs);
-#ifdef _DEBUG
-  merror_t AddModel(std::shared_ptr<modelGeneral> &mg);
-#endif  // _DEBUG
-  merror_t SetModel(int model_key);
-  /** \brief Проверить допустимость валидность используемой
-    *   модели current_model_ */
-  mstatus_t CheckCurrentModel();
-  merror_t GetError() const;
-
-private:
-  merror_t init_setup();
-  void swap_model();
-
-private:
-  ErrorWrap error_;
-  mstatus_t status_;
-  /** \brief копия установленных параметров */
-  parameters params_copy_;
-#ifdef _DEBUG
-  /** \brief список используемых моделей для расчёта */
-  std::multimap<priority_var, std::shared_ptr<modelGeneral>> models_;
-#else
-  /** \brief список используемых моделей для расчёта */
-  std::multimap<priority_var, std::unique_ptr<modelGeneral>> models_;
-#endif  // _DEBUG
-  /** \brief ссылка на текущую используемую модель */
-  modelGeneral *current_model_;
-  /** \brief данные инициализации расчёта */
-  calculation_setup init_data_;
-  /** \brief данные расчётов динамики
-    * \note в динамике отслеживается история расчётов,
-    *   и вероятна последовательная алгоритмизация */
-  dynamic_data dyn_data_;
-};
-using Calculations = std::map<int, CalculationSetup>;
-
-/* сейчас посто заглушка
- * todo: добавить calculation configuration */
-struct calculation_info {
-  // я хз чё тут надо, но вроде как инпут прописать
-  const calculation_configuration &configuration;
-  model_str *model;
-  time_t time;
+  /** \brief Инициализированные поля, для операций SELECT, UPDATE, INSERT */
+  model_info_flags initialized = f_empty;
 };
 
 #endif  // !_CORE__MODELS__MODELS_CONFIGURATIONS_H_

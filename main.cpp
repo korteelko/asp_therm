@@ -109,7 +109,6 @@ int test_database() {
     std::cerr << "  message: " << dbm.GetErrorMessage() << std::endl;
     return 1;
   }
-  bool exists = false;
   std::vector<db_table> tables { db_table::table_model_info,
       db_table::table_calculation_info, db_table::table_calculation_state_log };
   for (const auto &x : tables) {

@@ -18,10 +18,6 @@
 #include <string>
 #include <vector>
 
-/* !NOTE try pattern Command for it */
-/* а не усложню ли я этим архитектуру,
- *   в принципе, не творю ли я фигню.
- * хотя здесь всё выглядит логично */
 
 class DBConnection;
 struct db_table_create_setup;

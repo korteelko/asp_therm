@@ -10,6 +10,7 @@
 #include "db_connection_manager.h"
 
 #include "db_connection_postgre.h"
+#include "db_queries_setup.h"
 
 #include <ctime>
 
@@ -105,7 +106,7 @@ mstatus_t DBConnectionManager::CreateTable(db_table dt) {
         new DBQuerySetupConnection(db_connection_.get())));
     tr.AddQuery(QuerySmartPtr(
         new DBQueryCreateTable(db_connection_.get(),
-        get_table_create_setup(dt))));
+        db_table_create_setup::get_table_create_setup(dt))));
     tr.AddQuery(QuerySmartPtr(
         new DBQueryCloseConnection(db_connection_.get())));
     status_ = tryExecuteTransaction(tr);

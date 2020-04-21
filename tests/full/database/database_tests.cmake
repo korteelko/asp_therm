@@ -5,9 +5,8 @@ set (COMMON_SRC
   ${THERMCORE_SOURCE_DIR}/common/common.cpp
   ${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
-  # ${THERMCORE_SOURCE_DIR}/common/program_state.cpp
 
-  # ${THERMCORE_SOURCE_DIR}/models/models_configurations.cpp
+  ${THERMCORE_SOURCE_DIR}/models/calculation_info.cpp
 
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
 
@@ -15,6 +14,7 @@ set (COMMON_SRC
   ${THERMDB_SOURCE_DIR}/db_connection_manager.cpp
   ${THERMDB_SOURCE_DIR}/db_connection_postgre.cpp
   ${THERMDB_SOURCE_DIR}/db_defines.cpp
+  ${THERMDB_SOURCE_DIR}/db_queries_setup.cpp
   ${THERMDB_SOURCE_DIR}/db_query.cpp
 
   ${THERMUTILS_SOURCE_DIR}/ErrorWrap.cpp

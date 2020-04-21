@@ -123,7 +123,7 @@ enum class state_phase : uint32_t {
   /* специфические для смеси газов */
   LAMINATION,  // расслоение фаз в многокомпонентной смеси
   /* if binodal parameters isn't set */
-  NOT_SET = 0xff
+  NOT_SET
 };
 static const std::array<std::string, 6> stateToString {
   "SCF", "LIQUID", "LIQ_STEAM", "GAS", "LAMINATION", "undefied gas state"

@@ -171,11 +171,41 @@ struct gas_pair {
 /** \brief мапа бинарных коэффициентов  */
 typedef std::map<const gas_pair, double> binary_coef_map;
 
-/* todo: add link to calculation info */
-struct calculation_state_log {
+struct calculation_info;
+/** \brief Структура для добавления в базу данных */
+struct calculation_state_info {
+  enum state_info_flags {
+    f_empty = 0x00,
+    /** \brief Ссылка на данные расчёта */
+    f_info = 0x01,
+    /** \brief Объём */
+    f_vol = 0x02,
+    /** \brief Давление */
+    f_pres = 0x04,
+    /** \brief Температура */
+    f_temp = 0x08,
+    /** \brief Изохорная теплоёмкость */
+    f_dcv = 0x10,
+    /** \brief Изобарная теплоёмкость */
+    f_dcp = 0x20,
+    /** \brief Внутреняя энергия */
+    f_din = 0x40,
+    /** \brief Параметр Bk */
+    f_dbk = 0x80,
+    /** \brief Энтальпия */
+    f_enthalpy = 0x100,
+    /** \brief Фазовое состояние */
+    f_state_phase = 0x200,
+    f_full = 0x3FF
+  };
+
+  int32_t id;
+  calculation_info *calculation;
+
   dyn_parameters dyn_pars;    // p, v, t and cp(p,v,t), cv(p,v,t), u(p,v,t)
   double enthalpy;
   std::string state_phase;
+  state_info_flags initialized = f_empty;
 };
 
 /** \brief стат структура характеристик газа */

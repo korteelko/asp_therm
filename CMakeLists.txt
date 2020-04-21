@@ -105,6 +105,7 @@ set(MODELS_SRC
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
 
 # models sources
+  ${THERMCORE_SOURCE_DIR}/models/calculation_info.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_general.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_ideal_gas.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_ng_gost.cpp
@@ -124,6 +125,7 @@ set(MODELS_SRC
   ${THERMDB_SOURCE_DIR}/db_connection.cpp
   ${THERMDB_SOURCE_DIR}/db_connection_manager.cpp
   ${THERMDB_SOURCE_DIR}/db_defines.cpp
+  ${THERMDB_SOURCE_DIR}/db_queries_setup.cpp
   ${THERMDB_SOURCE_DIR}/db_query.cpp
 
 # plot sources
