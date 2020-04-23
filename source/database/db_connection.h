@@ -61,41 +61,33 @@ struct calculation_state_info;
 /** \brief абстрактный класс подключения к БД */
 class DBConnection {
 public:
-  /* хз... */
-  // virtual mstatus_t ExecuteQuery(const std::string &query_body) = 0;
+  virtual ~DBConnection();
 
+  /* хз... */
   virtual void Commit() = 0;
   virtual void Rollback() = 0;
-
-  /* todo: вынести это всё в соответствующий класс
-   *   здесь должны быть только низкоуровневые функции
-   *   Update, Insert, Select */
-  /* вызывается командами! */
-  virtual mstatus_t CreateTable(const db_table_create_setup &fields) = 0;
-  //virtual mstatus_t CheckTableFormat(const db_table_create_setup &fields) = 0;
-  virtual void UpdateTable(db_table t, const db_table_update_setup &vals) = 0;
-
-  // todo - replace argument 'const model_info &mi'
-  //   with 'const db_table_select_setup &mip'
-  // UPD: yes, looks wrong
-  //   InsertModelInfo нужна в DBConnectionManager добавить
-  // virtual void InsertModelInfo(const model_info &mi) = 0;
-  virtual void InsertRow(const db_table_update_setup &insert_data) = 0;
-  virtual void DeleteRow(const db_table_update_setup &delete_data) = 0;
-  virtual void SelectModelInfo(const db_table_update_setup &select_data) = 0;
-
-  virtual void InsertCalculationInfo(
-      const calculation_info &ci) = 0;
-  virtual void InsertCalculationStateLog(
-      const calculation_state_info &sl) = 0;
-  /* посюда */
 
   virtual mstatus_t SetupConnection() = 0;
   virtual void CloseConnection() = 0;
 
+  /* вызывается командами! */
   virtual mstatus_t IsTableExists(db_table t, bool *is_exists) = 0;
+  virtual mstatus_t CreateTable(const db_table_create_setup &fields) = 0;
+  //virtual mstatus_t CheckTableFormat(const db_table_create_setup &fields) = 0;
+  virtual void UpdateTable(db_table t, const db_table_update_setup &vals) = 0;
 
-  virtual ~DBConnection();
+
+  /** \brief Добавить новую строку в БД
+    * \return true если строка добавлена */
+  virtual mstatus_t InsertRows(const db_table_insert_setup &insert_data) = 0;
+  virtual mstatus_t DeleteRows(const db_table_delete_setup &delete_data) = 0;
+  virtual mstatus_t SelectRows(const db_table_select_setup &select_data) = 0;
+  virtual mstatus_t UpdateRows(const db_table_update_setup &update_data) = 0;
+  // virtual void SelectModelInfo(const db_table_update_setup &select_data) = 0;
+
+  //virtual void InsertCalculationInfo(const calculation_info &ci) = 0;
+  //virtual void InsertCalculationStateLog(const calculation_state_info &sl) = 0;
+  /* посюда */
 
   mstatus_t GetStatus() const;
   merror_t GetErrorCode() const;

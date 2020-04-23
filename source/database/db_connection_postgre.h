@@ -14,9 +14,13 @@
 
 #if defined(WITH_POSTGRESQL)
 #include "db_connection.h"
+#include "program_state.h"
+
+#include "Logging.h"
 
 #include <pqxx/pqxx>
 
+#include <functional>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -28,42 +32,112 @@
 class DBConnectionPostgre final: public DBConnection {
 public:
   DBConnectionPostgre(const db_parameters &parameters);
- // mstatus_t ExecuteQuery(DBQuery *query) override;
+  ~DBConnectionPostgre() override;
 
+  /* хз... */
   void Commit() override;
   void Rollback() override;
 
-  mstatus_t CreateTable(const db_table_create_setup &fields) override;
-  void UpdateTable(db_table t, const db_table_update_setup &vals) override;
-
-  // void InsertModelInfo(const model_info &mi) override;
-  void InsertRow(const db_table_update_setup &insert_data) override;
-  void DeleteRow(const db_table_update_setup &delete_data) override;
-  void SelectModelInfo(const db_table_update_setup &select_data) override;
-
-  void InsertCalculationInfo(const calculation_info &ci) override;
-  void InsertCalculationStateLog(const calculation_state_info &sl) override;
-
-  /* checked functions */
   mstatus_t SetupConnection() override;
   void CloseConnection() override;
 
   mstatus_t IsTableExists(db_table t, bool *is_exists) override;
+  mstatus_t CreateTable(const db_table_create_setup &fields) override;
+  void UpdateTable(db_table t, const db_table_update_setup &vals) override;
 
-  ~DBConnectionPostgre() override;
+  mstatus_t InsertRows(const db_table_insert_setup &insert_data) override;
+  mstatus_t DeleteRows(const db_table_delete_setup &delete_data) override;
+  mstatus_t SelectRows(const db_table_select_setup &select_data) override;
+  mstatus_t UpdateRows(const db_table_update_setup &update_data) override;
 
 private:
+  template <class DataT, class OutT, class SetupF, class ExecF>
+  mstatus_t exec_op(const DataT &data, OutT *res,
+      SetupF setup_m, ExecF exec_m) {
+    // setup content of query
+    std::stringstream sstr = std::invoke(setup_m, *this, data);
+    if (is_connected_ && pconnect_) {
+      if (pconnect_->is_open() && !error_.GetErrorCode()) {
+        try {
+          // execute query
+          std::invoke(exec_m, *this, sstr, res);
+          if (IS_DEBUG_MODE)
+            Logging::Append(io_loglvl::debug_logs,
+                "Запрос БД на создание таблицы:" + sstr.str() + "\n\t");
+        } catch (const pqxx::undefined_table &e) {
+          status_ = STATUS_HAVE_ERROR;
+          error_.SetError(ERROR_DB_TABLE_EXISTS, "Exception text: " +
+              std::string(e.what()) + "\n Query: " + e.query());
+        } catch (const pqxx::integrity_constraint_violation &e) {
+          status_ = STATUS_HAVE_ERROR;
+          error_.SetError(ERROR_DB_SQL_QUERY, "Exception text: " +
+              std::string(e.what()) + "\n Query: " + e.query());
+        } catch (const std::exception &e) {
+           error_.SetError(ERROR_DB_CONNECTION,
+               "Подключение к БД: exception. Запрос:\n" + sstr.str()
+               + "\nexception what: " + e.what());
+           status_ = STATUS_HAVE_ERROR;
+        }
+      } else {
+        // is not connected
+        if (!error_.GetErrorCode()) {
+          error_.SetError(ERROR_DB_CONNECTION, "Соединение с бд не открыто");
+          status_ = STATUS_NOT;
+        }
+      }
+    } else {
+      if (is_dry_run_) {
+        // dry_run_ programm setup
+        Logging::Append(io_loglvl::debug_logs, "dry_run: " + sstr.str());
+      } else {
+        // error - not connected
+        error_.SetError(ERROR_DB_CONNECTION);
+        status_ = STATUS_NOT;
+      }
+    }
+    return status_;
+  }
+
   std::string setupConnectionString();
-  std::stringstream setupCreateTableString(
-      const db_table_create_setup &fields);
+
+  /* функции сбора строки запроса */
+  /** \brief Сбор строки запроса существования таблицы */
+  std::stringstream setupTableExistsString(db_table t);
+  /** \brief Сбор строки запроса для создания таблицы */
+  std::stringstream setupCreateTableString(const db_table_create_setup &fields);
+  /** \brief Сбор строки запроса для добавления строки */
+  std::stringstream setupInsertString(const db_table_insert_setup &fields);
+  /** \brief Сбор строки запроса для удаления строки */
+  std::stringstream setupDeleteString(const db_table_delete_setup &fields);
+  /** \brief Сбор строки запроса для получения выборки */
+  std::stringstream setupSelectString(const db_table_select_setup &fields);
+  /** \brief Сбор строки запроса для обновления строки */
+  std::stringstream setupUpdateString(const db_table_update_setup &fields);
 
   /** \brief собрать строку поля БД по значению db_variable */
   std::string db_variable_to_string(const db_variable &dv);
+  /** \brief собрать строку сложный уникальный парметр */
+  std::string db_unique_constrain_to_string(const db_table_create_setup &cs);
   /** \brief собрать строку ссылки на другую таблицу
     *   по значению db_reference */
   std::string db_reference_to_string(const db_reference &ref);
   /** \brief собрать строку первичного ключа */
   std::string db_primarykey_to_string(const db_complex_pk &pk);
+
+  /* функции исполнения запросов */
+  /** \brief Запрос существования таблицы */
+  void execIsTableExists(const std::stringstream &sstr, bool *is_exists);
+  /** \brief Запрос создания таблицы */
+  void execCreateTable(const std::stringstream &sstr, void *);
+  /** \brief Запрос на добавление строки */
+  void execInsert(const std::stringstream &sstr, void *);
+  /** \brief Запрос на удаление строки */
+  void execDelete(const std::stringstream &sstr, void *);
+  /** \brief Запрос выборки из таблицы
+    * \note изменить 'void *' выход на 'pqxx::result *result' */
+  void execSelect(const std::stringstream &sstr, pqxx::result *result);
+  /** \brief Запрос на обновление строки */
+  void execUpdate(const std::stringstream &sstr, void *);
 
   /** \brief Переформатировать строку общего формата даты
     *   'yyyy/mm/dd' к формату используемому БД */
@@ -81,6 +155,8 @@ private:
 private:
   /** \brief Указатель на объект подключения */
   std::unique_ptr<pqxx::connection> pconnect_;
+  /* todo: ; */
+  // add result data for select queries for example, or IsTableExist
 };
 
 #endif  // WITH_POSTGRESQL

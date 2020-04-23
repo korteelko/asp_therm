@@ -85,14 +85,22 @@
 #define ERROR_STRTPL_VALWRONG (0x0300 | ERROR_STRTPL_T)
 
 // database connection
-/** \brief ошибка подключения к базе данных */
+/** \brief Ошибка подключения к базе данных */
 #define ERROR_DB_CONNECTION   (0x0100 | ERROR_DATABASE_T)
+/** \brief Ошибка переменной БД */
 #define ERROR_DB_VARIABLE     (0x0200 | ERROR_DATABASE_T)
+/** \brief Ошибка поля ссылки */
 #define ERROR_DB_REFER_FIELD  (0x0300 | ERROR_DATABASE_T)
+/** \brief Ошибка во время выполнения операции "существование таблицы" */
 #define ERROR_DB_TABLE_EXISTS (0x0400 | ERROR_DATABASE_T)
+/** \brief Ошибка составления запроса */
 #define ERROR_DB_QUERY_NULLP  (0x0500 | ERROR_DATABASE_T)
+/** \brief Ошибка первичного ключа */
 #define ERROR_DB_TABLE_PKEY   (0x0600 | ERROR_DATABASE_T)
+/** \brief Ошибка SQL запроса */
 #define ERROR_DB_SQL_QUERY    (0x0700 | ERROR_DATABASE_T)
+/** \brief Ошибочная операция СУБД */
+#define ERROR_DB_OPERATION    (0x0800 | ERROR_DATABASE_T)
 
 
 const char *GetCustomErrorMsg(unsigned int error);

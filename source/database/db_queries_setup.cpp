@@ -39,7 +39,8 @@
 #define CSL_ENTHALPY "enthalpy"
 #define CSL_STATE_PHASE "state_phase"
 namespace table_fields_setup {
-/** \brief Сетап таблицы БД хранения данных о модели */
+/** \brief Сетап таблицы БД хранения данных о модели
+  * \note В семантике PostgreSQL */
 /* SQL_QUERY:
 TABLE MODEL_INFO (
   model_id autoinc,
@@ -48,17 +49,18 @@ TABLE MODEL_INFO (
   vers_major uint not NULL,
   vers_minor uint,
   short_info string,
+  UNIQUE(model_type, model_subtype, vers_major, vers_minor),
   PRIMARY KEY (model_id)
 ); */
 static const db_fields_collection model_info_fields = {
   db_variable(MI_MODEL_ID, db_type::type_autoinc, {.is_primary_key = true,
       .is_unique = true, .can_be_null = false}),
   db_variable(MI_MODEL_TYPE, db_type::type_int, {.can_be_null = false,
-      .is_complex_unique = true}),
-  db_variable(MI_MODEL_SUBTYPE, db_type::type_int, {.is_complex_unique = true}),
+      .in_unique_constrain = true}),
+  db_variable(MI_MODEL_SUBTYPE, db_type::type_int, {.in_unique_constrain = true}),
   db_variable(MI_VERS_MAJOR, db_type::type_int, {.can_be_null = false,
-      .is_complex_unique = true}),
-  db_variable(MI_VERS_MINOR, db_type::type_int, {.is_complex_unique = true}),
+      .in_unique_constrain = true}),
+  db_variable(MI_VERS_MINOR, db_type::type_int, {.in_unique_constrain = true}),
   db_variable(MI_SHORT_INFO, db_type::type_text, {})
 };
 static const db_table_create_setup model_info_create_setup(
@@ -70,6 +72,7 @@ TABLE CALCULATION_INFO (
   model_info_id int,
   date date,
   time time,
+  UNIQUE(model_info_d, date, time),
   PRIMARY KEY (calculation_id),
   FOREIGN KEY (model_info_id) REFERENCES model_info(model_id)
 ); */
@@ -78,11 +81,11 @@ static const db_fields_collection calculation_info_fields = {
       .is_unique = true, .can_be_null = false}),
   // reference to model_info(fk)
   db_variable(CI_MODEL_INFO_ID, db_type::type_int, {.is_reference = true,
-      .can_be_null = false, .is_complex_unique = true}),
+      .can_be_null = false, .in_unique_constrain = true}),
   db_variable(CI_DATE, db_type::type_date, {.can_be_null = false,
-      .is_complex_unique = true}),
+      .in_unique_constrain = true}),
   db_variable(CI_TIME, db_type::type_time, {.can_be_null = false,
-      .is_complex_unique = true})
+      .in_unique_constrain = true})
 };
 static const db_ref_collection calculation_info_references = {
   db_reference(CI_MODEL_INFO_ID, db_table::table_model_info, MI_MODEL_ID, true)
@@ -152,6 +155,107 @@ const db_fields_collection *get_fields_collection(db_table dt) {
 }  // namespace table_fields_setup
 
 namespace ns_tfs = table_fields_setup;
+
+/* db_condition_tree */
+db_condition_tree::db_condition_tree()
+  : left(nullptr), rigth(nullptr), data(nullptr),
+    db_operator(db_operator_t::op_empty) {}
+
+db_condition_tree::db_condition_tree(db_operator_t db_operator)
+  : data(""), db_operator(db_operator) {}
+
+db_condition_tree::db_condition_tree(const std::string &data)
+  : data(data), db_operator(db_operator_t::op_empty) {}
+
+db_condition_tree::~db_condition_tree() {
+  if (left)
+    delete left;
+  if (rigth)
+    delete rigth;
+}
+
+std::string db_condition_tree::GetString() const {
+  std::string l, r;
+  std::string result;
+  // если поддеревьев нет, вернуть строку
+  if (db_operator == db_operator_t::op_empty)
+    return data;
+  if (left)
+    l = left->GetString();
+  if (rigth)
+    r = rigth->GetString();
+  switch (db_operator) {
+    case db_operator_t::op_is:
+      result = l +  " IS " + r;
+      break;
+    case db_operator_t::op_not:
+      result = l +  " IS NOT " + r;
+      break;
+    case db_operator_t::op_in:
+      result = l +  " IN " + r;
+      break;
+    case db_operator_t::op_like:
+      result = l +  " LIKE " + r;
+      break;
+    case db_operator_t::op_between:
+      result = l +  " BETWEEN " + r;
+      break;
+    case db_operator_t::op_and:
+      result = l +  " AND " + r;
+      break;
+    case db_operator_t::op_or:
+      result = l +  " OR " + r;
+      break;
+    case db_operator_t::op_eq:
+      result = l +  " = " + r;
+      break;
+    case db_operator_t::op_ne:
+      result = l +  " != " + r;
+      break;
+    case db_operator_t::op_ge:
+      result = l +  " >= " + r;
+      break;
+    case db_operator_t::op_gt:
+      result = l +  " > " + r;
+      break;
+    case db_operator_t::op_le:
+      result = l +  " <= " + r;
+      break;
+    case db_operator_t::op_lt:
+      result = l +  " < " + r;
+      break;
+    case db_operator_t::op_empty:
+      assert(0 && "check program DNA - it's case unavailable");
+      break;
+    // case db_operator_t::op_eq:
+
+  }
+  return result;
+}
+
+merror_t db_condition_tree::SetSubTree(const std::string &l,
+    const std::string &r) {
+  return SetSubTree(db_operator, l, r);
+}
+
+merror_t db_condition_tree::SetSubTree(db_operator_t operator_t,
+    const std::string &l, const std::string &r) {
+  if (left) {
+    delete left; left = nullptr;
+  }
+  if (rigth) {
+    delete rigth; rigth = nullptr;
+  }
+  merror_t error = ERROR_GENERAL_T;
+  if (operator_t != db_operator_t::op_empty) {
+    db_operator = operator_t;
+    left = new db_condition_tree(l);
+    rigth = new db_condition_tree(r);
+    data = "";
+    error = ERROR_SUCCESS_T;
+  }
+  return error;
+}
 
 /* db_table_create_setup */
 db_table_create_setup::db_table_create_setup(db_table table,
@@ -259,21 +363,62 @@ const db_table_create_setup &db_table_create_setup::
   assert(0 && "undef table");
 }
 
-
-/* db_table_select_setup */
-db_table_update_setup *db_table_update_setup::Init(db_table table) {
-  return new db_table_update_setup(
-      table, *ns_tfs::get_fields_collection(table));
-}
-
-db_table_update_setup::db_table_update_setup(db_table table,
-    const db_fields_collection &fields)
+/* db_table_query_basesetup */
+db_table_query_basesetup::db_table_query_basesetup(
+    db_table table, const db_fields_collection &fields)
   : table(table), fields(fields) {}
 
-void db_table_update_setup::SetUpdateSetup(
-    db_update_t up, model_info &select_data) {
-  update_t = up;
-  values.clear();
+db_table_query_basesetup::field_index db_table_query_basesetup::
+    indexByFieldName(const std::string &fname) {
+  field_index i = 0;
+  for (auto const &x : fields) {
+    if (x.fname == fname)
+      break;
+    ++i;
+  }
+  return (i == fields.size()) ? -1 : i;
+}
+
+/* db_table_insert_setup */
+db_table_insert_setup::db_table_insert_setup(db_table _table,
+    const db_fields_collection &_fields)
+  : db_table_query_basesetup(_table, _fields) {
+  update_t = INSERT;
+}
+
+/* todo: сделать шаблон, или вынести в шабло */
+db_table_insert_setup *db_table_insert_setup::Init(
+    const std::vector<model_info> &select_data) {
+  if (haveConflict(select_data))
+    return nullptr;
+  db_table_insert_setup *ins_setup = new db_table_insert_setup(
+      db_table::table_model_info, *ns_tfs::get_fields_collection(
+      db_table::table_model_info));
+  if (ins_setup)
+    for (const auto &x : select_data)
+      ins_setup->setValues(x);
+  return ins_setup;
+}
+
+db_table_insert_setup *db_table_insert_setup::Init(
+    const std::vector<calculation_info> &select_data) {
+  if (haveConflict(select_data))
+    return nullptr;
+  db_table_insert_setup *ins_setup = new db_table_insert_setup(
+      db_table::table_calculation_info, *ns_tfs::get_fields_collection(
+      db_table::table_calculation_info));
+  if (ins_setup)
+    for (const auto &x : select_data)
+      ins_setup->setValues(x);
+  return ins_setup;
+}
+
+size_t db_table_insert_setup::RowsSize() const {
+  assert(0);
+}
+
+void db_table_insert_setup::setValues(const model_info &select_data) {
+  row_values values;
   field_index i = -1;
   if (select_data.initialized & model_info::f_model_type) {
     if ((i = indexByFieldName(MI_MODEL_TYPE)) != field_index_end)
@@ -292,11 +437,10 @@ void db_table_update_setup::SetUpdateSetup(
   if (select_data.initialized & model_info::f_short_info)
     if ((i = indexByFieldName(MI_SHORT_INFO)) != field_index_end)
       values.emplace(i, select_data.short_info.short_info);
+  values_vec.emplace_back(values);
 }
-void db_table_update_setup::SetUpdateSetup(
-    db_update_t up, calculation_info &select_data) {
-  update_t = up;
-  values.clear();
+void db_table_insert_setup::setValues(const calculation_info &select_data) {
+  row_values values;
   field_index i = -1;
   if (select_data.initialized & calculation_info::f_model_id)
     if (select_data.model != nullptr)
@@ -308,11 +452,10 @@ void db_table_update_setup::SetUpdateSetup(
   if (select_data.initialized & calculation_info::f_time)
     if ((i = indexByFieldName(CI_TIME)) != field_index_end)
       values.emplace(i, select_data.GetTime());
+  values_vec.emplace_back(values);
 }
-void db_table_update_setup::SetUpdateSetup(
-    db_update_t up, calculation_state_info &select_data) {
-  update_t = up;
-  values.clear();
+void db_table_insert_setup::setValues(const calculation_state_info &select_data) {
+  row_values values;
   field_index i = -1;
   if (select_data.initialized & calculation_state_info::f_info)
     if (select_data.calculation != nullptr)
@@ -345,15 +488,28 @@ void db_table_update_setup::SetUpdateSetup(
   if (select_data.initialized & calculation_state_info::f_state_phase)
     if ((i = indexByFieldName(CSL_STATE_PHASE)) != field_index_end)
       values.emplace(i, select_data.state_phase);
+  values_vec.emplace_back(values);
 }
 
-db_table_update_setup::field_index db_table_update_setup::
-    indexByFieldName(const std::string &fname) {
-  field_index i = 0;
-  for (auto const &x : fields) {
-    if (x.fname == fname)
-      break;
-    ++i;
-  }
-  return (i == fields.size()) ? -1 : i;
+/* db_table_select_setup */
+db_table_select_setup::db_table_select_setup(db_table _table,
+    const db_fields_collection &_fields)
+  : db_table_query_basesetup(_table, _fields) {}
+
+db_table_select_setup *db_table_select_setup::Init(db_table _table) {
+  return new db_table_select_setup(_table, *ns_tfs::get_fields_collection(_table));
 }
+
+/* db_table_update_setup */
+db_table_update_setup *db_table_update_setup::Init(db_table _table) {
+  return new db_table_update_setup(_table, *ns_tfs::get_fields_collection(_table));
+}
+
+db_table_update_setup::db_table_update_setup(db_table _table,
+    const db_fields_collection &_fields)
+  : db_table_select_setup(_table, _fields) {}
+
+/* db_table_select_result */
+db_table_select_result::db_table_select_result(
+    const db_table_select_setup &setup)
+  : db_table_query_basesetup(setup) {}
