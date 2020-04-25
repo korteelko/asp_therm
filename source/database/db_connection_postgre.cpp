@@ -168,36 +168,6 @@ std::stringstream DBConnectionPostgre::setupTableExistsString(db_table t) {
       get_table_name(t) << "');";
   return select_ss;
 }
-std::stringstream DBConnectionPostgre::setupCreateTableString(
-    const db_table_create_setup &fields) {
-  std::stringstream sstr;
-  sstr << "CREATE TABLE " << get_table_name(fields.table) << " (";
-  // сначала забить все поля
-  for (const auto &field : fields.fields) {
-    if (!error_.GetErrorCode()) {
-      sstr << db_variable_to_string(field) << ", ";
-    } else {
-      break;
-    }
-  }
-  if (!error_.GetErrorCode()) {
-    // UNIQUE constraint
-    sstr << db_unique_constrain_to_string(fields);
-    // REFERENCES
-    if (fields.ref_strings) {
-      for (const auto &ref : *fields.ref_strings) {
-        sstr << db_reference_to_string(ref) << ", ";
-        if (error_.GetErrorCode())
-          break;
-      }
-    }
-    // PRIMARY KEY
-    if (!error_.GetErrorCode())
-      sstr << db_primarykey_to_string(fields.pk_string);
-  }
-  sstr << ");";
-  return sstr;
-}
 std::stringstream DBConnectionPostgre::setupInsertString(
     const db_table_insert_setup &fields) {
   std::string fnames;
@@ -235,28 +205,6 @@ std::stringstream DBConnectionPostgre::setupInsertString(
   std::stringstream sstr;
   sstr << fnames << values << ";";
   return sstr;
-}
-std::stringstream DBConnectionPostgre::setupDeleteString(
-    const db_table_delete_setup &fields) {
-  std::stringstream sstr;
-  sstr << "DELETE FROM " << get_table_name(fields.table);
-  if (fields.where_condition != nullptr)
-    sstr << " WHERE " << fields.where_condition->GetString();
-  sstr << ";";
-  return sstr;
-}
-std::stringstream DBConnectionPostgre::setupSelectString(
-    const db_table_select_setup &fields) {
-  std::stringstream sstr;
-  sstr << "SELECT * FROM " << get_table_name(fields.table);
-  if (fields.where_condition != nullptr)
-    sstr << " WHERE " << fields.where_condition->GetString();
-  sstr << ";";
-  return sstr;
-}
-std::stringstream DBConnectionPostgre::setupUpdateString(
-    const db_table_update_setup &fields) {
-  assert(0);
 }
 
 void DBConnectionPostgre::execIsTableExists(
@@ -297,8 +245,6 @@ void DBConnectionPostgre::execUpdate(const std::stringstream &sstr, void *) {
   assert(0);
 }
 
-/* можно ещё разнести:
- *   вообще вынести эту функцию в родительский класс */
 std::string DBConnectionPostgre::db_variable_to_string(
     const db_variable &dv) {
   std::stringstream ss;
@@ -323,62 +269,6 @@ std::string DBConnectionPostgre::db_variable_to_string(
         "Проверка параметров поля таблицы завершилось ошибкой");
   }
   return ss.str();
-}
-
-std::string DBConnectionPostgre::db_unique_constrain_to_string(
-    const db_table_create_setup &cs) {
-  std::stringstream sstr;
-  sstr << "UNIQUE(";
-  /* если нет сложного ключа, то и использовать его не будем и
-   *   вернём пустую строку */
-  int count = 0;
-  for (const auto &x : cs.fields) {
-    if (x.flags.in_unique_constrain) {
-      ++count;
-      sstr << x.fname << ", ";
-    }
-  }
-  if (count) {
-    std::string str = sstr.str();
-    str.replace(str.size() - 2, str.size() - 1, "),");
-    return str;
-  }
-  return "";
-}
-
-std::string DBConnectionPostgre::db_reference_to_string(
-    const db_reference &ref) {
-  std::string str;
-  merror_t ew = ref.CheckYourself();
-  if (!ew) {
-    if (ref.is_foreign_key)
-      str += "FOREIGN KEY ";
-    str += "(" + ref.fname + ") REFERENCES " + get_table_name(ref.foreign_table) +
-        " (" + ref.foreign_fname + ")";
-    if (ref.has_on_delete)
-      str += " ON DELETE " + ref.GetReferenceActString(ref.delete_method);
-    if (ref.has_on_update)
-      str += " ON UPDATE " + ref.GetReferenceActString(ref.update_method);
-  } else {
-    error_.SetError(ew,
-        "Проверка поля ссылки на другую таблицу завершилось ошибкой");
-  }
-  return str;
-}
-
-std::string DBConnectionPostgre::db_primarykey_to_string(
-    const db_complex_pk &pk) {
-  std::string str;
-  if (!pk.fnames.empty()) {
-    str = "PRIMARY KEY (";
-    for (const auto &fname : pk.fnames)
-      str += fname + ", ";
-    str.replace(str.size() - 2, str.size() - 1, ")");
-  } else {
-    error_.SetError(ERROR_DB_TABLE_PKEY, "ни одного первичного ключа "
-        "для таблицы не задано");
-  }
-  return str;
 }
 
 std::string DBConnectionPostgre::dateToPostgreDate(const std::string &date) {

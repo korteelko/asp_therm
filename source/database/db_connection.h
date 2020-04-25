@@ -101,6 +101,41 @@ protected:
    *   DBConnection inheritance classes */
   DBConnection(const db_parameters &parameters);
 
+  /* функции сбора строки запроса */
+  /** \brief Сбор строки запроса существования таблицы */
+  virtual std::stringstream setupTableExistsString(db_table t);
+  /** \brief Сбор строки запроса для создания таблицы */
+  virtual std::stringstream setupCreateTableString(
+      const db_table_create_setup &fields);
+  /** \brief Сбор строки запроса для добавления строки */
+  virtual std::stringstream setupInsertString(
+      const db_table_insert_setup &fields);
+  /** \brief Сбор строки запроса для удаления строки */
+  virtual std::stringstream setupDeleteString(
+      const db_table_delete_setup &fields);
+  /** \brief Сбор строки запроса для получения выборки */
+  virtual std::stringstream setupSelectString(
+      const db_table_select_setup &fields);
+  /** \brief Сбор строки запроса для обновления строки */
+  virtual std::stringstream setupUpdateString(
+      const db_table_update_setup &fields);
+
+  /** \brief собрать строку поля БД по значению db_variable
+    * \note Оказалось завязано на интерпретацию переменных
+    * \todo Собственно заменить прямые обращение на
+    *   вызовы виртуальных функций
+    */
+  virtual std::string db_variable_to_string(const db_variable &dv) = 0;
+  /** \brief собрать строку сложный уникальный парметр */
+  virtual std::string db_unique_constrain_to_string(
+      const db_table_create_setup &cs);
+  /** \brief собрать строку ссылки на другую таблицу
+    *   по значению db_reference */
+  virtual std::string db_reference_to_string(const db_reference &ref);
+  /** \brief собрать строку первичного ключа */
+  virtual std::string db_primarykey_to_string(const db_complex_pk &pk);
+
+
 protected:
   ErrorWrap error_;
   /** \brief статус подключения */

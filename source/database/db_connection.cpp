@@ -128,3 +128,147 @@ bool DBConnection::IsOpen() const {
 void DBConnection::LogError() {
   error_.LogIt();
 }
+
+/* setup quries text */
+std::stringstream DBConnection::setupTableExistsString(db_table t) {
+  assert(0 && "overrided");
+  return std::stringstream();
+}
+
+std::stringstream DBConnection::setupCreateTableString(
+    const db_table_create_setup &fields) {
+  std::stringstream sstr;
+  sstr << "CREATE TABLE " << get_table_name(fields.table) << " (";
+  // сначала забить все поля
+  for (const auto &field : fields.fields) {
+    if (!error_.GetErrorCode()) {
+      sstr << db_variable_to_string(field) << ", ";
+    } else {
+      break;
+    }
+  }
+  if (!error_.GetErrorCode()) {
+    // UNIQUE constraint
+    sstr << db_unique_constrain_to_string(fields);
+    // REFERENCES
+    if (fields.ref_strings) {
+      for (const auto &ref : *fields.ref_strings) {
+        sstr << db_reference_to_string(ref) << ", ";
+        if (error_.GetErrorCode())
+          break;
+      }
+    }
+    // PRIMARY KEY
+    if (!error_.GetErrorCode())
+      sstr << db_primarykey_to_string(fields.pk_string);
+  }
+  sstr << ");";
+  return sstr;
+}
+std::stringstream DBConnection::setupInsertString(
+    const db_table_insert_setup &fields) {
+  std::string fnames;
+  if (fields.values_vec.empty()) {
+    error_.SetError(ERROR_DB_VARIABLE, "Нет данных для INSERT операции");
+    return std::stringstream();
+  }
+  fnames = "INSERT INTO " + get_table_name(fields.table) + " (";
+  std::string values = "VALUES (";
+  std::vector<std::string> rows(fields.values_vec.size());
+  db_variable::db_var_type t;
+  for (const auto &row: fields.values_vec) {
+    for (const auto &x : row) {
+      if (x.first >= 0 && x.first < fields.fields.size()) {
+        fnames += fields.fields[x.first].fname + ", ";
+        t = fields.fields[x.first].type;
+          values += x.second + ", ";
+      } else {
+        Logging::Append(io_loglvl::debug_logs, "Ошибка индекса операции INSERT.\n"
+            "\tДля таблицы " + get_table_name(fields.table));
+      }
+    }
+  }
+  fnames.replace(fnames.size() - 2, fnames.size() - 1, ")");
+  values.replace(values.size() - 2, values.size() - 1, ")");
+  std::stringstream sstr;
+  sstr << fnames << values << ";";
+  return sstr;
+}
+std::stringstream DBConnection::setupDeleteString(
+    const db_table_delete_setup &fields) {
+  std::stringstream sstr;
+  sstr << "DELETE FROM " << get_table_name(fields.table);
+  if (fields.where_condition != nullptr)
+    sstr << " WHERE " << fields.where_condition->GetString();
+  sstr << ";";
+  return sstr;
+}
+std::stringstream DBConnection::setupSelectString(
+    const db_table_select_setup &fields) {
+  std::stringstream sstr;
+  sstr << "SELECT * FROM " << get_table_name(fields.table);
+  if (fields.where_condition != nullptr)
+    sstr << " WHERE " << fields.where_condition->GetString();
+  sstr << ";";
+  return sstr;
+}
+std::stringstream DBConnection::setupUpdateString(
+    const db_table_update_setup &fields) {
+  assert(0);
+}
+
+std::string DBConnection::db_unique_constrain_to_string(
+    const db_table_create_setup &cs) {
+  std::stringstream sstr;
+  sstr << "UNIQUE(";
+  /* если нет сложного ключа, то и использовать его не будем и
+   *   вернём пустую строку */
+  int count = 0;
+  for (const auto &x : cs.fields) {
+    if (x.flags.in_unique_constrain) {
+      ++count;
+      sstr << x.fname << ", ";
+    }
+  }
+  if (count) {
+    std::string str = sstr.str();
+    str.replace(str.size() - 2, str.size() - 1, "),");
+    return str;
+  }
+  return "";
+}
+
+std::string DBConnection::db_reference_to_string(
+    const db_reference &ref) {
+  std::string str;
+  merror_t ew = ref.CheckYourself();
+  if (!ew) {
+    if (ref.is_foreign_key)
+      str += "FOREIGN KEY ";
+    str += "(" + ref.fname + ") REFERENCES " + get_table_name(ref.foreign_table) +
+        " (" + ref.foreign_fname + ")";
+    if (ref.has_on_delete)
+      str += " ON DELETE " + ref.GetReferenceActString(ref.delete_method);
+    if (ref.has_on_update)
+      str += " ON UPDATE " + ref.GetReferenceActString(ref.update_method);
+  } else {
+    error_.SetError(ew,
+        "Проверка поля ссылки на другую таблицу завершилось ошибкой");
+  }
+  return str;
+}
+
+std::string DBConnection::db_primarykey_to_string(
+    const db_complex_pk &pk) {
+  std::string str;
+  if (!pk.fnames.empty()) {
+    str = "PRIMARY KEY (";
+    for (const auto &fname : pk.fnames)
+      str += fname + ", ";
+    str.replace(str.size() - 2, str.size() - 1, ")");
+  } else {
+    error_.SetError(ERROR_DB_TABLE_PKEY, "ни одного первичного ключа "
+        "для таблицы не задано");
+  }
+  return str;
+}

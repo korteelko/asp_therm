@@ -99,30 +99,11 @@ private:
   }
 
   std::string setupConnectionString();
+  std::stringstream setupTableExistsString(db_table t) override;
+  std::stringstream setupInsertString(
+       const db_table_insert_setup &fields) override;
 
-  /* функции сбора строки запроса */
-  /** \brief Сбор строки запроса существования таблицы */
-  std::stringstream setupTableExistsString(db_table t);
-  /** \brief Сбор строки запроса для создания таблицы */
-  std::stringstream setupCreateTableString(const db_table_create_setup &fields);
-  /** \brief Сбор строки запроса для добавления строки */
-  std::stringstream setupInsertString(const db_table_insert_setup &fields);
-  /** \brief Сбор строки запроса для удаления строки */
-  std::stringstream setupDeleteString(const db_table_delete_setup &fields);
-  /** \brief Сбор строки запроса для получения выборки */
-  std::stringstream setupSelectString(const db_table_select_setup &fields);
-  /** \brief Сбор строки запроса для обновления строки */
-  std::stringstream setupUpdateString(const db_table_update_setup &fields);
-
-  /** \brief собрать строку поля БД по значению db_variable */
-  std::string db_variable_to_string(const db_variable &dv);
-  /** \brief собрать строку сложный уникальный парметр */
-  std::string db_unique_constrain_to_string(const db_table_create_setup &cs);
-  /** \brief собрать строку ссылки на другую таблицу
-    *   по значению db_reference */
-  std::string db_reference_to_string(const db_reference &ref);
-  /** \brief собрать строку первичного ключа */
-  std::string db_primarykey_to_string(const db_complex_pk &pk);
+  std::string db_variable_to_string(const db_variable &dv) override;
 
   /* функции исполнения запросов */
   /** \brief Запрос существования таблицы */
@@ -155,7 +136,6 @@ private:
 private:
   /** \brief Указатель на объект подключения */
   std::unique_ptr<pqxx::connection> pconnect_;
-  /* todo: ; */
   // add result data for select queries for example, or IsTableExist
 };
 
