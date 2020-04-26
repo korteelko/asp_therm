@@ -71,7 +71,8 @@ static const char *custom_msg_database[] = {
   "database query setup - database nullptr error ",
   "database table primary key setup error ",
   "database sql query exception ",
-  "database wrong operation name "
+  "database wrong operation name ",
+  "database table column doesn't exists "
 };
 
 const char *GetCustomErrorMsg(unsigned int error) {

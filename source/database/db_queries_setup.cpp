@@ -364,12 +364,12 @@ const db_table_create_setup &db_table_create_setup::
 }
 
 /* db_table_query_basesetup */
-db_table_query_basesetup::db_table_query_basesetup(
+db_query_basesetup::db_query_basesetup(
     db_table table, const db_fields_collection &fields)
   : table(table), fields(fields) {}
 
-db_table_query_basesetup::field_index db_table_query_basesetup::
-    indexByFieldName(const std::string &fname) {
+db_query_basesetup::field_index db_query_basesetup::
+    IndexByFieldName(const std::string &fname) {
   field_index i = 0;
   for (auto const &x : fields) {
     if (x.fname == fname)
@@ -380,18 +380,18 @@ db_table_query_basesetup::field_index db_table_query_basesetup::
 }
 
 /* db_table_insert_setup */
-db_table_insert_setup::db_table_insert_setup(db_table _table,
+db_query_insert_setup::db_query_insert_setup(db_table _table,
     const db_fields_collection &_fields)
-  : db_table_query_basesetup(_table, _fields) {
+  : db_query_basesetup(_table, _fields) {
   update_t = INSERT;
 }
 
 /* todo: сделать шаблон, или вынести в шабло */
-db_table_insert_setup *db_table_insert_setup::Init(
+db_query_insert_setup *db_query_insert_setup::Init(
     const std::vector<model_info> &select_data) {
   if (haveConflict(select_data))
     return nullptr;
-  db_table_insert_setup *ins_setup = new db_table_insert_setup(
+  db_query_insert_setup *ins_setup = new db_query_insert_setup(
       db_table::table_model_info, *ns_tfs::get_fields_collection(
       db_table::table_model_info));
   if (ins_setup)
@@ -400,11 +400,11 @@ db_table_insert_setup *db_table_insert_setup::Init(
   return ins_setup;
 }
 
-db_table_insert_setup *db_table_insert_setup::Init(
+db_query_insert_setup *db_query_insert_setup::Init(
     const std::vector<calculation_info> &select_data) {
   if (haveConflict(select_data))
     return nullptr;
-  db_table_insert_setup *ins_setup = new db_table_insert_setup(
+  db_query_insert_setup *ins_setup = new db_query_insert_setup(
       db_table::table_calculation_info, *ns_tfs::get_fields_collection(
       db_table::table_calculation_info));
   if (ins_setup)
@@ -413,103 +413,103 @@ db_table_insert_setup *db_table_insert_setup::Init(
   return ins_setup;
 }
 
-size_t db_table_insert_setup::RowsSize() const {
+size_t db_query_insert_setup::RowsSize() const {
   assert(0);
 }
 
-void db_table_insert_setup::setValues(const model_info &select_data) {
+void db_query_insert_setup::setValues(const model_info &select_data) {
   row_values values;
   field_index i = -1;
   if (select_data.initialized & model_info::f_model_type) {
-    if ((i = indexByFieldName(MI_MODEL_TYPE)) != field_index_end)
+    if ((i = IndexByFieldName(MI_MODEL_TYPE)) != field_index_end)
       values.emplace(i, std::to_string(
           (int)select_data.short_info.model_type.type));
-    if ((i = indexByFieldName(MI_MODEL_SUBTYPE)) != field_index_end)
+    if ((i = IndexByFieldName(MI_MODEL_SUBTYPE)) != field_index_end)
       values.emplace(i, std::to_string(
           select_data.short_info.model_type.subtype));
   }
   if (select_data.initialized & model_info::f_vers_major)
-    if ((i = indexByFieldName(MI_VERS_MAJOR)) != field_index_end)
+    if ((i = IndexByFieldName(MI_VERS_MAJOR)) != field_index_end)
       values.emplace(i, std::to_string(select_data.short_info.vers_major));
   if (select_data.initialized & model_info::f_vers_minor)
-    if ((i = indexByFieldName(MI_VERS_MINOR)) != field_index_end)
+    if ((i = IndexByFieldName(MI_VERS_MINOR)) != field_index_end)
       values.emplace(i, std::to_string(select_data.short_info.vers_minor));
   if (select_data.initialized & model_info::f_short_info)
-    if ((i = indexByFieldName(MI_SHORT_INFO)) != field_index_end)
+    if ((i = IndexByFieldName(MI_SHORT_INFO)) != field_index_end)
       values.emplace(i, select_data.short_info.short_info);
   values_vec.emplace_back(values);
 }
-void db_table_insert_setup::setValues(const calculation_info &select_data) {
+void db_query_insert_setup::setValues(const calculation_info &select_data) {
   row_values values;
   field_index i = -1;
   if (select_data.initialized & calculation_info::f_model_id)
     if (select_data.model != nullptr)
-      if ((i = indexByFieldName(CI_MODEL_INFO_ID)) != field_index_end)
+      if ((i = IndexByFieldName(CI_MODEL_INFO_ID)) != field_index_end)
         values.emplace(i, std::to_string(select_data.model->id));
   if (select_data.initialized & calculation_info::f_date)
-    if ((i = indexByFieldName(CI_DATE)) != field_index_end)
+    if ((i = IndexByFieldName(CI_DATE)) != field_index_end)
       values.emplace(i, select_data.GetDate());
   if (select_data.initialized & calculation_info::f_time)
-    if ((i = indexByFieldName(CI_TIME)) != field_index_end)
+    if ((i = IndexByFieldName(CI_TIME)) != field_index_end)
       values.emplace(i, select_data.GetTime());
   values_vec.emplace_back(values);
 }
-void db_table_insert_setup::setValues(const calculation_state_info &select_data) {
+void db_query_insert_setup::setValues(const calculation_state_info &select_data) {
   row_values values;
   field_index i = -1;
   if (select_data.initialized & calculation_state_info::f_info)
     if (select_data.calculation != nullptr)
-      if ((i = indexByFieldName(CSL_INFO_ID)) != field_index_end)
+      if ((i = IndexByFieldName(CSL_INFO_ID)) != field_index_end)
         values.emplace(i, std::to_string(select_data.calculation->id));
   if (select_data.initialized & calculation_state_info::f_vol)
-    if ((i = indexByFieldName(CSL_VOLUME)) != field_index_end)
+    if ((i = IndexByFieldName(CSL_VOLUME)) != field_index_end)
       values.emplace(i, std::to_string(select_data.dyn_pars.parm.volume));
   if (select_data.initialized & calculation_state_info::f_pres)
-    if ((i = indexByFieldName(CSL_PRESSURE)) != field_index_end)
+    if ((i = IndexByFieldName(CSL_PRESSURE)) != field_index_end)
       values.emplace(i, std::to_string(select_data.dyn_pars.parm.pressure));
   if (select_data.initialized & calculation_state_info::f_temp)
-    if ((i = indexByFieldName(CSL_TEMPERATURE)) != field_index_end)
+    if ((i = IndexByFieldName(CSL_TEMPERATURE)) != field_index_end)
       values.emplace(i, std::to_string(select_data.dyn_pars.parm.temperature));
   if (select_data.initialized & calculation_state_info::f_dcv)
-    if ((i = indexByFieldName(CSL_HEAT_CV)) != field_index_end)
+    if ((i = IndexByFieldName(CSL_HEAT_CV)) != field_index_end)
       values.emplace(i, std::to_string(select_data.dyn_pars.heat_cap_vol));
   if (select_data.initialized & calculation_state_info::f_dcp)
-    if ((i = indexByFieldName(CSL_HEAT_CP)) != field_index_end)
+    if ((i = IndexByFieldName(CSL_HEAT_CP)) != field_index_end)
       values.emplace(i, std::to_string(select_data.dyn_pars.heat_cap_pres));
   if (select_data.initialized & calculation_state_info::f_din)
-    if ((i = indexByFieldName(CSL_INTERNAL_ENERGY)) != field_index_end)
+    if ((i = IndexByFieldName(CSL_INTERNAL_ENERGY)) != field_index_end)
       values.emplace(i, std::to_string(select_data.dyn_pars.internal_energy));
   if (select_data.initialized & calculation_state_info::f_dbk)
-    if ((i = indexByFieldName(CSL_BETA_KR)) != field_index_end)
+    if ((i = IndexByFieldName(CSL_BETA_KR)) != field_index_end)
       values.emplace(i, std::to_string(select_data.dyn_pars.beta_kr));
   if (select_data.initialized & calculation_state_info::f_enthalpy)
-    if ((i = indexByFieldName(CSL_ENTHALPY)) != field_index_end)
+    if ((i = IndexByFieldName(CSL_ENTHALPY)) != field_index_end)
       values.emplace(i, std::to_string(select_data.enthalpy));
   if (select_data.initialized & calculation_state_info::f_state_phase)
-    if ((i = indexByFieldName(CSL_STATE_PHASE)) != field_index_end)
+    if ((i = IndexByFieldName(CSL_STATE_PHASE)) != field_index_end)
       values.emplace(i, select_data.state_phase);
   values_vec.emplace_back(values);
 }
 
 /* db_table_select_setup */
-db_table_select_setup::db_table_select_setup(db_table _table,
+db_query_select_setup::db_query_select_setup(db_table _table,
     const db_fields_collection &_fields)
-  : db_table_query_basesetup(_table, _fields) {}
+  : db_query_basesetup(_table, _fields) {}
 
-db_table_select_setup *db_table_select_setup::Init(db_table _table) {
-  return new db_table_select_setup(_table, *ns_tfs::get_fields_collection(_table));
+db_query_select_setup *db_query_select_setup::Init(db_table _table) {
+  return new db_query_select_setup(_table, *ns_tfs::get_fields_collection(_table));
 }
 
 /* db_table_update_setup */
-db_table_update_setup *db_table_update_setup::Init(db_table _table) {
-  return new db_table_update_setup(_table, *ns_tfs::get_fields_collection(_table));
+db_query_update_setup *db_query_update_setup::Init(db_table _table) {
+  return new db_query_update_setup(_table, *ns_tfs::get_fields_collection(_table));
 }
 
-db_table_update_setup::db_table_update_setup(db_table _table,
+db_query_update_setup::db_query_update_setup(db_table _table,
     const db_fields_collection &_fields)
-  : db_table_select_setup(_table, _fields) {}
+  : db_query_select_setup(_table, _fields) {}
 
 /* db_table_select_result */
-db_table_select_result::db_table_select_result(
-    const db_table_select_setup &setup)
-  : db_table_query_basesetup(setup) {}
+db_query_select_result::db_query_select_result(
+    const db_query_select_setup &setup)
+  : db_query_basesetup(setup) {}

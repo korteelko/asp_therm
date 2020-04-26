@@ -16,7 +16,9 @@
 
 #include <algorithm>
 #include <map>
+#include <numeric>
 #include <sstream>
+#include <vector>
 
 #include <assert.h>
 
@@ -98,6 +100,74 @@ void DBConnectionPostgre::CloseConnection() {
   }
 }
 
+mstatus_t DBConnectionPostgre::IsTableExists(db_table t, bool *is_exists) {
+  return exec_op<db_table, bool,
+     std::stringstream (DBConnectionPostgre::*)(db_table),
+     void (DBConnectionPostgre::*)(const std::stringstream &, bool *)>(
+         t, is_exists, &DBConnectionPostgre::setupTableExistsString,
+         &DBConnectionPostgre::execIsTableExists);
+}
+
+mstatus_t DBConnectionPostgre::CheckTableFormat(
+    const db_table_create_setup &fields) {
+  // такс, проверяем:
+  //   колонки
+  std::vector<std::string> not_exists_cols;
+  mstatus_t res = exec_op<db_table, std::vector<std::string>,
+     std::stringstream (DBConnectionPostgre::*)(db_table),
+     void (DBConnectionPostgre::*)(const std::stringstream &, std::vector<std::string> *)>(
+         fields.table, &not_exists_cols, &DBConnectionPostgre::setupColumnNamesString,
+         &DBConnectionPostgre::execColumnNamesString);
+  if (is_status_ok(res)) {
+    for (const db_variable &fieldname : fields.fields) {
+      if (std::find(not_exists_cols.begin(), not_exists_cols.end(),
+          fieldname.fname) == not_exists_cols.end()) {
+        error_.SetError(ERROR_DB_COL_EXISTS,
+            "В таблице не существует колонка " + fieldname.fname);
+        break;
+      }
+    }
+  } else {
+    return res;
+  }
+  // todo:
+  //   примари ключ
+
+  //   внешние ключи
+
+  //   уникальные наборы
+
+  return res;
+}
+
+mstatus_t DBConnectionPostgre::UpdateTable(const db_table_create_setup &fields) {
+  std::vector<std::string> not_exists_cols;
+  /* append not exists columns */
+  mstatus_t res = exec_op<db_table, std::vector<std::string>,
+     std::stringstream (DBConnectionPostgre::*)(db_table),
+     void (DBConnectionPostgre::*)(const std::stringstream &, std::vector<std::string> *)>(
+         fields.table, &not_exists_cols, &DBConnectionPostgre::setupColumnNamesString,
+         &DBConnectionPostgre::execColumnNamesString);
+  if (is_status_ok(res)) {
+    // добавить строки
+    for (const db_variable &field: fields.fields) {
+      if (std::find(not_exists_cols.begin(), not_exists_cols.end(),
+          field.fname) == not_exists_cols.end()) {
+        // add column
+        std::pair<db_table, const db_variable &> pdv{fields.table, field};
+        res = exec_op<const std::pair<db_table, const db_variable &>, void,
+            std::stringstream (DBConnectionPostgre::*)(const std::pair<db_table, const db_variable &> &),
+            void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
+                pdv, nullptr, &DBConnectionPostgre::setupAddColumnString,
+                &DBConnectionPostgre::execAddColumn);
+      }
+    }
+  } else {
+    return res;
+  }
+  return STATUS_HAVE_ERROR;
+}
+
 mstatus_t DBConnectionPostgre::CreateTable(
     const db_table_create_setup &fields) {
   return exec_op<db_table_create_setup, void,
@@ -107,47 +177,55 @@ mstatus_t DBConnectionPostgre::CreateTable(
          &DBConnectionPostgre::execCreateTable);
 }
 
-void DBConnectionPostgre::UpdateTable(db_table t,
-    const db_table_update_setup &vals) {
-  (void) t;
-  (void) vals;
-  assert(0);
-}
-
-mstatus_t DBConnectionPostgre::IsTableExists(db_table t, bool *is_exists) {
-  return exec_op<db_table, bool,
-     std::stringstream (DBConnectionPostgre::*)(db_table),
-     void (DBConnectionPostgre::*)(const std::stringstream &, bool *)>(
-         t, is_exists, &DBConnectionPostgre::setupTableExistsString,
-         &DBConnectionPostgre::execIsTableExists);
-}
-
 mstatus_t DBConnectionPostgre::InsertRows(
-    const db_table_insert_setup &insert_data) {
-  return exec_op<db_table_insert_setup, void,
-     std::stringstream (DBConnectionPostgre::*)(const db_table_insert_setup &),
+    const db_query_insert_setup &insert_data) {
+  return exec_op<db_query_insert_setup, void,
+     std::stringstream (DBConnectionPostgre::*)(const db_query_insert_setup &),
      void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
          insert_data, nullptr, &DBConnectionPostgre::setupInsertString,
          &DBConnectionPostgre::execInsert);
 }
 
 mstatus_t DBConnectionPostgre::DeleteRows(
-    const db_table_delete_setup &delete_data) {
-  return exec_op<db_table_delete_setup, void,
-     std::stringstream (DBConnectionPostgre::*)(const db_table_delete_setup &),
+    const db_query_delete_setup &delete_data) {
+  return exec_op<db_query_delete_setup, void,
+     std::stringstream (DBConnectionPostgre::*)(const db_query_delete_setup &),
      void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
          delete_data, nullptr, &DBConnectionPostgre::setupDeleteString,
          &DBConnectionPostgre::execDelete);
 }
 
 mstatus_t DBConnectionPostgre::SelectRows(
-    const db_table_select_setup &select_data) {
-  assert(0);
+    const db_query_select_setup &select_data,
+    db_query_select_result *result_data) {
+  pqxx::result result;
+  result_data->values_vec.clear();
+  mstatus_t res = exec_op<db_query_select_setup, pqxx::result,
+     std::stringstream (DBConnectionPostgre::*)(const db_query_select_setup &),
+     void (DBConnectionPostgre::*)(const std::stringstream &, pqxx::result *)>(
+         select_data, &result, &DBConnectionPostgre::setupSelectString,
+         &DBConnectionPostgre::execSelect);
+  for (pqxx::const_result_iterator::reference row: result) {
+    db_query_basesetup::row_values rval;
+    db_query_basesetup::field_index ind = 0;
+    for (const auto &field: select_data.fields) {
+      std::string fieldname = field.fname;
+      if (row[fieldname] != row.end())
+        rval.emplace(ind, row[fieldname].c_str());
+      ++ind;
+    }
+    result_data->values_vec.push_back(rval);
+  }
+  return res;
 }
 
 mstatus_t DBConnectionPostgre::UpdateRows(
-    const db_table_update_setup &update_data) {
-  assert(0);
+    const db_query_update_setup &update_data) {
+  return exec_op<db_query_update_setup, void,
+     std::stringstream (DBConnectionPostgre::*)(const db_query_update_setup &),
+     void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
+         update_data, nullptr, &DBConnectionPostgre::setupUpdateString,
+         &DBConnectionPostgre::execUpdate);
 }
 
 
@@ -169,7 +247,7 @@ std::stringstream DBConnectionPostgre::setupTableExistsString(db_table t) {
   return select_ss;
 }
 std::stringstream DBConnectionPostgre::setupInsertString(
-    const db_table_insert_setup &fields) {
+    const db_query_insert_setup &fields) {
   std::string fnames;
   if (fields.values_vec.empty()) {
     error_.SetError(ERROR_DB_VARIABLE, "Нет данных для INSERT операции");
@@ -207,6 +285,18 @@ std::stringstream DBConnectionPostgre::setupInsertString(
   return sstr;
 }
 
+std::stringstream DBConnectionPostgre::setupColumnNamesString(db_table t) {
+  std::stringstream select_ss;
+  select_ss << "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS "
+      "WHERE TABLE_NAME = '" << get_table_name(t) << "';";
+  return select_ss;
+}
+
+void DBConnectionPostgre::execNoReturn(const std::stringstream &sstr) {
+  pqxx::work tr(*pconnect_);
+  tr.exec0(sstr.str());
+  tr.commit();
+}
 void DBConnectionPostgre::execIsTableExists(
     const std::stringstream &sstr, bool *is_exists) {
   pqxx::work tr(*pconnect_);
@@ -220,20 +310,35 @@ void DBConnectionPostgre::execIsTableExists(
           "'\n") ;
   }
 }
-void DBConnectionPostgre::execCreateTable(const std::stringstream &sstr, void *) {
+void DBConnectionPostgre::execColumnNamesString(
+    const std::stringstream &sstr, std::vector<std::string> *column_names) {
+  column_names->clear();
   pqxx::work tr(*pconnect_);
-  tr.exec0(sstr.str());
-  tr.commit();
+  pqxx::result trres(tr.exec(sstr.str()));
+  if (!trres.empty()) {
+    std::transform(trres.begin(), trres.end(), column_names->end(),
+        [](pqxx::const_result_iterator::reference x)
+            { return trim_str(x[0].as<std::string>()); });
+    if (IS_DEBUG_MODE) {
+      std::string cols = std::accumulate(
+          column_names->begin(), column_names->end(), std::string(),
+          [](std::string &r, const std::string &n) { return r + n; });
+      Logging::Append(io_loglvl::debug_logs, "Ответ на запрос БД:"
+          + sstr.str() + "\t'" + cols + "'\n") ;
+    }
+  }
+}
+void DBConnectionPostgre::execAddColumn(const std::stringstream &sstr, void *) {
+  execNoReturn(sstr);
+}
+void DBConnectionPostgre::execCreateTable(const std::stringstream &sstr, void *) {
+  execNoReturn(sstr);
 }
 void DBConnectionPostgre::execInsert(const std::stringstream &sstr, void *) {
-  pqxx::work tr(*pconnect_);
-  tr.exec0(sstr.str());
-  tr.commit();
+  execNoReturn(sstr);
 }
 void DBConnectionPostgre::execDelete(const std::stringstream &sstr, void *) {
-  pqxx::work tr(*pconnect_);
-  tr.exec0(sstr.str());
-  tr.commit();
+  execNoReturn(sstr);
 }
 void DBConnectionPostgre::execSelect(const std::stringstream &sstr,
     pqxx::result *result) {
@@ -242,7 +347,7 @@ void DBConnectionPostgre::execSelect(const std::stringstream &sstr,
   tr.commit();
 }
 void DBConnectionPostgre::execUpdate(const std::stringstream &sstr, void *) {
-  assert(0);
+  execNoReturn(sstr);
 }
 
 std::string DBConnectionPostgre::db_variable_to_string(
@@ -254,16 +359,16 @@ std::string DBConnectionPostgre::db_variable_to_string(
     auto itDBtype = postgresql_impl::str_db_types.find(dv.type);
     if (itDBtype != postgresql_impl::str_db_types.end()) {
       ss << postgresql_impl::str_db_types[dv.type];
+      if (dv.flags.is_array)
+        ss << "(" << dv.len << ")";
+      if (!dv.flags.can_be_null)
+        ss << " NOT NULL";
+      if (dv.flags.has_default)
+        ss << " DEFAULT " << dv.default_str;
     } else {
       error_.SetError(ERROR_DB_VARIABLE,
           "Тип переменной не задан для данной имплементации БД");
     }
-    if (dv.flags.is_array)
-      ss << "(" << dv.len << ")";
-    if (!dv.flags.can_be_null)
-      ss << " NOT NULL";
-    if (dv.flags.has_default)
-      ss << " DEFAULT " << dv.default_str;
   } else {
     error_.SetError(ew,
         "Проверка параметров поля таблицы завершилось ошибкой");

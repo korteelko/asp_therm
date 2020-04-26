@@ -105,9 +105,11 @@ std::string db_parameters::GetInfo() const {
 DBConnection::DBConnection(const db_parameters &parameters)
   : status_(STATUS_DEFAULT), parameters_(parameters), is_connected_(false),
     is_dry_run_(true) {
-  // дефайн на гугло десты БД
+  // дефайн на гугло десты БД, чтобы не линковать много объектников
 #if !defined(DATABASE_TEST)
   is_dry_run_ = ProgramState::Instance().IsDryRunDBConn();
+#else
+  is_dry_run_ = false;
 #endif  // !DATABASE_TEST
 }
 
@@ -130,11 +132,13 @@ void DBConnection::LogError() {
 }
 
 /* setup quries text */
-std::stringstream DBConnection::setupTableExistsString(db_table t) {
-  assert(0 && "overrided");
-  return std::stringstream();
+std::stringstream DBConnection::setupAddColumnString(
+    const std::pair<db_table, const db_variable &> &pdv) {
+  std::stringstream sstr;
+  sstr << "ALTER TABLE " << get_table_name(pdv.first) << " ADD COLUMN "
+      << db_variable_to_string(pdv.second) << ";";
+  return sstr;
 }
-
 std::stringstream DBConnection::setupCreateTableString(
     const db_table_create_setup &fields) {
   std::stringstream sstr;
@@ -166,7 +170,7 @@ std::stringstream DBConnection::setupCreateTableString(
   return sstr;
 }
 std::stringstream DBConnection::setupInsertString(
-    const db_table_insert_setup &fields) {
+    const db_query_insert_setup &fields) {
   std::string fnames;
   if (fields.values_vec.empty()) {
     error_.SetError(ERROR_DB_VARIABLE, "Нет данных для INSERT операции");
@@ -195,7 +199,7 @@ std::stringstream DBConnection::setupInsertString(
   return sstr;
 }
 std::stringstream DBConnection::setupDeleteString(
-    const db_table_delete_setup &fields) {
+    const db_query_delete_setup &fields) {
   std::stringstream sstr;
   sstr << "DELETE FROM " << get_table_name(fields.table);
   if (fields.where_condition != nullptr)
@@ -204,7 +208,7 @@ std::stringstream DBConnection::setupDeleteString(
   return sstr;
 }
 std::stringstream DBConnection::setupSelectString(
-    const db_table_select_setup &fields) {
+    const db_query_select_setup &fields) {
   std::stringstream sstr;
   sstr << "SELECT * FROM " << get_table_name(fields.table);
   if (fields.where_condition != nullptr)
@@ -213,8 +217,21 @@ std::stringstream DBConnection::setupSelectString(
   return sstr;
 }
 std::stringstream DBConnection::setupUpdateString(
-    const db_table_update_setup &fields) {
-  assert(0);
+    const db_query_update_setup &fields) {
+  std::stringstream sstr;
+  if (!fields.values.empty()) {
+    sstr << "UPDATE " << get_table_name(fields.table)
+        << " SET ";
+    std::string set_str = "";
+    for (const auto &x: fields.values)
+      set_str += fields.fields[x.first].fname + " = " + x.second + ",";
+    set_str[set_str.size() - 1] = ' ';
+    sstr << set_str;
+    if (fields.where_condition != nullptr)
+      sstr << " WHERE " << fields.where_condition->GetString();
+    sstr << ";";
+  }
+  return sstr;
 }
 
 std::string DBConnection::db_unique_constrain_to_string(

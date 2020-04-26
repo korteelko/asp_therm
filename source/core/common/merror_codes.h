@@ -101,6 +101,8 @@
 #define ERROR_DB_SQL_QUERY    (0x0700 | ERROR_DATABASE_T)
 /** \brief Ошибочная операция СУБД */
 #define ERROR_DB_OPERATION    (0x0800 | ERROR_DATABASE_T)
+/** \brief Колонка не существует */
+#define ERROR_DB_COL_EXISTS   (0x0900 | ERROR_DATABASE_T)
 
 
 const char *GetCustomErrorMsg(unsigned int error);

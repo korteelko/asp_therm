@@ -21,9 +21,8 @@
 #include "ErrorWrap.h"
 
 #include <string>
+#include <utility>
 #include <vector>
-
-#include <assert.h>
 
 
 /** \brief структура содержит параметры коннектинга */
@@ -70,23 +69,25 @@ public:
   virtual mstatus_t SetupConnection() = 0;
   virtual void CloseConnection() = 0;
 
-  /* вызывается командами! */
+  /* вызывается командами */
+  /** \brief Проверить существование таблицы */
   virtual mstatus_t IsTableExists(db_table t, bool *is_exists) = 0;
+  /** \brief Проверить формат таблицы
+    * \note Как метод 'UpdateTable', только не изменяет состояние таблицы */
+  virtual mstatus_t CheckTableFormat(const db_table_create_setup &fields) = 0;
+  /** \brief Обновить формат таблицы */
+  virtual mstatus_t UpdateTable(const db_table_create_setup &fields) = 0;
+  /** \brief Создать таблицу */
   virtual mstatus_t CreateTable(const db_table_create_setup &fields) = 0;
-  //virtual mstatus_t CheckTableFormat(const db_table_create_setup &fields) = 0;
-  virtual void UpdateTable(db_table t, const db_table_update_setup &vals) = 0;
 
 
   /** \brief Добавить новую строку в БД
-    * \return true если строка добавлена */
-  virtual mstatus_t InsertRows(const db_table_insert_setup &insert_data) = 0;
-  virtual mstatus_t DeleteRows(const db_table_delete_setup &delete_data) = 0;
-  virtual mstatus_t SelectRows(const db_table_select_setup &select_data) = 0;
-  virtual mstatus_t UpdateRows(const db_table_update_setup &update_data) = 0;
-  // virtual void SelectModelInfo(const db_table_update_setup &select_data) = 0;
-
-  //virtual void InsertCalculationInfo(const calculation_info &ci) = 0;
-  //virtual void InsertCalculationStateLog(const calculation_state_info &sl) = 0;
+    * \return STATUS_OK если строка добавлена */
+  virtual mstatus_t InsertRows(const db_query_insert_setup &insert_data) = 0;
+  virtual mstatus_t DeleteRows(const db_query_delete_setup &delete_data) = 0;
+  virtual mstatus_t SelectRows(const db_query_select_setup &select_data,
+      db_query_select_result *result_data) = 0;
+  virtual mstatus_t UpdateRows(const db_query_update_setup &update_data) = 0;
   /* посюда */
 
   mstatus_t GetStatus() const;
@@ -103,22 +104,28 @@ protected:
 
   /* функции сбора строки запроса */
   /** \brief Сбор строки запроса существования таблицы */
-  virtual std::stringstream setupTableExistsString(db_table t);
+  virtual std::stringstream setupTableExistsString(db_table t) = 0;
+  /** \brief Сбор строки на получение имён столбцов таблицы
+    * \note не знаю как она в унифицированом виде может выглядеть */
+  virtual std::stringstream setupColumnNamesString(db_table t) = 0;
+  /** \brief Сбор строки для добавления колонки */
+  virtual std::stringstream setupAddColumnString(
+      const std::pair<db_table, const db_variable &> &pdv);
   /** \brief Сбор строки запроса для создания таблицы */
   virtual std::stringstream setupCreateTableString(
       const db_table_create_setup &fields);
   /** \brief Сбор строки запроса для добавления строки */
   virtual std::stringstream setupInsertString(
-      const db_table_insert_setup &fields);
+      const db_query_insert_setup &fields);
   /** \brief Сбор строки запроса для удаления строки */
   virtual std::stringstream setupDeleteString(
-      const db_table_delete_setup &fields);
+      const db_query_delete_setup &fields);
   /** \brief Сбор строки запроса для получения выборки */
   virtual std::stringstream setupSelectString(
-      const db_table_select_setup &fields);
+      const db_query_select_setup &fields);
   /** \brief Сбор строки запроса для обновления строки */
   virtual std::stringstream setupUpdateString(
-      const db_table_update_setup &fields);
+      const db_query_update_setup &fields);
 
   /** \brief собрать строку поля БД по значению db_variable
     * \note Оказалось завязано на интерпретацию переменных

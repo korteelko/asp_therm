@@ -16,6 +16,7 @@
 #include "db_connection.h"
 #include "program_state.h"
 
+#include "ErrorWrap.h"
 #include "Logging.h"
 
 #include <pqxx/pqxx>
@@ -42,15 +43,25 @@ public:
   void CloseConnection() override;
 
   mstatus_t IsTableExists(db_table t, bool *is_exists) override;
+  mstatus_t CheckTableFormat(const db_table_create_setup &fields) override;
+  mstatus_t UpdateTable(const db_table_create_setup &fields) override;
   mstatus_t CreateTable(const db_table_create_setup &fields) override;
-  void UpdateTable(db_table t, const db_table_update_setup &vals) override;
 
-  mstatus_t InsertRows(const db_table_insert_setup &insert_data) override;
-  mstatus_t DeleteRows(const db_table_delete_setup &delete_data) override;
-  mstatus_t SelectRows(const db_table_select_setup &select_data) override;
-  mstatus_t UpdateRows(const db_table_update_setup &update_data) override;
+  mstatus_t InsertRows(const db_query_insert_setup &insert_data) override;
+  mstatus_t DeleteRows(const db_query_delete_setup &delete_data) override;
+  mstatus_t SelectRows(const db_query_select_setup &select_data,
+      db_query_select_result *result_data) override;
+  mstatus_t UpdateRows(const db_query_update_setup &update_data) override;
 
 private:
+  /** \brief Шаблон функции абстрагирующей операции с БД:
+    *  1) Собрать запрос.
+    *  2) Отправить и обработать результат.
+    *  3) Обработать ошибки.
+    * \param data данные для сборки запроса
+    * \param res указатель на хранилище результата
+    * \param setup_m функция сборки текста запроса
+    * \param exec_m функция отправки запроса, парсинга результата */
   template <class DataT, class OutT, class SetupF, class ExecF>
   mstatus_t exec_op(const DataT &data, OutT *res,
       SetupF setup_m, ExecF exec_m) {
@@ -99,15 +110,25 @@ private:
   }
 
   std::string setupConnectionString();
+
   std::stringstream setupTableExistsString(db_table t) override;
+  std::stringstream setupColumnNamesString(db_table t) override;
   std::stringstream setupInsertString(
-       const db_table_insert_setup &fields) override;
+       const db_query_insert_setup &fields) override;
 
   std::string db_variable_to_string(const db_variable &dv) override;
 
   /* функции исполнения запросов */
+  /** \brief Обычный запрос к БД без возвращаемого результата */
+  void execNoReturn(const std::stringstream &sstr);
+
   /** \brief Запрос существования таблицы */
   void execIsTableExists(const std::stringstream &sstr, bool *is_exists);
+  /** \brief Запрос существования таблицы */
+  void execColumnNamesString(const std::stringstream &sstr,
+      std::vector<std::string> *column_names);
+  /** \brief Запрос добавления колонки в таблицу */
+  void execAddColumn(const std::stringstream &sstr, void *);
   /** \brief Запрос создания таблицы */
   void execCreateTable(const std::stringstream &sstr, void *);
   /** \brief Запрос на добавление строки */

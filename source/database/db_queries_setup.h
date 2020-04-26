@@ -125,9 +125,9 @@ const db_fields_collection *get_fields_collection(db_table dt);
 
 /* queries setup */
 /** \brief базовая структура сборки запроса */
-struct db_table_query_basesetup {
+struct db_query_basesetup {
   typedef int32_t field_index;
-  /** \brief Набор данных  */
+  /** \brief Набор данных */
   typedef std::map<field_index, std::string> row_values;
 
   enum db_query_t {
@@ -140,13 +140,13 @@ struct db_table_query_basesetup {
   static constexpr int field_index_end = -1;
 
 public:
-  virtual ~db_table_query_basesetup() = default;
+  virtual ~db_query_basesetup() = default;
+
+  field_index IndexByFieldName(const std::string &fname);
 
 protected:
-  db_table_query_basesetup(db_table table,
+  db_query_basesetup(db_table table,
       const db_fields_collection &fields);
-
-  field_index indexByFieldName(const std::string &fname);
 
 public:
   ErrorWrap error;
@@ -162,28 +162,28 @@ public:
 
 
 /** \brief структура для сборки INSERT запросов */
-struct db_table_insert_setup: public db_table_query_basesetup {
+struct db_query_insert_setup: public db_query_basesetup {
 public:
-  static db_table_insert_setup *Init(
+  static db_query_insert_setup *Init(
       const std::vector<model_info> &select_data);
-  static db_table_insert_setup *Init(
+  static db_query_insert_setup *Init(
       const std::vector<calculation_info> &select_data);
-  static db_table_insert_setup *Init(
+  static db_query_insert_setup *Init(
       const std::vector<calculation_state_info> &select_data);
 
   size_t RowsSize() const;
 
-  virtual ~db_table_insert_setup() = default;
+  virtual ~db_query_insert_setup() = default;
 
 protected:
-  db_table_insert_setup(db_table _table, const db_fields_collection &_fields);
+  db_query_insert_setup(db_table _table, const db_fields_collection &_fields);
 
   template <class DataInfo, class Table>
-  static db_table_insert_setup *init(Table t,
+  static db_query_insert_setup *init(Table t,
       const std::vector<DataInfo> &select_data) {
     if (haveConflict(select_data))
       return nullptr;
-    db_table_insert_setup *ins_setup = new db_table_insert_setup(t,
+    db_query_insert_setup *ins_setup = new db_query_insert_setup(t,
         *table_fields_setup::get_fields_collection(t));
     if (ins_setup)
       for (const auto &x : select_data)
@@ -215,46 +215,46 @@ public:
 
 
 /** \brief структура для сборки SELECT(и DELETE) запросов */
-struct db_table_select_setup: public db_table_query_basesetup {
+struct db_query_select_setup: public db_query_basesetup {
 public:
-  static db_table_select_setup *Init(db_table _table);
+  static db_query_select_setup *Init(db_table _table);
 
-  virtual ~db_table_select_setup() = default;
+  virtual ~db_query_select_setup() = default;
 
 public:
   /** \brief Сетап выражения where для SELECT/UPDATE/DELETE запросов */
   std::unique_ptr<db_condition_tree> where_condition;
 
 protected:
-  db_table_select_setup(db_table _table,
+  db_query_select_setup(db_table _table,
       const db_fields_collection &_fields);
 };
 /** \brief псевдоним DELETE запросов */
-typedef db_table_select_setup db_table_delete_setup;
+typedef db_query_select_setup db_query_delete_setup;
 
 
 /** \brief структура для сборки UPDATE запросов */
-struct db_table_update_setup: public db_table_select_setup {
+struct db_query_update_setup: public db_query_select_setup {
 public:
-  static db_table_update_setup *Init(db_table _table);
+  static db_query_update_setup *Init(db_table _table);
 
 public:
   row_values values;
 
 protected:
-  db_table_update_setup(db_table _table,
+  db_query_update_setup(db_table _table,
       const db_fields_collection &_fields);
 };
 
 
 /* select result */
 /** \brief структура для сборки INSERT запросов */
-struct db_table_select_result: public db_table_query_basesetup {
+struct db_query_select_result: public db_query_basesetup {
 public:
-  db_table_select_result() = delete;
-  db_table_select_result(const db_table_select_setup &setup);
+  db_query_select_result() = delete;
+  db_query_select_result(const db_query_select_setup &setup);
 
-  virtual ~db_table_select_result() = default;
+  virtual ~db_query_select_result() = default;
 
 public:
   /** \brief Набор значений для операций INSERT/UPDATE */
