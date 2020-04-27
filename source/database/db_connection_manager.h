@@ -11,9 +11,11 @@
 #define _DATABASE__DB_CONNECTION_MANAGER_H_
 
 #include "db_connection.h"
+#include "db_query.h"
 #include "ErrorWrap.h"
 #include "ThreadWrap.h"
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -75,10 +77,19 @@ public:
   mstatus_t CheckConnection();
   // static const std::vector<std::string> &GetJSONKeys();
   /** \brief Попробовать законектится к БД */
-  mstatus_t ResetConnectionParameters(
-      const db_parameters &parameters);
+  mstatus_t ResetConnectionParameters(const db_parameters &parameters);
+  /** \brief Проверка существования таблицы */
   bool IsTableExist(db_table dt);
+  /** \brief Создать таблицу */
   mstatus_t CreateTable(db_table dt);
+  /* insert operations */
+  /** \brief Сохранить в БД строку model_info */
+  mstatus_t SaveModelInfo(model_info &mi);
+  /** \brief Сохранить в БД строку calculation_info */
+  mstatus_t SaveCalculationInfo(calculation_info &ci);
+  /** \brief Сохранить в БД строку calculation_info */
+  mstatus_t SaveCalculationStateInfo(std::vector<calculation_state_info> &csi);
+
   /* todo: select, update methods */
 
   /* rename method to GetError */
@@ -91,7 +102,42 @@ private:
   class DBConnectionCreator;
 
 private:
+  /** \brief
+    *
+  */
+  template <class DataT, class OutT, class SetupQueryF>
+  mstatus_t exec_wrap(DataT data, OutT *res, SetupQueryF setup_m) {
+    if (status_ == STATUS_DEFAULT)
+      status_ = CheckConnection();
+    if (db_connection_ && is_status_aval(status_)) {
+      Transaction tr(db_connection_.get());
+      tr.AddQuery(QuerySmartPtr(
+          new DBQuerySetupConnection(db_connection_.get())));
+      // добавить специализированные запросы
+      //   true - если вызов функции успешен
+      std::invoke(setup_m, *this, &tr, data, res);
+      tr.AddQuery(QuerySmartPtr(
+          new DBQueryCloseConnection(db_connection_.get())));
+      status_ = tryExecuteTransaction(tr);
+    } else {
+      error_.SetError(ERROR_DB_CONNECTION, "Не удалось установить "
+          "соединение для БД: " + parameters_.GetInfo());
+      status_ = STATUS_HAVE_ERROR;
+    }
+    return status_;
+  }
+
+  /** \brief Проинициализировать соединение с БД */
   void initDBConnection();
+
+  /* добавить в транзакцию соответствующий запрос */
+  /** \brief  */
+  void isTableExist(Transaction *tr, db_table dt, bool *is_exists);
+  /** \brief  */
+  void createTable(Transaction *tr, db_table dt, void *);
+  /** \brief  */
+  void saveRow(Transaction *tr, const db_query_insert_setup &qi, void *);
+
   /** \brief провести транзакцию tr из собраных запросов(строк) */
   [[nodiscard]]
   mstatus_t tryExecuteTransaction(Transaction &tr);

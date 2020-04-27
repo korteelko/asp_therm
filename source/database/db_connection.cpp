@@ -171,21 +171,18 @@ std::stringstream DBConnection::setupCreateTableString(
 }
 std::stringstream DBConnection::setupInsertString(
     const db_query_insert_setup &fields) {
-  std::string fnames;
   if (fields.values_vec.empty()) {
     error_.SetError(ERROR_DB_VARIABLE, "Нет данных для INSERT операции");
     return std::stringstream();
   }
-  fnames = "INSERT INTO " + get_table_name(fields.table) + " (";
+  std::string fnames = "INSERT INTO " + get_table_name(fields.table) + " (";
   std::string values = "VALUES (";
   std::vector<std::string> rows(fields.values_vec.size());
-  db_variable::db_var_type t;
   for (const auto &row: fields.values_vec) {
     for (const auto &x : row) {
       if (x.first >= 0 && x.first < fields.fields.size()) {
         fnames += fields.fields[x.first].fname + ", ";
-        t = fields.fields[x.first].type;
-          values += x.second + ", ";
+        values += x.second + ", ";
       } else {
         Logging::Append(io_loglvl::debug_logs, "Ошибка индекса операции INSERT.\n"
             "\tДля таблицы " + get_table_name(fields.table));
@@ -195,7 +192,7 @@ std::stringstream DBConnection::setupInsertString(
   fnames.replace(fnames.size() - 2, fnames.size() - 1, ")");
   values.replace(values.size() - 2, values.size() - 1, ")");
   std::stringstream sstr;
-  sstr << fnames << values << ";";
+  sstr << fnames << " " << values << ";";
   return sstr;
 }
 std::stringstream DBConnection::setupDeleteString(

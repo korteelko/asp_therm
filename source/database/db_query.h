@@ -11,6 +11,7 @@
 #define _DATABASE__DB_QUERY_H_
 
 #include "db_defines.h"
+#include "db_queries_setup.h"
 #include "gas_description.h"
 #include "ErrorWrap.h"
 
@@ -25,20 +26,25 @@ struct db_table_create_setup;
 /** \brief абстрактный класс запросов */
 class DBQuery {
 public:
-  bool IsPerformed() const {return is_performed_;}
+  bool IsPerformed() const { return is_performed_; }
 
   void LogError();
 
-  virtual mstatus_t Execute() = 0;
+  /** \brief Обёртка над функцией исполнения команды */
+  virtual mstatus_t Execute();
   virtual void unExecute() = 0;
   virtual ~DBQuery();
 
 protected:
   DBQuery(DBConnection *db_ptr);
+  /** \brief Функция исполнения команды */
+  virtual mstatus_t exec() = 0;
+  virtual std::string q_info() = 0;
 
 protected:
   // std::string query_body_;
   mstatus_t status_;
+  /** \brief Указатель на подключение к БД */
   DBConnection *db_ptr_;
   bool is_performed_;
 };
@@ -49,9 +55,12 @@ typedef std::vector<QuerySmartPtr> QueryContainer;
 class DBQuerySetupConnection: public DBQuery {
 public:
   DBQuerySetupConnection(DBConnection *db_ptr);
-  mstatus_t Execute() override;
   /** \brief отключиться от бд */
   void unExecute() override;
+
+protected:
+  mstatus_t exec() override;
+  std::string q_info() override;
 };
 
 /** \brief Запрос отключения от бд */
@@ -61,15 +70,22 @@ public:
   mstatus_t Execute() override;
   /** \brief не делать ничего */
   void unExecute() override;
+
+protected:
+  mstatus_t exec() override;
+  std::string q_info() override;
 };
 
 /** \brief Запрос проверки существования таблицы в бд */
-class DBQueryIsTableExist: public DBQuery {
+class DBQueryIsTableExists: public DBQuery {
 public:
-  DBQueryIsTableExist(DBConnection *db_ptr, db_table dt, bool &is_exists);
-  mstatus_t Execute() override;
+  DBQueryIsTableExists(DBConnection *db_ptr, db_table dt, bool &is_exists);
   /** \brief не делать ничего */
   void unExecute() override;
+
+protected:
+  mstatus_t exec() override;
+  std::string q_info() override;
 
 private:
   db_table table_;
@@ -79,51 +95,48 @@ private:
 /** \brief Запрос создания таблицы в бд */
 class DBQueryCreateTable: public DBQuery {
 public:
-  DBQueryCreateTable(DBConnection *db_ptr, const db_table_create_setup &create_setup);
-  mstatus_t Execute() override;
+  DBQueryCreateTable(DBConnection *db_ptr,
+      const db_table_create_setup &create_setup);
+ // mstatus_t Execute() override;
   /** \brief обычный rollback создания таблицы */
   void unExecute() override;
+
+protected:
+  mstatus_t exec() override;
+  std::string q_info() override;
 
 private:
   const db_table_create_setup &create_setup;
 };
 
-
-
+/** \brief Запрос обновления формата таблицы в бд
+  * \note Обновление таблицы БД */
 class DBQueryUpdateTable: public DBQuery {
 public:
-  DBQueryUpdateTable(const std::string &query);
-  DBQueryUpdateTable(
-      DBConnection *db_ptr, const std::string &query);
+  DBQueryUpdateTable(DBConnection *db_ptr,
+      const db_table_create_setup &table_setup);
   mstatus_t Execute() override;
   void unExecute() override;
+
+protected:
+  mstatus_t exec() override;
+  std::string q_info() override;
 };
 
-class DBQueryInsertModelInfo: public DBQuery {
+/** \brief Запрос на добавление строки */
+class DBQueryInsertRows: public DBQuery {
 public:
-  DBQueryInsertModelInfo(const std::string &query);
-  DBQueryInsertModelInfo(
-      DBConnection *db_ptr, const std::string &query);
-  mstatus_t Execute() override;
+  DBQueryInsertRows(DBConnection *db_ptr,
+      const db_query_insert_setup &insert_setup);
+ // mstatus_t Execute() override;
   void unExecute() override;
-};
 
-class DBQueryInsertCalculationInfo: public DBQuery {
-public:
-  DBQueryInsertCalculationInfo(const std::string &query);
-  DBQueryInsertCalculationInfo(
-      DBConnection *db_ptr, const std::string &query);
-  mstatus_t Execute() override;
-  void unExecute() override;
-};
+protected:
+  mstatus_t exec() override;
+  std::string q_info() override;
 
-class DBQueryInsertCalculationStateLog: public DBQuery {
-public:
-  DBQueryInsertCalculationStateLog(const std::string &query);
-  DBQueryInsertCalculationStateLog(
-      DBConnection *db_ptr, const std::string &query);
-  mstatus_t Execute() override;
-  void unExecute() override;
+private:
+  const db_query_insert_setup &insert_setup;
 };
 
 #endif  // !_DATABASE__DB_QUERY_H_

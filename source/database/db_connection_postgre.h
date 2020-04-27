@@ -54,7 +54,7 @@ public:
   mstatus_t UpdateRows(const db_query_update_setup &update_data) override;
 
 private:
-  /** \brief Шаблон функции абстрагирующей операции с БД:
+  /** \brief Шаблон функции оборачивающий операции с БД:
     *  1) Собрать запрос.
     *  2) Отправить и обработать результат.
     *  3) Обработать ошибки.
@@ -63,12 +63,14 @@ private:
     * \param setup_m функция сборки текста запроса
     * \param exec_m функция отправки запроса, парсинга результата */
   template <class DataT, class OutT, class SetupF, class ExecF>
-  mstatus_t exec_op(const DataT &data, OutT *res,
+  mstatus_t exec_wrap(const DataT &data, OutT *res,
       SetupF setup_m, ExecF exec_m) {
     // setup content of query
     std::stringstream sstr = std::invoke(setup_m, *this, data);
-    if (is_connected_ && pconnect_) {
-      if (pconnect_->is_open() && !error_.GetErrorCode()) {
+    sstr.seekg(0, std::ios::end);
+    auto sstr_len = sstr.tellg();
+    if (is_connected_ && pconnect_ && sstr_len) {
+      if (pconnect_->is_open() && (!error_.GetErrorCode())) {
         try {
           // execute query
           std::invoke(exec_m, *this, sstr, res);
@@ -98,8 +100,13 @@ private:
       }
     } else {
       if (is_dry_run_) {
+        status_ = STATUS_OK;
         // dry_run_ programm setup
-        Logging::Append(io_loglvl::debug_logs, "dry_run: " + sstr.str());
+        if (sstr_len) {
+          Logging::Append(io_loglvl::debug_logs, "dry_run: " + sstr.str());
+        } else {
+          Logging::Append(io_loglvl::debug_logs, "dry_run: 'empty query!'");
+        }
       } else {
         // error - not connected
         error_.SetError(ERROR_DB_CONNECTION);

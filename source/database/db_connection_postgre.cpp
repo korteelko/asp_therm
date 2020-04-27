@@ -82,6 +82,7 @@ mstatus_t DBConnectionPostgre::SetupConnection() {
       status_ = STATUS_HAVE_ERROR;
     }
   } else {
+    status_ = STATUS_OK;
     Logging::Append(io_loglvl::debug_logs, "dry_run connect:" + connect_str);
   }
   return status_;
@@ -96,12 +97,13 @@ void DBConnectionPostgre::CloseConnection() {
           + parameters_.name);
   }
   if (is_dry_run_) {
+    status_ = STATUS_OK;
     Logging::Append(io_loglvl::debug_logs, "dry_run disconect");
   }
 }
 
 mstatus_t DBConnectionPostgre::IsTableExists(db_table t, bool *is_exists) {
-  return exec_op<db_table, bool,
+  return exec_wrap<db_table, bool,
      std::stringstream (DBConnectionPostgre::*)(db_table),
      void (DBConnectionPostgre::*)(const std::stringstream &, bool *)>(
          t, is_exists, &DBConnectionPostgre::setupTableExistsString,
@@ -113,7 +115,7 @@ mstatus_t DBConnectionPostgre::CheckTableFormat(
   // такс, проверяем:
   //   колонки
   std::vector<std::string> not_exists_cols;
-  mstatus_t res = exec_op<db_table, std::vector<std::string>,
+  mstatus_t res = exec_wrap<db_table, std::vector<std::string>,
      std::stringstream (DBConnectionPostgre::*)(db_table),
      void (DBConnectionPostgre::*)(const std::stringstream &, std::vector<std::string> *)>(
          fields.table, &not_exists_cols, &DBConnectionPostgre::setupColumnNamesString,
@@ -143,7 +145,7 @@ mstatus_t DBConnectionPostgre::CheckTableFormat(
 mstatus_t DBConnectionPostgre::UpdateTable(const db_table_create_setup &fields) {
   std::vector<std::string> not_exists_cols;
   /* append not exists columns */
-  mstatus_t res = exec_op<db_table, std::vector<std::string>,
+  mstatus_t res = exec_wrap<db_table, std::vector<std::string>,
      std::stringstream (DBConnectionPostgre::*)(db_table),
      void (DBConnectionPostgre::*)(const std::stringstream &, std::vector<std::string> *)>(
          fields.table, &not_exists_cols, &DBConnectionPostgre::setupColumnNamesString,
@@ -155,7 +157,7 @@ mstatus_t DBConnectionPostgre::UpdateTable(const db_table_create_setup &fields) 
           field.fname) == not_exists_cols.end()) {
         // add column
         std::pair<db_table, const db_variable &> pdv{fields.table, field};
-        res = exec_op<const std::pair<db_table, const db_variable &>, void,
+        res = exec_wrap<const std::pair<db_table, const db_variable &>, void,
             std::stringstream (DBConnectionPostgre::*)(const std::pair<db_table, const db_variable &> &),
             void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
                 pdv, nullptr, &DBConnectionPostgre::setupAddColumnString,
@@ -170,7 +172,7 @@ mstatus_t DBConnectionPostgre::UpdateTable(const db_table_create_setup &fields) 
 
 mstatus_t DBConnectionPostgre::CreateTable(
     const db_table_create_setup &fields) {
-  return exec_op<db_table_create_setup, void,
+  return exec_wrap<db_table_create_setup, void,
      std::stringstream (DBConnectionPostgre::*)(const db_table_create_setup &),
      void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
          fields, nullptr, &DBConnectionPostgre::setupCreateTableString,
@@ -179,7 +181,7 @@ mstatus_t DBConnectionPostgre::CreateTable(
 
 mstatus_t DBConnectionPostgre::InsertRows(
     const db_query_insert_setup &insert_data) {
-  return exec_op<db_query_insert_setup, void,
+  return exec_wrap<db_query_insert_setup, void,
      std::stringstream (DBConnectionPostgre::*)(const db_query_insert_setup &),
      void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
          insert_data, nullptr, &DBConnectionPostgre::setupInsertString,
@@ -188,7 +190,7 @@ mstatus_t DBConnectionPostgre::InsertRows(
 
 mstatus_t DBConnectionPostgre::DeleteRows(
     const db_query_delete_setup &delete_data) {
-  return exec_op<db_query_delete_setup, void,
+  return exec_wrap<db_query_delete_setup, void,
      std::stringstream (DBConnectionPostgre::*)(const db_query_delete_setup &),
      void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
          delete_data, nullptr, &DBConnectionPostgre::setupDeleteString,
@@ -200,7 +202,7 @@ mstatus_t DBConnectionPostgre::SelectRows(
     db_query_select_result *result_data) {
   pqxx::result result;
   result_data->values_vec.clear();
-  mstatus_t res = exec_op<db_query_select_setup, pqxx::result,
+  mstatus_t res = exec_wrap<db_query_select_setup, pqxx::result,
      std::stringstream (DBConnectionPostgre::*)(const db_query_select_setup &),
      void (DBConnectionPostgre::*)(const std::stringstream &, pqxx::result *)>(
          select_data, &result, &DBConnectionPostgre::setupSelectString,
@@ -221,7 +223,7 @@ mstatus_t DBConnectionPostgre::SelectRows(
 
 mstatus_t DBConnectionPostgre::UpdateRows(
     const db_query_update_setup &update_data) {
-  return exec_op<db_query_update_setup, void,
+  return exec_wrap<db_query_update_setup, void,
      std::stringstream (DBConnectionPostgre::*)(const db_query_update_setup &),
      void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
          update_data, nullptr, &DBConnectionPostgre::setupUpdateString,
@@ -248,12 +250,11 @@ std::stringstream DBConnectionPostgre::setupTableExistsString(db_table t) {
 }
 std::stringstream DBConnectionPostgre::setupInsertString(
     const db_query_insert_setup &fields) {
-  std::string fnames;
   if (fields.values_vec.empty()) {
     error_.SetError(ERROR_DB_VARIABLE, "Нет данных для INSERT операции");
     return std::stringstream();
   }
-  fnames = "INSERT INTO " + get_table_name(fields.table) + " (";
+  std::string fnames = "INSERT INTO " + get_table_name(fields.table) + " (";
   std::string values = "VALUES (";
   std::vector<std::string> rows(fields.values_vec.size());
   db_variable::db_var_type t;

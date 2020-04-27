@@ -413,11 +413,26 @@ db_query_insert_setup *db_query_insert_setup::Init(
   return ins_setup;
 }
 
+db_query_insert_setup *db_query_insert_setup::Init(
+    const std::vector<calculation_state_info> &select_data) {
+  if (haveConflict(select_data))
+    return nullptr;
+  db_query_insert_setup *ins_setup = new db_query_insert_setup(
+      db_table::table_calculation_state_log, *ns_tfs::get_fields_collection(
+      db_table::table_calculation_state_log));
+  if (ins_setup)
+    for (const auto &x : select_data)
+      ins_setup->setValues(x);
+  return ins_setup;
+}
+
 size_t db_query_insert_setup::RowsSize() const {
-  assert(0);
+  return values_vec.size();
 }
 
 void db_query_insert_setup::setValues(const model_info &select_data) {
+  if (select_data.initialized == model_info::f_empty)
+    return;
   row_values values;
   field_index i = -1;
   if (select_data.initialized & model_info::f_model_type) {
@@ -440,6 +455,8 @@ void db_query_insert_setup::setValues(const model_info &select_data) {
   values_vec.emplace_back(values);
 }
 void db_query_insert_setup::setValues(const calculation_info &select_data) {
+  if (select_data.initialized == calculation_info::f_empty)
+    return;
   row_values values;
   field_index i = -1;
   if (select_data.initialized & calculation_info::f_model_id)
@@ -455,6 +472,8 @@ void db_query_insert_setup::setValues(const calculation_info &select_data) {
   values_vec.emplace_back(values);
 }
 void db_query_insert_setup::setValues(const calculation_state_info &select_data) {
+  if (select_data.initialized == calculation_state_info::f_empty)
+    return;
   row_values values;
   field_index i = -1;
   if (select_data.initialized & calculation_state_info::f_info)

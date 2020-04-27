@@ -92,6 +92,23 @@ int test_json() {
   return ERROR_SUCCESS_T;
 }
 
+int test_database_with_models(DBConnectionManager &dbm) {
+int res = 0;
+  std::string filename = (cwd / xml_path / xml_gasmix).string();
+#if defined(RK2_DEBUG)
+  std::unique_ptr<modelGeneral> mk(
+      ModelsCreator::GetCalculatingModel(rk2_str, filename, INPUT_P_T));
+  model_info mi{.short_info = mk->GetModelShortInfo()};
+  dbm.SaveModelInfo(mi);
+  mi.initialized = mi.f_full;
+  dbm.SaveModelInfo(mi);
+  /* calculation info */
+  // calculation_info ci;
+
+#endif  // RK2_TEST
+  return res;
+}
+
 int test_database() {
   std::string filename = (cwd / xml_path / xml_configuration).string();
   ProgramState &ps = ProgramState::Instance();
@@ -124,6 +141,8 @@ int test_database() {
     std::cerr << "error during create table: "
         << dbm.GetErrorCode() << std::endl;
   }
+  if (!ps.GetErrorCode())
+    return test_database_with_models(dbm);
   return ps.GetErrorCode();
 }
 

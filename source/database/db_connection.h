@@ -64,6 +64,7 @@ public:
 
   /* хз... */
   virtual void Commit() = 0;
+  /* хз... */
   virtual void Rollback() = 0;
 
   virtual mstatus_t SetupConnection() = 0;
