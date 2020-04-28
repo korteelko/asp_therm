@@ -104,13 +104,19 @@ mstatus_t DBConnectionManager::SaveCalculationInfo(calculation_info &ci) {
 }
 
 mstatus_t DBConnectionManager::SaveCalculationStateInfo(
-    std::vector<calculation_state_info> &csi) {
+    std::vector<calculation_state_log> &csi) {
   std::unique_ptr<db_query_insert_setup> dis(db_query_insert_setup::Init(csi));
   return exec_wrap<const db_query_insert_setup &, void, void (DBConnectionManager::*)(
       Transaction *, const db_query_insert_setup &, void *)>(
       *dis, nullptr, &DBConnectionManager::saveRow);
 }
 
+mstatus_t DBConnectionManager::SelectModelInfo(model_info &where,
+    std::vector<model_info> *res) {
+  std::unique_ptr<db_query_select_setup> dss(
+      db_query_select_setup::Init(db_table::table_model_info));
+  assert(0);
+}
 
 merror_t DBConnectionManager::GetErrorCode() {
   return error_.GetErrorCode();

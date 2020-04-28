@@ -211,13 +211,13 @@ const_parameters modelGeneral::GetConstParameters() const {
   return parameters_->cgetConstparameters();
 }
 
-calculation_state_info modelGeneral::GetStateLog() const {
+calculation_state_log modelGeneral::GetStateLog() const {
   dyn_parameters dps = parameters_->cgetDynParameters();
   // пока так
   return {.id = -1, .calculation = nullptr, .dyn_pars = dps,
       .enthalpy = dps.internal_energy * dps.parm.pressure * dps.parm.volume,
       .state_phase = stateToString[(uint32_t)parameters_->cgetState()],
-      .initialized = calculation_state_info::f_empty};
+      .initialized = calculation_state_log::f_empty};
 }
 
 merror_t modelGeneral::GetError() const {

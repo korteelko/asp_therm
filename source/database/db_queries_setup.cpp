@@ -10,7 +10,7 @@
 
 #include "models_configurations.h"
 
-#include <algorithm>
+#include <stack>
 
 #include <assert.h>
 
@@ -38,6 +38,7 @@
 #define CSL_BETA_KR "beta_kr"
 #define CSL_ENTHALPY "enthalpy"
 #define CSL_STATE_PHASE "state_phase"
+
 namespace table_fields_setup {
 /** \brief Сетап таблицы БД хранения данных о модели
   * \note В семантике PostgreSQL */
@@ -151,39 +152,35 @@ const db_fields_collection *get_fields_collection(db_table dt) {
   }
   return result;
 }
-
 }  // namespace table_fields_setup
 
 namespace ns_tfs = table_fields_setup;
 
 /* db_condition_tree */
-db_condition_tree::db_condition_tree()
-  : left(nullptr), rigth(nullptr), data(nullptr),
-    db_operator(db_operator_t::op_empty) {}
+// db_condition_tree::db_condition_tree()
+//   : left(nullptr), rigth(nullptr), data(nullptr), db_operator(db_operator_t::op_empty) {}
 
 db_condition_tree::db_condition_tree(db_operator_t db_operator)
-  : data(""), db_operator(db_operator) {}
+  : data(""), db_operator(db_operator), is_leafnode(false) {}
 
 db_condition_tree::db_condition_tree(const std::string &data)
-  : data(data), db_operator(db_operator_t::op_empty) {}
+  : data(data), db_operator(db_operator_t::op_empty), is_leafnode(true) {}
 
-db_condition_tree::~db_condition_tree() {
-  if (left)
-    delete left;
-  if (rigth)
-    delete rigth;
-}
+db_condition_tree::~db_condition_tree() {}
 
 std::string db_condition_tree::GetString() const {
   std::string l, r;
   std::string result;
+  visited = true;
   // если поддеревьев нет, вернуть строку
   if (db_operator == db_operator_t::op_empty)
     return data;
   if (left)
-    l = left->GetString();
+    if (!left->visited)
+      l = left->GetString();
   if (rigth)
-    r = rigth->GetString();
+    if (!rigth->visited)
+      r = rigth->GetString();
   switch (db_operator) {
     case db_operator_t::op_is:
       result = l +  " IS " + r;
@@ -228,33 +225,8 @@ std::string db_condition_tree::GetString() const {
       assert(0 && "check program DNA - it's case unavailable");
       break;
     // case db_operator_t::op_eq:
-
   }
   return result;
-}
-
-merror_t db_condition_tree::SetSubTree(const std::string &l,
-    const std::string &r) {
-  return SetSubTree(db_operator, l, r);
-}
-
-merror_t db_condition_tree::SetSubTree(db_operator_t operator_t,
-    const std::string &l, const std::string &r) {
-  if (left) {
-    delete left; left = nullptr;
-  }
-  if (rigth) {
-    delete rigth; rigth = nullptr;
-  }
-  merror_t error = ERROR_GENERAL_T;
-  if (operator_t != db_operator_t::op_empty) {
-    db_operator = operator_t;
-    left = new db_condition_tree(l);
-    rigth = new db_condition_tree(r);
-    data = "";
-    error = ERROR_SUCCESS_T;
-  }
-  return error;
 }
 
 /* db_table_create_setup */
@@ -376,7 +348,7 @@ db_query_basesetup::field_index db_query_basesetup::
       break;
     ++i;
   }
-  return (i == fields.size()) ? -1 : i;
+  return (i == fields.size()) ? db_query_basesetup::field_index_end : i;
 }
 
 /* db_table_insert_setup */
@@ -414,7 +386,7 @@ db_query_insert_setup *db_query_insert_setup::Init(
 }
 
 db_query_insert_setup *db_query_insert_setup::Init(
-    const std::vector<calculation_state_info> &select_data) {
+    const std::vector<calculation_state_log> &select_data) {
   if (haveConflict(select_data))
     return nullptr;
   db_query_insert_setup *ins_setup = new db_query_insert_setup(
@@ -434,7 +406,7 @@ void db_query_insert_setup::setValues(const model_info &select_data) {
   if (select_data.initialized == model_info::f_empty)
     return;
   row_values values;
-  field_index i = -1;
+  field_index i;
   if (select_data.initialized & model_info::f_model_type) {
     if ((i = IndexByFieldName(MI_MODEL_TYPE)) != field_index_end)
       values.emplace(i, std::to_string(
@@ -458,7 +430,7 @@ void db_query_insert_setup::setValues(const calculation_info &select_data) {
   if (select_data.initialized == calculation_info::f_empty)
     return;
   row_values values;
-  field_index i = -1;
+  field_index i;
   if (select_data.initialized & calculation_info::f_model_id)
     if (select_data.model != nullptr)
       if ((i = IndexByFieldName(CI_MODEL_INFO_ID)) != field_index_end)
@@ -471,40 +443,40 @@ void db_query_insert_setup::setValues(const calculation_info &select_data) {
       values.emplace(i, select_data.GetTime());
   values_vec.emplace_back(values);
 }
-void db_query_insert_setup::setValues(const calculation_state_info &select_data) {
-  if (select_data.initialized == calculation_state_info::f_empty)
+void db_query_insert_setup::setValues(const calculation_state_log &select_data) {
+  if (select_data.initialized == calculation_state_log::f_empty)
     return;
   row_values values;
-  field_index i = -1;
-  if (select_data.initialized & calculation_state_info::f_info)
+  field_index i;
+  if (select_data.initialized & calculation_state_log::f_info)
     if (select_data.calculation != nullptr)
       if ((i = IndexByFieldName(CSL_INFO_ID)) != field_index_end)
         values.emplace(i, std::to_string(select_data.calculation->id));
-  if (select_data.initialized & calculation_state_info::f_vol)
+  if (select_data.initialized & calculation_state_log::f_vol)
     if ((i = IndexByFieldName(CSL_VOLUME)) != field_index_end)
       values.emplace(i, std::to_string(select_data.dyn_pars.parm.volume));
-  if (select_data.initialized & calculation_state_info::f_pres)
+  if (select_data.initialized & calculation_state_log::f_pres)
     if ((i = IndexByFieldName(CSL_PRESSURE)) != field_index_end)
       values.emplace(i, std::to_string(select_data.dyn_pars.parm.pressure));
-  if (select_data.initialized & calculation_state_info::f_temp)
+  if (select_data.initialized & calculation_state_log::f_temp)
     if ((i = IndexByFieldName(CSL_TEMPERATURE)) != field_index_end)
       values.emplace(i, std::to_string(select_data.dyn_pars.parm.temperature));
-  if (select_data.initialized & calculation_state_info::f_dcv)
+  if (select_data.initialized & calculation_state_log::f_dcv)
     if ((i = IndexByFieldName(CSL_HEAT_CV)) != field_index_end)
       values.emplace(i, std::to_string(select_data.dyn_pars.heat_cap_vol));
-  if (select_data.initialized & calculation_state_info::f_dcp)
+  if (select_data.initialized & calculation_state_log::f_dcp)
     if ((i = IndexByFieldName(CSL_HEAT_CP)) != field_index_end)
       values.emplace(i, std::to_string(select_data.dyn_pars.heat_cap_pres));
-  if (select_data.initialized & calculation_state_info::f_din)
+  if (select_data.initialized & calculation_state_log::f_din)
     if ((i = IndexByFieldName(CSL_INTERNAL_ENERGY)) != field_index_end)
       values.emplace(i, std::to_string(select_data.dyn_pars.internal_energy));
-  if (select_data.initialized & calculation_state_info::f_dbk)
+  if (select_data.initialized & calculation_state_log::f_dbk)
     if ((i = IndexByFieldName(CSL_BETA_KR)) != field_index_end)
       values.emplace(i, std::to_string(select_data.dyn_pars.beta_kr));
-  if (select_data.initialized & calculation_state_info::f_enthalpy)
+  if (select_data.initialized & calculation_state_log::f_enthalpy)
     if ((i = IndexByFieldName(CSL_ENTHALPY)) != field_index_end)
       values.emplace(i, std::to_string(select_data.enthalpy));
-  if (select_data.initialized & calculation_state_info::f_state_phase)
+  if (select_data.initialized & calculation_state_log::f_state_phase)
     if ((i = IndexByFieldName(CSL_STATE_PHASE)) != field_index_end)
       values.emplace(i, select_data.state_phase);
   values_vec.emplace_back(values);
@@ -532,3 +504,53 @@ db_query_update_setup::db_query_update_setup(db_table _table,
 db_query_select_result::db_query_select_result(
     const db_query_select_setup &setup)
   : db_query_basesetup(setup) {}
+
+/* db_where_tree */
+db_where_tree *db_where_tree::Init(const model_info &where) {
+  return db_where_tree::init(where);
+}
+db_where_tree *db_where_tree::Init(const calculation_info &where) {
+  return db_where_tree::init(where);
+}
+db_where_tree *db_where_tree::Init(const calculation_state_log &where) {
+  return db_where_tree::init(where);
+}
+
+db_where_tree::~db_where_tree() {
+  for (auto x: source_)
+    delete x;
+  source_.clear();
+}
+
+db_where_tree::db_where_tree()
+  : root_(nullptr) {}
+
+void db_where_tree::construct() {
+  std::stack<db_condition_tree *> st;
+  for (auto nd = source_.begin(); nd != source_.end(); ++nd) {
+    if ((*nd)->IsOperator()) {
+      auto top1 = st.top();
+      st.pop();
+      auto top2 = st.top();
+      st.pop();
+      (*nd)->rigth = top1;
+      (*nd)->left = top2;
+      st.push(*nd);
+    } else {
+      st.push(*nd);
+    }
+  }
+  root_ = st.top();
+}
+
+/*
+int db_condition_tree::subnodesCount() {
+  int s = 0;
+  if (left)
+    s += 1 + left->subnodesCount();
+  if (rigth)
+    s += 1 + rigth->subnodesCount();
+  return s;
+}
+*/
+

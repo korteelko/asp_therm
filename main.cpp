@@ -10,6 +10,7 @@
 #include "target_sys.h"
 
 #include "db_connection_manager.h"
+#include "db_queries_setup.h"
 #include "gas_by_file.h"
 #include "gasmix_by_file.h"
 #include "inode_imp.h"
@@ -105,6 +106,17 @@ int res = 0;
   /* calculation info */
   // calculation_info ci;
 
+  /* selecte setup */
+  // model_info
+  model_info mi1 {.short_info = mk->GetModelShortInfo()};
+  mi1.initialized = mi1.f_model_type | mi1.f_short_info;
+  std::unique_ptr<db_where_tree> wt(db_where_tree::Init(mi1));
+  Logging::Append(io_loglvl::debug_logs, "where condition: " + wt->GetString());
+
+  mi1.initialized = mi1.f_model_type | mi1.f_short_info | mi1.f_vers_major;
+  wt.reset(db_where_tree::Init(mi1));
+  Logging::Append(io_loglvl::debug_logs, "where condition: " + wt->GetString());
+  // std::string;
 #endif  // RK2_TEST
   return res;
 }

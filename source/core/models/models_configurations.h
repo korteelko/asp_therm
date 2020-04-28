@@ -146,7 +146,7 @@ struct model_info {
   model_str short_info;
   // dyn_setup dynamic_vars;
   /** \brief Инициализированные поля, для операций SELECT, UPDATE, INSERT */
-  model_info_flags initialized = f_empty;
+  uint32_t initialized = f_empty;
 };
 
 #endif  // !_CORE__MODELS__MODELS_CONFIGURATIONS_H_

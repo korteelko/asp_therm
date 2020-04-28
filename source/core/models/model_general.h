@@ -142,7 +142,7 @@ public:
   state_phase GetState() const;
   parameters GetParametersCopy() const;
   const_parameters GetConstParameters() const;
-  calculation_state_info GetStateLog() const;
+  calculation_state_log GetStateLog() const;
   merror_t GetError() const;
 
   // todo: maybe remove it in another class

@@ -91,7 +91,7 @@ public:
   /** \brief Время и дата */
   std::time_t datetime;
   /** \brief Иницианилизированные поля */
-  calculation_info_flags initialized = f_empty;
+  uint32_t initialized = f_empty;
 };
 
 /** \brief информация о предыдущих расчётах */

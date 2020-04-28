@@ -82,13 +82,18 @@ public:
   bool IsTableExist(db_table dt);
   /** \brief Создать таблицу */
   mstatus_t CreateTable(db_table dt);
+
   /* insert operations */
   /** \brief Сохранить в БД строку model_info */
   mstatus_t SaveModelInfo(model_info &mi);
   /** \brief Сохранить в БД строку calculation_info */
   mstatus_t SaveCalculationInfo(calculation_info &ci);
   /** \brief Сохранить в БД строку calculation_info */
-  mstatus_t SaveCalculationStateInfo(std::vector<calculation_state_info> &csi);
+  mstatus_t SaveCalculationStateInfo(std::vector<calculation_state_log> &csi);
+
+  /* select operations */
+  /** \brief Вытащить из БД строки model_info по 'where' условиям */
+  mstatus_t SelectModelInfo(model_info &where, std::vector<model_info> *res);
 
   /* todo: select, update methods */
 

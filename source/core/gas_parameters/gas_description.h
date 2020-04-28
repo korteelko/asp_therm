@@ -173,7 +173,7 @@ typedef std::map<const gas_pair, double> binary_coef_map;
 
 struct calculation_info;
 /** \brief Структура для добавления в базу данных */
-struct calculation_state_info {
+struct calculation_state_log {
   enum state_info_flags {
     f_empty = 0x00,
     /** \brief Ссылка на данные расчёта */
@@ -205,7 +205,7 @@ struct calculation_state_info {
   dyn_parameters dyn_pars;    // p, v, t and cp(p,v,t), cv(p,v,t), u(p,v,t)
   double enthalpy;
   std::string state_phase;
-  state_info_flags initialized = f_empty;
+  uint32_t initialized = f_empty;
 };
 
 /** \brief стат структура характеристик газа */
