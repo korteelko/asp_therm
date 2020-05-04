@@ -32,10 +32,8 @@
 `make`
 
 
-### Подключение PostgreSQL
-
-*Для управления БД [PostgreSQL](https://www.postgresql.org) можно использовать [pgAdmin4](https://www.pgadmin.org)*.   
-**Пример**  
+### Подключение [PostgreSQL](https://www.postgresql.org)
+#### Пример   
 *Имя БД - 'africae', имя пользователя(user или role) - 'jorge', пароль пользователя 'my\_pass'*.   
 Первым делом необходимо переключиться на пользователя postgres и запустим cli субд:   
 `$ sudo -u postgres psql`   
@@ -54,17 +52,26 @@
 <code>&nbsp;&nbsp;\<parameter name="password"> my\_pass \</parameter></code>    
 <code>&nbsp;&nbsp;\<parameter name="host"> 127.0.0.1 \</parameter></code>    
 <code>&nbsp;&nbsp;\<parameter name="port"> 5432 \</parameter></code>     
-<code>\</group></code>
+<code>\</group></code>  
+Подключение к бд *'africae'* по cli: `$ sudo -u postgres pqsl -d africae`
 
-### Подмодули:
+#### [pgAdmin4](https://www.pgadmin.org)
+
+Для управления базами данными PostgreSQL удобно использовать pgAdmin4. Функционал просмотра записей, изменения таблиц и т.п. требует соответствующих привилегии пользователя на таблицы. Добавить необходимые привелегии можно подключившись к БД по cli. Соответствующие команды для пользователя *user* выглядят примерно так:    
+На все привилегии:    
+`GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO user`   
+На привелегии выборки:    
+`GRANT SELECT ON ALL TABLES IN SCHEMA public TO user`
+
+### Подмодули
 
 - [**pugixml**](https://github.com/zeux/pugixml) - парсинг xml-файлов
 - [**rapidjson**](https://github.com/Tencent/rapidjson) - парсинг json-файлов
 
-### <a name="dependencies"></a> Зависимости:
+### <a name="dependencies"></a> Зависимости
 
 - [libpqxx](http://pqxx.org/development/libpqxx/) - С++ клиент для PostgreSQL
-- *опционально* [gtest](https://github.com/google/googletest) - C++ тест фрэймворк от Google
+- *опционально* [googletest](https://github.com/google/googletest) - C++ тест фрэймворк от Google
 
 ------
 ### Прочее
@@ -76,8 +83,9 @@
 **ToDo**
 
 - [ ] разбить модели на области
-- [ ] добавить БД
+- [*] добавить БД
 - [ ] добавить JSON конфиг
 - [ ] прикрутить модуль динамики(по мере необходимости)
 - [ ] gtest модулем добавить
-- [ ] данные компонентов забить в базу, и, собственно, добавить .cpp модуль на чтение этих параметров из неё.
+- [*] данные компонентов забить в базу, и, собственно, добавить .cpp модуль на чтение этих параметров из неё.
+- [ ] дописать модуль iso 20765

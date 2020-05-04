@@ -10,8 +10,9 @@
 #ifndef _CORE__GAS_PARAMETERS__GAS_DESCRIPTION_H_
 #define _CORE__GAS_PARAMETERS__GAS_DESCRIPTION_H_
 
-#include "ErrorWrap.h"
+#include "common.h"
 #include "gas_defines.h"
+#include "ErrorWrap.h"
 
 #include <map>
 #include <string>
@@ -176,30 +177,35 @@ struct calculation_info;
 struct calculation_state_log {
   enum state_info_flags {
     f_empty = 0x00,
+    /** \brief Уникальный id информации по расчёту */
+    f_calculation_info_id = 0x01,
     /** \brief Ссылка на данные расчёта */
-    f_info = 0x01,
+    f_info = 0x02,
     /** \brief Объём */
-    f_vol = 0x02,
+    f_vol = 0x04,
     /** \brief Давление */
-    f_pres = 0x04,
+    f_pres = 0x08,
     /** \brief Температура */
-    f_temp = 0x08,
+    f_temp = 0x10,
     /** \brief Изохорная теплоёмкость */
-    f_dcv = 0x10,
+    f_dcv = 0x20,
     /** \brief Изобарная теплоёмкость */
-    f_dcp = 0x20,
+    f_dcp = 0x40,
     /** \brief Внутреняя энергия */
-    f_din = 0x40,
+    f_din = 0x80,
     /** \brief Параметр Bk */
-    f_dbk = 0x80,
+    f_dbk = 0x100,
     /** \brief Энтальпия */
-    f_enthalpy = 0x100,
+    f_enthalpy = 0x200,
     /** \brief Фазовое состояние */
-    f_state_phase = 0x200,
-    f_full = 0x3FF
+    f_state_phase = 0x400,
+    /** \brief Уникальный id строки расчёта */
+    f_calculation_state_log_id = 0x800,
+    f_full = 0xFFF
   };
 
   int32_t id;
+  int32_t info_id;
   calculation_info *calculation;
 
   dyn_parameters dyn_pars;    // p, v, t and cp(p,v,t), cv(p,v,t), u(p,v,t)

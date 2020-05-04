@@ -61,13 +61,20 @@ struct calculation_setup {
 
 /* сейчас посто заглушка
  * todo: добавить calculation configuration */
-/** \brief Структура для добавления в базу данных */
+/** \brief Структура для добавления в базу данных
+  * \todo Добавить тесты на эти методы */
 struct calculation_info {
 public:
   calculation_info();
 
   /** \brief Установить время/дату */
   void SetDateTime(std::time_t *dt);
+  /** \brief Установить дату
+    * \param date дата в формате 'yyyy/mm/dd' */
+  mstatus_t SetDate(const std::string &date);
+  /** \brief Установить время
+    * \param time время в формате 'hh:mm:ss' */
+  mstatus_t SetTime(const std::string &time);
 
   /** \brief Получить строку даты в формате 'yyyy/mm/dd' */
   std::string GetDate() const;
@@ -80,10 +87,13 @@ public:
     f_model_id = 0x01,
     f_date = 0x02,
     f_time = 0x04,
-    f_full = 0x07
+    f_calculation_info_id = 0x08,
+    f_full = 0x0f
   };
-  /** \brief Уникальный id строки из базы данных */
+  /** \brief Уникальный id строки расчёта из базы данных */
   int32_t id = -1;
+  /** \brief Уникальный id модели из базы данных */
+  int32_t model_id = -1;
   /** \brief Указатель на конфигурацию расчёта */
   const calculation_configuration *configuration = nullptr;
   /** \brief Указатель на модель */

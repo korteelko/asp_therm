@@ -11,6 +11,9 @@
 
 #include "model_general.h"
 
+#include <array>
+
+
 /* calculation_configuration */
 bool calculation_configuration::IsDebug() const {
   return is_debug_mode;
@@ -32,6 +35,70 @@ calculation_info::calculation_info()
 void calculation_info::SetDateTime(std::time_t *dt) {
   datetime = *dt;
 }
+
+/* формат 'yyyy/mm/dd'
+ *   +1 за regex */
+mstatus_t calculation_info::SetDate(const std::string &date) {
+  mstatus_t st = STATUS_DEFAULT;
+  /* размер разделителя для даты это '/' */
+  int delim_size = 1;
+  struct tm *as_tm;
+  int date_arr[3] = {0, 0, 0};
+  if (!date.empty()) {
+    const char *d = date.c_str();
+    char *end = nullptr;
+    int i = 0;
+    for (i = 0; i < 3; ++i) {
+      date_arr[i] = std::strtod(d, &end);
+      if (d != end)
+        d = end + delim_size;
+    }
+    if (i == 3) {
+      initialized |= f_date;
+      st = STATUS_OK;
+    }
+  }
+  /* обновить только дату */
+  as_tm = localtime(&datetime);
+  as_tm->tm_year = date_arr[0] - 1900;
+  as_tm->tm_mon = date_arr[1] - 1;
+  as_tm->tm_mday = date_arr[2];
+  datetime = mktime(as_tm);
+
+  return st;
+}
+
+/* формат 'hh:mm:ss' */
+mstatus_t calculation_info::SetTime(const std::string &time) {
+  mstatus_t st = STATUS_DEFAULT;
+  /* размер разделителя для времени это ':' */
+  int delim_size = 1;
+  struct tm *as_tm;
+  int time_arr[3] = {0, 0, 0};
+  if (!time.empty()) {
+    const char *t = time.c_str();
+    char *end = nullptr;
+    int i = 0;
+    for (i = 0; i < 3; ++i) {
+      time_arr[i] = std::strtod(t, &end);
+      if (t != end)
+        t = end + delim_size;
+    }
+    if (i == 3) {
+      initialized |= f_time;
+      st = STATUS_OK;
+    }
+  }
+  /* обновить только дату */
+  as_tm = localtime(&datetime);
+  as_tm->tm_hour = time_arr[0];
+  as_tm->tm_min = time_arr[1];
+  as_tm->tm_sec = time_arr[2];
+  datetime = mktime(as_tm);
+
+  return st;
+}
+
 /* формат 'yyyy/mm/dd' */
 std::string calculation_info::GetDate() const {
   char d[16] = {0};

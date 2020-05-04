@@ -279,6 +279,8 @@ public:
   void SetData(std::vector<calculation_state_log> *out_vec);
 
 protected:
+  /** \brief Проверить соответствие строки strname и имени поля
+    * \note todo: Заменить строки на int идентификаторы */
   bool isFieldName(const std::string &strname, const db_variable &var);
 
 public:
@@ -312,6 +314,10 @@ public:
 protected:
   db_where_tree();
 
+  /** \brief Шаблон функции собирающей обычное дерево where условий
+    *   разнесённых операторами AND
+    * \badcode Не понятно как собрать шикарное дерево с множеством
+    *   разнообразных условий */
   template <class TableT>
   static db_where_tree *init(const TableT &where) {
     /* todo: это конечно мрак */
@@ -320,7 +326,6 @@ protected:
     if (qis->values_vec.empty())
       return nullptr;
     db_where_tree *wt = new db_where_tree();
-    // std::vector<db_condition_tree *> nodes;
     auto &row = qis->values_vec[0];
     const auto &fields = qis->fields;
     for (const auto &x : row) {
@@ -340,11 +345,15 @@ protected:
     return wt;
   }
 
+  /** \brief Собрать дерево условий по вектору узлов условий source_ */
   void construct();
 
 protected:
+  /** \brief Контейнер-хранилище узлов условий */
   std::vector<db_condition_node *> source_;
+  /** \brief Корень дерева условий */
   db_condition_node *root_ = nullptr;
+  /** \brief Результирующая строка собранная из дерева условий */
   std::string data_;
 };
 

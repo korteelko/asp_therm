@@ -541,12 +541,69 @@ void db_query_select_result::SetData(std::vector<model_info> *out_vec) {
 
 void db_query_select_result::SetData(
     std::vector<calculation_info> *out_vec) {
-  assert(0);
+  for (auto &row: values_vec) {
+    calculation_info ci;
+    for (auto &col: row) {
+      if (isFieldName(CI_CALCULATION_ID, fields[col.first])) {
+        ci.id = std::atoi(col.second.c_str());
+        ci.initialized |= calculation_info::f_calculation_info_id;
+      } else if (isFieldName(CI_MODEL_INFO_ID, fields[col.first])) {
+        ci.model_id = std::atoi(col.second.c_str());
+        ci.initialized |= calculation_info::f_model_id;
+      } else if (isFieldName(CI_DATE, fields[col.first])) {
+        ci.SetDate(col.second);
+      } else if (isFieldName(CI_TIME, fields[col.first])) {
+        ci.SetTime(col.second);
+      }
+    }
+    if (ci.initialized != ci.f_empty)
+      out_vec->push_back(std::move(ci));
+  }
 }
 
 void db_query_select_result::SetData(
     std::vector<calculation_state_log> *out_vec) {
-  assert(0);
+  for (auto &row: values_vec) {
+    calculation_state_log cl;
+    for (auto &col: row) {
+      if (isFieldName(CSL_LOG_ID, fields[col.first])) {
+        cl.id = std::atoi(col.second.c_str());
+        cl.initialized |= calculation_state_log::f_info;
+      } else if (isFieldName(CSL_INFO_ID, fields[col.first])) {
+        cl.info_id = std::atoi(col.second.c_str());
+        cl.initialized |= calculation_state_log::f_calculation_info_id;
+      } else if (isFieldName(CSL_VOLUME, fields[col.first])) {
+        cl.dyn_pars.parm.volume = std::atof(col.second.c_str());
+        cl.initialized |= calculation_state_log::f_vol;
+      } else if (isFieldName(CSL_PRESSURE, fields[col.first])) {
+        cl.dyn_pars.parm.pressure = std::atof(col.second.c_str());
+        cl.initialized |= calculation_state_log::f_pres;
+      } else if (isFieldName(CSL_TEMPERATURE, fields[col.first])) {
+        cl.dyn_pars.parm.temperature = std::atof(col.second.c_str());
+        cl.initialized |= calculation_state_log::f_temp;
+      } else if (isFieldName(CSL_HEAT_CV, fields[col.first])) {
+        cl.dyn_pars.heat_cap_vol = std::atof(col.second.c_str());
+        cl.initialized |= calculation_state_log::f_dcv;
+      } else if (isFieldName(CSL_HEAT_CP, fields[col.first])) {
+        cl.dyn_pars.heat_cap_pres = std::atof(col.second.c_str());
+        cl.initialized |= calculation_state_log::f_dcp;
+      } else if (isFieldName(CSL_INTERNAL_ENERGY, fields[col.first])) {
+        cl.dyn_pars.internal_energy = std::atof(col.second.c_str());
+        cl.initialized |= calculation_state_log::f_din;
+      } else if (isFieldName(CSL_BETA_KR, fields[col.first])) {
+        cl.dyn_pars.beta_kr = std::atof(col.second.c_str());
+        cl.initialized |= calculation_state_log::f_dbk;
+      } else if (isFieldName(CSL_ENTHALPY, fields[col.first])) {
+        cl.enthalpy = std::atof(col.second.c_str());
+        cl.initialized |= calculation_state_log::f_enthalpy;
+      } else if (isFieldName(CSL_STATE_PHASE, fields[col.first])) {
+        cl.state_phase = col.second;
+        cl.initialized |= calculation_state_log::f_state_phase;
+      }
+    }
+    if (cl.initialized != cl.f_empty)
+      out_vec->push_back(std::move(cl));
+  }
 }
 
 /* db_where_tree */
@@ -586,15 +643,3 @@ void db_where_tree::construct() {
   }
   root_ = st.top();
 }
-
-/*
-int db_condition_tree::subnodesCount() {
-  int s = 0;
-  if (left)
-    s += 1 + left->subnodesCount();
-  if (rigth)
-    s += 1 + rigth->subnodesCount();
-  return s;
-}
-*/
-

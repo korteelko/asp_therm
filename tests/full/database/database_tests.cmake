@@ -6,6 +6,8 @@ set (COMMON_SRC
   ${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 
+  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description.cpp
+
   ${THERMCORE_SOURCE_DIR}/models/calculation_info.cpp
   ${THERMCORE_SOURCE_DIR}/models/models_configurations.cpp
 

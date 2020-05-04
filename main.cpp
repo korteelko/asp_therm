@@ -99,21 +99,21 @@ int test_database_with_models(DBConnectionManager &dbm) {
 #if defined(RK2_DEBUG)
   std::unique_ptr<modelGeneral> mk(
       ModelsCreator::GetCalculatingModel(rk2_str, filename, INPUT_P_T));
-  model_info mi{.short_info = mk->GetModelShortInfo()};
+  model_info mi {.short_info = mk->GetModelShortInfo()};
+  // dbm.SaveModelInfo(mi);
+  mi.initialized = mi.f_full & (~mi.f_model_id);
   dbm.SaveModelInfo(mi);
-  mi.initialized = mi.f_full;
-  dbm.SaveModelInfo(mi);
+
   /* selecte setup */
   // model_info
-  model_info mi1 {.short_info = mk->GetModelShortInfo()};
+  /*model_info mi1 {.short_info = mk->GetModelShortInfo()};
   mi1.initialized = mi1.f_model_type | mi1.f_model_subtype;
   std::unique_ptr<db_where_tree> wt(db_where_tree::Init(mi1));
   Logging::Append(io_loglvl::debug_logs, "where condition: " + wt->GetString());
   mi1.initialized = mi1.f_model_type | mi1.f_model_subtype |
       mi1.f_short_info | mi1.f_vers_major;
   wt.reset(db_where_tree::Init(mi1));
-  Logging::Append(io_loglvl::debug_logs, "where condition: " + wt->GetString());
-  // std::string;
+  Logging::Append(io_loglvl::debug_logs, "where condition: " + wt->GetString()); */
 
   /* select test */
   auto mi2 = model_info::GetDefault();
