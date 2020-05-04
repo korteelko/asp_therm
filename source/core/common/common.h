@@ -34,6 +34,7 @@
 #define BINODAL_MODEL_SHIFT   4
 #define MARK_MASK_SHIFT       8
 
+#define MODEL_EMPTY           0x00000000
 #define MODEL_IDEAL_GAS       0x00000001
 #define MODEL_REDLICH_KWONG   0x00000002
 #define MODEL_PENG_ROBINSON   0x00000003
@@ -125,10 +126,19 @@ void AddGostModelMark(gas_marks_t *m);
 void AddGasMixMark(gas_marks_t *m);
 
 /** \brief Используемые модели */
-enum class rg_model_t : uint64_t {
+enum class rg_model_t: uint64_t {
+  /** \brief Заглушка типа модели для дефолтных сетапов */
+  EMPTY = MODEL_EMPTY,
+  /** \brief Модель идеального газа
+    * \note just for fun */
   IDEAL_GAS = MODEL_IDEAL_GAS,
+  /** \brief Уравнение состояния Редлиха-Квонга
+    * \note В классической постановке и в модификации Соаве */
   REDLICH_KWONG = MODEL_REDLICH_KWONG,
+  /** \brief Уравнение состояние Пенга-Робинсона, в нескольких модификациях */
   PENG_ROBINSON = MODEL_PENG_ROBINSON,
+  /** \brief Не кубическое уравкнение состояния составленное по материалам
+    *   ГОСТ 30319 и ISO 20765 */
   NG_GOST = MODEL_NG_GOST
 };
 typedef int64_t rg_model_subtype;

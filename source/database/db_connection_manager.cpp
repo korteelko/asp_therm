@@ -93,14 +93,14 @@ mstatus_t DBConnectionManager::SaveModelInfo(model_info &mi) {
   std::unique_ptr<db_query_insert_setup> dis(db_query_insert_setup::Init({mi}));
   return exec_wrap<const db_query_insert_setup &, void, void (DBConnectionManager::*)(
       Transaction *, const db_query_insert_setup &, void *)>(
-      *dis, nullptr, &DBConnectionManager::saveRow);
+      *dis, nullptr, &DBConnectionManager::saveRows);
 }
 
 mstatus_t DBConnectionManager::SaveCalculationInfo(calculation_info &ci) {
   std::unique_ptr<db_query_insert_setup> dis(db_query_insert_setup::Init({ci}));
   return exec_wrap<const db_query_insert_setup &, void, void (DBConnectionManager::*)(
       Transaction *, const db_query_insert_setup &, void *)>(
-      *dis, nullptr, &DBConnectionManager::saveRow);
+      *dis, nullptr, &DBConnectionManager::saveRows);
 }
 
 mstatus_t DBConnectionManager::SaveCalculationStateInfo(
@@ -108,14 +108,22 @@ mstatus_t DBConnectionManager::SaveCalculationStateInfo(
   std::unique_ptr<db_query_insert_setup> dis(db_query_insert_setup::Init(csi));
   return exec_wrap<const db_query_insert_setup &, void, void (DBConnectionManager::*)(
       Transaction *, const db_query_insert_setup &, void *)>(
-      *dis, nullptr, &DBConnectionManager::saveRow);
+      *dis, nullptr, &DBConnectionManager::saveRows);
 }
 
 mstatus_t DBConnectionManager::SelectModelInfo(model_info &where,
     std::vector<model_info> *res) {
   std::unique_ptr<db_query_select_setup> dss(
       db_query_select_setup::Init(db_table::table_model_info));
-  assert(0);
+  if (dss)
+    dss->where_condition.reset(db_where_tree::Init(where));
+  db_query_select_result result(*dss);
+  auto st = exec_wrap<const db_query_select_setup &, db_query_select_result,
+      void (DBConnectionManager::*)(Transaction *, const db_query_select_setup &,
+      db_query_select_result *)>(*dss, &result, &DBConnectionManager::selectRows);
+  if (st == STATUS_OK)
+    result.SetData(res);
+  return st;
 }
 
 merror_t DBConnectionManager::GetErrorCode() {
@@ -155,9 +163,16 @@ void DBConnectionManager::createTable(Transaction *tr, db_table dt, void *) {
       db_table_create_setup::get_table_create_setup(dt))));
 }
 
-void DBConnectionManager::saveRow(Transaction *tr,
+void DBConnectionManager::saveRows(Transaction *tr,
     const db_query_insert_setup &qi, void *) {
-  tr->AddQuery(QuerySmartPtr(new DBQueryInsertRows(db_connection_.get(), qi)));
+  tr->AddQuery(QuerySmartPtr(
+      new DBQueryInsertRows(db_connection_.get(), qi)));
+}
+
+void DBConnectionManager::selectRows(Transaction *tr,
+    const db_query_select_setup &qi, db_query_select_result *result) {
+  tr->AddQuery(QuerySmartPtr(
+      new DBQuerySelectRows(db_connection_.get(), qi, result)));
 }
 
 mstatus_t DBConnectionManager::tryExecuteTransaction(Transaction &tr) {

@@ -128,7 +128,6 @@ class DBQueryInsertRows: public DBQuery {
 public:
   DBQueryInsertRows(DBConnection *db_ptr,
       const db_query_insert_setup &insert_setup);
- // mstatus_t Execute() override;
   void unExecute() override;
 
 protected:
@@ -137,6 +136,25 @@ protected:
 
 private:
   const db_query_insert_setup &insert_setup;
+};
+
+
+/** \brief Запрос выборки */
+class DBQuerySelectRows: public DBQuery {
+public:
+  DBQuerySelectRows(DBConnection *db_ptr,
+      const db_query_select_setup &select_setup,
+      db_query_select_result *result);
+  // mstatus_t Execute() override;
+  void unExecute() override;
+
+protected:
+  mstatus_t exec() override;
+  std::string q_info() override;
+
+private:
+  const db_query_select_setup &select_setup;
+  db_query_select_result *result;
 };
 
 #endif  // !_DATABASE__DB_QUERY_H_

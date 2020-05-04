@@ -90,12 +90,13 @@ mstatus_t CalculationSetup::CheckCurrentModel() {
 #endif  // !DATABASE_TEST
 
 merror_t CalculationSetup::SetModel(int model_key) {
-  merror_t error = ERROR_SUCCESS_T;
+  merror_t error = ERROR_GENERAL_T;
   const auto it = models_.find(model_key);
   if (it != models_.end()) {
     current_model_ = it->second.get();
     error = ERROR_SUCCESS_T;
   }
+  return error;
 }
 
 merror_t CalculationSetup::GetError() const {

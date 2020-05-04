@@ -135,3 +135,20 @@ mstatus_t DBQueryInsertRows::exec() {
 std::string DBQueryInsertRows::q_info() {
   return "InsertRows";
 }
+
+/* DBQuerySelect */
+
+DBQuerySelectRows::DBQuerySelectRows(DBConnection *db_ptr,
+    const db_query_select_setup &select_setup,
+    db_query_select_result *result)
+ : DBQuery(db_ptr), select_setup(select_setup), result(result) {}
+
+void DBQuerySelectRows::unExecute() {}
+
+mstatus_t DBQuerySelectRows::exec() {
+  return db_ptr_->SelectRows(select_setup, result);
+}
+
+std::string DBQuerySelectRows::q_info() {
+  return "SelectRows";
+}

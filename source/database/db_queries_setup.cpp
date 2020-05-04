@@ -160,15 +160,15 @@ namespace ns_tfs = table_fields_setup;
 // db_condition_tree::db_condition_tree()
 //   : left(nullptr), rigth(nullptr), data(nullptr), db_operator(db_operator_t::op_empty) {}
 
-db_condition_tree::db_condition_tree(db_operator_t db_operator)
+db_condition_node::db_condition_node(db_operator_t db_operator)
   : data(""), db_operator(db_operator), is_leafnode(false) {}
 
-db_condition_tree::db_condition_tree(const std::string &data)
+db_condition_node::db_condition_node(const std::string &data)
   : data(data), db_operator(db_operator_t::op_empty), is_leafnode(true) {}
 
-db_condition_tree::~db_condition_tree() {}
+db_condition_node::~db_condition_node() {}
 
-std::string db_condition_tree::GetString() const {
+std::string db_condition_node::GetString() const {
   std::string l, r;
   std::string result;
   visited = true;
@@ -407,14 +407,14 @@ void db_query_insert_setup::setValues(const model_info &select_data) {
     return;
   row_values values;
   field_index i;
-  if (select_data.initialized & model_info::f_model_type) {
+  if (select_data.initialized & model_info::f_model_type)
     if ((i = IndexByFieldName(MI_MODEL_TYPE)) != field_index_end)
       values.emplace(i, std::to_string(
           (int)select_data.short_info.model_type.type));
+  if (select_data.initialized & model_info::f_model_subtype)
     if ((i = IndexByFieldName(MI_MODEL_SUBTYPE)) != field_index_end)
       values.emplace(i, std::to_string(
           select_data.short_info.model_type.subtype));
-  }
   if (select_data.initialized & model_info::f_vers_major)
     if ((i = IndexByFieldName(MI_VERS_MAJOR)) != field_index_end)
       values.emplace(i, std::to_string(select_data.short_info.vers_major));
@@ -426,6 +426,7 @@ void db_query_insert_setup::setValues(const model_info &select_data) {
       values.emplace(i, select_data.short_info.short_info);
   values_vec.emplace_back(values);
 }
+
 void db_query_insert_setup::setValues(const calculation_info &select_data) {
   if (select_data.initialized == calculation_info::f_empty)
     return;
@@ -443,6 +444,7 @@ void db_query_insert_setup::setValues(const calculation_info &select_data) {
       values.emplace(i, select_data.GetTime());
   values_vec.emplace_back(values);
 }
+
 void db_query_insert_setup::setValues(const calculation_state_log &select_data) {
   if (select_data.initialized == calculation_state_log::f_empty)
     return;
@@ -505,6 +507,48 @@ db_query_select_result::db_query_select_result(
     const db_query_select_setup &setup)
   : db_query_basesetup(setup) {}
 
+void db_query_select_result::SetData(std::vector<model_info> *out_vec) {
+  for (auto &row: values_vec) {
+    model_info mi = model_info::GetDefault();
+    for (auto &col: row) {
+      /* todo: очень не оптимальное решение с IsFieldName,
+       *   переработать индексацию:
+       *   индекс определяет имя поля, а не наоборот */
+      if (isFieldName(MI_MODEL_ID, fields[col.first])) {
+        mi.id = std::atoi(col.second.c_str());
+        mi.initialized |= model_info::f_model_id;
+      } else if (isFieldName(MI_MODEL_TYPE, fields[col.first])) {
+        mi.short_info.model_type.type = (rg_model_t)std::atoi(col.second.c_str());
+        mi.initialized |= model_info::f_model_type;
+      } else if (isFieldName(MI_MODEL_SUBTYPE, fields[col.first])) {
+        mi.short_info.model_type.subtype = std::atoi(col.second.c_str());
+        mi.initialized |= model_info::f_model_subtype;
+      } else if (isFieldName(MI_VERS_MAJOR, fields[col.first])) {
+        mi.short_info.vers_major = std::atoi(col.second.c_str());
+        mi.initialized |= model_info::f_vers_major;
+      } else if (isFieldName(MI_VERS_MINOR, fields[col.first])) {
+        mi.short_info.vers_minor = std::atoi(col.second.c_str());
+        mi.initialized |= model_info::f_vers_minor;
+      } else if (isFieldName(MI_SHORT_INFO, fields[col.first])) {
+        mi.short_info.short_info = col.second.c_str();
+        mi.initialized |= model_info::f_short_info;
+      }
+    }
+    if (mi.initialized != mi.f_empty)
+      out_vec->push_back(std::move(mi));
+  }
+}
+
+void db_query_select_result::SetData(
+    std::vector<calculation_info> *out_vec) {
+  assert(0);
+}
+
+void db_query_select_result::SetData(
+    std::vector<calculation_state_log> *out_vec) {
+  assert(0);
+}
+
 /* db_where_tree */
 db_where_tree *db_where_tree::Init(const model_info &where) {
   return db_where_tree::init(where);
@@ -526,7 +570,7 @@ db_where_tree::db_where_tree()
   : root_(nullptr) {}
 
 void db_where_tree::construct() {
-  std::stack<db_condition_tree *> st;
+  std::stack<db_condition_node *> st;
   for (auto nd = source_.begin(); nd != source_.end(); ++nd) {
     if ((*nd)->IsOperator()) {
       auto top1 = st.top();

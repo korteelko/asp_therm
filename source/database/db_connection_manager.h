@@ -107,9 +107,7 @@ private:
   class DBConnectionCreator;
 
 private:
-  /** \brief
-    *
-  */
+  /** \brief Обёртка над функционалом сбора и выполнения транзакции */
   template <class DataT, class OutT, class SetupQueryF>
   mstatus_t exec_wrap(DataT data, OutT *res, SetupQueryF setup_m) {
     if (status_ == STATUS_DEFAULT)
@@ -136,12 +134,15 @@ private:
   void initDBConnection();
 
   /* добавить в транзакцию соответствующий запрос */
-  /** \brief  */
+  /** \brief Запрос сушествования таблицы */
   void isTableExist(Transaction *tr, db_table dt, bool *is_exists);
-  /** \brief  */
+  /** \brief Запрос создания таблицы */
   void createTable(Transaction *tr, db_table dt, void *);
-  /** \brief  */
-  void saveRow(Transaction *tr, const db_query_insert_setup &qi, void *);
+  /** \brief Запрос сохранения строки данных */
+  void saveRows(Transaction *tr, const db_query_insert_setup &qi, void *);
+  /** \brief Запрос выборки параметров */
+  void selectRows(Transaction *tr, const db_query_select_setup &qi,
+      db_query_select_result *result);
 
   /** \brief провести транзакцию tr из собраных запросов(строк) */
   [[nodiscard]]

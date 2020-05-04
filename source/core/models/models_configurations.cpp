@@ -96,3 +96,9 @@ merror_t program_configuration::SetConfigurationParameter(
 program_configuration::program_configuration()
   : calc_cfg(calculation_configuration()),
     log_level(io_loglvl::debug_logs), log_file("") {}
+
+/* model_info */
+model_info model_info::GetDefault() {
+  return model_info {.short_info = model_str(
+      rg_model_id(rg_model_t::EMPTY, MODEL_SUBTYPE_DEFAULT), 0, 0, "")};
+}

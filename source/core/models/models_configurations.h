@@ -135,10 +135,13 @@ struct model_info {
   enum model_info_flags {
     f_empty = 0x00,
     f_model_type = 0x01,
-    f_vers_major = 0x02,
-    f_vers_minor = 0x04,
-    f_short_info = 0x08,
-    f_full = 0x0F
+    f_model_subtype = 0x02,
+    f_vers_major = 0x04,
+    f_vers_minor = 0x08,
+    f_short_info = 0x10,
+    /* спорный вопрос насчёт этого */
+    f_model_id = 0x20,
+    f_full = 0x3F
   };
   /** \brief Уникальный id строки из базы данных */
   int32_t id = -1;
@@ -147,6 +150,10 @@ struct model_info {
   // dyn_setup dynamic_vars;
   /** \brief Инициализированные поля, для операций SELECT, UPDATE, INSERT */
   uint32_t initialized = f_empty;
+
+public:
+  /** \brief Получить стандартную структуру model_info , с пустыми полями */
+  static model_info GetDefault();
 };
 
 #endif  // !_CORE__MODELS__MODELS_CONFIGURATIONS_H_

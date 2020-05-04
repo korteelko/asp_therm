@@ -35,8 +35,8 @@ struct calculation_state_log;
   *   в глубь
   * Прописывал ориантируюсь на СУБД Postgre потому что
   *   более/менее похожа стандарт */
-struct db_condition_tree {
-  /** \brief дерево условия для where_tree  */
+struct db_condition_node {
+  /** \brief Дерево условия для where_tree */
   OWNER(db_where_tree);
   /** \brief Операторы отношений условий
     * \note чё там унарые то операторы то подвезли? */
@@ -72,19 +72,19 @@ struct db_condition_tree {
   };
 
 public:
-  ~db_condition_tree();
+  ~db_condition_node();
   /** \brief Получить строковое представление дерева */
   std::string GetString() const;
   bool IsOperator() const { return !is_leafnode; }
 
 protected:
   // db_condition_tree();
-  db_condition_tree(db_operator_t db_operator);
-  db_condition_tree(const std::string &data);
+  db_condition_node(db_operator_t db_operator);
+  db_condition_node(const std::string &data);
 
 protected:
-  db_condition_tree *left = nullptr;
-  db_condition_tree *rigth = nullptr;
+  db_condition_node *left = nullptr;
+  db_condition_node *rigth = nullptr;
   /* todo: optimize here:
    *   cause we can replace 'data' and 'db_operator'
    *   as union
@@ -96,7 +96,9 @@ protected:
   // size_t subnodes_count = 0;
   /** \brief КОНЕЧНАЯ */
   bool is_leafnode = false;
-  /** \brief избегаем циклических ссылок для сборок строк */
+  /** \brief избегаем циклических ссылок для сборок строк
+    * \note небольшой оверкилл наверное
+    * \todo чекнуть можно ли обойтись без неё */
   mutable bool visited = false;
 };
 
@@ -232,7 +234,7 @@ public:
 
 public:
   /** \brief Сетап выражения where для SELECT/UPDATE/DELETE запросов */
-  std::unique_ptr<db_condition_tree> where_condition;
+  std::unique_ptr<class db_where_tree> where_condition;
 
 protected:
   db_query_select_setup(db_table _table,
@@ -265,10 +267,29 @@ public:
 
   virtual ~db_query_select_result() = default;
 
+  /** \brief Записать в out_vec строки model_info из данных values_vec,
+    *   полученных из БД
+    * \note Обратная операция для db_query_insert_setup::setValues */
+  void SetData(std::vector<model_info> *out_vec);
+  /** \brief Записать в out_vec строки calculation_info из данных values_vec,
+    *  полученных из БД */
+  void SetData(std::vector<calculation_info> *out_vec);
+  /** \brief Записать в out_vec строки calculation_state_log из данных values_vec,
+    *   полученных из БД */
+  void SetData(std::vector<calculation_state_log> *out_vec);
+
+protected:
+  bool isFieldName(const std::string &strname, const db_variable &var);
+
 public:
   /** \brief Набор значений для операций INSERT/UPDATE */
   std::vector<row_values> values_vec;
 };
+inline bool db_query_select_result::isFieldName(
+    const std::string &strname, const db_variable &var) {
+  return strname == var.fname;
+}
+
 
 /* Дерево where условий */
 class db_where_tree {
@@ -304,15 +325,15 @@ protected:
     const auto &fields = qis->fields;
     for (const auto &x : row) {
       auto i = x.first;
-      if (i != db_query_basesetup::field_index_end && i < row.size()) {
+      if (i != db_query_basesetup::field_index_end && i < fields.size()) {
         auto &f = fields[i];
-        wt->source_.push_back(new db_condition_tree(f.fname + " = " + x.second));
+        wt->source_.push_back(new db_condition_node(f.fname + " = " + x.second));
       }
     }
-    std::generate_n(std::back_insert_iterator<std::vector<db_condition_tree *>>
+    std::generate_n(std::back_insert_iterator<std::vector<db_condition_node *>>
         (wt->source_), wt->source_.size() - 1,
-        []() { return new db_condition_tree(
-        db_condition_tree::db_operator_t::op_and);});
+        []() { return new db_condition_node(
+        db_condition_node::db_operator_t::op_and);});
     wt->construct();
     if (wt->root_)
       wt->data_ = wt->root_->GetString();
@@ -322,8 +343,8 @@ protected:
   void construct();
 
 protected:
-  std::vector<db_condition_tree *> source_;
-  db_condition_tree *root_ = nullptr;
+  std::vector<db_condition_node *> source_;
+  db_condition_node *root_ = nullptr;
   std::string data_;
 };
 

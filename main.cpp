@@ -94,7 +94,7 @@ int test_json() {
 }
 
 int test_database_with_models(DBConnectionManager &dbm) {
-int res = 0;
+  int res = 0;
   std::string filename = (cwd / xml_path / xml_gasmix).string();
 #if defined(RK2_DEBUG)
   std::unique_ptr<modelGeneral> mk(
@@ -103,20 +103,25 @@ int res = 0;
   dbm.SaveModelInfo(mi);
   mi.initialized = mi.f_full;
   dbm.SaveModelInfo(mi);
-  /* calculation info */
-  // calculation_info ci;
-
   /* selecte setup */
   // model_info
   model_info mi1 {.short_info = mk->GetModelShortInfo()};
-  mi1.initialized = mi1.f_model_type | mi1.f_short_info;
+  mi1.initialized = mi1.f_model_type | mi1.f_model_subtype;
   std::unique_ptr<db_where_tree> wt(db_where_tree::Init(mi1));
   Logging::Append(io_loglvl::debug_logs, "where condition: " + wt->GetString());
-
-  mi1.initialized = mi1.f_model_type | mi1.f_short_info | mi1.f_vers_major;
+  mi1.initialized = mi1.f_model_type | mi1.f_model_subtype |
+      mi1.f_short_info | mi1.f_vers_major;
   wt.reset(db_where_tree::Init(mi1));
   Logging::Append(io_loglvl::debug_logs, "where condition: " + wt->GetString());
   // std::string;
+
+  /* select test */
+  auto mi2 = model_info::GetDefault();
+  mi2.short_info.model_type.type = rg_model_t::REDLICH_KWONG;
+  mi2.short_info.model_type.subtype = MODEL_SUBTYPE_DEFAULT;
+  mi2.initialized = model_info::f_model_type | model_info::f_model_subtype;
+  std::vector<model_info> r;
+  dbm.SelectModelInfo(mi2, &r);
 #endif  // RK2_TEST
   return res;
 }
