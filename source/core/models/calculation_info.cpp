@@ -34,6 +34,7 @@ calculation_info::calculation_info()
 
 void calculation_info::SetDateTime(std::time_t *dt) {
   datetime = *dt;
+  initialized |= (f_date | f_time);
 }
 
 /* формат 'yyyy/mm/dd'
@@ -50,21 +51,30 @@ mstatus_t calculation_info::SetDate(const std::string &date) {
     int i = 0;
     for (i = 0; i < 3; ++i) {
       date_arr[i] = std::strtod(d, &end);
-      if (d != end)
+      if (d != end) {
         d = end + delim_size;
+      } else {
+        break;
+      }
     }
     if (i == 3) {
-      initialized |= f_date;
-      st = STATUS_OK;
+      /* обновить только дату */
+      as_tm = localtime(&datetime);
+      as_tm->tm_year = date_arr[0] - 1900;
+      as_tm->tm_mon = date_arr[1] - 1;
+      as_tm->tm_mday = date_arr[2];
+      std::time_t res_time = mktime(as_tm);
+      // проверить что при записи даты не слетели на такое как:
+      //   32 января -> 1 февраля
+      bool NotOverride = (as_tm->tm_year == date_arr[0] - 1900) &&
+          (as_tm->tm_mon == date_arr[1] - 1) && (as_tm->tm_mday == date_arr[2]);
+      if (res_time != -1 && NotOverride) {
+        initialized |= f_date;
+        st = STATUS_OK;
+        datetime = res_time;
+      }
     }
   }
-  /* обновить только дату */
-  as_tm = localtime(&datetime);
-  as_tm->tm_year = date_arr[0] - 1900;
-  as_tm->tm_mon = date_arr[1] - 1;
-  as_tm->tm_mday = date_arr[2];
-  datetime = mktime(as_tm);
-
   return st;
 }
 
@@ -81,21 +91,29 @@ mstatus_t calculation_info::SetTime(const std::string &time) {
     int i = 0;
     for (i = 0; i < 3; ++i) {
       time_arr[i] = std::strtod(t, &end);
-      if (t != end)
+      if (t != end) {
         t = end + delim_size;
+      } else {
+        break;
+      }
     }
-    if (i == 3) {
-      initialized |= f_time;
-      st = STATUS_OK;
+    /* можно без секунд */
+    if (i >= 2) {
+      /* обновить только дату */
+      as_tm = localtime(&datetime);
+      as_tm->tm_hour = time_arr[0];
+      as_tm->tm_min = time_arr[1];
+      as_tm->tm_sec = time_arr[2];
+      std::time_t res_time = mktime(as_tm);
+      bool NotOverride = (as_tm->tm_hour == time_arr[0]) &&
+          (as_tm->tm_min == time_arr[1]) && (as_tm->tm_sec == time_arr[2]);
+      if ((res_time != -1) && NotOverride) {
+        initialized |= f_time;
+        st = STATUS_OK;
+        datetime = res_time;
+      }
     }
   }
-  /* обновить только дату */
-  as_tm = localtime(&datetime);
-  as_tm->tm_hour = time_arr[0];
-  as_tm->tm_min = time_arr[1];
-  as_tm->tm_sec = time_arr[2];
-  datetime = mktime(as_tm);
-
   return st;
 }
 
