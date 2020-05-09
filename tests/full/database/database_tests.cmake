@@ -35,7 +35,7 @@ add_executable(
 target_link_libraries(test_database
 
   ${GTEST_LIBRARIES}
-  Threads::Threads
+  ${FULLTEST_LIBRARIES}
   pqxx
   pq
 )

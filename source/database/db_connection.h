@@ -70,7 +70,6 @@ public:
   virtual mstatus_t SetupConnection() = 0;
   virtual void CloseConnection() = 0;
 
-  /* вызывается командами */
   /** \brief Проверить существование таблицы */
   virtual mstatus_t IsTableExists(db_table t, bool *is_exists) = 0;
   /** \brief Проверить формат таблицы
@@ -81,15 +80,16 @@ public:
   /** \brief Создать таблицу */
   virtual mstatus_t CreateTable(const db_table_create_setup &fields) = 0;
 
-
-  /** \brief Добавить новую строку в БД
+  /** \brief Добавить новые строки в БД
     * \return STATUS_OK если строка добавлена */
   virtual mstatus_t InsertRows(const db_query_insert_setup &insert_data) = 0;
+  /** \brief Удалить строки из БД */
   virtual mstatus_t DeleteRows(const db_query_delete_setup &delete_data) = 0;
+  /** \brief Выбрать строки из БД */
   virtual mstatus_t SelectRows(const db_query_select_setup &select_data,
       db_query_select_result *result_data) = 0;
+  /** \brief Обновить строки БД */
   virtual mstatus_t UpdateRows(const db_query_update_setup &update_data) = 0;
-  /* посюда */
 
   mstatus_t GetStatus() const;
   merror_t GetErrorCode() const;

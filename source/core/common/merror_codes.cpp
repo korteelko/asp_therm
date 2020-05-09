@@ -77,7 +77,7 @@ static const char *custom_msg_database[] = {
 
 const char *GetCustomErrorMsg(unsigned int error) {
   unsigned int err_type     = ERROR_MASK_TYPE & error;
-  unsigned int err_concrete = ERROR_MASK_SUBTYPE & error;
+  unsigned int err_concrete = (ERROR_MASK_SUBTYPE & error) >> 8;
   // Прицеливаемся в ногу
   const char **list_of_custom_msg = nullptr;
   switch (err_type) {

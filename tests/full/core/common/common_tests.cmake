@@ -9,6 +9,6 @@ add_executable(
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 )
 
-target_link_libraries(test_math ${GTEST_LIBRARIES} Threads::Threads)
+target_link_libraries(test_math ${GTEST_LIBRARIES} ${FULLTEST_LIBRARIES})
 
 add_test(test_math "core/test_math")

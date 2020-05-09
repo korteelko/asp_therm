@@ -18,6 +18,6 @@ add_executable(
   ${THERMUTILS_SOURCE_DIR}/Logging.cpp
 )
 
-target_link_libraries(test_models ${GTEST_LIBRARIES} Threads::Threads)
+target_link_libraries(test_models ${GTEST_LIBRARIES} ${FULLTEST_LIBRARIES})
 
 add_test(test_models "core/test_models")

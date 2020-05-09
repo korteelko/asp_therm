@@ -31,7 +31,7 @@ target_link_libraries(test_gasmix
 
   ${PUGIXML_LIB}
   ${GTEST_LIBRARIES}
-  Threads::Threads
+  ${FULLTEST_LIBRARIES}
 )
 
 add_test(test_gasmix "core/test_gasmix")

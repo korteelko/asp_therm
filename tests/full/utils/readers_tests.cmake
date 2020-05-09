@@ -50,13 +50,9 @@ target_link_libraries(test_xml
 
   ${PUGIXML_LIB}
   ${GTEST_LIBRARIES}
-  Threads::Threads
+  ${FULLTEST_LIBRARIES}
 )
-target_link_libraries(test_json
-
-  ${GTEST_LIBRARIES}
-  Threads::Threads
-)
+target_link_libraries(test_json ${GTEST_LIBRARIES} ${FULLTEST_LIBRARIES})
 
 add_test(test_xml "utils xml")
 add_test(test_json "utils json")

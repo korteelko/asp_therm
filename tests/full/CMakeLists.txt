@@ -1,20 +1,27 @@
 cmake_minimum_required(VERSION 3.7)
 
-project(asp_therm-fulltests)
+set(MAIN_PROJECT "asp_therm")
+project(${MAIN_PROJECT}-fulltests)
 
 # so intresting and it's all about cmake and gtest!
 #   https://cmake.org/cmake/help/latest/module/GoogleTest.html
 
 include(gtest_setup.cmake)
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../)
+set(ASP_THERM_FULLTEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(MODULES_DIR ${ASP_THERM_ROOT}/lib)
+set(FULLTEST_LIBRARIES "")
+
+# code coverage
+add_compile_options(-fprofile-arcs -ftest-coverage)
+list(APPEND FULLTEST_LIBRARIES gcov)
 
 if(${GTEST_FOUND})
   include(${ASP_THERM_ROOT}/atherm_setup.cmake)
 
   find_package(Threads REQUIRED)
+  list(APPEND FULLTEST_LIBRARIES Threads::Threads)
 
-  set(ASP_THERM_FULLTEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
   set(THERMCORE_INCLUDES
     "${THERMCORE_SOURCE_DIR}/common"
     "${THERMCORE_SOURCE_DIR}/gas_parameters"
@@ -43,4 +50,5 @@ if(${GTEST_FOUND})
   include(${ASP_THERM_FULLTEST_DIR}/database/database_tests.cmake)
   #   models tests
   include(${ASP_THERM_FULLTEST_DIR}/core/models/models_tests.cmake)
+
 endif(${GTEST_FOUND})

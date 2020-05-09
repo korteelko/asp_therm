@@ -4,6 +4,7 @@ lib/atherm/
 
 soft/*
 !soft/gas2json.py
+!soft/gcov_report.py
 
 .kdev4/
 .vs/

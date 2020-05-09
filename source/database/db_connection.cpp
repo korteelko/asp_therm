@@ -75,7 +75,6 @@ static std::map<const std::string, dbconfig_functions> map_dbconfig_fuctions =
 }  // namespace update_configuration_functional
 
 
-
 /* db_parameters */
 namespace ns_ucf = update_configuration_functional;
 db_parameters::db_parameters()

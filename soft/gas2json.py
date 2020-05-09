@@ -1,3 +1,4 @@
+# todo: дописать
 import json
 import optparse
 import sys
@@ -16,6 +17,7 @@ def is_rigth_format(filename):
 
 
 class InpConfig:
+    # todo: remove parameter 'config_options'
     def __init__(self, options, config_options):
         self.options = options
         self.config_options = config_options
@@ -29,9 +31,6 @@ class InpConfig:
     def recursive_depth(self):
         return self.options.depth
      
-    def recursive_depth(self):
-        return self.options.depth
-
 
 class GasXmlNode:
     def __init__(self, name, text):

@@ -28,6 +28,7 @@ class DBQuery {
 public:
   bool IsPerformed() const { return is_performed_; }
 
+  /* todo: rename to 'LogDataBaseError' or something */
   void LogError();
 
   /** \brief Обёртка над функцией исполнения команды */
@@ -49,6 +50,7 @@ protected:
   bool is_performed_;
 };
 typedef std::shared_ptr<DBQuery> QuerySmartPtr;
+/* todo: rename QueryContainer to QuerySequence */
 typedef std::vector<QuerySmartPtr> QueryContainer;
 
 /** \brief Запрос установить соединение с бд */

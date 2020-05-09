@@ -120,6 +120,8 @@ modelGeneral *ModelsCreator::initModel(model_str ms, binodalpoints *bp,
     case rg_model_t::NG_GOST:
       mg = NG_Gost::Init(set_input(ms, bp, p, t, *cdu.ng_gost_components));
       break;
+    case rg_model_t::EMPTY:
+      break;
   }
   if (modelGeneral::init_error.GetErrorCode()) {
     modelGeneral::init_error.LogIt();
