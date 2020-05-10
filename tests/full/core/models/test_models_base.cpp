@@ -8,8 +8,7 @@
 
 TEST(calculation_info, DateTimeByString) {
   const char *ds = "1937/03/15",
-             *dt = "13:33:23",
-             *dt1 = "13:43";
+             *dt = "13:33";
   calculation_info ci;
   EXPECT_EQ(ci.initialized, calculation_info::f_empty);
   /* try to set valid date */
@@ -24,12 +23,6 @@ TEST(calculation_info, DateTimeByString) {
   /* check result for valid data */
   EXPECT_TRUE(ci.GetDate() == ds);
   EXPECT_TRUE(ci.GetTime() == dt);
-  /* check reduced time string */
-  st = ci.SetTime(dt1);
-  EXPECT_EQ(st, STATUS_OK);
-  EXPECT_EQ(ci.initialized, calculation_info::f_date | calculation_info::f_time);
-  std::cerr << ci.GetTime() << std::endl;
-  EXPECT_TRUE(ci.GetTime() == "13:43:00");
 
   /* corrupted data */
   /*   date */
@@ -50,13 +43,11 @@ TEST(calculation_info, DateTimeByString) {
   EXPECT_NE(st, STATUS_OK);
   EXPECT_EQ(ci.initialized, calculation_info::f_empty);
   /*   time */
-  st = ci.SetTime("sd08:12:00");
+  st = ci.SetTime("sd08:12");
   EXPECT_NE(st, STATUS_OK);
-  st = ci.SetTime("24:54:01");
+  st = ci.SetTime("24:54");
   EXPECT_NE(st, STATUS_OK);
   st = ci.SetTime("22:64:01");
-  EXPECT_NE(st, STATUS_OK);
-  st = ci.SetTime("22:21:60");
   EXPECT_NE(st, STATUS_OK);
   st = ci.SetTime("24");
   EXPECT_NE(st, STATUS_OK);
@@ -82,7 +73,7 @@ TEST(calculation_info, DateTimeCTime) {
   /* check result */
   EXPECT_EQ(ci.initialized, calculation_info::f_date | calculation_info::f_time);
   EXPECT_EQ(ci.GetDate(), "1937/03/15");
-  EXPECT_EQ(ci.GetTime(), "13:33:23");
+  EXPECT_EQ(ci.GetTime(), "13:33");
 }
 
 int main(int argc, char **argv) {

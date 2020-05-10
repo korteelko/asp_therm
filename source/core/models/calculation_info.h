@@ -14,6 +14,7 @@
 #include "gas_description.h"
 #include "ErrorWrap.h"
 
+#include <chrono>
 #include <map>
 
 
@@ -73,7 +74,7 @@ public:
     * \param date дата в формате 'yyyy/mm/dd' */
   mstatus_t SetDate(const std::string &date);
   /** \brief Установить время
-    * \param time время в формате 'hh:mm:ss' */
+    * \param time время в формате 'hh:mm' */
   mstatus_t SetTime(const std::string &time);
 
   /** \brief Получить строку даты в формате 'yyyy/mm/dd' */

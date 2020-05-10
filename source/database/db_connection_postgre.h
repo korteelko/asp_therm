@@ -155,13 +155,13 @@ private:
     *   'yyyy/mm/dd' к формату используемому БД */
   std::string dateToPostgreDate(const std::string &date);
   /** \brief Переформатировать строку общего формата времени
-    *   'hh:mm:ss' к формату используемому БД */
+    *   'hh:mm' к формату используемому БД */
   std::string timeToPostgreTime(const std::string &time);
   /** \brief Переформатировать строку общего формата даты БД
     *   к формату 'yyyy/mm/dd' */
   std::string postgreDateToDate(const std::string &pdate);
   /** \brief Переформатировать строку общего формата времени БД
-    *   к формату 'hh:mm:ss' */
+    *   к формату 'hh:mm' */
   std::string postgreTimeToTime(const std::string &ptime);
 
 private:

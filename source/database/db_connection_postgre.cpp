@@ -416,7 +416,6 @@ std::string DBConnectionPostgre::dateToPostgreDate(const std::string &date) {
 }
 
 std::string DBConnectionPostgre::timeToPostgreTime(const std::string &time) {
-  // format postgresql is same as 'hh:mm:ss'
   return time;
 }
 

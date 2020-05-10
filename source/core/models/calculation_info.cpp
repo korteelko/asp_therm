@@ -68,7 +68,7 @@ mstatus_t calculation_info::SetDate(const std::string &date) {
       //   32 января -> 1 февраля
       bool NotOverride = (as_tm->tm_year == date_arr[0] - 1900) &&
           (as_tm->tm_mon == date_arr[1] - 1) && (as_tm->tm_mday == date_arr[2]);
-      if (res_time != -1 && NotOverride) {
+      if (res_time != -1 && NotOverride && (as_tm->tm_year < 200)) {
         initialized |= f_date;
         st = STATUS_OK;
         datetime = res_time;
@@ -78,18 +78,18 @@ mstatus_t calculation_info::SetDate(const std::string &date) {
   return st;
 }
 
-/* формат 'hh:mm:ss' */
+/* формат 'hh:mm' */
 mstatus_t calculation_info::SetTime(const std::string &time) {
   mstatus_t st = STATUS_DEFAULT;
   /* размер разделителя для времени это ':' */
   int delim_size = 1;
   struct tm *as_tm;
-  int time_arr[3] = {0, 0, 0};
+  int time_arr[2] = {0, 0};
   if (!time.empty()) {
     const char *t = time.c_str();
     char *end = nullptr;
     int i = 0;
-    for (i = 0; i < 3; ++i) {
+    for (i = 0; i < 2; ++i) {
       time_arr[i] = std::strtod(t, &end);
       if (t != end) {
         t = end + delim_size;
@@ -98,15 +98,14 @@ mstatus_t calculation_info::SetTime(const std::string &time) {
       }
     }
     /* можно без секунд */
-    if (i >= 2) {
+    if (i == 2) {
       /* обновить только дату */
       as_tm = localtime(&datetime);
       as_tm->tm_hour = time_arr[0];
       as_tm->tm_min = time_arr[1];
-      as_tm->tm_sec = time_arr[2];
       std::time_t res_time = mktime(as_tm);
       bool NotOverride = (as_tm->tm_hour == time_arr[0]) &&
-          (as_tm->tm_min == time_arr[1]) && (as_tm->tm_sec == time_arr[2]);
+          (as_tm->tm_min == time_arr[1]);
       if ((res_time != -1) && NotOverride) {
         initialized |= f_time;
         st = STATUS_OK;
@@ -129,8 +128,7 @@ std::string calculation_info::GetDate() const {
 std::string calculation_info::GetTime() const {
   char t[16] = {0};
   std::tm *as_tm = std::localtime(&datetime);
-  sprintf(t, "%02d:%02d:%02d", as_tm->tm_hour,
-      as_tm->tm_min, as_tm->tm_sec);
+  sprintf(t, "%02d:%02d", as_tm->tm_hour, as_tm->tm_min);
   return std::string(t);
 }
 
