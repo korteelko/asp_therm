@@ -63,10 +63,13 @@ class DBConnection {
 public:
   virtual ~DBConnection();
 
+  /** \brief Коммит транзакции на чтение
+    * \note всё равно кажется что нет, не то */
+  // virtual mstatus_t Commit() = 0;
   /** \brief Добавить метку сохранения */
   virtual mstatus_t AddSavePoint(const db_save_point &sp) = 0;
   /** \brief Откатиться к метке сохранения */
-  virtual mstatus_t RollbackToSavePoint(const db_save_point &sp) = 0;
+  virtual void RollbackToSavePoint(const db_save_point &sp) = 0;
 
   virtual mstatus_t SetupConnection() = 0;
   virtual void CloseConnection() = 0;

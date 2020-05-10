@@ -26,10 +26,11 @@ struct db_table_create_setup;
 /** \brief абстрактный класс запросов */
 class DBQuery {
 public:
-  bool IsPerformed() const { return is_performed_; }
+  /** \brief Выполнение запроса */
+  bool IsPerformed() const;
 
   /* todo: rename to 'LogDataBaseError' or something */
-  void LogError();
+  void LogDBConnectionError();
 
   /** \brief Обёртка над функцией исполнения команды */
   virtual mstatus_t Execute();
@@ -47,6 +48,7 @@ protected:
   mstatus_t status_;
   /** \brief Указатель на подключение к БД */
   DBConnection *db_ptr_;
+  /** \brief Выполнение запроса */
   bool is_performed_;
 };
 typedef std::shared_ptr<DBQuery> QuerySmartPtr;

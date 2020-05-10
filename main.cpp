@@ -101,6 +101,8 @@ int test_database_with_models(DBConnectionManager &dbm) {
       ModelsCreator::GetCalculatingModel(rk2_str, filename, INPUT_P_T));
   model_info mi {.short_info = mk->GetModelShortInfo()};
   // dbm.SaveModelInfo(mi);
+  // todo: это стандартный сетап на добавление так что его можно
+  //   сохранить и использовать
   mi.initialized = mi.f_full & (~mi.f_model_id);
   dbm.SaveModelInfo(mi);
 
@@ -121,6 +123,15 @@ int test_database_with_models(DBConnectionManager &dbm) {
   mi2.short_info.model_type.subtype = MODEL_SUBTYPE_DEFAULT;
   mi2.initialized = model_info::f_model_type | model_info::f_model_subtype;
   std::vector<model_info> r;
+
+  mk.reset(ModelsCreator::GetCalculatingModel(rks_str, filename, INPUT_P_T));
+  model_info mis {.short_info = mk->GetModelShortInfo()};
+  // dbm.SaveModelInfo(mi);
+  // todo: это стандартный сетап на добавление так что его можно
+  //   сохранить и использовать
+  mis.initialized = mis.f_full & (~mis.f_model_id);
+  dbm.SaveModelInfo(mis);
+
   dbm.SelectModelInfo(mi2, &r);
 #endif  // RK2_TEST
   return res;

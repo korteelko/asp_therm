@@ -42,7 +42,7 @@ static std::map<db_type, std::string> str_db_types =
 }  // namespace postgresql_impl
 
 DBConnectionPostgre::DBConnectionPostgre(const db_parameters &parameters)
-  : DBConnection(parameters), pconnect_(nullptr) {}
+  : DBConnection(parameters) {}
 
 DBConnectionPostgre::~DBConnectionPostgre() {
   CloseConnection();
@@ -56,8 +56,8 @@ mstatus_t DBConnectionPostgre::AddSavePoint(const db_save_point &sp) {
          &DBConnectionPostgre::execAddSavePoint);
 }
 
-mstatus_t DBConnectionPostgre::RollbackToSavePoint(const db_save_point &sp) {
-  return exec_wrap<db_save_point, void,
+void DBConnectionPostgre::RollbackToSavePoint(const db_save_point &sp) {
+  exec_wrap<db_save_point, void,
      std::stringstream (DBConnectionPostgre::*)(const db_save_point &),
      void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
          sp, nullptr, &DBConnectionPostgre::setupRollbackToSavePoint,
@@ -68,12 +68,14 @@ mstatus_t DBConnectionPostgre::SetupConnection() {
   auto connect_str = setupConnectionString();
   if (!is_dry_run_ ) {
     try {
-      pconnect_ = std::unique_ptr<pqxx::connection>(
-          new pqxx::connection(connect_str));
-      if (pconnect_ && !error_.GetErrorCode()) {
-        if (pconnect_->is_open()) {
+      pqxx_work.InitConnection(connect_str);
+      if (!error_.GetErrorCode()) {
+        if (pqxx_work.IsAvailable()) {
           status_ = STATUS_OK;
           is_connected_ = true;
+          // отметим начало транзакции
+          // todo: вероятно в отдельную функцию вынести
+          pqxx_work.GetTransaction()->exec("begin;");
           if (IS_DEBUG_MODE)
             Logging::Append(io_loglvl::debug_logs, "Подключение к БД "
                 + parameters_.name);
@@ -96,21 +98,26 @@ mstatus_t DBConnectionPostgre::SetupConnection() {
   } else {
     status_ = STATUS_OK;
     Logging::Append(io_loglvl::debug_logs, "dry_run connect:" + connect_str);
+    Logging::Append(io_loglvl::debug_logs, "dry_run transaction begin");
   }
   return status_;
 }
 
 void DBConnectionPostgre::CloseConnection() {
-  if (pconnect_) {
-    pconnect_->disconnect();
+  if (pqxx_work.pconnect_) {
+    // если собирали транзакцию - закрыть
+    if (pqxx_work.IsAvailable())
+      pqxx_work.GetTransaction()->exec("commit;");
+    pqxx_work.pconnect_->disconnect();
     is_connected_ = false;
+    error_.Reset();
     if (IS_DEBUG_MODE)
       Logging::Append(io_loglvl::debug_logs, "Закрытие соединения c БД "
           + parameters_.name);
   }
   if (is_dry_run_) {
     status_ = STATUS_OK;
-    Logging::Append(io_loglvl::debug_logs, "dry_run disconect");
+    Logging::Append(io_loglvl::debug_logs, "dry_run commit and disconect");
   }
 }
 
@@ -271,9 +278,7 @@ std::stringstream DBConnectionPostgre::setupInsertString(
   std::string values = "VALUES (";
   std::vector<std::string> rows(fields.values_vec.size());
   db_variable::db_var_type t;
-  std::unique_ptr<pqxx::work> txn;
-  if (pconnect_)
-    txn.reset(new pqxx::work(*pconnect_));
+  auto txn = pqxx_work.GetTransaction();
   for (const auto &row: fields.values_vec) {
     for (const auto &x : row) {
       if (x.first >= 0 && x.first < fields.fields.size()) {
@@ -307,9 +312,9 @@ std::stringstream DBConnectionPostgre::setupColumnNamesString(db_table t) {
 }
 
 void DBConnectionPostgre::execNoReturn(const std::stringstream &sstr) {
-  pqxx::work tr(*pconnect_);
-  tr.exec0(sstr.str());
-  tr.commit();
+  auto tr = pqxx_work.GetTransaction();
+  if (tr)
+    tr->exec0(sstr.str());
 }
 void DBConnectionPostgre::execAddSavePoint(
     const std::stringstream &sstr, void *) {
@@ -321,32 +326,35 @@ void DBConnectionPostgre::execRollbackToSavePoint(
 }
 void DBConnectionPostgre::execIsTableExists(
     const std::stringstream &sstr, bool *is_exists) {
-  pqxx::work tr(*pconnect_);
-  pqxx::result trres(tr.exec(sstr.str()));
-  if (!trres.empty()) {
-    std::string ex = trres.begin()[0].as<std::string>();
-    *is_exists = (ex == "t") ? true : false;
-    if (IS_DEBUG_MODE)
-      Logging::Append(io_loglvl::debug_logs, "Ответ на запрос БД:"
-          + sstr.str() + "\t'" + trres.begin()[0].as<std::string>() +
-          "'\n") ;
+  auto tr = pqxx_work.GetTransaction();
+  if (tr) {
+    pqxx::result trres(tr->exec(sstr.str()));
+    if (!trres.empty()) {
+      std::string ex = trres.begin()[0].as<std::string>();
+      *is_exists = (ex == "t") ? true : false;
+      if (IS_DEBUG_MODE)
+       Logging::Append(io_loglvl::debug_logs, "Ответ на запрос БД:"
+            + sstr.str() + "\t'" + trres.begin()[0].as<std::string>() + "'\n") ;
+    }
   }
 }
 void DBConnectionPostgre::execColumnNamesString(
     const std::stringstream &sstr, std::vector<std::string> *column_names) {
   column_names->clear();
-  pqxx::work tr(*pconnect_);
-  pqxx::result trres(tr.exec(sstr.str()));
-  if (!trres.empty()) {
-    std::transform(trres.begin(), trres.end(), column_names->end(),
-        [](pqxx::const_result_iterator::reference x)
-            { return trim_str(x[0].as<std::string>()); });
-    if (IS_DEBUG_MODE) {
-      std::string cols = std::accumulate(
-          column_names->begin(), column_names->end(), std::string(),
-          [](std::string &r, const std::string &n) { return r + n; });
-      Logging::Append(io_loglvl::debug_logs, "Ответ на запрос БД:"
-          + sstr.str() + "\t'" + cols + "'\n") ;
+  auto tr = pqxx_work.GetTransaction();
+  if (tr) {
+    pqxx::result trres(tr->exec(sstr.str()));
+    if (!trres.empty()) {
+      std::transform(trres.begin(), trres.end(), column_names->end(),
+          [](pqxx::const_result_iterator::reference x)
+              { return trim_str(x[0].as<std::string>()); });
+      if (IS_DEBUG_MODE) {
+        std::string cols = std::accumulate(
+            column_names->begin(), column_names->end(), std::string(),
+            [](std::string &r, const std::string &n) { return r + n; });
+        Logging::Append(io_loglvl::debug_logs, "Ответ на запрос БД:"
+            + sstr.str() + "\t'" + cols + "'\n") ;
+      }
     }
   }
 }
@@ -364,9 +372,9 @@ void DBConnectionPostgre::execDelete(const std::stringstream &sstr, void *) {
 }
 void DBConnectionPostgre::execSelect(const std::stringstream &sstr,
     pqxx::result *result) {
-  pqxx::work tr(*pconnect_);
-  *result = tr.exec(sstr.str());
-  tr.commit();
+  auto tr = pqxx_work.GetTransaction();
+  if (tr)
+    *result = tr->exec(sstr.str());
 }
 void DBConnectionPostgre::execUpdate(const std::stringstream &sstr, void *) {
   execNoReturn(sstr);

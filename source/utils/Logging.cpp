@@ -12,6 +12,7 @@
 #define DEFAULT_LOGFILE  "logs"
 #define OLD_LOGFILE_SFX  "_prev"
 #include <ctime>
+#include <iostream>
 #if __has_include(<filesystem>)
 #  if defined (CXX17)
 #    define USE_FILESYSTEM
@@ -44,6 +45,8 @@ logging_cfg Logging::li_ = {
 ErrorWrap Logging::error_;
 Mutex Logging::logfile_mutex_;
 bool Logging::is_aval_ = false;
+// todo: для тестов
+bool Logging::cerr_duplicate_ = true;
 
 merror_t Logging::checkInstance() {
   // don't try call models_errors.h function
@@ -88,7 +91,6 @@ merror_t Logging::checkInstance() {
   return error;
 }
 
-
 merror_t Logging::initInstance(const logging_cfg *li) {
   std::lock_guard<Mutex> init_lock(Logging::logfile_mutex_);
   set_cfg(li);
@@ -125,6 +127,8 @@ void Logging::append(const char *msg) {
   if (Logging::output_.is_open()) {
     if (msg) {
       Logging::output_ << msg;
+      if (Logging::cerr_duplicate_)
+        std::cerr << msg << std::endl;
       if (!strrchr(msg, '\n'))
         Logging::output_.put('\n');
     }

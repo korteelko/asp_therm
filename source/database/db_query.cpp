@@ -19,7 +19,11 @@ DBQuery::DBQuery(DBConnection *db_ptr)
 
 DBQuery::~DBQuery() {}
 
-void DBQuery::LogError() {
+bool DBQuery::IsPerformed() const {
+  return is_performed_;
+}
+
+void DBQuery::LogDBConnectionError() {
   if (db_ptr_)
     db_ptr_->LogError();
 }

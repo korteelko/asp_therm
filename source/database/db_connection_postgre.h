@@ -36,7 +36,7 @@ public:
   ~DBConnectionPostgre() override;
 
   mstatus_t AddSavePoint(const db_save_point &sp) override;
-  mstatus_t RollbackToSavePoint(const db_save_point &sp) override;
+  void RollbackToSavePoint(const db_save_point &sp) override;
 
   mstatus_t SetupConnection() override;
   void CloseConnection() override;
@@ -72,34 +72,29 @@ private:
     std::stringstream sstr = std::invoke(setup_m, *this, data);
     sstr.seekg(0, std::ios::end);
     auto sstr_len = sstr.tellg();
-    if (is_connected_ && pconnect_ && sstr_len) {
-      if (pconnect_->is_open()) {
-        try {
-          // execute query
-          std::invoke(exec_m, *this, sstr, res);
-          if (IS_DEBUG_MODE)
-            Logging::Append(io_loglvl::debug_logs,
-                "Запрос БД на создание таблицы:" + sstr.str() + "\n\t");
-        } catch (const pqxx::undefined_table &e) {
-          status_ = STATUS_HAVE_ERROR;
-          error_.SetError(ERROR_DB_TABLE_EXISTS, "Exception text: " +
-              std::string(e.what()) + "\n Query: " + e.query());
-        } catch (const pqxx::integrity_constraint_violation &e) {
-          status_ = STATUS_HAVE_ERROR;
-          error_.SetError(ERROR_DB_SQL_QUERY, "Exception text: " +
-              std::string(e.what()) + "\n Query: " + e.query());
-        } catch (const std::exception &e) {
-           error_.SetError(ERROR_DB_CONNECTION,
-               "Подключение к БД: exception. Запрос:\n" + sstr.str()
-               + "\nexception what: " + e.what());
-           status_ = STATUS_HAVE_ERROR;
-        }
-      } else {
-        // is not connected
-        if (!error_.GetErrorCode()) {
-          error_.SetError(ERROR_DB_CONNECTION, "Соединение с бд не открыто");
-          status_ = STATUS_NOT;
-        }
+    if (pqxx_work.IsAvailable() && sstr_len) {
+      try {
+        // execute query
+        std::invoke(exec_m, *this, sstr, res);
+        if (IS_DEBUG_MODE)
+          Logging::Append(io_loglvl::debug_logs,
+              "Запрос БД на создание таблицы:" + sstr.str() + "\n\t");
+      } catch (const pqxx::undefined_table &e) {
+        status_ = STATUS_HAVE_ERROR;
+        error_.SetError(ERROR_DB_TABLE_EXISTS, "Exception text: " +
+            std::string(e.what()) + "\n Query: " + e.query());
+      } catch (const pqxx::integrity_constraint_violation &e) {
+        // исключение пробрасывается при ошибке создания строки
+        //   например если строка с таким комплексом уникальных
+        //   значений уже существует
+        status_ = STATUS_HAVE_ERROR;
+        error_.SetError(ERROR_DB_SQL_QUERY, "Exception text: " +
+            std::string(e.what()) + "\n Query: " + e.query());
+      } catch (const std::exception &e) {
+         status_ = STATUS_HAVE_ERROR;
+         error_.SetError(ERROR_DB_CONNECTION,
+             "Подключение к БД: exception. Запрос:\n" + sstr.str()
+             + "\nexception what: " + e.what());
       }
     } else {
       if (is_dry_run_) {
@@ -170,8 +165,33 @@ private:
   std::string postgreTimeToTime(const std::string &ptime);
 
 private:
-  /** \brief Указатель на объект подключения */
-  std::unique_ptr<pqxx::connection> pconnect_;
+  struct {
+  public:
+    /** \brief Указатель на объект подключения */
+    std::unique_ptr<pqxx::connection> pconnect_;
+    /** \brief Указатель на транзакцию */
+    std::unique_ptr<pqxx::nontransaction> work_;
+
+  public:
+    /** \brief Инициализировать параметры соединения, транзакции */
+    bool InitConnection(const std::string &connect_str) {
+      pconnect_ = std::unique_ptr<pqxx::connection>(
+          new pqxx::connection(connect_str));
+      if (pconnect_)
+        if (pconnect_->is_open())
+          work_ = std::unique_ptr<pqxx::nontransaction>(
+              new pqxx::nontransaction(*pconnect_));
+      return IsAvailable();
+    }
+    /** \brief Проверить установки текущей транзаккции */
+    bool IsAvailable() const {
+      return work_ != nullptr;
+    }
+    /** \brief Указатель на транзакцию */
+    pqxx::nontransaction *GetTransaction() const {
+      return work_.get();
+    }
+  } pqxx_work;
   // add result data for select queries for example, or IsTableExist
 };
 

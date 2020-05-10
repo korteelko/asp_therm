@@ -34,11 +34,10 @@ mstatus_t Transaction::ExecuteQueries() {
       // если статус после выполнения не удовлетворителен -
       //   откатим все изменения, залогируем ошибку
       if (!is_status_ok(status_)) {
-        (*it_query)->LogError();
+        (*it_query)->LogDBConnectionError();
         auto ri = std::make_reverse_iterator(it_query);
         for (;ri != queries_.rend(); ++ri) {
           if ((*ri)->IsPerformed())
-            // dev может и им статус поменять?
             (*ri)->unExecute();
         }
         break;
@@ -183,13 +182,14 @@ void DBConnectionManager::selectRows(Transaction *tr,
 
 mstatus_t DBConnectionManager::tryExecuteTransaction(Transaction &tr) {
   std::shared_lock<SharedMutex> lock(connect_init_lock_);
+  mstatus_t trans_st;
   try {
-    status_ = tr.ExecuteQueries();
+    trans_st = tr.ExecuteQueries();
   } catch (const std::exception &e) {
     error_.SetError(ERROR_DB_CONNECTION, "Во время попытки "
         "подключения к БД перехвачено исключение: " + std::string(e.what()));
     error_.LogIt();
-    status_ = STATUS_HAVE_ERROR;
+    trans_st = STATUS_HAVE_ERROR;
   }
   if (db_connection_) {
     if (db_connection_->IsOpen())
@@ -200,9 +200,9 @@ mstatus_t DBConnectionManager::tryExecuteTransaction(Transaction &tr) {
     if (!error_.GetErrorCode())
       error_.SetError(ERROR_DB_CONNECTION,
           "Подключение к базе данных не инициализировано");
-    status_ = STATUS_HAVE_ERROR;
+    status_ = trans_st = STATUS_HAVE_ERROR;
   }
-  return status_;
+  return trans_st;
 }
 
 /* DBConnection::DBConnectionInstance */

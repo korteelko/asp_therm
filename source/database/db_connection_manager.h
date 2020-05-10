@@ -114,6 +114,7 @@ private:
       db_save_point *sp_ptr) {
     if (status_ == STATUS_DEFAULT)
       status_ = CheckConnection();
+    mstatus_t trans_st;
     if (db_connection_ && is_status_aval(status_)) {
       Transaction tr(db_connection_.get());
       tr.AddQuery(QuerySmartPtr(
@@ -126,13 +127,13 @@ private:
       std::invoke(setup_m, *this, &tr, data, res);
       tr.AddQuery(QuerySmartPtr(
           new DBQueryCloseConnection(db_connection_.get())));
-      status_ = tryExecuteTransaction(tr);
+      trans_st = tryExecuteTransaction(tr);
     } else {
       error_.SetError(ERROR_DB_CONNECTION, "Не удалось установить "
           "соединение для БД: " + parameters_.GetInfo());
-      status_ = STATUS_HAVE_ERROR;
+      status_ = trans_st = STATUS_HAVE_ERROR;
     }
-    return status_;
+    return trans_st;
   }
 
   /** \brief Проинициализировать соединение с БД */
@@ -160,6 +161,7 @@ private:
   SharedMutex connect_init_lock_;
   /** \brief Параметры текущего подключения к БД */
   db_parameters parameters_;
+  /* todo: replace with connection pull */
   /** \brief Указатель иницианилизированное подключение */
   std::unique_ptr<DBConnection> db_connection_;
 };

@@ -80,6 +80,7 @@ private:
   static Mutex logfile_mutex_;
   // static RecursiveMutex append_mutex_;
   static bool is_aval_;
+  static bool cerr_duplicate_;
 
 private:
   /** \brief check logfile exist, check length of file */
