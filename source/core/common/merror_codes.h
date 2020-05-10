@@ -103,6 +103,8 @@
 #define ERROR_DB_OPERATION    (0x0800 | ERROR_DATABASE_T)
 /** \brief Колонка не существует */
 #define ERROR_DB_COL_EXISTS   (0x0900 | ERROR_DATABASE_T)
+/** \brief Ошибка конфигурации точки сохранения */
+#define ERROR_DB_SAVE_POINT   (0x0A00 | ERROR_DATABASE_T)
 
 
 const char *GetCustomErrorMsg(unsigned int error);

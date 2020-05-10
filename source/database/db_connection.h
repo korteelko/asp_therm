@@ -46,6 +46,7 @@ public:
 
   merror_t SetConfigurationParameter(const std::string &param_strtpl,
       const std::string &param_value);
+  /** \brief Получить информацию о параметрах соединения с БД */
   std::string GetInfo() const;
 };
 
@@ -62,10 +63,10 @@ class DBConnection {
 public:
   virtual ~DBConnection();
 
-  /* хз... */
-  virtual void Commit() = 0;
-  /* хз... */
-  virtual void Rollback() = 0;
+  /** \brief Добавить метку сохранения */
+  virtual mstatus_t AddSavePoint(const db_save_point &sp) = 0;
+  /** \brief Откатиться к метке сохранения */
+  virtual mstatus_t RollbackToSavePoint(const db_save_point &sp) = 0;
 
   virtual mstatus_t SetupConnection() = 0;
   virtual void CloseConnection() = 0;
@@ -104,6 +105,10 @@ protected:
   DBConnection(const db_parameters &parameters);
 
   /* функции сбора строки запроса */
+  /** \brief Сбор строки запроса создания точки сохранения */
+  virtual std::stringstream setupAddSavePointString(const db_save_point &sp);
+  /** \brief Сбор строки запроса отката до точки сохранения */
+  virtual std::stringstream setupRollbackToSavePoint(const db_save_point &sp);
   /** \brief Сбор строки запроса существования таблицы */
   virtual std::stringstream setupTableExistsString(db_table t) = 0;
   /** \brief Сбор строки на получение имён столбцов таблицы

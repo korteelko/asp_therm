@@ -72,7 +72,8 @@ static const char *custom_msg_database[] = {
   "database table primary key setup error ",
   "database sql query exception ",
   "database wrong operation name ",
-  "database table column doesn't exists "
+  "database table column doesn't exists ",
+  "database save point error ",
 };
 
 const char *GetCustomErrorMsg(unsigned int error) {

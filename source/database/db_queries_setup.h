@@ -29,6 +29,21 @@ struct model_info;
 struct calculation_info;
 struct calculation_state_log;
 
+/** \brief Сетап для добавления точки сохранения */
+struct db_save_point {
+public:
+  /** \brief Формат имени точки сохранения:
+    *  [a-z,A-Z,_]{1}[a-z,A-Z,1-9,_]{*} */
+  db_save_point(const std::string &_name);
+
+  /** \brief Получить собранную строку для добавления точки сохранения */
+  std::string GetString() const;
+
+public:
+  /** \brief Собственное уникальное имя ноды */
+  std::string name;
+};
+
 /** \brief Структура описывающая дерево логических отношений
   * \note В общем, во внутренних узлах хранится операция, в конечных
   *   операнды, соответственно строка выражения собирается обходом

@@ -80,35 +80,40 @@ bool DBConnectionManager::IsTableExist(db_table dt) {
   bool exists = false;
   exec_wrap<db_table, bool, void (DBConnectionManager::*)(
       Transaction *, db_table, bool *)>(dt, &exists,
-      &DBConnectionManager::isTableExist);
+      &DBConnectionManager::isTableExist, nullptr);
   return exists;
 }
 
 mstatus_t DBConnectionManager::CreateTable(db_table dt) {
+  db_save_point sp("create_table");
   return exec_wrap<db_table, void, void (DBConnectionManager::*)(
-      Transaction *, db_table, void *)>(dt, nullptr, &DBConnectionManager::createTable);
+      Transaction *, db_table, void *)>(dt, nullptr,
+      &DBConnectionManager::createTable, &sp);
 }
 
 mstatus_t DBConnectionManager::SaveModelInfo(model_info &mi) {
   std::unique_ptr<db_query_insert_setup> dis(db_query_insert_setup::Init({mi}));
+  db_save_point sp("save_model_info");
   return exec_wrap<const db_query_insert_setup &, void, void (DBConnectionManager::*)(
       Transaction *, const db_query_insert_setup &, void *)>(
-      *dis, nullptr, &DBConnectionManager::saveRows);
+      *dis, nullptr, &DBConnectionManager::saveRows, &sp);
 }
 
 mstatus_t DBConnectionManager::SaveCalculationInfo(calculation_info &ci) {
   std::unique_ptr<db_query_insert_setup> dis(db_query_insert_setup::Init({ci}));
+  db_save_point sp("save_calculation_info");
   return exec_wrap<const db_query_insert_setup &, void, void (DBConnectionManager::*)(
       Transaction *, const db_query_insert_setup &, void *)>(
-      *dis, nullptr, &DBConnectionManager::saveRows);
+      *dis, nullptr, &DBConnectionManager::saveRows, &sp);
 }
 
-mstatus_t DBConnectionManager::SaveCalculationStateInfo(
+mstatus_t DBConnectionManager::SaveCalculationStateLog(
     std::vector<calculation_state_log> &csi) {
   std::unique_ptr<db_query_insert_setup> dis(db_query_insert_setup::Init(csi));
+  db_save_point sp("save_calculation_state_log");
   return exec_wrap<const db_query_insert_setup &, void, void (DBConnectionManager::*)(
       Transaction *, const db_query_insert_setup &, void *)>(
-      *dis, nullptr, &DBConnectionManager::saveRows);
+      *dis, nullptr, &DBConnectionManager::saveRows, &sp);
 }
 
 mstatus_t DBConnectionManager::SelectModelInfo(model_info &where,
@@ -120,7 +125,8 @@ mstatus_t DBConnectionManager::SelectModelInfo(model_info &where,
   db_query_select_result result(*dss);
   auto st = exec_wrap<const db_query_select_setup &, db_query_select_result,
       void (DBConnectionManager::*)(Transaction *, const db_query_select_setup &,
-      db_query_select_result *)>(*dss, &result, &DBConnectionManager::selectRows);
+      db_query_select_result *)>(*dss, &result, &DBConnectionManager::selectRows,
+      nullptr);
   if (st == STATUS_OK)
     result.SetData(res);
   return st;

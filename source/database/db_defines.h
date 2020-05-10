@@ -28,7 +28,7 @@ enum class db_client: uint32_t {
   /// реализация в db_connection_postgre.cpp
   POSTGRESQL = 1
 };
-
+/** \brief Получить имя клиента БД по идентификатору */
 std::string db_client_to_string(db_client client);
 
 /** \brief перечисление типов используемых таблиц */
@@ -40,19 +40,8 @@ enum class db_table {
   /** \brief лог расчёта */
   table_calculation_state_log = 2
 };
-
+/** \brief Получить имя таблицы в БД по идентификатору */
 std::string get_table_name(db_table dt);
-
-/* todo: remove db_query_str!!! */
-/* если запрос как набор типизированных строк
- *   то необходимо определить строки неформата.
- *   например запрос "создать таблицу" может содержать
- *   комплексный первичный ключ, прописываемый в отд. строке */
-enum class db_query_str {
-  query_str_variable = 0,
-  query_str_complex_pk,
-  query_str_complex_fk
-};
 
 /** \brief структура описывающая столбец таблицы БД.
   *   собственно, описание валидно и для знчения в этом столбце,

@@ -35,9 +35,8 @@ public:
   DBConnectionPostgre(const db_parameters &parameters);
   ~DBConnectionPostgre() override;
 
-  /* хз... */
-  void Commit() override;
-  void Rollback() override;
+  mstatus_t AddSavePoint(const db_save_point &sp) override;
+  mstatus_t RollbackToSavePoint(const db_save_point &sp) override;
 
   mstatus_t SetupConnection() override;
   void CloseConnection() override;
@@ -54,6 +53,10 @@ public:
   mstatus_t UpdateRows(const db_query_update_setup &update_data) override;
 
 private:
+  /** \brief Добавить бэкап точку перед операцией изменяющей
+    *   состояние таблицы */
+  mstatus_t addSavePoint();
+
   /** \brief Шаблон функции оборачивающий операции с БД:
     *  1) Собрать запрос.
     *  2) Отправить и обработать результат.
@@ -70,7 +73,7 @@ private:
     sstr.seekg(0, std::ios::end);
     auto sstr_len = sstr.tellg();
     if (is_connected_ && pconnect_ && sstr_len) {
-      if (pconnect_->is_open() && (!error_.GetErrorCode())) {
+      if (pconnect_->is_open()) {
         try {
           // execute query
           std::invoke(exec_m, *this, sstr, res);
@@ -129,6 +132,10 @@ private:
   /** \brief Обычный запрос к БД без возвращаемого результата */
   void execNoReturn(const std::stringstream &sstr);
 
+  /** \brief Запрос создания метки сохранения */
+  void execAddSavePoint(const std::stringstream &sstr, void *);
+  /** \brief Запрос отката к метке сохранения */
+  void execRollbackToSavePoint(const std::stringstream &sstr, void *);
   /** \brief Запрос существования таблицы */
   void execIsTableExists(const std::stringstream &sstr, bool *is_exists);
   /** \brief Запрос существования таблицы */
@@ -138,6 +145,7 @@ private:
   void execAddColumn(const std::stringstream &sstr, void *);
   /** \brief Запрос создания таблицы */
   void execCreateTable(const std::stringstream &sstr, void *);
+
   /** \brief Запрос на добавление строки */
   void execInsert(const std::stringstream &sstr, void *);
   /** \brief Запрос на удаление строки */

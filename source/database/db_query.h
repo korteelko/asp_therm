@@ -33,7 +33,7 @@ public:
 
   /** \brief Обёртка над функцией исполнения команды */
   virtual mstatus_t Execute();
-  virtual void unExecute() = 0;
+  virtual void unExecute();
   virtual ~DBQuery();
 
 protected:
@@ -70,20 +70,31 @@ class DBQueryCloseConnection: public DBQuery {
 public:
   DBQueryCloseConnection(DBConnection *db_ptr);
   mstatus_t Execute() override;
-  /** \brief не делать ничего */
-  void unExecute() override;
 
 protected:
   mstatus_t exec() override;
   std::string q_info() override;
 };
 
+/** \brief Запрос создания точки сохранения */
+class DBQueryAddSavePoint: public DBQuery {
+public:
+  DBQueryAddSavePoint(DBConnection *ptr, const db_save_point &sp);
+  /** \brief Rollback к этой точке сохранения */
+  void unExecute() override;
+
+protected:
+  mstatus_t exec() override;
+  std::string q_info() override;
+
+private:
+  const db_save_point &save_point;
+};
+
 /** \brief Запрос проверки существования таблицы в бд */
 class DBQueryIsTableExists: public DBQuery {
 public:
   DBQueryIsTableExists(DBConnection *db_ptr, db_table dt, bool &is_exists);
-  /** \brief не делать ничего */
-  void unExecute() override;
 
 protected:
   mstatus_t exec() override;
@@ -99,9 +110,6 @@ class DBQueryCreateTable: public DBQuery {
 public:
   DBQueryCreateTable(DBConnection *db_ptr,
       const db_table_create_setup &create_setup);
- // mstatus_t Execute() override;
-  /** \brief обычный rollback создания таблицы */
-  void unExecute() override;
 
 protected:
   mstatus_t exec() override;
@@ -117,12 +125,13 @@ class DBQueryUpdateTable: public DBQuery {
 public:
   DBQueryUpdateTable(DBConnection *db_ptr,
       const db_table_create_setup &table_setup);
-  mstatus_t Execute() override;
-  void unExecute() override;
 
 protected:
   mstatus_t exec() override;
   std::string q_info() override;
+
+private:
+  const db_table_create_setup &update_setup;
 };
 
 /** \brief Запрос на добавление строки */
@@ -130,7 +139,6 @@ class DBQueryInsertRows: public DBQuery {
 public:
   DBQueryInsertRows(DBConnection *db_ptr,
       const db_query_insert_setup &insert_setup);
-  void unExecute() override;
 
 protected:
   mstatus_t exec() override;
@@ -147,8 +155,6 @@ public:
   DBQuerySelectRows(DBConnection *db_ptr,
       const db_query_select_setup &select_setup,
       db_query_select_result *result);
-  // mstatus_t Execute() override;
-  void unExecute() override;
 
 protected:
   mstatus_t exec() override;

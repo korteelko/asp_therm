@@ -10,6 +10,7 @@
 #include "db_queries_setup.h"
 
 #include "models_configurations.h"
+#include "Logging.h"
 
 #include <stack>
 
@@ -157,10 +158,32 @@ const db_fields_collection *get_fields_collection(db_table dt) {
 
 namespace ns_tfs = table_fields_setup;
 
-/* db_condition_tree */
-// db_condition_tree::db_condition_tree()
-//   : left(nullptr), rigth(nullptr), data(nullptr), db_operator(db_operator_t::op_empty) {}
 
+/* db_save_point */
+db_save_point::db_save_point(const std::string &_name)
+  : name("") {
+  std::string tmp = trim_str(_name);
+  if (!tmp.empty()) {
+    if (std::isalpha(tmp[0]) || tmp[0] == '_') {
+      // проверить наличие пробелов и знаков разделения
+      auto sep_pos = std::find_if_not(tmp.begin(), tmp.end(),
+          [](char c) { return std::iswalnum(c) || c == '_'; });
+      if (sep_pos == tmp.end())
+        name = tmp;
+    }
+  }
+  if (name.empty()) {
+    Logging::Append(ERROR_DB_SAVE_POINT,
+        "Ошибка инициализации параметров точки сохранения состояния БД\n"
+        "Строка инициализации: " + _name);
+  }
+}
+
+std::string db_save_point::GetString() const {
+  return name;
+}
+
+/* db_condition_tree */
 db_condition_node::db_condition_node(db_operator_t db_operator)
   : data(""), db_operator(db_operator), is_leafnode(false) {}
 

@@ -48,9 +48,21 @@ DBConnectionPostgre::~DBConnectionPostgre() {
   CloseConnection();
 }
 
-void DBConnectionPostgre::Commit() {}
+mstatus_t DBConnectionPostgre::AddSavePoint(const db_save_point &sp) {
+  return exec_wrap<db_save_point, void,
+     std::stringstream (DBConnectionPostgre::*)(const db_save_point &),
+     void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
+         sp, nullptr, &DBConnectionPostgre::setupAddSavePointString,
+         &DBConnectionPostgre::execAddSavePoint);
+}
 
-void DBConnectionPostgre::Rollback() {}
+mstatus_t DBConnectionPostgre::RollbackToSavePoint(const db_save_point &sp) {
+  return exec_wrap<db_save_point, void,
+     std::stringstream (DBConnectionPostgre::*)(const db_save_point &),
+     void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
+         sp, nullptr, &DBConnectionPostgre::setupRollbackToSavePoint,
+         &DBConnectionPostgre::execRollbackToSavePoint);
+}
 
 mstatus_t DBConnectionPostgre::SetupConnection() {
   auto connect_str = setupConnectionString();
@@ -158,7 +170,8 @@ mstatus_t DBConnectionPostgre::UpdateTable(const db_table_create_setup &fields) 
         // add column
         std::pair<db_table, const db_variable &> pdv{fields.table, field};
         res = exec_wrap<const std::pair<db_table, const db_variable &>, void,
-            std::stringstream (DBConnectionPostgre::*)(const std::pair<db_table, const db_variable &> &),
+            std::stringstream (DBConnectionPostgre::*)(const std::pair<db_table,
+                const db_variable &> &),
             void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
                 pdv, nullptr, &DBConnectionPostgre::setupAddColumnString,
                 &DBConnectionPostgre::execAddColumn);
@@ -297,6 +310,14 @@ void DBConnectionPostgre::execNoReturn(const std::stringstream &sstr) {
   pqxx::work tr(*pconnect_);
   tr.exec0(sstr.str());
   tr.commit();
+}
+void DBConnectionPostgre::execAddSavePoint(
+    const std::stringstream &sstr, void *) {
+  execNoReturn(sstr);
+}
+void DBConnectionPostgre::execRollbackToSavePoint(
+    const std::stringstream &sstr, void *) {
+  execNoReturn(sstr);
 }
 void DBConnectionPostgre::execIsTableExists(
     const std::stringstream &sstr, bool *is_exists) {

@@ -89,7 +89,7 @@ public:
   /** \brief Сохранить в БД строку calculation_info */
   mstatus_t SaveCalculationInfo(calculation_info &ci);
   /** \brief Сохранить в БД строку calculation_info */
-  mstatus_t SaveCalculationStateInfo(std::vector<calculation_state_log> &csi);
+  mstatus_t SaveCalculationStateLog(std::vector<calculation_state_log> &csi);
 
   /* select operations */
   /** \brief Вытащить из БД строки model_info по 'where' условиям */
@@ -107,17 +107,22 @@ private:
   class DBConnectionCreator;
 
 private:
-  /** \brief Обёртка над функционалом сбора и выполнения транзакции */
+  /** \brief Обёртка над функционалом сбора и выполнения транзакции:
+    *   подключение, создание точки сохранения */
   template <class DataT, class OutT, class SetupQueryF>
-  mstatus_t exec_wrap(DataT data, OutT *res, SetupQueryF setup_m) {
+  mstatus_t exec_wrap(DataT data, OutT *res, SetupQueryF setup_m,
+      db_save_point *sp_ptr) {
     if (status_ == STATUS_DEFAULT)
       status_ = CheckConnection();
     if (db_connection_ && is_status_aval(status_)) {
       Transaction tr(db_connection_.get());
       tr.AddQuery(QuerySmartPtr(
           new DBQuerySetupConnection(db_connection_.get())));
+      // добавить точку сохранения, если есть необходимость
+      if (sp_ptr)
+        tr.AddQuery(QuerySmartPtr(
+            new DBQueryAddSavePoint(db_connection_.get(), *sp_ptr)));
       // добавить специализированные запросы
-      //   true - если вызов функции успешен
       std::invoke(setup_m, *this, &tr, data, res);
       tr.AddQuery(QuerySmartPtr(
           new DBQueryCloseConnection(db_connection_.get())));

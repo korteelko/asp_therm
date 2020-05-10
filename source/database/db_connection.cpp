@@ -131,6 +131,18 @@ void DBConnection::LogError() {
 }
 
 /* setup quries text */
+std::stringstream DBConnection::setupAddSavePointString(
+    const db_save_point &sp) {
+  std::stringstream sstr;
+  sstr << "SAVEPOINT " << sp.GetString() << ";";
+  return sstr;
+}
+std::stringstream DBConnection::setupRollbackToSavePoint(
+    const db_save_point &sp) {
+  std::stringstream sstr;
+  sstr << "ROLLBACK TO SAVEPOINT " << sp.GetString() << ";";
+  return sstr;
+}
 std::stringstream DBConnection::setupAddColumnString(
     const std::pair<db_table, const db_variable &> &pdv) {
   std::stringstream sstr;

@@ -40,6 +40,8 @@ mstatus_t DBQuery::Execute() {
   return status_;
 }
 
+void DBQuery::unExecute() {}
+
 /* DBQuerySetupConnection */
 DBQuerySetupConnection::DBQuerySetupConnection(
     DBConnection *db_ptr)
@@ -74,8 +76,6 @@ mstatus_t DBQueryCloseConnection::Execute() {
   return status_;
 }
 
-void DBQueryCloseConnection::unExecute() {}
-
 mstatus_t DBQueryCloseConnection::exec() {
   // метод Execute перегружен
   return STATUS_NOT;
@@ -85,12 +85,27 @@ std::string DBQueryCloseConnection::q_info() {
   return "CloseConnection";
 }
 
+/* DBQueryAddSavePoint */
+DBQueryAddSavePoint::DBQueryAddSavePoint(
+    DBConnection *ptr, const db_save_point &sp)
+  : DBQuery(ptr), save_point(sp) {}
+
+void DBQueryAddSavePoint::unExecute() {
+  db_ptr_->RollbackToSavePoint(save_point);
+}
+
+mstatus_t DBQueryAddSavePoint::exec() {
+  return db_ptr_->AddSavePoint(save_point);
+}
+
+std::string DBQueryAddSavePoint::q_info() {
+  return "AddSavePoint";
+}
+
 /* DBQueryIsTableExist */
 DBQueryIsTableExists::DBQueryIsTableExists(
     DBConnection *db_ptr, db_table dt, bool &is_exists)
   : DBQuery(db_ptr), table_(dt), is_exists_(is_exists) {}
-
-void DBQueryIsTableExists::unExecute() {}
 
 mstatus_t DBQueryIsTableExists::exec() {
   return db_ptr_->IsTableExists(table_, &is_exists_);
@@ -113,20 +128,23 @@ std::string DBQueryCreateTable::q_info() {
   return "CreateTable";
 }
 
-/** \brief обычный rollback создания таблицы */
-void DBQueryCreateTable::unExecute() {
-  if (db_ptr_)
-    db_ptr_->Rollback();
+/* DBQueryUpdateTable */
+DBQueryUpdateTable::DBQueryUpdateTable(DBConnection *db_ptr,
+      const db_table_create_setup &table_setup)
+  : DBQuery(db_ptr), update_setup(table_setup) {}
+
+mstatus_t DBQueryUpdateTable::exec() {
+  return db_ptr_->UpdateTable(update_setup);
 }
 
-/* DBQueryUpdateTable */
+std::string DBQueryUpdateTable::q_info() {
+  return "UpdateTable";
+}
 
 /* DBQueryInsert */
 DBQueryInsertRows::DBQueryInsertRows(DBConnection *db_ptr,
     const db_query_insert_setup &insert_setup)
   : DBQuery(db_ptr), insert_setup(insert_setup) {}
-
-void DBQueryInsertRows::unExecute() {}
 
 mstatus_t DBQueryInsertRows::exec() {
   return db_ptr_->InsertRows(insert_setup);
@@ -137,13 +155,10 @@ std::string DBQueryInsertRows::q_info() {
 }
 
 /* DBQuerySelect */
-
 DBQuerySelectRows::DBQuerySelectRows(DBConnection *db_ptr,
     const db_query_select_setup &select_setup,
     db_query_select_result *result)
  : DBQuery(db_ptr), select_setup(select_setup), result(result) {}
-
-void DBQuerySelectRows::unExecute() {}
 
 mstatus_t DBQuerySelectRows::exec() {
   return db_ptr_->SelectRows(select_setup, result);
