@@ -145,7 +145,7 @@ std::string DBQueryUpdateTable::q_info() {
   return "UpdateTable";
 }
 
-/* DBQueryInsert */
+/* DBQueryInsertRows */
 DBQueryInsertRows::DBQueryInsertRows(DBConnection *db_ptr,
     const db_query_insert_setup &insert_setup)
   : DBQuery(db_ptr), insert_setup(insert_setup) {}
@@ -158,7 +158,7 @@ std::string DBQueryInsertRows::q_info() {
   return "InsertRows";
 }
 
-/* DBQuerySelect */
+/* DBQuerySelectRows */
 DBQuerySelectRows::DBQuerySelectRows(DBConnection *db_ptr,
     const db_query_select_setup &select_setup,
     db_query_select_result *result)
@@ -170,4 +170,17 @@ mstatus_t DBQuerySelectRows::exec() {
 
 std::string DBQuerySelectRows::q_info() {
   return "SelectRows";
+}
+
+/* DBQueryDeleteRows */
+DBQueryDeleteRows::DBQueryDeleteRows(DBConnection *db_ptr,
+    const db_query_delete_setup &delete_setup)
+ : DBQuery(db_ptr), delete_setup(delete_setup) {}
+
+mstatus_t DBQueryDeleteRows::exec() {
+  return db_ptr_->DeleteRows(delete_setup);
+}
+
+std::string DBQueryDeleteRows::q_info() {
+  return "DeleteRows";
 }

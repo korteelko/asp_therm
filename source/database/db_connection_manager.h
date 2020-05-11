@@ -95,7 +95,8 @@ public:
   /** \brief Вытащить из БД строки model_info по 'where' условиям */
   mstatus_t SelectModelInfo(model_info &where, std::vector<model_info> *res);
 
-  /* todo: select, update methods */
+  /** \brief Удалить строки */
+  mstatus_t DeleteModelInfo(model_info &where);
 
   /* rename method to GetError */
   merror_t GetErrorCode();
@@ -147,8 +148,10 @@ private:
   /** \brief Запрос сохранения строки данных */
   void saveRows(Transaction *tr, const db_query_insert_setup &qi, void *);
   /** \brief Запрос выборки параметров */
-  void selectRows(Transaction *tr, const db_query_select_setup &qi,
+  void selectRows(Transaction *tr, const db_query_select_setup &qs,
       db_query_select_result *result);
+  /** \brief Запрос на удаление рядов */
+  void deleteRows(Transaction *tr, const db_query_delete_setup &qd, void *);
 
   /** \brief провести транзакцию tr из собраных запросов(строк) */
   [[nodiscard]]

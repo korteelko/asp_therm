@@ -150,7 +150,6 @@ private:
   const db_query_insert_setup &insert_setup;
 };
 
-
 /** \brief Запрос выборки */
 class DBQuerySelectRows: public DBQuery {
 public:
@@ -165,6 +164,20 @@ protected:
 private:
   const db_query_select_setup &select_setup;
   db_query_select_result *result;
+};
+
+/** \brief Запрос на удаление рядов из БД */
+class DBQueryDeleteRows: public DBQuery {
+public:
+  DBQueryDeleteRows(DBConnection *db_ptr,
+      const db_query_delete_setup &delete_setup);
+
+protected:
+  mstatus_t exec() override;
+  std::string q_info() override;
+
+private:
+  const db_query_delete_setup &delete_setup;
 };
 
 #endif  // !_DATABASE__DB_QUERY_H_

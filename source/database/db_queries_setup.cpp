@@ -12,6 +12,7 @@
 #include "models_configurations.h"
 #include "Logging.h"
 
+#include <algorithm>
 #include <stack>
 
 #include <assert.h>
@@ -185,20 +186,30 @@ std::string db_save_point::GetString() const {
 
 /* db_condition_tree */
 db_condition_node::db_condition_node(db_operator_t db_operator)
-  : data(""), db_operator(db_operator), is_leafnode(false) {}
+  : data({db_type::type_empty, "", ""}), db_operator(db_operator),
+    is_leafnode(false) {}
 
-db_condition_node::db_condition_node(const std::string &data)
-  : data(data), db_operator(db_operator_t::op_empty), is_leafnode(true) {}
+db_condition_node::db_condition_node(db_type t, const std::string &fname,
+    const std::string &data)
+  : data({t, fname, data}), db_operator(db_operator_t::op_empty), is_leafnode(true) {}
 
 db_condition_node::~db_condition_node() {}
 
-std::string db_condition_node::GetString() const {
+std::string db_condition_node::DataToStr(db_type t, const std::string &f,
+    const std::string &v) {
+  // return f + " = " + v;
+  return (t == db_type::type_char_array || t == db_type::type_text) ?
+      f + " = '" + v + "'": f + " = " + v;
+}
+
+std::string db_condition_node::GetString(DataToStrF dts) const {
   std::string l, r;
   std::string result;
   visited = true;
-  // если поддеревьев нет, вернуть строку
+  // если поддеревьев нет, собрать строку
   if (db_operator == db_operator_t::op_empty)
-    return data;
+    return dts(data.type, data.field_name, data.field_value);
+    //return data.field_name + " = " + data.field_value;
   if (left)
     if (!left->visited)
       l = left->GetString();
@@ -391,7 +402,7 @@ db_query_insert_setup *db_query_insert_setup::Init(
       db_table::table_model_info, *ns_tfs::get_fields_collection(
       db_table::table_model_info));
   if (ins_setup)
-    for (const auto &x : select_data)
+    for (const auto &x: select_data)
       ins_setup->setValues(x);
   return ins_setup;
 }
@@ -404,7 +415,7 @@ db_query_insert_setup *db_query_insert_setup::Init(
       db_table::table_calculation_info, *ns_tfs::get_fields_collection(
       db_table::table_calculation_info));
   if (ins_setup)
-    for (const auto &x : select_data)
+    for (const auto &x: select_data)
       ins_setup->setValues(x);
   return ins_setup;
 }
@@ -417,7 +428,7 @@ db_query_insert_setup *db_query_insert_setup::Init(
       db_table::table_calculation_state_log, *ns_tfs::get_fields_collection(
       db_table::table_calculation_state_log));
   if (ins_setup)
-    for (const auto &x : select_data)
+    for (const auto &x: select_data)
       ins_setup->setValues(x);
   return ins_setup;
 }
@@ -431,6 +442,9 @@ void db_query_insert_setup::setValues(const model_info &select_data) {
     return;
   row_values values;
   field_index i;
+  if (select_data.initialized & model_info::f_model_id)
+    if ((i = IndexByFieldName(MI_MODEL_ID)) != field_index_end)
+      values.emplace(i, std::to_string(select_data.id));
   if (select_data.initialized & model_info::f_model_type)
     if ((i = IndexByFieldName(MI_MODEL_TYPE)) != field_index_end)
       values.emplace(i, std::to_string(
@@ -456,6 +470,9 @@ void db_query_insert_setup::setValues(const calculation_info &select_data) {
     return;
   row_values values;
   field_index i;
+  if (select_data.initialized & calculation_info::f_calculation_info_id)
+    if ((i = IndexByFieldName(CI_CALCULATION_ID)) != field_index_end)
+      values.emplace(i, std::to_string(select_data.id));
   if (select_data.initialized & calculation_info::f_model_id)
     if (select_data.model != nullptr)
       if ((i = IndexByFieldName(CI_MODEL_INFO_ID)) != field_index_end)
@@ -474,6 +491,9 @@ void db_query_insert_setup::setValues(const calculation_state_log &select_data) 
     return;
   row_values values;
   field_index i;
+  if (select_data.initialized & calculation_state_log::f_calculation_state_log_id)
+    if ((i = IndexByFieldName(CSL_LOG_ID)) != field_index_end)
+      values.emplace(i, std::to_string(select_data.id));
   if (select_data.initialized & calculation_state_log::f_info)
     if (select_data.calculation != nullptr)
       if ((i = IndexByFieldName(CSL_INFO_ID)) != field_index_end)
@@ -649,6 +669,23 @@ db_where_tree::~db_where_tree() {
 
 db_where_tree::db_where_tree()
   : root_(nullptr) {}
+
+std::string db_where_tree::GetString(db_condition_node::DataToStrF dts) const {
+  if (root_) {
+    for_each (source_.begin(), source_.end(),
+        [](db_condition_node *c) { c->visited = false; });
+    return root_->GetString(dts);
+  }
+  return "";
+}
+
+std::vector<db_condition_node *>::iterator db_where_tree::TreeBegin() {
+  return source_.begin();
+}
+
+std::vector<db_condition_node *>::iterator db_where_tree::TreeEnd() {
+  return source_.end();
+}
 
 void db_where_tree::construct() {
   std::stack<db_condition_node *> st;

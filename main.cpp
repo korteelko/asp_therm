@@ -123,6 +123,8 @@ int test_database_with_models(DBConnectionManager &dbm) {
   mi2.short_info.model_type.subtype = MODEL_SUBTYPE_DEFAULT;
   mi2.initialized = model_info::f_model_type | model_info::f_model_subtype;
   std::vector<model_info> r;
+  dbm.SelectModelInfo(mi, &r);
+  r.clear();
 
   mk.reset(ModelsCreator::GetCalculatingModel(rks_str, filename, INPUT_P_T));
   model_info mis {.short_info = mk->GetModelShortInfo()};
@@ -133,6 +135,21 @@ int test_database_with_models(DBConnectionManager &dbm) {
   dbm.SaveModelInfo(mis);
 
   dbm.SelectModelInfo(mi2, &r);
+  dbm.DeleteModelInfo(mi2);
+
+  std::string str = "Тестовая строка";
+  model_info mi3 = model_info::GetDefault();
+  mi3.short_info.short_info = str;
+  mi3.initialized = mi.f_full & (~mi.f_model_id);
+  auto st = dbm.SaveModelInfo(mi3);
+
+  /* select */
+  std::vector<model_info> r1;
+  dbm.SelectModelInfo(mi3, &r1);
+  model_info mi_del = model_info::GetDefault();
+  mi_del.id = r1[0].id;
+  mi_del.initialized = mi_del.f_model_id;
+  st = dbm.DeleteModelInfo(mi_del);
 #endif  // RK2_TEST
   return res;
 }

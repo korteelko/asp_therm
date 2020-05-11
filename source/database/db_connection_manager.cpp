@@ -131,6 +131,17 @@ mstatus_t DBConnectionManager::SelectModelInfo(model_info &where,
   return st;
 }
 
+mstatus_t DBConnectionManager::DeleteModelInfo(model_info &where) {
+  std::unique_ptr<db_query_delete_setup> dds(
+      db_query_delete_setup::Init(db_table::table_model_info));
+  if (dds)
+    dds->where_condition.reset(db_where_tree::Init(where));
+  db_save_point sp("delete_rows");
+  return exec_wrap<const db_query_delete_setup &, void,
+      void (DBConnectionManager::*)(Transaction *, const db_query_delete_setup &,
+      void *)>(*dds, nullptr, &DBConnectionManager::deleteRows, &sp);
+}
+
 merror_t DBConnectionManager::GetErrorCode() {
   return error_.GetErrorCode();
 }
@@ -175,9 +186,15 @@ void DBConnectionManager::saveRows(Transaction *tr,
 }
 
 void DBConnectionManager::selectRows(Transaction *tr,
-    const db_query_select_setup &qi, db_query_select_result *result) {
+    const db_query_select_setup &qs, db_query_select_result *result) {
   tr->AddQuery(QuerySmartPtr(
-      new DBQuerySelectRows(db_connection_.get(), qi, result)));
+      new DBQuerySelectRows(db_connection_.get(), qs, result)));
+}
+
+void DBConnectionManager::deleteRows(Transaction *tr,
+     const db_query_delete_setup &qd, void *) {
+  tr->AddQuery(QuerySmartPtr(
+      new DBQueryDeleteRows(db_connection_.get(), qd)));
 }
 
 mstatus_t DBConnectionManager::tryExecuteTransaction(Transaction &tr) {

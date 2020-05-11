@@ -49,9 +49,11 @@ std::string get_table_name(db_table dt);
 struct db_variable {
 public:
   enum class db_var_type {
+    /** пустой тип */
+    type_empty = 0,
     /** автоинкрементируюмое поле id
       *   в postgresql это SERIAL */
-    type_autoinc = 0,
+    type_autoinc,
     /** для хранения Universal Unique Identificator(RFC 4122) */
     type_uuid,
     /** boolean */

@@ -39,6 +39,18 @@ static std::map<db_type, std::string> str_db_types =
   {db_type::type_char_array, "CHAR"},
   {db_type::type_text, "TEXT"},
 };
+
+struct where_string_set {
+  where_string_set(pqxx::nontransaction *tr)
+    : tr(tr) {}
+  std::string operator()(db_type t, const std::string &f,
+      const std::string &v) {
+    return (t == db_type::type_char_array || t == db_type::type_text) ?
+        f + " = '" + tr->quote(v) + "'": f + " = " + v;
+  }
+public:
+  pqxx::nontransaction *tr;
+};
 }  // namespace postgresql_impl
 
 DBConnectionPostgre::DBConnectionPostgre(const db_parameters &parameters)
@@ -268,6 +280,12 @@ std::stringstream DBConnectionPostgre::setupTableExistsString(db_table t) {
       get_table_name(t) << "');";
   return select_ss;
 }
+std::stringstream DBConnectionPostgre::setupColumnNamesString(db_table t) {
+  std::stringstream select_ss;
+  select_ss << "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS "
+      "WHERE TABLE_NAME = '" << get_table_name(t) << "';";
+  return select_ss;
+}
 std::stringstream DBConnectionPostgre::setupInsertString(
     const db_query_insert_setup &fields) {
   if (fields.values_vec.empty()) {
@@ -304,11 +322,43 @@ std::stringstream DBConnectionPostgre::setupInsertString(
   return sstr;
 }
 
-std::stringstream DBConnectionPostgre::setupColumnNamesString(db_table t) {
-  std::stringstream select_ss;
-  select_ss << "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS "
-      "WHERE TABLE_NAME = '" << get_table_name(t) << "';";
-  return select_ss;
+std::stringstream DBConnectionPostgre::setupDeleteString(
+    const db_query_delete_setup &fields) {
+  std::stringstream sstr;
+  postgresql_impl::where_string_set ws(pqxx_work.GetTransaction());
+  sstr << "DELETE FROM " << get_table_name(fields.table);
+  if (fields.where_condition != nullptr)
+    sstr << " WHERE " << fields.where_condition->GetString(ws);
+  sstr << ";";
+  return sstr;
+}
+std::stringstream DBConnectionPostgre::setupSelectString(
+    const db_query_select_setup &fields) {
+  std::stringstream sstr;
+  postgresql_impl::where_string_set ws(pqxx_work.GetTransaction());
+  sstr << "SELECT * FROM " << get_table_name(fields.table);
+  if (fields.where_condition != nullptr)
+    sstr << " WHERE " << fields.where_condition->GetString(ws);
+  sstr << ";";
+  return sstr;
+}
+std::stringstream DBConnectionPostgre::setupUpdateString(
+    const db_query_update_setup &fields) {
+  postgresql_impl::where_string_set ws(pqxx_work.GetTransaction());
+  std::stringstream sstr;
+  if (!fields.values.empty()) {
+    sstr << "UPDATE " << get_table_name(fields.table)
+        << " SET ";
+    std::string set_str = "";
+    for (const auto &x: fields.values)
+      set_str += fields.fields[x.first].fname + " = " + x.second + ",";
+    set_str[set_str.size() - 1] = ' ';
+    sstr << set_str;
+    if (fields.where_condition != nullptr)
+      sstr << " WHERE " << fields.where_condition->GetString(ws);
+    sstr << ";";
+  }
+  return sstr;
 }
 
 void DBConnectionPostgre::execNoReturn(const std::stringstream &sstr) {

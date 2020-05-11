@@ -78,7 +78,7 @@ private:
         std::invoke(exec_m, *this, sstr, res);
         if (IS_DEBUG_MODE)
           Logging::Append(io_loglvl::debug_logs,
-              "Запрос БД на создание таблицы:" + sstr.str() + "\n\t");
+              "Debug mode: \n\tЗапрос БД: " + sstr.str() + "\n\t");
       } catch (const pqxx::undefined_table &e) {
         status_ = STATUS_HAVE_ERROR;
         error_.SetError(ERROR_DB_TABLE_EXISTS, "Exception text: " +
@@ -120,6 +120,12 @@ private:
   std::stringstream setupColumnNamesString(db_table t) override;
   std::stringstream setupInsertString(
        const db_query_insert_setup &fields) override;
+  std::stringstream setupDeleteString(
+      const db_query_delete_setup &fields) override;
+  std::stringstream setupSelectString(
+      const db_query_select_setup &fields) override;
+  std::stringstream setupUpdateString(
+      const db_query_update_setup &fields) override;
 
   std::string db_variable_to_string(const db_variable &dv) override;
 

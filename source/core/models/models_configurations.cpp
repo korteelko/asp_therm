@@ -100,5 +100,5 @@ program_configuration::program_configuration()
 /* model_info */
 model_info model_info::GetDefault() {
   return model_info {.short_info = model_str(
-      rg_model_id(rg_model_t::EMPTY, MODEL_SUBTYPE_DEFAULT), 0, 0, "")};
+      rg_model_id(rg_model_t::EMPTY, MODEL_SUBTYPE_DEFAULT), 1, 0, "")};
 }

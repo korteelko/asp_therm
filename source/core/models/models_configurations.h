@@ -132,6 +132,11 @@ public:
 
 /** \brief строка для добавления в БД */
 struct model_info {
+public:
+  /** \brief Получить стандартную структуру model_info , с пустыми полями */
+  static model_info GetDefault();
+
+public:
   enum model_info_flags {
     f_empty = 0x00,
     f_model_type = 0x01,
@@ -146,14 +151,11 @@ struct model_info {
   /** \brief Уникальный id строки из базы данных */
   int32_t id = -1;
   /** \brief Информация о модели */
+  /* todo: переименовать */
   model_str short_info;
   // dyn_setup dynamic_vars;
   /** \brief Инициализированные поля, для операций SELECT, UPDATE, INSERT */
   uint32_t initialized = f_empty;
-
-public:
-  /** \brief Получить стандартную структуру model_info , с пустыми полями */
-  static model_info GetDefault();
 };
 
 #endif  // !_CORE__MODELS__MODELS_CONFIGURATIONS_H_

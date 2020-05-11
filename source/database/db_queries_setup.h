@@ -86,25 +86,39 @@ struct db_condition_node {
     op_lt,
   };
 
+  typedef std::function<std::string(db_type, const std::string &,
+      const std::string &)> DataToStrF;
+
+  /** \brief Конвертировать данные узла в строку */
+  static std::string DataToStr(db_type, const std::string &f,
+      const std::string &v);
+
 public:
   ~db_condition_node();
-  /** \brief Получить строковое представление дерева */
-  std::string GetString() const;
+  /** \brief Получить строковое представление дерева
+    * \note Предварительный сетап данных для операций с СУБД */
+  std::string GetString(DataToStrF dts = DataToStr) const;
+  /** \brief Есть ли подузлы */
   bool IsOperator() const { return !is_leafnode; }
 
 protected:
   // db_condition_tree();
   db_condition_node(db_operator_t db_operator);
-  db_condition_node(const std::string &data);
+  db_condition_node(db_type t, const std::string &fname,
+      const std::string &data);
 
 protected:
   db_condition_node *left = nullptr;
   db_condition_node *rigth = nullptr;
-  /* todo: optimize here:
-   *   cause we can replace 'data' and 'db_operator'
-   *   as union
-   */
-  std::string data;
+  /** \brief Структура данных узла */
+  struct {
+    /** \brief Тип данных в БД */
+    db_type type;
+    /** \brief Имя столбца */
+    std::string field_name;
+    /** \brief Строковое представление данных */
+    std::string field_value;
+  } data;
   db_operator_t db_operator;
   /** \brief Количество подузлов
     * \note Для insert операций */
@@ -308,7 +322,11 @@ inline bool db_query_select_result::isFieldName(
 }
 
 
-/* Дерево where условий */
+/** \brief Дерево where условий
+  * \note В общем и целом:
+  *   1) не очень оптимизировано
+  *   2) строки которая хочет видеть СУБД могут отличаться от того что
+  *     представлено в коде, поэтому оставим возможность их менять */
 class db_where_tree {
 public:
   static db_where_tree *Init(const model_info &where);
@@ -324,7 +342,13 @@ public:
   db_where_tree &operator=(db_where_tree &&) = delete;
 
   // db_condition_tree *GetTree() const {return root_;}
-  std::string GetString() const { return data_; }
+  /** \brief Собрать строку условного выражения */
+  std::string GetString(db_condition_node::DataToStrF dts =
+       db_condition_node::DataToStr) const;
+  /** \brief Условно(не упорядочены), первая нода коллекции дерева */
+  std::vector<db_condition_node *>::iterator TreeBegin();
+  /** \brief Условно(не упорядочены), конечная нода коллекции дерева */
+  std::vector<db_condition_node *>::iterator TreeEnd();
 
 protected:
   db_where_tree();
@@ -338,6 +362,8 @@ protected:
     /* todo: это конечно мрак */
     std::unique_ptr<db_query_insert_setup> qis(
         db_query_insert_setup::Init({where}));
+    if (!qis)
+      return nullptr;
     if (qis->values_vec.empty())
       return nullptr;
     db_where_tree *wt = new db_where_tree();
@@ -347,16 +373,20 @@ protected:
       auto i = x.first;
       if (i != db_query_basesetup::field_index_end && i < fields.size()) {
         auto &f = fields[i];
-        wt->source_.push_back(new db_condition_node(f.fname + " = " + x.second));
+        wt->source_.push_back(new db_condition_node(
+            f.type, f.fname, x.second));
       }
     }
-    std::generate_n(std::back_insert_iterator<std::vector<db_condition_node *>>
-        (wt->source_), wt->source_.size() - 1,
-        []() { return new db_condition_node(
-        db_condition_node::db_operator_t::op_and);});
-    wt->construct();
-    if (wt->root_)
-      wt->data_ = wt->root_->GetString();
+    if (wt->source_.size() == 1) {
+      // только одно условие
+      wt->root_ = wt->source_[0];
+    } else if (wt->source_.size() > 1) {
+      std::generate_n(std::back_insert_iterator<std::vector<db_condition_node *>>
+          (wt->source_), wt->source_.size() - 1,
+          []() { return new db_condition_node(
+              db_condition_node::db_operator_t::op_and); });
+      wt->construct();
+    }
     return wt;
   }
 
