@@ -180,6 +180,13 @@ std::stringstream DBConnection::setupCreateTableString(
   sstr << ");";
   return sstr;
 }
+std::stringstream DBConnection::setupDropTableString(
+    const db_table_drop_setup &drop) {
+  std::stringstream sstr;
+  sstr << "DROP TABLE " << get_table_name(drop.table) << " " <<
+      db_reference::GetReferenceActString(drop.act) << ";";
+  return sstr;
+}
 std::stringstream DBConnection::setupInsertString(
     const db_query_insert_setup &fields) {
   if (fields.values_vec.empty()) {
@@ -209,10 +216,12 @@ std::stringstream DBConnection::setupInsertString(
 std::stringstream DBConnection::setupDeleteString(
     const db_query_delete_setup &fields) {
   std::stringstream sstr;
-  sstr << "DELETE FROM " << get_table_name(fields.table);
-  if (fields.where_condition != nullptr)
-    sstr << " WHERE " << fields.where_condition->GetString();
-  sstr << ";";
+  if (fields.where_condition != nullptr) {
+    sstr << "DELETE FROM " << get_table_name(fields.table) <<
+        " WHERE " << fields.where_condition->GetString() << ";";
+  } else {
+    sstr << "DELETE * FROM " << get_table_name(fields.table) << ";";
+  }
   return sstr;
 }
 std::stringstream DBConnection::setupSelectString(

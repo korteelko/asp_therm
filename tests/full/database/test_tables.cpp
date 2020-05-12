@@ -59,6 +59,7 @@ TEST_F(DatabaseTablesTest, InsertModelInfo) {
   auto st = dbm_.SaveModelInfo(mi);
   std::cerr << "save status: " << st << std::endl;
   ASSERT_TRUE(is_status_ok(st));
+
   /* select */
   std::vector<model_info> r;
   dbm_.SelectModelInfo(mi, &r);

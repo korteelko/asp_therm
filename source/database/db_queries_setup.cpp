@@ -18,30 +18,6 @@
 #include <assert.h>
 
 
-#define MI_MODEL_ID "model_id"
-#define MI_MODEL_TYPE "model_type"
-#define MI_MODEL_SUBTYPE "model_subtype"
-#define MI_VERS_MAJOR "vers_major"
-#define MI_VERS_MINOR "vers_minor"
-#define MI_SHORT_INFO "short_info"
-
-#define CI_CALCULATION_ID "calculation_id"
-#define CI_MODEL_INFO_ID "model_info_id"
-#define CI_DATE "date"
-#define CI_TIME "time"
-
-#define CSL_LOG_ID "calculation_log_id"
-#define CSL_INFO_ID "calculation_info_id"
-#define CSL_VOLUME "volume"
-#define CSL_PRESSURE "pressure"
-#define CSL_TEMPERATURE "temperature"
-#define CSL_HEAT_CV "heat_capacity_vol"
-#define CSL_HEAT_CP "heat_capacity_pres"
-#define CSL_INTERNAL_ENERGY "internal_energy"
-#define CSL_BETA_KR "beta_kr"
-#define CSL_ENTHALPY "enthalpy"
-#define CSL_STATE_PHASE "state_phase"
-
 namespace table_fields_setup {
 /** \brief Сетап таблицы БД хранения данных о модели
   * \note В семантике PostgreSQL */
@@ -56,7 +32,7 @@ TABLE MODEL_INFO (
   UNIQUE(model_type, model_subtype, vers_major, vers_minor),
   PRIMARY KEY (model_id)
 ); */
-static const db_fields_collection model_info_fields = {
+const db_fields_collection model_info_fields = {
   db_variable(MI_MODEL_ID, db_type::type_autoinc, {.is_primary_key = true,
       .is_unique = true, .can_be_null = false}),
   db_variable(MI_MODEL_TYPE, db_type::type_int, {.can_be_null = false,
@@ -80,7 +56,7 @@ TABLE CALCULATION_INFO (
   PRIMARY KEY (calculation_id),
   FOREIGN KEY (model_info_id) REFERENCES model_info(model_id)
 ); */
-static const db_fields_collection calculation_info_fields = {
+const db_fields_collection calculation_info_fields = {
   db_variable(CI_CALCULATION_ID, db_type::type_autoinc, {.is_primary_key = true,
       .is_unique = true, .can_be_null = false}),
   // reference to model_info(fk)
@@ -114,7 +90,7 @@ TABLE CALCULATION_STATE_LOG (
   FOREIGN KEY (calculation_info_id)
       REFERENCES calculation_info(calculation_id) ON DELETE CASCADE
 ); */
-static const db_fields_collection calculation_state_log_fields = {
+const db_fields_collection calculation_state_log_fields = {
   db_variable(CSL_LOG_ID, db_type::type_autoinc, {.is_primary_key = true,
       .is_unique = true, .can_be_null = false}),
   db_variable(CSL_INFO_ID, db_type::type_int, {.is_primary_key = true,
@@ -131,8 +107,8 @@ static const db_fields_collection calculation_state_log_fields = {
 };
 static const db_ref_collection calculation_state_log_references = {
   db_reference(CSL_INFO_ID, db_table::table_calculation_info, CI_CALCULATION_ID,
-      true, db_reference::db_reference_act::ref_act_cascade,
-      db_reference::db_reference_act::ref_act_cascade)
+      true, db_reference_act::ref_act_cascade,
+      db_reference_act::ref_act_cascade)
 };
 static const db_table_create_setup calculation_state_log_create_setup(
     db_table::table_calculation_state_log, calculation_state_log_fields);
@@ -555,9 +531,6 @@ void db_query_select_result::SetData(std::vector<model_info> *out_vec) {
   for (auto &row: values_vec) {
     model_info mi = model_info::GetDefault();
     for (auto &col: row) {
-      /* todo: очень не оптимальное решение с IsFieldName,
-       *   переработать индексацию:
-       *   индекс определяет имя поля, а не наоборот */
       if (isFieldName(MI_MODEL_ID, fields[col.first])) {
         mi.id = std::atoi(col.second.c_str());
         mi.initialized |= model_info::f_model_id;

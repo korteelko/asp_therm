@@ -25,9 +25,42 @@
 
 #define OWNER(x) friend class x
 
+/* имена столбцов в БД */
+#define MI_MODEL_ID "model_id"
+#define MI_MODEL_TYPE "model_type"
+#define MI_MODEL_SUBTYPE "model_subtype"
+#define MI_VERS_MAJOR "vers_major"
+#define MI_VERS_MINOR "vers_minor"
+#define MI_SHORT_INFO "short_info"
+
+#define CI_CALCULATION_ID "calculation_id"
+#define CI_MODEL_INFO_ID "model_info_id"
+#define CI_DATE "date"
+#define CI_TIME "time"
+
+#define CSL_LOG_ID "calculation_log_id"
+#define CSL_INFO_ID "calculation_info_id"
+#define CSL_VOLUME "volume"
+#define CSL_PRESSURE "pressure"
+#define CSL_TEMPERATURE "temperature"
+#define CSL_HEAT_CV "heat_capacity_vol"
+#define CSL_HEAT_CP "heat_capacity_pres"
+#define CSL_INTERNAL_ENERGY "internal_energy"
+#define CSL_BETA_KR "beta_kr"
+#define CSL_ENTHALPY "enthalpy"
+#define CSL_STATE_PHASE "state_phase"
+
 struct model_info;
 struct calculation_info;
 struct calculation_state_log;
+
+namespace table_fields_setup {
+extern const db_fields_collection model_info_fields;
+extern const db_fields_collection calculation_info_fields;
+extern const db_fields_collection calculation_state_log_fields;
+
+const db_fields_collection *get_fields_collection(db_table dt);
+}  // namespace table_fields_setup
 
 /** \brief Сетап для добавления точки сохранения */
 struct db_save_point {
@@ -42,6 +75,12 @@ public:
 public:
   /** \brief Собственное уникальное имя ноды */
   std::string name;
+};
+
+/** \brief Сетап удаления таблицы */
+struct db_table_drop_setup {
+  db_table table;
+  db_reference_act act;
 };
 
 /** \brief Структура описывающая дерево логических отношений
@@ -159,10 +198,6 @@ private:
 };
 
 
-namespace table_fields_setup {
-const db_fields_collection *get_fields_collection(db_table dt);
-}
-
 /* queries setup */
 /** \brief базовая структура сборки запроса */
 struct db_query_basesetup {
@@ -231,6 +266,8 @@ protected:
     return ins_setup;
   }
 
+  /** \brief Проверить соответствие значений полей initialized в векторе
+    *   элементов данных выборки. Для всех должны быть одинаковы */
   template <class DataInfo>
   static bool haveConflict(const std::vector<DataInfo> &select_data) {
     if (!select_data.empty()) {
@@ -241,15 +278,19 @@ protected:
     }
     return false;
   }
-  /** \brief Собрать вектор 'values' значеений столбцов БД,
-    *   по переданным структурам */
+  /** \brief Собрать вектор 'values' значений столбцов БД,
+    *   по переданным строкам model_info */
+
   void setValues(const model_info &select_data);
+  /** \brief Собрать вектор 'values' значений столбцов БД,
+    *   по переданным строкам calculation_info */
   void setValues(const calculation_info &select_data);
+  /** \brief Собрать вектор 'values' значений столбцов БД,
+    *   по переданным строкам calculation_state_log */
   void setValues(const calculation_state_log &select_data);
 
 public:
-  /** \brief Набор значений для операций INSERT */
-  // std::vector<row_values> values_vec;
+  /** \brief Набор значений для операций INSERT|SELECT|DELETE */
   std::vector<row_values> values_vec;
 };
 
@@ -378,7 +419,7 @@ protected:
       }
     }
     if (wt->source_.size() == 1) {
-      // только одно условие
+      // только одно условие выборки
       wt->root_ = wt->source_[0];
     } else if (wt->source_.size() > 1) {
       std::generate_n(std::back_insert_iterator<std::vector<db_condition_node *>>

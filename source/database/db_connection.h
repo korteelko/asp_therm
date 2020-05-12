@@ -80,6 +80,8 @@ public:
   virtual mstatus_t UpdateTable(const db_table_create_setup &fields) = 0;
   /** \brief Создать таблицу */
   virtual mstatus_t CreateTable(const db_table_create_setup &fields) = 0;
+  /** \brief Удалить таблицу */
+  virtual mstatus_t DropTable(const db_table_drop_setup &drop) = 0;
 
   /** \brief Добавить новые строки в БД
     * \return STATUS_OK если строка добавлена */
@@ -120,6 +122,10 @@ protected:
   /** \brief Сбор строки запроса для создания таблицы */
   virtual std::stringstream setupCreateTableString(
       const db_table_create_setup &fields);
+  /** \brief Сбор строки запроса для удаления таблицы
+    * \note Тут ещё опции RESTRICT|CASCADE */
+  virtual std::stringstream setupDropTableString(
+      const db_table_drop_setup &drop);
   /** \brief Сбор строки запроса для добавления строки */
   virtual std::stringstream setupInsertString(
       const db_query_insert_setup &fields);

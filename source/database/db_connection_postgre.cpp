@@ -211,6 +211,14 @@ mstatus_t DBConnectionPostgre::CreateTable(
          &DBConnectionPostgre::execCreateTable);
 }
 
+mstatus_t DBConnectionPostgre::DropTable(const db_table_drop_setup &drop) {
+  return exec_wrap<db_table_drop_setup, void,
+     std::stringstream (DBConnectionPostgre::*)(const db_table_drop_setup &),
+     void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
+         drop, nullptr, &DBConnectionPostgre::setupDropTableString,
+         &DBConnectionPostgre::execDropTable);
+}
+
 mstatus_t DBConnectionPostgre::InsertRows(
     const db_query_insert_setup &insert_data) {
   return exec_wrap<db_query_insert_setup, void,
@@ -412,6 +420,9 @@ void DBConnectionPostgre::execAddColumn(const std::stringstream &sstr, void *) {
   execNoReturn(sstr);
 }
 void DBConnectionPostgre::execCreateTable(const std::stringstream &sstr, void *) {
+  execNoReturn(sstr);
+}
+void DBConnectionPostgre::execDropTable(const std::stringstream &sstr, void *) {
   execNoReturn(sstr);
 }
 void DBConnectionPostgre::execInsert(const std::stringstream &sstr, void *) {

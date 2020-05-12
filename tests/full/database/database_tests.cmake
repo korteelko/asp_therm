@@ -29,6 +29,7 @@ add_executable(
   test_database
 
   ${ASP_THERM_FULLTEST_DIR}/database/test_tables.cpp
+  ${ASP_THERM_FULLTEST_DIR}/database/test_queries.cpp
   ${COMMON_SRC}
 )
 

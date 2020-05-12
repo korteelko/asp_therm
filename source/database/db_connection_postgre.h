@@ -45,6 +45,7 @@ public:
   mstatus_t CheckTableFormat(const db_table_create_setup &fields) override;
   mstatus_t UpdateTable(const db_table_create_setup &fields) override;
   mstatus_t CreateTable(const db_table_create_setup &fields) override;
+  mstatus_t DropTable(const db_table_drop_setup &drop) override;
 
   mstatus_t InsertRows(const db_query_insert_setup &insert_data) override;
   mstatus_t DeleteRows(const db_query_delete_setup &delete_data) override;
@@ -146,6 +147,8 @@ private:
   void execAddColumn(const std::stringstream &sstr, void *);
   /** \brief Запрос создания таблицы */
   void execCreateTable(const std::stringstream &sstr, void *);
+  /** \brief Запрос удаления таблицы */
+  void execDropTable(const std::stringstream &sstr, void *);
 
   /** \brief Запрос на добавление строки */
   void execInsert(const std::stringstream &sstr, void *);

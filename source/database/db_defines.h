@@ -128,16 +128,21 @@ struct db_complex_pk {
   std::vector<std::string> fnames;
 };
 
+/** \brief enum действий над объектами со ссылками на другие элементами:
+  *   колонками другой таблицы или самими таблицами */
+enum class db_reference_act {
+  ref_act_empty = 0,
+  // ref_act_set_null,
+  // ref_act_set_default,
+  /** \brief Изменить зависимые объекты и объекты зависимые от зависимых */
+  ref_act_cascade,
+  /** \brief Не изменять объект при наличии связей */
+  ref_act_restrict
+};
+
 /** \brief структура содержащая параметры удалённого ключа */
 struct db_reference {
 public:
-  enum class db_reference_act {
-    ref_act_empty = 0,
-    // ref_act_set_null,
-    // ref_act_set_default,
-    ref_act_cascade,
-    ref_act_restrict
-  };
 
 public:
   /** \brief собственное имя параметра таблицы */
