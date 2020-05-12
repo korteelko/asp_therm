@@ -6,7 +6,6 @@ add_executable(
 
   ${ASP_THERM_FULLTEST_DIR}/core/models/test_models_base.cpp
 
-  ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
   ${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 

@@ -28,8 +28,8 @@
 #include <string.h>
 
 
-logging_cfg::logging_cfg(io_loglvl ll, const std::string &file)
-  : loglvl(ll) {
+logging_cfg::logging_cfg(io_loglvl ll, const std::string &file, bool duplicate)
+  : loglvl(ll) ,cerr_duplicate(duplicate) {
   strncpy(filepath, file.c_str(), sizeof(filepath));
 }
 
@@ -37,16 +37,17 @@ mlog_fostream Logging::output_;
 logging_cfg Logging::li_ = {
 #ifdef _DEBUG
   debug_logs,
+  DEFAULT_LOGFILE,
+  true
 #else
   err_logs,
+  DEFAULT_LOGFILE,
+  false
 #endif  // _DEBUG
-  DEFAULT_LOGFILE
 };
 ErrorWrap Logging::error_;
 Mutex Logging::logfile_mutex_;
 bool Logging::is_aval_ = false;
-// todo: для тестов
-bool Logging::cerr_duplicate_ = true;
 
 merror_t Logging::checkInstance() {
   // don't try call models_errors.h function
@@ -127,7 +128,7 @@ void Logging::append(const char *msg) {
   if (Logging::output_.is_open()) {
     if (msg) {
       Logging::output_ << msg;
-      if (Logging::cerr_duplicate_)
+      if (Logging::li_.cerr_duplicate)
         std::cerr << msg << std::endl;
       if (!strrchr(msg, '\n'))
         Logging::output_.put('\n');

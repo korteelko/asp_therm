@@ -134,7 +134,8 @@ void PSConfiguration::setDefault() {
 void PSConfiguration::initProgramConfig() {
   configuration = config_by_file->GetConfiguration();
   Logging::ResetInstance(
-      logging_cfg(configuration.log_level, configuration.log_file));
+      logging_cfg(configuration.log_level, configuration.log_file,
+      configuration.calc_cfg.is_debug_mode));
 }
 
 void PSConfiguration::initDatabaseConfig() {

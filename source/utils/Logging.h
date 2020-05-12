@@ -32,9 +32,14 @@
 struct logging_cfg {
   io_loglvl loglvl;
   char filepath[PATH_MAX];  //MAXPATHLEN
+  bool cerr_duplicate;
 
 public:
-  logging_cfg(io_loglvl ll, const std::string &file);
+  /** \brief Установки логирования
+    * \param ll уровень логирования
+    * \param file файл для записи
+    * \param cerr_duplicate дублировать логи в стандартный вывод ошибок */
+  logging_cfg(io_loglvl ll, const std::string &file, bool duplicate);
 };
 
 typedef std::ofstream mlog_fostream;
@@ -74,15 +79,6 @@ public:
   // static void Append(ErrorWrap err, const std::string &msg);
 
 private:
-  static mlog_fostream output_;
-  static logging_cfg li_;
-  static ErrorWrap error_;
-  static Mutex logfile_mutex_;
-  // static RecursiveMutex append_mutex_;
-  static bool is_aval_;
-  static bool cerr_duplicate_;
-
-private:
   /** \brief check logfile exist, check length of file */
   static merror_t checkInstance();
   /** \brief check instance and set variables */
@@ -91,6 +87,13 @@ private:
   static void append(const char *msg);
   /** \brief reset logging configuration(filename, log level) */
   static void set_cfg(const logging_cfg *li);
+
+private:
+  static mlog_fostream output_;
+  static logging_cfg li_;
+  static ErrorWrap error_;
+  static Mutex logfile_mutex_;
+  static bool is_aval_;
 };
 
 #endif  // !UTILS__LOGGING_H

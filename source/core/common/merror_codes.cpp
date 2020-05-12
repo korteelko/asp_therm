@@ -77,13 +77,16 @@ static const char *custom_msg_database[] = {
 };
 
 const char *GetCustomErrorMsg(unsigned int error) {
+  /* общие ошибки */
+  if (error == ERROR_SUCCESS_T)
+    return custom_msg[ERROR_SUCCESS_T];
+  if (error == ERROR_GENERAL_T)
+    return custom_msg[ERROR_GENERAL_T];
+  /* специализация */
   unsigned int err_type     = ERROR_MASK_TYPE & error;
   unsigned int err_concrete = (ERROR_MASK_SUBTYPE & error) >> 8;
-  // Прицеливаемся в ногу
   const char **list_of_custom_msg = nullptr;
   switch (err_type) {
-    case ERROR_SUCCESS_T:
-      return custom_msg[ERROR_SUCCESS_T];
     case ERROR_FILEIO_T:
       list_of_custom_msg = custom_msg_fileio;
       break;
