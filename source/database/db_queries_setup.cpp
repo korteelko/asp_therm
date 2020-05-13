@@ -173,7 +173,6 @@ db_condition_node::~db_condition_node() {}
 
 std::string db_condition_node::DataToStr(db_type t, const std::string &f,
     const std::string &v) {
-  // return f + " = " + v;
   return (t == db_type::type_char_array || t == db_type::type_text) ?
       f + " = '" + v + "'": f + " = " + v;
 }
@@ -188,10 +187,10 @@ std::string db_condition_node::GetString(DataToStrF dts) const {
     //return data.field_name + " = " + data.field_value;
   if (left)
     if (!left->visited)
-      l = left->GetString();
+      l = left->GetString(dts);
   if (rigth)
     if (!rigth->visited)
-      r = rigth->GetString();
+      r = rigth->GetString(dts);
   switch (db_operator) {
     case db_operator_t::op_is:
       result = l +  " IS " + r;
@@ -450,9 +449,8 @@ void db_query_insert_setup::setValues(const calculation_info &select_data) {
     if ((i = IndexByFieldName(CI_CALCULATION_ID)) != field_index_end)
       values.emplace(i, std::to_string(select_data.id));
   if (select_data.initialized & calculation_info::f_model_id)
-    if (select_data.model != nullptr)
-      if ((i = IndexByFieldName(CI_MODEL_INFO_ID)) != field_index_end)
-        values.emplace(i, std::to_string(select_data.model->id));
+    if ((i = IndexByFieldName(CI_MODEL_INFO_ID)) != field_index_end)
+      values.emplace(i, std::to_string(select_data.model_id));
   if (select_data.initialized & calculation_info::f_date)
     if ((i = IndexByFieldName(CI_DATE)) != field_index_end)
       values.emplace(i, select_data.GetDate());
@@ -470,10 +468,9 @@ void db_query_insert_setup::setValues(const calculation_state_log &select_data) 
   if (select_data.initialized & calculation_state_log::f_calculation_state_log_id)
     if ((i = IndexByFieldName(CSL_LOG_ID)) != field_index_end)
       values.emplace(i, std::to_string(select_data.id));
-  if (select_data.initialized & calculation_state_log::f_info)
-    if (select_data.calculation != nullptr)
-      if ((i = IndexByFieldName(CSL_INFO_ID)) != field_index_end)
-        values.emplace(i, std::to_string(select_data.calculation->id));
+  if (select_data.initialized & calculation_state_log::f_calculation_info_id)
+    if ((i = IndexByFieldName(CSL_INFO_ID)) != field_index_end)
+      values.emplace(i, std::to_string(select_data.info_id));
   if (select_data.initialized & calculation_state_log::f_vol)
     if ((i = IndexByFieldName(CSL_VOLUME)) != field_index_end)
       values.emplace(i, std::to_string(select_data.dyn_pars.parm.volume));
@@ -585,7 +582,7 @@ void db_query_select_result::SetData(
     for (auto &col: row) {
       if (isFieldName(CSL_LOG_ID, fields[col.first])) {
         cl.id = std::atoi(col.second.c_str());
-        cl.initialized |= calculation_state_log::f_info;
+        cl.initialized |= calculation_state_log::f_calculation_state_log_id;
       } else if (isFieldName(CSL_INFO_ID, fields[col.first])) {
         cl.info_id = std::atoi(col.second.c_str());
         cl.initialized |= calculation_state_log::f_calculation_info_id;

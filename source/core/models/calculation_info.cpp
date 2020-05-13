@@ -69,7 +69,7 @@ mstatus_t calculation_info::SetDate(const std::string &date) {
       bool NotOverride = (as_tm->tm_year == date_arr[0] - 1900) &&
           (as_tm->tm_mon == date_arr[1] - 1) && (as_tm->tm_mday == date_arr[2]);
       if (res_time != -1 && NotOverride && (as_tm->tm_year < 200)) {
-        initialized |= f_date;
+        initialized |= calculation_info::f_date;
         st = STATUS_OK;
         datetime = res_time;
       }
@@ -107,7 +107,7 @@ mstatus_t calculation_info::SetTime(const std::string &time) {
       bool NotOverride = (as_tm->tm_hour == time_arr[0]) &&
           (as_tm->tm_min == time_arr[1]);
       if ((res_time != -1) && NotOverride) {
-        initialized |= f_time;
+        initialized |= calculation_info::f_time;
         st = STATUS_OK;
         datetime = res_time;
       }

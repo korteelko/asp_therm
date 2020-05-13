@@ -258,8 +258,8 @@ protected:
       const std::vector<DataInfo> &select_data) {
     if (haveConflict(select_data))
       return nullptr;
-    db_query_insert_setup *ins_setup = new db_query_insert_setup(t,
-        *table_fields_setup::get_fields_collection(t));
+    db_query_insert_setup *ins_setup = new db_query_insert_setup(
+        t, *table_fields_setup::get_fields_collection(t));
     if (ins_setup)
       for (const auto &x : select_data)
         ins_setup->setValues(x);

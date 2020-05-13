@@ -180,7 +180,7 @@ struct calculation_state_log {
     /** \brief Уникальный id информации по расчёту */
     f_calculation_info_id = 0x01,
     /** \brief Ссылка на данные расчёта */
-    f_info = 0x02,
+    // f_info_id = 0x02,
     /** \brief Объём */
     f_vol = 0x04,
     /** \brief Давление */

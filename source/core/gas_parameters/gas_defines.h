@@ -126,7 +126,7 @@ enum class state_phase : uint32_t {
   NOT_SET
 };
 static const std::array<std::string, 6> stateToString {
-  "SCF", "LIQUID", "LIQ_STEAM", "GAS", "LAMINATION", "undefied gas state"
+  "SCF", "LIQUID", "LIQ_STEAM", "GAS", "LAMINATION", "NOT_SET"
 };
 
 /// Общие параметры состояния вещества,

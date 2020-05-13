@@ -10,6 +10,7 @@ add_executable(
   ${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
   ${THERMUTILS_SOURCE_DIR}/ErrorWrap.cpp
+  ${THERMUTILS_SOURCE_DIR}/FileURL.cpp
   ${THERMUTILS_SOURCE_DIR}/Logging.cpp
 )
 

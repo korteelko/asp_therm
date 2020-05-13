@@ -45,8 +45,13 @@ struct where_string_set {
     : tr(tr) {}
   std::string operator()(db_type t, const std::string &f,
       const std::string &v) {
+    if (t == db_type::type_date) {
+      return f + " = " + DBConnectionPostgre::DateToPostgreDate(v);
+    } else if (t == db_type::type_time) {
+      return f + " = " + DBConnectionPostgre::TimeToPostgreTime(v);
+    }
     return (t == db_type::type_char_array || t == db_type::type_text) ?
-        f + " = '" + tr->quote(v) + "'": f + " = " + v;
+        f + " = " + tr->quote(v): f + " = " + v;
   }
 public:
   pqxx::nontransaction *tr;
@@ -301,32 +306,46 @@ std::stringstream DBConnectionPostgre::setupInsertString(
     return std::stringstream();
   }
   std::string fnames = "INSERT INTO " + get_table_name(fields.table) + " (";
-  std::string values = "VALUES (";
+  // std::string values = "VALUES (";
+  std::vector<std::string> vals;
   std::vector<std::string> rows(fields.values_vec.size());
   db_variable::db_var_type t;
   auto txn = pqxx_work.GetTransaction();
+  // set fields:
+  auto &row = fields.values_vec[0];
+  for (auto &x: row)
+    fnames += fields.fields[x.first].fname + ", ";
+  fnames.replace(fnames.size() - 2, fnames.size() - 1, ")");
+
   for (const auto &row: fields.values_vec) {
+    std::string value = " (";
     for (const auto &x : row) {
       if (x.first >= 0 && x.first < fields.fields.size()) {
-        fnames += fields.fields[x.first].fname + ", ";
         t = fields.fields[x.first].type;
         if (txn && (t == db_variable::db_var_type::type_char_array ||
             t == db_variable::db_var_type::type_text)) {
           /* хз, но в интернетах так */
-          values += txn->quote(x.second) + ", ";
+          value += txn->quote(x.second) + ", ";
+        } else if (t == db_variable::db_var_type::type_date) {
+          value += DateToPostgreDate(x.second) + ", ";
+        } else if (t == db_variable::db_var_type::type_time) {
+          value += TimeToPostgreTime(x.second) + ", ";
         } else {
-          values += x.second + ", ";
+          value += x.second + ", ";
         }
       } else {
         Logging::Append(io_loglvl::debug_logs, "Ошибка индекса операции INSERT.\n"
             "\tДля таблицы " + get_table_name(fields.table));
       }
     }
+    value.replace(value.size() - 2, value.size(), "),");
+    vals.emplace_back(value);
   }
-  fnames.replace(fnames.size() - 2, fnames.size() - 1, ")");
-  values.replace(values.size() - 2, values.size() - 1, ")");
+  vals.back().replace(vals.back().size() - 1, vals.back().size(), ";");
   std::stringstream sstr;
-  sstr << fnames << values << ";";
+  sstr << fnames << " VALUES ";
+  for (const auto &x: vals)
+    sstr << x;
   return sstr;
 }
 
@@ -467,20 +486,20 @@ std::string DBConnectionPostgre::db_variable_to_string(
   return ss.str();
 }
 
-std::string DBConnectionPostgre::dateToPostgreDate(const std::string &date) {
+std::string DBConnectionPostgre::DateToPostgreDate(const std::string &date) {
   // postgres need
   char s[16] = {0};
   int i = 0;
   for_each (date.begin(), date.end(),
       [&s, &i](char c) { s[i++] = (c == '/') ? '-' : c; });
-  return s;
+  return "'" + std::string(s) + "'";
 }
 
-std::string DBConnectionPostgre::timeToPostgreTime(const std::string &time) {
-  return time;
+std::string DBConnectionPostgre::TimeToPostgreTime(const std::string &time) {
+  return "'" + time + "'";
 }
 
-std::string DBConnectionPostgre::postgreDateToDate(const std::string &pdate) {
+std::string DBConnectionPostgre::PostgreDateToDate(const std::string &pdate) {
   char s[16] = {0};
   int i = 0;
   for_each (pdate.begin(), pdate.end(),
@@ -488,6 +507,6 @@ std::string DBConnectionPostgre::postgreDateToDate(const std::string &pdate) {
   return s;
 }
 
-std::string DBConnectionPostgre::postgreTimeToTime(const std::string &ptime) {
+std::string DBConnectionPostgre::PostgreTimeToTime(const std::string &ptime) {
   return ptime;
 }

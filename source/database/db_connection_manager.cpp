@@ -117,18 +117,17 @@ mstatus_t DBConnectionManager::SaveCalculationStateLog(
 
 mstatus_t DBConnectionManager::SelectModelInfo(model_info &where,
     std::vector<model_info> *res) {
-  std::unique_ptr<db_query_select_setup> dss(
-      db_query_select_setup::Init(db_table::table_model_info));
-  if (dss)
-    dss->where_condition.reset(db_where_tree::Init(where));
-  db_query_select_result result(*dss);
-  auto st = exec_wrap<const db_query_select_setup &, db_query_select_result,
-      void (DBConnectionManager::*)(Transaction *, const db_query_select_setup &,
-      db_query_select_result *)>(*dss, &result, &DBConnectionManager::selectRows,
-      nullptr);
-  if (st == STATUS_OK)
-    result.SetData(res);
-  return st;
+  return selectData(db_table::table_model_info, where, res);
+}
+
+mstatus_t DBConnectionManager::SelectCalculationInfo(calculation_info &where,
+    std::vector<calculation_info> *res) {
+  return selectData(db_table::table_calculation_info, where, res);
+}
+
+mstatus_t DBConnectionManager::SelectCalculationStateLog(
+    calculation_state_log &where, std::vector<calculation_state_log> *res) {
+  return selectData(db_table::table_calculation_state_log, where, res);
 }
 
 mstatus_t DBConnectionManager::DeleteModelInfo(model_info &where) {

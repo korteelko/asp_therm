@@ -3,12 +3,17 @@
 
 #include "ErrorWrap.h"
 #include "Logging.h"
+#include "FileURL.h"
 
 #include "gtest/gtest.h"
 
 #include <filesystem>
+#include <iostream>
+
+#include <assert.h>
 
 
+using namespace file_utils;
 namespace fs = std::filesystem;
 
 TEST(merror_codes, init) {
@@ -17,7 +22,7 @@ TEST(merror_codes, init) {
   EXPECT_NE(GetCustomErrorMsg(ERROR_GENERAL_T), nullptr);
 }
 
-TEST(ErrorWrap, init) {
+TEST(ErrorWrap, Full) {
   ErrorWrap ew;
   /* конструктор по умолчанию */
   EXPECT_EQ(ew.GetErrorCode(), ERROR_SUCCESS_T);
@@ -67,4 +72,31 @@ TEST(Logging, Full) {
   ew.LogIt(io_loglvl::err_logs);
   EXPECT_TRUE(ew.IsLogged());
   EXPECT_NE(fs::file_size("testolog"), 0);
+}
+
+TEST(FileURL, Full) {
+  std::string td = "test_dir";
+  std::string tf = "test_file";
+  fs::path test_dir(td);
+  if (!fs::is_directory(test_dir)) {
+    ASSERT_TRUE(fs::create_directory(test_dir));
+  }
+  SetupURL setup(url_t::fs_path, td);
+  EXPECT_EQ(setup.GetURLType(), url_t::fs_path);
+  EXPECT_EQ(setup.GetFullPrefix(), td);
+  std::fstream file(td + "/" + tf, std::ios_base::out);
+  ASSERT_TRUE(file.is_open());
+  file.close();
+  FileURLRoot uroot(setup);
+  ASSERT_TRUE(uroot.IsInitialized());
+
+  /* file_url */
+  FileURL ufile = uroot.CreateFileURL(tf);
+  EXPECT_EQ(ufile.GetError(), ERROR_SUCCESS_T);
+  EXPECT_FALSE(ufile.IsInvalidPath());
+  EXPECT_EQ(ufile.GetURL(), "test_dir/test_file");
+  ufile.SetError(ERROR_FILE_OUT_ST, "Тест ошибки");
+  EXPECT_TRUE(ufile.IsInvalidPath());
+
+  EXPECT_TRUE(fs::remove_all(test_dir));
 }

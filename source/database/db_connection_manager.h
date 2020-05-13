@@ -93,7 +93,14 @@ public:
 
   /* select operations */
   /** \brief Вытащить из БД строки model_info по 'where' условиям */
-  mstatus_t SelectModelInfo(model_info &where, std::vector<model_info> *res);
+  mstatus_t SelectModelInfo(model_info &where,
+      std::vector<model_info> *res);
+  /** \brief Вытащить из БД строки calculation_info по 'where' условиям */
+  mstatus_t SelectCalculationInfo(calculation_info &where,
+      std::vector<calculation_info> *res);
+  /** \brief Вытащить из БД строки calculation_state_log по 'where' условиям */
+  mstatus_t SelectCalculationStateLog(calculation_state_log &where,
+      std::vector<calculation_state_log> *res);
 
   /** \brief Удалить строки */
   mstatus_t DeleteModelInfo(model_info &where);
@@ -139,6 +146,23 @@ private:
 
   /** \brief Проинициализировать соединение с БД */
   void initDBConnection();
+
+  /** \brief Собрать запрос на выборку данных */
+  template <class DataT>
+  mstatus_t selectData(db_table t, DataT &where,
+      std::vector<DataT> *res) {
+    std::unique_ptr<db_query_select_setup> dss(db_query_select_setup::Init(t));
+    if (dss)
+      dss->where_condition.reset(db_where_tree::Init(where));
+    db_query_select_result result(*dss);
+    auto st = exec_wrap<const db_query_select_setup &, db_query_select_result,
+        void (DBConnectionManager::*)(Transaction *, const db_query_select_setup &,
+        db_query_select_result *)>(*dss, &result, &DBConnectionManager::selectRows,
+        nullptr);
+    if (st == STATUS_OK)
+      result.SetData(res);
+    return st;
+  }
 
   /* добавить в транзакцию соответствующий запрос */
   /** \brief Запрос сушествования таблицы */

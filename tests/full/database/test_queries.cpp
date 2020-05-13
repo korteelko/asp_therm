@@ -70,3 +70,25 @@ TEST(db_where_tree, calculation_info) {
   wt.reset(db_where_tree::Init(ci));
   std::string where_str3 = where_str2 + " AND " + CI_TIME + "12:42";
 }
+
+TEST(db_where_tree, calculation_state_log) {
+  calculation_state_log log;
+  log.initialized = log.f_empty;
+  std::unique_ptr<db_where_tree> wt(db_where_tree::Init(log));
+  EXPECT_TRUE(wt == nullptr);
+  log.id = 103;
+  log.initialized = log.f_calculation_state_log_id;
+  wt.reset(db_where_tree::Init(log));
+  EXPECT_EQ(trim_str(wt->GetString()), db_condition_node::DataToStr(
+      db_type::type_int, CSL_LOG_ID, std::to_string(log.id)));
+  /* base */
+  log.dyn_pars.parm.volume = 0.002;
+  log.initialized |= log.f_vol;
+  wt.reset(db_where_tree::Init(log));
+  std::string w1 = db_condition_node::DataToStr(
+      db_type::type_int, CSL_LOG_ID, std::to_string(log.id));
+  w1 += " AND ";
+  w1 += db_condition_node::DataToStr(
+      db_type::type_int, CSL_VOLUME, std::to_string(log.dyn_pars.parm.volume));
+  EXPECT_EQ(trim_str(wt->GetString()), w1);
+}

@@ -106,17 +106,6 @@ int test_database_with_models(DBConnectionManager &dbm) {
   mi.initialized = mi.f_full & (~mi.f_model_id);
   dbm.SaveModelInfo(mi);
 
-  /* selecte setup */
-  // model_info
-  /*model_info mi1 {.short_info = mk->GetModelShortInfo()};
-  mi1.initialized = mi1.f_model_type | mi1.f_model_subtype;
-  std::unique_ptr<db_where_tree> wt(db_where_tree::Init(mi1));
-  Logging::Append(io_loglvl::debug_logs, "where condition: " + wt->GetString());
-  mi1.initialized = mi1.f_model_type | mi1.f_model_subtype |
-      mi1.f_short_info | mi1.f_vers_major;
-  wt.reset(db_where_tree::Init(mi1));
-  Logging::Append(io_loglvl::debug_logs, "where condition: " + wt->GetString()); */
-
   /* select test */
   auto mi2 = model_info::GetDefault();
   mi2.short_info.model_type.type = rg_model_t::REDLICH_KWONG;
@@ -141,15 +130,62 @@ int test_database_with_models(DBConnectionManager &dbm) {
   model_info mi3 = model_info::GetDefault();
   mi3.short_info.short_info = str;
   mi3.initialized = mi.f_full & (~mi.f_model_id);
-  auto st = dbm.SaveModelInfo(mi3);
+  dbm.SaveModelInfo(mi3);
 
   /* select */
   std::vector<model_info> r1;
   dbm.SelectModelInfo(mi3, &r1);
-  model_info mi_del = model_info::GetDefault();
-  mi_del.id = r1[0].id;
-  mi_del.initialized = mi_del.f_model_id;
-  st = dbm.DeleteModelInfo(mi_del);
+
+  /* add calculation_info */
+  calculation_info ci;
+  if (r1.size()) {
+    ci.model_id = r1[0].id;
+    ci.initialized = ci.f_model_id;
+    ci.initialized |= ci.f_date | ci.f_time;
+    dbm.SaveCalculationInfo(ci);
+  }
+  /* add state_log */
+  std::vector<calculation_info> rc;
+  dbm.SelectCalculationInfo(ci, &rc);
+  if (rc.size()) {
+    calculation_state_log log;
+    log.info_id = rc[0].id;
+    log.initialized = log.f_calculation_info_id;
+    /* dyn base */
+    auto v = 0.0024;
+    auto p = 2500000;
+    log.dyn_pars.parm.volume = v;
+    log.initialized |= log.f_vol;
+    log.dyn_pars.parm.pressure = p;
+    log.initialized |= log.f_pres;
+    log.dyn_pars.parm.temperature = 197;
+    log.initialized |= log.f_temp;
+    /* dyn */
+    log.dyn_pars.heat_cap_vol = 1245;
+    log.initialized |= log.f_dcv;
+    log.dyn_pars.internal_energy = 985;
+    log.initialized |= log.f_din;
+    log.state_phase = stateToString[(int)state_phase::NOT_SET];
+    log.initialized |= log.f_state_phase;
+    std::vector<calculation_state_log> logs;
+    std::generate_n(std::back_insert_iterator<std::vector<calculation_state_log>>
+        (logs), 5, [&log](){ return log; });
+    for (auto &x: logs) {
+      v += 0.0003;
+      p -= 1272;
+      x.dyn_pars.parm.volume = v;
+      x.dyn_pars.parm.pressure = p;
+    }
+    dbm.SaveCalculationStateLog(logs);
+  }
+
+  /* delete */
+  if (r1.size()) {
+    model_info mi_del = model_info::GetDefault();
+    mi_del.id = r1[0].id;
+    mi_del.initialized = mi_del.f_model_id;
+    dbm.DeleteModelInfo(mi_del);
+  }
 #endif  // RK2_TEST
   return res;
 }
