@@ -68,11 +68,15 @@ public:
   /** \brief Откатиться к метке сохранения */
   virtual void RollbackToSavePoint(const db_save_point &sp) = 0;
 
+  /** \brief Установка соединения */
   virtual mstatus_t SetupConnection() = 0;
+  /** \brief Закрытие соединения */
   virtual void CloseConnection() = 0;
 
   /** \brief Проверить существование таблицы */
   virtual mstatus_t IsTableExists(db_table t, bool *is_exists) = 0;
+  /** \brief Вытащить формат таблицы из СУБД */
+  virtual mstatus_t GetTableFormat(db_table t, db_table_create_setup *fields) = 0;
   /** \brief Проверить формат таблицы
     * \note Как метод 'UpdateTable', только не изменяет состояние таблицы */
   virtual mstatus_t CheckTableFormat(const db_table_create_setup &fields) = 0;
@@ -83,9 +87,12 @@ public:
   /** \brief Удалить таблицу */
   virtual mstatus_t DropTable(const db_table_drop_setup &drop) = 0;
 
-  /** \brief Добавить новые строки в БД
-    * \return STATUS_OK если строка добавлена */
-  virtual mstatus_t InsertRows(const db_query_insert_setup &insert_data) = 0;
+  /** \brief Добавить новые строки в БД, выданные id записать в
+    *   результирующий вектор
+    * \return STATUS_OK если строки добавлена
+    * \note Пока не понятно что с вектором выходных данных */
+  virtual mstatus_t InsertRows(const db_query_insert_setup &insert_data,
+      id_container  *id_vec) = 0;
   /** \brief Удалить строки из БД */
   virtual mstatus_t DeleteRows(const db_query_delete_setup &delete_data) = 0;
   /** \brief Выбрать строки из БД */
@@ -115,7 +122,7 @@ protected:
   virtual std::stringstream setupTableExistsString(db_table t) = 0;
   /** \brief Сбор строки на получение имён столбцов таблицы
     * \note не знаю как она в унифицированом виде может выглядеть */
-  virtual std::stringstream setupColumnNamesString(db_table t) = 0;
+  virtual std::stringstream setupGetColumnsInfoString(db_table t) = 0;
   /** \brief Сбор строки для добавления колонки */
   virtual std::stringstream setupAddColumnString(
       const std::pair<db_table, const db_variable &> &pdv);

@@ -25,31 +25,6 @@
 
 #define OWNER(x) friend class x
 
-/* имена столбцов в БД */
-#define MI_MODEL_ID "model_id"
-#define MI_MODEL_TYPE "model_type"
-#define MI_MODEL_SUBTYPE "model_subtype"
-#define MI_VERS_MAJOR "vers_major"
-#define MI_VERS_MINOR "vers_minor"
-#define MI_SHORT_INFO "short_info"
-
-#define CI_CALCULATION_ID "calculation_id"
-#define CI_MODEL_INFO_ID "model_info_id"
-#define CI_DATE "date"
-#define CI_TIME "time"
-
-#define CSL_LOG_ID "calculation_log_id"
-#define CSL_INFO_ID "calculation_info_id"
-#define CSL_VOLUME "volume"
-#define CSL_PRESSURE "pressure"
-#define CSL_TEMPERATURE "temperature"
-#define CSL_HEAT_CV "heat_capacity_vol"
-#define CSL_HEAT_CP "heat_capacity_pres"
-#define CSL_INTERNAL_ENERGY "internal_energy"
-#define CSL_BETA_KR "beta_kr"
-#define CSL_ENTHALPY "enthalpy"
-#define CSL_STATE_PHASE "state_phase"
-
 struct model_info;
 struct calculation_info;
 struct calculation_state_log;
@@ -171,53 +146,92 @@ protected:
 };
 
 /* Data structs */
-/* todo: можно наверное общую имплементацию
- *   db_table_create_setup и db_table_select_setup
- *   вынести в структуру db_table_setup
- * UPD: сейчас идея не кажется удачной */
+/** \brief Структура создания таблицы БД и, в перспективе,
+  *   формата существующей таблицы
+  * \note Эту же структуру можно заполнять по данным полученным от СУБД,
+  *   результаты же можно сравнить форматы и обновить существующую таблицу
+  *   не удаляя её */
 struct db_table_create_setup {
+  /** \brief Набор имён полей таблицы, составляющих уникальный комплекс */
+  typedef std::vector<std::string> unique_constrain;
+  /** \brief Контейнер уникальных комплексов */
+  typedef std::vector<unique_constrain> uniques_container;
+  /** \brief enum для сравнений сетапов */
+  enum compare_field {
+    /** \brief Код таблицы */
+    cf_table = 0,
+    /** \brief Поля таблицы */
+    cf_fields,
+    /** \brief Сложный первичный ключ */
+    cf_pk_string,
+    /** \brief Уникальные комплексы */
+    cf_unique_constrains,
+    /** \brief Внешние ссылки */
+    cf_ref_strings
+  };
+
 public:
-  /** \brief получить сетап на создание таблицы */
+  /** \brief Получить сетап на создание таблицы */
   static const db_table_create_setup &get_table_create_setup(db_table dt);
 
-  db_table_create_setup(db_table table,
-      const db_fields_collection &fields);
+  /** \brief Конструктор для записи данных из БД */
+  db_table_create_setup(db_table table);
+  /** \brief Конструктор для добавления таблицы в БД */
+  db_table_create_setup(db_table table, const db_fields_collection &fields,
+      const uniques_container &unique_constrains);
+
+  /** \brief Сравнить сетапы таблиц */
+  std::map<compare_field, bool> Compare(const db_table_create_setup &r);
 
 public:
-  ErrorWrap init_error;
+  ErrorWrap error;
+  /** \brief Код таблицы */
   db_table table;
-  const db_fields_collection &fields;
-  /** \brief вектор имен полей таблицы которые составляют
+  /** \brief Наборы полей таблицы */
+  db_fields_collection fields;
+  /** \brief Вектор имен полей таблицы которые составляют
     *   сложный(неодинарный) первичный ключ */
   db_complex_pk pk_string;
-  const db_ref_collection *ref_strings;
+  /** \brief Наборы уникальных комплексов */
+  uniques_container unique_constrains;
+  /** \brief Набор внешних ссылок */
+  db_ref_collection ref_strings;
 
 private:
+  /** \brief Собрать поле 'pk_string' */
   void setupPrimaryKeyString();
+  /** \brief Проверить ссылки */
   void checkReferences();
+  /** \brief Шаблон сравения массивов */
+  template<class ArrayT>
+  static bool IsSame(const ArrayT &l, const ArrayT &r) {
+    bool same = l.size() == r.size();
+    if (same) {
+      size_t i = 0;
+      for (; i < l.size(); ++i)
+        if (l[i] != r[i])
+          break;
+      if (i == l.size())
+        same = true;
+    }
+    return same;
+  }
 };
 
 
 /* queries setup */
-/** \brief базовая структура сборки запроса */
+/** \brief Базовая структура сборки запроса */
 struct db_query_basesetup {
   typedef size_t field_index;
   /** \brief Набор данных */
   typedef std::map<field_index, std::string> row_values;
-
-  enum db_query_t {
-    SELECT,
-    UPDATE,
-    INSERT,
-    DELETE
-  };
 
   static constexpr size_t field_index_end = std::string::npos;
 
 public:
   virtual ~db_query_basesetup() = default;
 
-  field_index IndexByFieldName(const std::string &fname);
+  field_index IndexByFieldId(db_variable_id fid);
 
 protected:
   db_query_basesetup(db_table table,
@@ -226,8 +240,6 @@ protected:
 public:
   ErrorWrap error;
   db_table table;
-  /** \brief Тип обновления */
-  db_query_t update_t;
 
 public:
   /** \brief Ссылка на коллекцию полей(столбцов)
@@ -236,15 +248,15 @@ public:
 };
 
 
-/** \brief структура для сборки INSERT запросов */
+/** \brief Структура для сборки INSERT запросов */
 struct db_query_insert_setup: public db_query_basesetup {
 public:
   static db_query_insert_setup *Init(
-      const std::vector<model_info> &select_data);
+      const std::vector<model_info> &insert_data);
   static db_query_insert_setup *Init(
-      const std::vector<calculation_info> &select_data);
+      const std::vector<calculation_info> &insert_data);
   static db_query_insert_setup *Init(
-      const std::vector<calculation_state_log> &select_data);
+      const std::vector<calculation_state_log> &insert_data);
 
   size_t RowsSize() const;
 
@@ -255,13 +267,13 @@ protected:
 
   template <class DataInfo, class Table>
   static db_query_insert_setup *init(Table t,
-      const std::vector<DataInfo> &select_data) {
-    if (haveConflict(select_data))
+      const std::vector<DataInfo> &insert_data) {
+    if (haveConflict(insert_data))
       return nullptr;
     db_query_insert_setup *ins_setup = new db_query_insert_setup(
         t, *table_fields_setup::get_fields_collection(t));
     if (ins_setup)
-      for (const auto &x : select_data)
+      for (const auto &x: insert_data)
         ins_setup->setValues(x);
     return ins_setup;
   }
@@ -280,7 +292,6 @@ protected:
   }
   /** \brief Собрать вектор 'values' значений столбцов БД,
     *   по переданным строкам model_info */
-
   void setValues(const model_info &select_data);
   /** \brief Собрать вектор 'values' значений столбцов БД,
     *   по переданным строкам calculation_info */
@@ -292,6 +303,14 @@ protected:
 public:
   /** \brief Набор значений для операций INSERT|SELECT|DELETE */
   std::vector<row_values> values_vec;
+};
+/** \brief Контейнер для результатов операции INSERT, иначе говоря,
+  *   для полученных от СУБД идентификаторов рядов/строк */
+struct id_container {
+public:
+  mstatus_t status = STATUS_DEFAULT;
+  /** \brief Контенер идентификаторов строк вектора в БД */
+  std::vector<int> id_vec;
 };
 
 
@@ -342,7 +361,7 @@ public:
     * \note Обратная операция для db_query_insert_setup::setValues */
   void SetData(std::vector<model_info> *out_vec);
   /** \brief Записать в out_vec строки calculation_info из данных values_vec,
-    *  полученных из БД */
+    *   полученных из БД */
   void SetData(std::vector<calculation_info> *out_vec);
   /** \brief Записать в out_vec строки calculation_state_log из данных values_vec,
     *   полученных из БД */

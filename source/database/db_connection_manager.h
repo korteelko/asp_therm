@@ -102,6 +102,12 @@ public:
   mstatus_t SelectCalculationStateLog(calculation_state_log &where,
       std::vector<calculation_state_log> *res);
 
+  /* table format */
+  /** \brief Проверить формат таблицы */
+  bool CheckTableFormat(db_table dt);
+  /** \brief Обновить формат таблицы */
+  mstatus_t UpdateTableFormat(db_table dt);
+
   /** \brief Удалить строки */
   mstatus_t DeleteModelInfo(model_info &where);
 
@@ -116,7 +122,14 @@ private:
 
 private:
   /** \brief Обёртка над функционалом сбора и выполнения транзакции:
-    *   подключение, создание точки сохранения */
+    *   подключение, создание точки сохранения
+    * \param DataT data входные данные
+    * \param OutT res указатель на выходные данные
+    * \param SetupQueryF setup_m метод на добавление
+    *   специализированного запроса(Query) к транзакции
+    * \param sp_ptr указатель на сетап точки сохранения
+    * \todo Слишком много шаблонных параметров получается,
+    *   не очень красиво смотрится */
   template <class DataT, class OutT, class SetupQueryF>
   mstatus_t exec_wrap(DataT data, OutT *res, SetupQueryF setup_m,
       db_save_point *sp_ptr) {
@@ -169,8 +182,12 @@ private:
   void isTableExist(Transaction *tr, db_table dt, bool *is_exists);
   /** \brief Запрос создания таблицы */
   void createTable(Transaction *tr, db_table dt, void *);
+  /** \brief Запрос получения формата таблицы */
+  void getTableFormat(Transaction *tr, db_table dt,
+      db_table_create_setup *exist_table);
   /** \brief Запрос сохранения строки данных */
-  void saveRows(Transaction *tr, const db_query_insert_setup &qi, void *);
+  void saveRows(Transaction *tr, const db_query_insert_setup &qi,
+      id_container *id_vec);
   /** \brief Запрос выборки параметров */
   void selectRows(Transaction *tr, const db_query_select_setup &qs,
       db_query_select_result *result);

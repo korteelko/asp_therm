@@ -116,7 +116,6 @@ set(MODELS_SRC
   ${THERMCORE_SOURCE_DIR}/models/models_configurations.cpp
   ${THERMCORE_SOURCE_DIR}/models/models_creator.cpp
 
-
 # utils sources
   ${THERMUTILS_SOURCE_DIR}/ErrorWrap.cpp
   ${THERMUTILS_SOURCE_DIR}/FileURL.cpp
@@ -128,6 +127,7 @@ set(MODELS_SRC
   ${THERMDB_SOURCE_DIR}/db_defines.cpp
   ${THERMDB_SOURCE_DIR}/db_queries_setup.cpp
   ${THERMDB_SOURCE_DIR}/db_query.cpp
+  ${THERMDB_SOURCE_DIR}/db_tables.cpp
 
 # plot sources
 # maybe OpenGL libs

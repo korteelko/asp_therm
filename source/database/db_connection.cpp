@@ -166,8 +166,8 @@ std::stringstream DBConnection::setupCreateTableString(
     // UNIQUE constraint
     sstr << db_unique_constrain_to_string(fields);
     // REFERENCES
-    if (fields.ref_strings) {
-      for (const auto &ref : *fields.ref_strings) {
+    if (!fields.ref_strings.empty()) {
+      for (const auto &ref : fields.ref_strings) {
         sstr << db_reference_to_string(ref) << ", ";
         if (error_.GetErrorCode())
           break;
@@ -199,7 +199,7 @@ std::stringstream DBConnection::setupInsertString(
   for (const auto &row: fields.values_vec) {
     for (const auto &x : row) {
       if (x.first >= 0 && x.first < fields.fields.size()) {
-        fnames += fields.fields[x.first].fname + ", ";
+        fnames += std::string(fields.fields[x.first].fname) + ", ";
         values += x.second + ", ";
       } else {
         Logging::Append(io_loglvl::debug_logs, "Ошибка индекса операции INSERT.\n"
@@ -210,7 +210,7 @@ std::stringstream DBConnection::setupInsertString(
   fnames.replace(fnames.size() - 2, fnames.size() - 1, ")");
   values.replace(values.size() - 2, values.size() - 1, ")");
   std::stringstream sstr;
-  sstr << fnames << " " << values << ";";
+  sstr << fnames << " " << values << " RETURNING ID;";
   return sstr;
 }
 std::stringstream DBConnection::setupDeleteString(
@@ -241,7 +241,8 @@ std::stringstream DBConnection::setupUpdateString(
         << " SET ";
     std::string set_str = "";
     for (const auto &x: fields.values)
-      set_str += fields.fields[x.first].fname + " = " + x.second + ",";
+      set_str += std::string(fields.fields[x.first].fname)
+          + " = " + x.second + ",";
     set_str[set_str.size() - 1] = ' ';
     sstr << set_str;
     if (fields.where_condition != nullptr)
@@ -253,23 +254,16 @@ std::stringstream DBConnection::setupUpdateString(
 
 std::string DBConnection::db_unique_constrain_to_string(
     const db_table_create_setup &cs) {
-  std::stringstream sstr;
-  sstr << "UNIQUE(";
-  /* если нет сложного ключа, то и использовать его не будем и
-   *   вернём пустую строку */
-  int count = 0;
-  for (const auto &x : cs.fields) {
-    if (x.flags.in_unique_constrain) {
-      ++count;
-      sstr << x.fname << ", ";
-    }
+  std::string result = "";
+  for (const auto &x: cs.unique_constrains) {
+    std::stringstream sstr;
+    sstr << "UNIQUE(";
+    for (const auto y: x)
+      sstr << y << ", ";
+    result += sstr.str();
+    result.replace(result.size() - 2, result.size() - 1, "),");
   }
-  if (count) {
-    std::string str = sstr.str();
-    str.replace(str.size() - 2, str.size() - 1, "),");
-    return str;
-  }
-  return "";
+  return result;
 }
 
 std::string DBConnection::db_reference_to_string(

@@ -31,13 +31,8 @@
 #  define STRING_DEBUG_INFO ("file: " + std::string(__FILE__) + \
        "\n\tfunction: " + std::string(__FUNCTION__) \
        + " line: " + std::to_string(__LINE__) + "\n")
-#  define APPEND_STREAM_DEBUG_INFO(sstm) (sstm << "file: " << __FILE__ \
-       << "\n\tfunction: " << __FUNCTION__ << " line: " << __LINE__ << "\n")
-#  define APPEND_STRING_DEBUG_INFO(str) (str += STRING_DEBUG_INFO)
 #else
 #  define STRING_DEBUG_INFO ""
-#  define APPEND_STREAM_DEBUG_INFO(sstm) (sstream << "")
-#  define APPEND_STRING_DEBUG_INFO(str) (str += "")
 #endif  // _DEBUG
 
 

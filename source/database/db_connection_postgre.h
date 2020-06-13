@@ -29,8 +29,20 @@
 
 // смотри страницу:
 // https://www.tutorialspoint.com/postgresql/postgresql_c_cpp.htm
-/** \brief реализация DBConnection для postgresql */
+/** \brief Реализация DBConnection для postgresql */
 class DBConnectionPostgre final: public DBConnection {
+  /** \brief Данные полей таблицы, которые можно из неё вытащить */
+  struct db_field_info {
+  public:
+    /** \brief Имя поля */
+    std::string name;
+    /** \brief Тип данных */
+    db_variable::db_var_type type;
+    // int len;
+  public:
+    db_field_info(const std::string &name, db_variable::db_var_type type);
+  };
+
 public:
   DBConnectionPostgre(const db_parameters &parameters);
   ~DBConnectionPostgre() override;
@@ -42,12 +54,14 @@ public:
   void CloseConnection() override;
 
   mstatus_t IsTableExists(db_table t, bool *is_exists) override;
+  mstatus_t GetTableFormat(db_table t, db_table_create_setup *fields) override;
   mstatus_t CheckTableFormat(const db_table_create_setup &fields) override;
   mstatus_t UpdateTable(const db_table_create_setup &fields) override;
   mstatus_t CreateTable(const db_table_create_setup &fields) override;
   mstatus_t DropTable(const db_table_drop_setup &drop) override;
 
-  mstatus_t InsertRows(const db_query_insert_setup &insert_data) override;
+  mstatus_t InsertRows(const db_query_insert_setup &insert_data,
+      id_container *id_vec) override;
   mstatus_t DeleteRows(const db_query_delete_setup &delete_data) override;
   mstatus_t SelectRows(const db_query_select_setup &select_data,
       db_query_select_result *result_data) override;
@@ -82,7 +96,8 @@ private:
   template <class DataT, class OutT, class SetupF, class ExecF>
   mstatus_t exec_wrap(const DataT &data, OutT *res,
       SetupF setup_m, ExecF exec_m) {
-    // setup content of query
+    // setup content of query(call some function 'setup*String' from
+    //   list of function below)
     std::stringstream sstr = std::invoke(setup_m, *this, data);
     sstr.seekg(0, std::ios::end);
     auto sstr_len = sstr.tellg();
@@ -128,10 +143,16 @@ private:
     return status_;
   }
 
+  /* функции собирающие строку запроса */
+  /** \brief Собрать строку подключения к БД */
   std::string setupConnectionString();
-
   std::stringstream setupTableExistsString(db_table t) override;
-  std::stringstream setupColumnNamesString(db_table t) override;
+  /** \brief Собрать строку получения информации о столбцах */
+  std::stringstream setupGetColumnsInfoString(db_table t) override;
+  /** \brief Собрать строку получения ограничений таблицы */
+  std::stringstream setupGetConstrainsString(db_table t);
+  /** \brief Собрать строку получения внешних ключей */
+  std::stringstream setupGetForeignKeys(db_table t);
   std::stringstream setupInsertString(
        const db_query_insert_setup &fields) override;
   std::stringstream setupDeleteString(
@@ -145,7 +166,9 @@ private:
 
   /* функции исполнения запросов */
   /** \brief Обычный запрос к БД без возвращаемого результата */
-  void execNoReturn(const std::stringstream &sstr);
+  void execWithoutReturn(const std::stringstream &sstr);
+  /** \brief Запрос к БД с получением результата */
+  void execWithReturn(const std::stringstream &sstr, pqxx::result *result);
 
   /** \brief Запрос создания метки сохранения */
   void execAddSavePoint(const std::stringstream &sstr, void *);
@@ -154,8 +177,14 @@ private:
   /** \brief Запрос существования таблицы */
   void execIsTableExists(const std::stringstream &sstr, bool *is_exists);
   /** \brief Запрос существования таблицы */
-  void execColumnNamesString(const std::stringstream &sstr,
-      std::vector<std::string> *column_names);
+  void execGetColumnInfo(const std::stringstream &sstr,
+      std::vector<db_field_info> *columns_info);
+  /** \brief Запрос получения ограничений таблицы */
+  void execGetConstrainsString(const std::stringstream &sstr,
+      pqxx::result *result);
+  /** \brief Запрос получения внешних ключей таблицы */
+  void execGetForeignKeys(const std::stringstream &sstr,
+      pqxx::result *result);
   /** \brief Запрос добавления колонки в таблицу */
   void execAddColumn(const std::stringstream &sstr, void *);
   /** \brief Запрос создания таблицы */
@@ -164,7 +193,7 @@ private:
   void execDropTable(const std::stringstream &sstr, void *);
 
   /** \brief Запрос на добавление строки */
-  void execInsert(const std::stringstream &sstr, void *);
+  void execInsert(const std::stringstream &sstr, pqxx::result *result);
   /** \brief Запрос на удаление строки */
   void execDelete(const std::stringstream &sstr, void *);
   /** \brief Запрос выборки из таблицы
@@ -172,6 +201,15 @@ private:
   void execSelect(const std::stringstream &sstr, pqxx::result *result);
   /** \brief Запрос на обновление строки */
   void execUpdate(const std::stringstream &sstr, void *);
+
+  /** \brief Собрать вектор имён ограничений
+    * \param indexes Индексы полей из fields
+    * \param fields Контейнер полей
+    * \param output Указатель на вектор выходных данных,
+    *   именно в него записываются по индексам их indexes
+    *   имена полей из fields */
+  merror_t setConstrainVector(const std::vector<int> &indexes,
+      const db_fields_collection &fields, std::vector<std::string> *output);
 
 private:
   struct {

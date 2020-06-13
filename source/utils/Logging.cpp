@@ -9,8 +9,6 @@
  */
 #include "Logging.h"
 
-#define DEFAULT_LOGFILE  "logs"
-#define OLD_LOGFILE_SFX  "_prev"
 #include <ctime>
 #include <iostream>
 #if __has_include(<filesystem>)
@@ -27,6 +25,9 @@
 #include <stdio.h>
 #include <string.h>
 
+
+#define DEFAULT_LOGFILE  "logs"
+#define OLD_LOGFILE_SFX  "_prev"
 
 logging_cfg::logging_cfg(io_loglvl ll, const std::string &file, bool duplicate)
   : loglvl(ll) ,cerr_duplicate(duplicate) {
@@ -60,7 +61,7 @@ merror_t Logging::checkInstance() {
   #else
       // todo: set error and error_msg
       //   push error message to stdio
-      Logging::error_.SetError(ERROR_GENERAL_T, "error in progran DNA");
+      Logging::error_.SetError(ERROR_GENERAL_T, "error in programer DNA");
       Logging::output_.close();
   #endif
     }
@@ -175,6 +176,12 @@ void Logging::ClearLogfile() {
   }
   return;
 }
+
+#if defined (_DEBUG)
+void Logging::PrintCerr(const std::string &info) {
+  std::cerr << info << std::endl;
+}
+#endif  // _DEBUG
 
 void Logging::Append(const std::string &msg) {
   if (Logging::is_aval_)

@@ -15,6 +15,7 @@
 #include "models_configurations.h"
 
 #include <algorithm>
+#include <iterator>
 #include <map>
 #include <numeric>
 #include <sstream>
@@ -23,26 +24,52 @@
 #include <assert.h>
 
 
+#define types_pair(x, y) { x, y }
+// #define reverse_types_pair(x, y) { y, x }
+
 /* примеры использования можно посмотреть на github, в репке Jeroen Vermeulen:
      https://github.com/jtv/libpqxx */
 namespace postgresql_impl {
+/** \brief Мапа соответствий типов данных db_type библиотеки
+  *   с PostgreSQL типами данных */
 static std::map<db_type, std::string> str_db_types =
-    std::map<db_type, std::string>{
-  {db_type::type_autoinc, "SERIAL"},
-  {db_type::type_uuid, "UUID"},
-  {db_type::type_bool, "BOOL"},
-  {db_type::type_int, "INTEGER"},
-  {db_type::type_long, "BIGINT"},
-  {db_type::type_real, "REAL"},
-  {db_type::type_date, "DATE"},
-  {db_type::type_time, "TIME"},
-  {db_type::type_char_array, "CHAR"},
-  {db_type::type_text, "TEXT"},
+    std::map<db_type, std::string> {
+  types_pair(db_type::type_empty, ""),
+  types_pair(db_type::type_autoinc, "SERIAL"),
+  types_pair(db_type::type_uuid, "UUID"),
+  types_pair(db_type::type_bool, "BOOL"),
+  types_pair(db_type::type_int, "INTEGER"),
+  types_pair(db_type::type_long, "BIGINT"),
+  types_pair(db_type::type_real, "REAL"),
+  types_pair(db_type::type_date, "DATE"),
+  types_pair(db_type::type_time, "TIME"),
+  // todo: в pgAdmin4 'char' выглядит как 'character' или как 'text'
+  types_pair(db_type::type_char_array, "CHAR"),
+  types_pair(db_type::type_text, "TEXT"),
 };
+/** \brief Найти соответствующий строковому представлению
+  *   тип данных приложения
+  * \todo Получается весьма тонкое место,
+  *   из-за специализации времени например */
+db_type find_type(const std::string &uppercase_str) {
+  for (const auto &x: str_db_types)
+    if (x.second == uppercase_str)
+      return x.first;
+  /* Несколько специфичные типы */
+  /* postgres выдаёт строку с широким разворотом по времени,включая
+   *   инфо по временному поясу так что это надо расширять */
+  std::size_t find_pos = uppercase_str.find("TIME");
+  if (find_pos != std::string::npos)
+    return db_type::type_time;
+  /* про соотношение character/text не знаю что делать */
+  return db_type::type_empty;
+}
 
+/** \brief Функтор для сетапа полей деревьев условий для PostgreSQL СУБД */
 struct where_string_set {
   where_string_set(pqxx::nontransaction *tr)
     : tr(tr) {}
+
   std::string operator()(db_type t, const std::string &f,
       const std::string &v) {
     if (t == db_type::type_date) {
@@ -54,8 +81,54 @@ struct where_string_set {
         f + " = " + tr->quote(v): f + " = " + v;
   }
 public:
+  /** \brief Указатель на pqxx транзакцию */
   pqxx::nontransaction *tr;
 };
+
+/** \brief Распарсить строку достать из неё все целые числа */
+void StringToIntNumbers(const std::string &str, std::vector<int> *result) {
+  std::string num = "";
+  auto it = str.begin();
+  while (it != str.end()) {
+    if (std::isdigit(*it)) {
+      num += *it;
+    } else {
+      if (!num.empty()) {
+        int n = atoi(num.c_str());
+        // полученные индексы начинаются с 1, не с 0
+        result->push_back(n - 1);
+        num = "";
+      }
+    }
+    ++it;
+  }
+}
+
+/** \brief Получить update|delete действие по символу от БД
+  * \note update action code: a = no action, r = restrict,
+  *   //   c = cascade, n = set null, d = set default
+*/
+db_reference_act GetReferenceAct(char postgre_symbol) {
+  db_reference_act act = db_reference_act::ref_act_not;
+  switch (postgre_symbol) {
+    case 'a':
+      act = db_reference_act::ref_act_not;
+      break;
+    case 'n':
+      act = db_reference_act::ref_act_set_null;
+      break;
+    case 'c':
+      act = db_reference_act::ref_act_cascade;
+      break;
+    case 'r':
+      act = db_reference_act::ref_act_restrict;
+      break;
+    default:
+      throw db_exception(ERROR_DB_REFER_FIELD,
+          "Не зарегистрированное действие для внешнего ключа");
+  }
+  return act;
+}
 }  // namespace postgresql_impl
 
 DBConnectionPostgre::DBConnectionPostgre(const db_parameters &parameters)
@@ -64,6 +137,10 @@ DBConnectionPostgre::DBConnectionPostgre(const db_parameters &parameters)
 DBConnectionPostgre::~DBConnectionPostgre() {
   CloseConnection();
 }
+
+DBConnectionPostgre::db_field_info::db_field_info(const std::string &name,
+    db_variable::db_var_type type)
+  : name(name), type(type) {}
 
 mstatus_t DBConnectionPostgre::AddSavePoint(const db_save_point &sp) {
   return exec_wrap<db_save_point, void,
@@ -146,74 +223,211 @@ mstatus_t DBConnectionPostgre::IsTableExists(db_table t, bool *is_exists) {
          &DBConnectionPostgre::execIsTableExists);
 }
 
-mstatus_t DBConnectionPostgre::CheckTableFormat(
-    const db_table_create_setup &fields) {
-  // такс, проверяем:
+// todo: в методе смешаны уровни абстракции,
+//   разбить на парочку/другую
+mstatus_t DBConnectionPostgre::GetTableFormat(db_table t,
+    db_table_create_setup *fields) {
+  // такс, собираем
   //   колонки
-  std::vector<std::string> not_exists_cols;
-  mstatus_t res = exec_wrap<db_table, std::vector<std::string>,
-     std::stringstream (DBConnectionPostgre::*)(db_table),
-     void (DBConnectionPostgre::*)(const std::stringstream &, std::vector<std::string> *)>(
-         fields.table, &not_exists_cols, &DBConnectionPostgre::setupColumnNamesString,
-         &DBConnectionPostgre::execColumnNamesString);
+  std::vector<db_field_info> exists_cols;
+  mstatus_t res = exec_wrap<db_table, std::vector<db_field_info>,
+      std::stringstream (DBConnectionPostgre::*)(db_table),
+      void (DBConnectionPostgre::*)(const std::stringstream &, std::vector<db_field_info> *)>(
+          t, &exists_cols, &DBConnectionPostgre::setupGetColumnsInfoString,
+          &DBConnectionPostgre::execGetColumnInfo);
   if (is_status_ok(res)) {
-    for (const db_variable &fieldname : fields.fields) {
-      if (std::find(not_exists_cols.begin(), not_exists_cols.end(),
-          fieldname.fname) == not_exists_cols.end()) {
-        error_.SetError(ERROR_DB_COL_EXISTS,
-            "В таблице не существует колонка " + fieldname.fname);
+    fields->table = t;
+    auto table_name = get_table_name(t);
+    auto ptr_table_fields = table_fields_setup::get_fields_collection(t);
+    std::map<std::string, db_variable_id> fields_names_map;
+    for (const auto &x: *ptr_table_fields)
+      fields_names_map.emplace(x.fname, x.fid);
+    fields->fields.clear();
+    for (const auto &x: exists_cols) {
+      auto id_it = fields_names_map.find(x.name);
+      if (id_it != fields_names_map.end()) {
+        fields->fields.push_back(db_variable(id_it->second, x.name.c_str(),
+            x.type, db_variable::db_variable_flags()));
+      } else {
+        // поле с таким именем даже не нашлось, вставим заглушку
+        fields->fields.push_back(db_variable(UNDEFINED_COLUMN, x.name.c_str(),
+            db_variable::db_var_type::type_empty, db_variable::db_variable_flags()));
+      }
+    }
+  }
+  //   закончили про колонку
+
+  // update|delete методы внешнего ключа
+  struct fk_UpDel {
+    db_reference_act up;
+    db_reference_act del;
+  };
+  std::map<std::string, fk_UpDel> fk_map;
+
+  //   ограничения начинаем
+  pqxx::result constrains;
+    res = exec_wrap<db_table, pqxx::result,
+      std::stringstream (DBConnectionPostgre::*)(db_table),
+      void (DBConnectionPostgre::*)(const std::stringstream &, pqxx::result *)>(
+          t, &constrains, &DBConnectionPostgre::setupGetConstrainsString,
+          &DBConnectionPostgre::execGetConstrainsString);
+  // обход по ограничениям - первичным и внешним ключам, уникальным комплексам
+  merror_t error = ERROR_SUCCESS_T;
+  if (is_status_ok(res)) {
+    for (pqxx::const_result_iterator::reference row: constrains) {
+      // массив индексов
+      std::vector<int> indexes;
+      auto conkey = row["conkey"];
+      if (conkey != row.end()) {
+        indexes.clear();
+        std::string indexes_str = conkey.as<std::string>();
+        postgresql_impl::StringToIntNumbers(indexes_str, &indexes);
+        if (indexes.empty()) {
+          error = error_.SetError(ERROR_STR_PARSE_ST,
+              "Ошибка парсинга строки: '" + indexes_str + "' - пустой результат");
+          break;
+        }
+        // такс, здесь храним имена колонок, которые достанем из ряда row
+        auto ct = row["contype"];
+        if (ct != row.end()) {
+          char cs = '!';
+          std::string tmp = ct.as<std::string>();
+          if (!tmp.empty())
+            cs = tmp[0];
+          switch (cs) {
+            // primary key
+            case 'p':
+              setConstrainVector(indexes, fields->fields, &fields->pk_string.fnames);
+              break;
+            // unique
+            case 'u':
+              fields->unique_constrains.push_back(
+                  db_table_create_setup::unique_constrain());
+              setConstrainVector(indexes, fields->fields,
+                  &fields->unique_constrains.back());
+              fields->unique_constrains.clear();
+              break;
+            // foreign key(separate function)
+            case 'f':
+              {
+                // Foreign key update action code: a = no action, r = restrict,
+                //   c = cascade, n = set null, d = set default
+                // нужно достать имя поля, оно одно, но функция под вектор
+                std::vector<std::string> name;
+                setConstrainVector(indexes, fields->fields, &name);
+                if (!name.empty()) {
+                  try {
+                    fk_UpDel ud;
+                    auto c = row["confupdtype"];
+                    if (c != row.end()) {
+                      tmp = c.as<std::string>();
+                      ud.up = postgresql_impl::GetReferenceAct(
+                          tmp.empty() ? '!': tmp[0]);
+                      c = row["confdeltype"];
+                      if (c != row.end()) {
+                        tmp = c.as<std::string>();
+                        ud.del = postgresql_impl::GetReferenceAct(
+                            tmp.empty() ? '!': tmp[0]);
+                      } else {
+                        error = ERROR_GENERAL_T;
+                        Logging::Append("foreign key constrain error: act delete");
+                      }
+                    } else {
+                      Logging::Append("foreign key constrain error: act update");
+                      error = ERROR_GENERAL_T;
+                    }
+                    fk_map.emplace(trim_str(name[0]), ud);
+                  } catch (db_exception &e) {
+                    e.LogException();
+                    error = e.GetError();
+                  }
+                }
+              }
+              break;
+            // exclusion constraint
+            case 'x':
+            // check constraint
+            case 'c':
+            // constraint trigger
+            case 't':
+            default:
+              break;
+          }
+        }
+      }
+    }
+  }
+  //   ограничения закончили
+
+  //   внешние ключи
+  pqxx::result fkeys;
+  error = ERROR_SUCCESS_T;
+  res = exec_wrap<db_table, pqxx::result,
+    std::stringstream (DBConnectionPostgre::*)(db_table),
+    void (DBConnectionPostgre::*)(const std::stringstream &, pqxx::result *)>(
+        t, &fkeys, &DBConnectionPostgre::setupGetForeignKeys,
+        &DBConnectionPostgre::execGetForeignKeys);
+  if (is_status_ok(res)) {
+    // foreign_column_name, foreign_table_name
+    for (pqxx::const_result_iterator::reference row: fkeys) {
+      bool success = false;
+      // таблица со ссылкой
+      auto row_it = row["column_name"];
+      std::string col_name = "";
+      if (row_it != row.end()) {
+        col_name = row_it.as<std::string>();
+        if (row_it != row.end()) {
+          row_it = row["foreign_table_name"];
+          if (row_it != row.end()) {
+            std::string f_table = row_it.as<std::string>();
+            row_it = row["foreign_column_name"];
+            if (row_it != row.end()) {
+              std::string f_col = row_it.as<std::string>();
+              auto du = fk_map.find(col_name);
+              if (du != fk_map.end()) {
+                db_reference(col_name, get_table_code(f_table), f_col,
+                    true, du->second.up, du->second.del);
+                success = true;
+              } else {
+                error = ERROR_DB_REFER_FIELD;
+              }
+            }
+          }
+        }
+      }
+      if (!success) {
+        error = error_.SetError(ERROR_DB_REFER_FIELD,
+            "Ошибка составления строки внешнего ключа");
         break;
       }
     }
-  } else {
-    return res;
   }
-  // todo:
-  //   примари ключ
-
-  //   внешние ключи
-
-  //   уникальные наборы
-
+  if (error_.GetErrorCode())
+    res = STATUS_HAVE_ERROR;
   return res;
 }
 
-mstatus_t DBConnectionPostgre::UpdateTable(const db_table_create_setup &fields) {
-  std::vector<std::string> not_exists_cols;
-  /* append not exists columns */
-  mstatus_t res = exec_wrap<db_table, std::vector<std::string>,
-     std::stringstream (DBConnectionPostgre::*)(db_table),
-     void (DBConnectionPostgre::*)(const std::stringstream &, std::vector<std::string> *)>(
-         fields.table, &not_exists_cols, &DBConnectionPostgre::setupColumnNamesString,
-         &DBConnectionPostgre::execColumnNamesString);
-  if (is_status_ok(res)) {
-    // добавить строки
-    for (const db_variable &field: fields.fields) {
-      if (std::find(not_exists_cols.begin(), not_exists_cols.end(),
-          field.fname) == not_exists_cols.end()) {
-        // add column
-        std::pair<db_table, const db_variable &> pdv{fields.table, field};
-        res = exec_wrap<const std::pair<db_table, const db_variable &>, void,
-            std::stringstream (DBConnectionPostgre::*)(const std::pair<db_table,
-                const db_variable &> &),
-            void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
-                pdv, nullptr, &DBConnectionPostgre::setupAddColumnString,
-                &DBConnectionPostgre::execAddColumn);
-      }
-    }
-  } else {
-    return res;
-  }
+mstatus_t DBConnectionPostgre::CheckTableFormat(
+    const db_table_create_setup &fields) {
+  /* todo */
+  assert(0);
+  return 0;
+}
+
+mstatus_t DBConnectionPostgre::UpdateTable(
+    const db_table_create_setup &fields) {
+  /* todo */
+  assert(0);
   return STATUS_HAVE_ERROR;
 }
 
 mstatus_t DBConnectionPostgre::CreateTable(
     const db_table_create_setup &fields) {
   return exec_wrap<db_table_create_setup, void,
-     std::stringstream (DBConnectionPostgre::*)(const db_table_create_setup &),
-     void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
-         fields, nullptr, &DBConnectionPostgre::setupCreateTableString,
-         &DBConnectionPostgre::execCreateTable);
+    std::stringstream (DBConnectionPostgre::*)(const db_table_create_setup &),
+    void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
+        fields, nullptr, &DBConnectionPostgre::setupCreateTableString,
+        &DBConnectionPostgre::execCreateTable);
 }
 
 mstatus_t DBConnectionPostgre::DropTable(const db_table_drop_setup &drop) {
@@ -225,12 +439,16 @@ mstatus_t DBConnectionPostgre::DropTable(const db_table_drop_setup &drop) {
 }
 
 mstatus_t DBConnectionPostgre::InsertRows(
-    const db_query_insert_setup &insert_data) {
-  return exec_wrap<db_query_insert_setup, void,
-     std::stringstream (DBConnectionPostgre::*)(const db_query_insert_setup &),
-     void (DBConnectionPostgre::*)(const std::stringstream &, void *)>(
-         insert_data, nullptr, &DBConnectionPostgre::setupInsertString,
-         &DBConnectionPostgre::execInsert);
+    const db_query_insert_setup &insert_data, id_container *id_vec) {
+  pqxx::result result;
+  mstatus_t status = exec_wrap<db_query_insert_setup, pqxx::result,
+      std::stringstream (DBConnectionPostgre::*)(const db_query_insert_setup &),
+      void (DBConnectionPostgre::*)(const std::stringstream &, pqxx::result *)>(
+          insert_data, nullptr, &DBConnectionPostgre::setupInsertString,
+          &DBConnectionPostgre::execInsert);
+  for (pqxx::const_result_iterator::reference row: result)
+    id_vec->id_vec.push_back(row[0].as<int>());
+  return status;
 }
 
 mstatus_t DBConnectionPostgre::DeleteRows(
@@ -275,7 +493,6 @@ mstatus_t DBConnectionPostgre::UpdateRows(
          &DBConnectionPostgre::execUpdate);
 }
 
-
 std::string DBConnectionPostgre::setupConnectionString() {
   std::stringstream connect_ss;
   connect_ss << "dbname = " << parameters_.name << " ";
@@ -293,12 +510,48 @@ std::stringstream DBConnectionPostgre::setupTableExistsString(db_table t) {
       get_table_name(t) << "');";
   return select_ss;
 }
-std::stringstream DBConnectionPostgre::setupColumnNamesString(db_table t) {
+std::stringstream DBConnectionPostgre::setupGetColumnsInfoString(db_table t) {
   std::stringstream select_ss;
-  select_ss << "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS "
+  select_ss << "SELECT column_name, data_type FROM INFORMATION_SCHEMA.COLUMNS "
       "WHERE TABLE_NAME = '" << get_table_name(t) << "';";
   return select_ss;
 }
+std::stringstream DBConnectionPostgre::setupGetConstrainsString(db_table t) {
+  std::stringstream sstr;
+  sstr << "SELECT con.* " <<
+       "FROM pg_catalog.pg_constraint con " <<
+            "INNER JOIN pg_catalog.pg_class rel " <<
+                       "ON rel.oid = con.conrelid " <<
+            "INNER JOIN pg_catalog.pg_namespace nsp " <<
+                       "ON nsp.oid = connamespace ";
+  sstr << "WHERE nsp.nspname = 'public' AND rel.relname = ";
+  sstr << "'" << get_table_name(t) << "';";
+  return sstr;
+}
+
+std::stringstream DBConnectionPostgre::setupGetForeignKeys(db_table t) {
+  std::stringstream sstr;
+  sstr << "SELECT " <<
+        "tc.table_schema, " <<
+        "tc.constraint_name, " <<
+        "tc.table_name, " <<
+        "kcu.column_name, " <<
+        "ccu.table_schema AS foreign_table_schema, " <<
+        "ccu.table_name AS foreign_table_name, " <<
+        "ccu.column_name AS foreign_column_name " <<
+    "FROM " <<
+        "information_schema.table_constraints AS tc " <<
+    "JOIN information_schema.key_column_usage AS kcu " <<
+        "ON tc.constraint_name = kcu.constraint_name " <<
+        "AND tc.table_schema = kcu.table_schema " <<
+    "JOIN information_schema.constraint_column_usage AS ccu " <<
+        "ON ccu.constraint_name = tc.constraint_name " <<
+        "AND ccu.table_schema = tc.table_schema ";
+  sstr << "WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name = ";
+  sstr << "'" << get_table_name(t) << "';";
+  return sstr;
+}
+
 std::stringstream DBConnectionPostgre::setupInsertString(
     const db_query_insert_setup &fields) {
   if (fields.values_vec.empty()) {
@@ -306,15 +559,14 @@ std::stringstream DBConnectionPostgre::setupInsertString(
     return std::stringstream();
   }
   std::string fnames = "INSERT INTO " + get_table_name(fields.table) + " (";
-  // std::string values = "VALUES (";
   std::vector<std::string> vals;
   std::vector<std::string> rows(fields.values_vec.size());
   db_variable::db_var_type t;
   auto txn = pqxx_work.GetTransaction();
-  // set fields:
+  // set fields
   auto &row = fields.values_vec[0];
   for (auto &x: row)
-    fnames += fields.fields[x.first].fname + ", ";
+    fnames += std::string(fields.fields[x.first].fname) + ", ";
   fnames.replace(fnames.size() - 2, fnames.size() - 1, ")");
 
   for (const auto &row: fields.values_vec) {
@@ -346,6 +598,7 @@ std::stringstream DBConnectionPostgre::setupInsertString(
   sstr << fnames << " VALUES ";
   for (const auto &x: vals)
     sstr << x;
+  sstr << "RETURNING " << get_id_column_name(fields.table) << ";";
   return sstr;
 }
 
@@ -378,7 +631,8 @@ std::stringstream DBConnectionPostgre::setupUpdateString(
         << " SET ";
     std::string set_str = "";
     for (const auto &x: fields.values)
-      set_str += fields.fields[x.first].fname + " = " + x.second + ",";
+      set_str += std::string(fields.fields[x.first].fname)
+          + " = " + x.second + ",";
     set_str[set_str.size() - 1] = ' ';
     sstr << set_str;
     if (fields.where_condition != nullptr)
@@ -388,18 +642,25 @@ std::stringstream DBConnectionPostgre::setupUpdateString(
   return sstr;
 }
 
-void DBConnectionPostgre::execNoReturn(const std::stringstream &sstr) {
+void DBConnectionPostgre::execWithoutReturn(const std::stringstream &sstr) {
   auto tr = pqxx_work.GetTransaction();
   if (tr)
     tr->exec0(sstr.str());
 }
+void DBConnectionPostgre::execWithReturn(const std::stringstream &sstr,
+    pqxx::result *result) {
+  auto tr = pqxx_work.GetTransaction();
+  if (tr)
+    *result = tr->exec(sstr.str());
+}
+
 void DBConnectionPostgre::execAddSavePoint(
     const std::stringstream &sstr, void *) {
-  execNoReturn(sstr);
+  execWithoutReturn(sstr);
 }
 void DBConnectionPostgre::execRollbackToSavePoint(
     const std::stringstream &sstr, void *) {
-  execNoReturn(sstr);
+  execWithoutReturn(sstr);
 }
 void DBConnectionPostgre::execIsTableExists(
     const std::stringstream &sstr, bool *is_exists) {
@@ -415,49 +676,85 @@ void DBConnectionPostgre::execIsTableExists(
     }
   }
 }
-void DBConnectionPostgre::execColumnNamesString(
-    const std::stringstream &sstr, std::vector<std::string> *column_names) {
-  column_names->clear();
+/* todo: так-с, нужно вынести названия служебных столбцов/полей
+ *   'column_name' и 'data_type' в енумчик или дефайн */
+void DBConnectionPostgre::execGetColumnInfo(
+    const std::stringstream &sstr, std::vector<db_field_info> *columns_info) {
+  columns_info->clear();
   auto tr = pqxx_work.GetTransaction();
   if (tr) {
     pqxx::result trres(tr->exec(sstr.str()));
     if (!trres.empty()) {
-      std::transform(trres.begin(), trres.end(), column_names->end(),
-          [](pqxx::const_result_iterator::reference x)
-              { return trim_str(x[0].as<std::string>()); });
+      for (const auto &x: trres) {
+        auto row = x["column_name"];
+        if (row != x.end()) {
+          std::string name = trim_str(row.as<std::string>());
+          row = x["data_type"];
+          if (row != x.end()) {
+            std::string type_str = trim_str(row.as<std::string>());
+            std::transform(type_str.begin(), type_str.end(),
+                type_str.begin(), toupper);
+            columns_info->push_back(
+                db_field_info(name, postgresql_impl::find_type(type_str)));
+          }
+        }
+      }
       if (IS_DEBUG_MODE) {
         std::string cols = std::accumulate(
-            column_names->begin(), column_names->end(), std::string(),
-            [](std::string &r, const std::string &n) { return r + n; });
+            columns_info->begin(), columns_info->end(), std::string(),
+            [](std::string &r, const db_field_info &n) { return r + n.name; });
         Logging::Append(io_loglvl::debug_logs, "Ответ на запрос БД:"
             + sstr.str() + "\t'" + cols + "'\n") ;
       }
     }
   }
 }
+void DBConnectionPostgre::execGetConstrainsString(const std::stringstream &sstr,
+    pqxx::result *result) {
+  execWithReturn(sstr, result);
+}
+void DBConnectionPostgre::execGetForeignKeys(const std::stringstream &sstr,
+    pqxx::result *result) {
+  execWithReturn(sstr, result);
+}
 void DBConnectionPostgre::execAddColumn(const std::stringstream &sstr, void *) {
-  execNoReturn(sstr);
+  execWithoutReturn(sstr);
 }
 void DBConnectionPostgre::execCreateTable(const std::stringstream &sstr, void *) {
-  execNoReturn(sstr);
+  execWithoutReturn(sstr);
 }
 void DBConnectionPostgre::execDropTable(const std::stringstream &sstr, void *) {
-  execNoReturn(sstr);
+  execWithoutReturn(sstr);
 }
-void DBConnectionPostgre::execInsert(const std::stringstream &sstr, void *) {
-  execNoReturn(sstr);
+void DBConnectionPostgre::execInsert(const std::stringstream &sstr,
+    pqxx::result *result) {
+  execWithReturn(sstr, result);
 }
 void DBConnectionPostgre::execDelete(const std::stringstream &sstr, void *) {
-  execNoReturn(sstr);
+  execWithoutReturn(sstr);
 }
 void DBConnectionPostgre::execSelect(const std::stringstream &sstr,
     pqxx::result *result) {
-  auto tr = pqxx_work.GetTransaction();
-  if (tr)
-    *result = tr->exec(sstr.str());
+  execWithReturn(sstr, result);
 }
 void DBConnectionPostgre::execUpdate(const std::stringstream &sstr, void *) {
-  execNoReturn(sstr);
+  execWithoutReturn(sstr);
+}
+
+merror_t DBConnectionPostgre::setConstrainVector(const std::vector<int> &indexes,
+    const db_fields_collection &fields, std::vector<std::string> *output) {
+  merror_t error = ERROR_SUCCESS_T;
+  output->clear();
+  for (const size_t i: indexes) {
+    if (i < fields.size()) {
+      output->push_back(fields[i].fname);
+    } else {
+      error = error_.SetError(ERROR_DB_TABLE_PKEY,
+          "Ошибка создания первичного ключа по параметрам из БД: "
+          "индекс столбца вне границ таблицы");
+    }
+  }
+  return error;
 }
 
 std::string DBConnectionPostgre::db_variable_to_string(

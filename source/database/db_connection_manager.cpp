@@ -90,29 +90,78 @@ mstatus_t DBConnectionManager::CreateTable(db_table dt) {
       &DBConnectionManager::createTable, &sp);
 }
 
+bool DBConnectionManager::CheckTableFormat(db_table dt) {
+  db_table_create_setup cs_db(dt);
+  mstatus_t result = exec_wrap<db_table, db_table_create_setup, void (DBConnectionManager::*)(
+      Transaction *, db_table, db_table_create_setup *)>(dt, &cs_db,
+      &DBConnectionManager::getTableFormat, nullptr);
+
+  if (is_status_ok(result)) {
+    assert(0);
+  }
+  assert(0);
+
+  return false;
+}
+
+mstatus_t DBConnectionManager::UpdateTableFormat(db_table dt) {
+  db_table_create_setup cs_db(dt);
+  mstatus_t result = exec_wrap<db_table, db_table_create_setup, void (DBConnectionManager::*)(
+      Transaction *, db_table, db_table_create_setup *)>(dt, &cs_db,
+      &DBConnectionManager::getTableFormat, nullptr);
+
+  if (is_status_ok(result)) {
+    assert(0);
+  }
+  assert(0);
+
+  return result;
+}
+
 mstatus_t DBConnectionManager::SaveModelInfo(model_info &mi) {
   std::unique_ptr<db_query_insert_setup> dis(db_query_insert_setup::Init({mi}));
   db_save_point sp("save_model_info");
-  return exec_wrap<const db_query_insert_setup &, void, void (DBConnectionManager::*)(
-      Transaction *, const db_query_insert_setup &, void *)>(
-      *dis, nullptr, &DBConnectionManager::saveRows, &sp);
+  id_container id_vec;
+  mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
+      void (DBConnectionManager::*)(Transaction *, const db_query_insert_setup &,
+      id_container *)>(*dis, &id_vec, &DBConnectionManager::saveRows, &sp);
+  if (id_vec.id_vec.size()) {
+    mi.id = id_vec.id_vec[0];
+    mi.initialized |= model_info::f_model_id;
+  }
+  return st;
 }
 
 mstatus_t DBConnectionManager::SaveCalculationInfo(calculation_info &ci) {
-  std::unique_ptr<db_query_insert_setup> dis(db_query_insert_setup::Init({ci}));
+  std::vector<calculation_info> ci_vec { ci };
+  std::unique_ptr<db_query_insert_setup> dis(db_query_insert_setup::Init(ci_vec));
   db_save_point sp("save_calculation_info");
-  return exec_wrap<const db_query_insert_setup &, void, void (DBConnectionManager::*)(
-      Transaction *, const db_query_insert_setup &, void *)>(
-      *dis, nullptr, &DBConnectionManager::saveRows, &sp);
+  id_container id_vec;
+  mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
+      void (DBConnectionManager::*)(Transaction *, const db_query_insert_setup &,
+      id_container *)>(*dis, &id_vec, &DBConnectionManager::saveRows, &sp);
+  if (id_vec.id_vec.size()) {
+    ci.id = id_vec.id_vec[0];
+    ci.initialized |= calculation_info::f_calculation_info_id;
+  }
+  return st;
 }
 
 mstatus_t DBConnectionManager::SaveCalculationStateLog(
     std::vector<calculation_state_log> &csi) {
   std::unique_ptr<db_query_insert_setup> dis(db_query_insert_setup::Init(csi));
   db_save_point sp("save_calculation_state_log");
-  return exec_wrap<const db_query_insert_setup &, void, void (DBConnectionManager::*)(
-      Transaction *, const db_query_insert_setup &, void *)>(
-      *dis, nullptr, &DBConnectionManager::saveRows, &sp);
+  id_container id_vec;
+  mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
+      void (DBConnectionManager::*)(Transaction *, const db_query_insert_setup &,
+      id_container *)>(*dis, &id_vec, &DBConnectionManager::saveRows, &sp);
+  if (id_vec.id_vec.size() == csi.size()) {
+    for (size_t i = 0; i < csi.size(); ++i) {
+      csi[i].id = id_vec.id_vec[i];
+      csi[i].initialized |= calculation_state_log::f_calculation_state_log_id;
+    }
+  }
+  return st;
 }
 
 mstatus_t DBConnectionManager::SelectModelInfo(model_info &where,
@@ -178,10 +227,15 @@ void DBConnectionManager::createTable(Transaction *tr, db_table dt, void *) {
       db_table_create_setup::get_table_create_setup(dt))));
 }
 
+void DBConnectionManager::getTableFormat(Transaction *tr, db_table dt,
+    db_table_create_setup *exist_table) {
+  assert(0);
+}
+
 void DBConnectionManager::saveRows(Transaction *tr,
-    const db_query_insert_setup &qi, void *) {
+    const db_query_insert_setup &qi, id_container *id_vec) {
   tr->AddQuery(QuerySmartPtr(
-      new DBQueryInsertRows(db_connection_.get(), qi)));
+      new DBQueryInsertRows(db_connection_.get(), qi, id_vec)));
 }
 
 void DBConnectionManager::selectRows(Transaction *tr,

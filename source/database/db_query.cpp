@@ -147,11 +147,11 @@ std::string DBQueryUpdateTable::q_info() {
 
 /* DBQueryInsertRows */
 DBQueryInsertRows::DBQueryInsertRows(DBConnection *db_ptr,
-    const db_query_insert_setup &insert_setup)
-  : DBQuery(db_ptr), insert_setup(insert_setup) {}
+    const db_query_insert_setup &insert_setup, id_container *id_vec)
+  : DBQuery(db_ptr), insert_setup(insert_setup), id_vec(id_vec) {}
 
 mstatus_t DBQueryInsertRows::exec() {
-  return db_ptr_->InsertRows(insert_setup);
+  return db_ptr_->InsertRows(insert_setup, id_vec);
 }
 
 std::string DBQueryInsertRows::q_info() {

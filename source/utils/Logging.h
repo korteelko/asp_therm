@@ -15,10 +15,11 @@
 #include "ThreadWrap.h"
 
 #include <fstream>
-#include <string>
 #include <sstream>
+#include <string>
 
-#ifdef OS_NIX
+
+#if defined (OS_NIX)
 #  include <sys/param.h>
 #elif defined(_OS_WIN)
 //   don'checked
@@ -28,7 +29,7 @@
 /* максимальный размер файла логов */
 #define MAXSIZE_LOGFILE  128*1024  // 128 KiB
 
-/** logging settings: level and filename */
+/** \brief logging settings: level and filename */
 struct logging_cfg {
   io_loglvl loglvl;
   char filepath[PATH_MAX];  //MAXPATHLEN
@@ -44,7 +45,6 @@ public:
 
 typedef std::ofstream mlog_fostream;
 
-/* TODO может и эти дефайны переопределить в файле конфигурации */
 /** \brief класс логирования сообщений */
 class Logging {
 public:
@@ -57,9 +57,12 @@ public:
   static std::string GetStatusMessage();
   /** \brief force clear logfile */
   static void ClearLogfile();
+  #if defined (_DEBUG)
+  /** \brief Вывести строку в стандартный вывод ошибок */
+  static void PrintCerr(const std::string &info);
+  #endif  // _DEBUG
   /** \brief append logfile with passed message
     *  if loglevel of instance != io_loglvl::no_log */
-  // static void Append(const char *format, ...);
   static void Append(const std::string &msg);
   /** \brief append logfile with passed message
     * if loglevel of instance correspond to 'lvl'

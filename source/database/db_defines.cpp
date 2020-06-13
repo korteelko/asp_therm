@@ -10,7 +10,10 @@
 #include "db_defines.h"
 #include "Logging.h"
 
+#include <map>
+
 #include <assert.h>
+#include <string.h>
 
 
 std::string db_client_to_string(db_client client) {
@@ -24,38 +27,19 @@ std::string db_client_to_string(db_client client) {
       break;
     default:
       assert(0);
-      name = "assert";
+      name = "undefined";
   }
   return name;
 }
-
-std::string get_table_name(db_table dt) {
-  std::string name = "";
-  switch (dt) {
-    case db_table::table_model_info:
-      name = "model_info";
-      break;
-    case db_table::table_calculation_info:
-      name = "calculation_info";
-      break;
-    case db_table::table_calculation_state_log:
-      name = "calculation_state_log";
-      break;
-    default:
-      assert(0 && "нужно добавить больше типов таблиц");
-  }
-  return name;
-}
-
 
 /* db_variable */
-db_variable::db_variable(std::string fname, db_var_type type,
-    db_variable_flags flags, int len)
-  : fname(fname), type(type), flags(flags), len(len) {}
+db_variable::db_variable(db_variable_id fid, const char *fname,
+    db_var_type type, db_variable_flags flags, int len)
+  : fid(fid), fname(fname), type(type), flags(flags), len(len) {}
 
 merror_t db_variable::CheckYourself() const {
   merror_t ew = ERROR_SUCCESS_T;
-  if (fname.empty()) {
+  if (fname == NULL) {
     ew = ERROR_DB_VARIABLE;
     Logging::Append(io_loglvl::err_logs, "пустое имя поля таблицы бд" +
         STRING_DEBUG_INFO);
@@ -63,22 +47,38 @@ merror_t db_variable::CheckYourself() const {
       (!flags.is_array || len < 1)) {
     ew = ERROR_DB_VARIABLE;
     Logging::Append(io_loglvl::err_logs,
-        "установки поля char array не соответствуют ожиданиям :(" +
+        "установки поля char array не соответствуют ожиданиям" +
         STRING_DEBUG_INFO);
   }
   return ew;
 }
 
+bool db_variable::operator==(const db_variable &r) const {
+  bool same = strcmp(r.fname, fname) == 0;
+  same &= r.type == type;
+  same &= r.len == len;
+  if (same) {
+    // flags
+    same = r.flags.is_unique == flags.is_unique;
+    same &= r.flags.can_be_null == flags.can_be_null;
+  }
+  return same;
+}
 
+bool db_variable::operator!=(const db_variable &r) const {
+  return !(*this == r);
+}
+
+/* db_reference */
 db_reference::db_reference(const std::string &fname, db_table ftable,
     const std::string &f_fname, bool is_fkey, db_reference_act on_del,
     db_reference_act on_upd)
   : fname(fname), foreign_table(ftable), foreign_fname(f_fname),
     is_foreign_key(is_fkey), has_on_delete(false), delete_method(on_del),
     update_method(on_upd) {
-  if (delete_method != db_reference_act::ref_act_empty)
+  if (delete_method != db_reference_act::ref_act_not)
     has_on_delete = true;
-  if (update_method != db_reference_act::ref_act_empty)
+  if (update_method != db_reference_act::ref_act_not)
     has_on_update = true;
 }
 
@@ -87,12 +87,12 @@ merror_t db_reference::CheckYourself() const {
   if (!fname.empty()) {
     if (!foreign_fname.empty()) {
       // перестраховались
-      if (has_on_delete && delete_method == db_reference_act::ref_act_empty) {
+      if (has_on_delete && delete_method == db_reference_act::ref_act_not) {
         error = ERROR_DB_VARIABLE;
         Logging::Append(io_loglvl::err_logs, "несоответсвие метода удаления "
             "для ссылки. Поле: " + fname + ". Внешнее поле: " + foreign_fname);
       }
-      if (has_on_update && update_method == db_reference_act::ref_act_empty) {
+      if (has_on_update && update_method == db_reference_act::ref_act_not) {
         error = ERROR_DB_VARIABLE;
         Logging::Append(io_loglvl::err_logs, "несоответсвие метода обновления "
             "для ссылки. Поле: " + fname + ". Внешнее поле: " + foreign_fname);
@@ -112,12 +112,51 @@ merror_t db_reference::CheckYourself() const {
 /* this is for postgresql, what about anothers? */
 std::string db_reference::GetReferenceActString(db_reference_act act) {
   switch (act) {
-    case db_reference_act::ref_act_empty:
+    case db_reference_act::ref_act_not:
       return "";
+    case db_reference_act::ref_act_set_null:
+      return "SET NULL";
     case db_reference_act::ref_act_cascade:
       return "CASCADE";
     case db_reference_act::ref_act_restrict:
       return "RESTRICT";
+    default:
+      throw std::exception();
   }
-  return "";
+}
+
+bool db_reference::operator==(const db_reference &r) const {
+  bool same = fname == r.fname;
+  same |= foreign_table == r.foreign_table;
+  same |= foreign_fname == r.foreign_fname;
+  if (same) {
+    same = is_foreign_key == r.is_foreign_key;
+    same |= has_on_delete == r.has_on_delete;
+    same |= has_on_update == r.has_on_update;
+    same |= delete_method == r.delete_method;
+    same |= update_method == r.update_method;
+  }
+  return same;
+}
+
+bool db_reference::operator!=(const db_reference &r) const {
+  return !(*this == r);
+}
+
+/* db_exception */
+db_exception::db_exception(merror_t error, const std::string &msg)
+  : error_(error, msg) {}
+db_exception::db_exception(const std::string &msg)
+  : db_exception(ERROR_GENERAL_T, msg) {}
+
+void db_exception::LogException() {
+  error_.LogIt();
+}
+
+merror_t db_exception::GetError() const {
+  return error_.GetErrorCode();
+}
+
+std::string db_exception::GetErrorMessage() const {
+  return error_.GetMessage();
 }

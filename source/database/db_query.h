@@ -140,7 +140,7 @@ private:
 class DBQueryInsertRows: public DBQuery {
 public:
   DBQueryInsertRows(DBConnection *db_ptr,
-      const db_query_insert_setup &insert_setup);
+      const db_query_insert_setup &insert_setup, id_container *id_vec);
 
 protected:
   mstatus_t exec() override;
@@ -148,6 +148,8 @@ protected:
 
 private:
   const db_query_insert_setup &insert_setup;
+  /** \brief Указатель на вектор присвоенных строкам id */
+  id_container *id_vec;
 };
 
 /** \brief Запрос выборки */
