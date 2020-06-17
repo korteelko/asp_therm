@@ -14,7 +14,6 @@
 #ifndef _DATABASE__DB_DEFINES_H_
 #define _DATABASE__DB_DEFINES_H_
 
-#include "db_tables.h"
 #include "ErrorWrap.h"
 
 #include <exception>
@@ -23,6 +22,9 @@
 
 #include <stdint.h>
 
+
+/** \brief Перечисление всех таблиц из файла db_tables.h */
+enum class db_table;
 
 /** \brief Уникальный идентификатор поля БД */
 typedef uint32_t db_variable_id;

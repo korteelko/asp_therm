@@ -10,7 +10,6 @@
 #include "db_connection_manager.h"
 
 #include "db_connection_postgre.h"
-#include "db_queries_setup.h"
 
 #include <ctime>
 
@@ -119,7 +118,8 @@ mstatus_t DBConnectionManager::UpdateTableFormat(db_table dt) {
 }
 
 mstatus_t DBConnectionManager::SaveModelInfo(model_info &mi) {
-  std::unique_ptr<db_query_insert_setup> dis(db_query_insert_setup::Init({mi}));
+  std::unique_ptr<db_query_insert_setup> dis(
+      InitInsertSetup<model_info>({mi}));
   db_save_point sp("save_model_info");
   id_container id_vec;
   mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
@@ -134,7 +134,8 @@ mstatus_t DBConnectionManager::SaveModelInfo(model_info &mi) {
 
 mstatus_t DBConnectionManager::SaveCalculationInfo(calculation_info &ci) {
   std::vector<calculation_info> ci_vec { ci };
-  std::unique_ptr<db_query_insert_setup> dis(db_query_insert_setup::Init(ci_vec));
+  std::unique_ptr<db_query_insert_setup> dis(
+      InitInsertSetup<calculation_info >(ci_vec));
   db_save_point sp("save_calculation_info");
   id_container id_vec;
   mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
@@ -149,7 +150,8 @@ mstatus_t DBConnectionManager::SaveCalculationInfo(calculation_info &ci) {
 
 mstatus_t DBConnectionManager::SaveCalculationStateLog(
     std::vector<calculation_state_log> &csi) {
-  std::unique_ptr<db_query_insert_setup> dis(db_query_insert_setup::Init(csi));
+  std::unique_ptr<db_query_insert_setup> dis(
+      InitInsertSetup<calculation_state_log>(csi));
   db_save_point sp("save_calculation_state_log");
   id_container id_vec;
   mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
@@ -183,7 +185,7 @@ mstatus_t DBConnectionManager::DeleteModelInfo(model_info &where) {
   std::unique_ptr<db_query_delete_setup> dds(
       db_query_delete_setup::Init(db_table::table_model_info));
   if (dds)
-    dds->where_condition.reset(db_where_tree::Init(where));
+    dds->where_condition.reset(InitWhereTree(where));
   db_save_point sp("delete_rows");
   return exec_wrap<const db_query_delete_setup &, void,
       void (DBConnectionManager::*)(Transaction *, const db_query_delete_setup &,
@@ -224,7 +226,7 @@ void DBConnectionManager::isTableExist(Transaction *tr,
 
 void DBConnectionManager::createTable(Transaction *tr, db_table dt, void *) {
   tr->AddQuery(QuerySmartPtr(new DBQueryCreateTable(db_connection_.get(),
-      db_table_create_setup::get_table_create_setup(dt))));
+      create_setup_by_code(dt))));
 }
 
 void DBConnectionManager::getTableFormat(Transaction *tr, db_table dt,

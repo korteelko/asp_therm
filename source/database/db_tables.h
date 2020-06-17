@@ -13,6 +13,8 @@
 #ifndef _DATABASE__DB_TABLES_H_
 #define _DATABASE__DB_TABLES_H_
 
+#include "db_queries_setup.h"
+
 #include <string>
 
 
@@ -81,7 +83,12 @@
 #define CSL_ENTHALPY_NAME "enthalpy"
 #define CSL_STATE_PHASE_NAME "state_phase"
 
-/** \brief перечисление типов используемых таблиц */
+
+struct model_info;
+struct calculation_info;
+struct calculation_state_log;
+
+/** \brief Перечисление типов используемых таблиц */
 enum class db_table {
   /** \brief Заглушка */
   table_undefiend = UNDEFINED_TABLE,
@@ -92,11 +99,108 @@ enum class db_table {
   /** \brief лог расчёта */
   table_calculation_state_log = CALCULATIONSTATE_TABLE >> 16
 };
+
+namespace table_fields_setup {
+extern const db_fields_collection model_info_fields;
+extern const db_fields_collection calculation_info_fields;
+extern const db_fields_collection calculation_state_log_fields;
+
+const db_fields_collection *get_fields_collection(db_table dt);
+}  // namespace table_fields_setup
+
+/** \brief Получить код таблицы по имени */
+db_table str_to_table_code(const std::string &str);
 /** \brief Получить имя таблицы в БД по идентификатору */
 std::string get_table_name(db_table dt);
-/** \brief Получить код таблицы по имени */
-db_table get_table_code(const std::string &str);
 /** \brief Получить имя id колонки в таблице */
 std::string get_id_column_name(db_table dt);
+
+template <class T>
+db_table get_table_code();
+
+template <>
+db_table get_table_code<model_info>();
+template <>
+db_table get_table_code<calculation_info>();
+template <>
+db_table get_table_code<calculation_state_log>();
+
+/* db_query_create_setup queries */
+/** \brief Получить сетап на создание таблицы */
+const db_table_create_setup &create_setup_by_code(db_table dt);
+/** \brief Копировать контейнер ссылок для сетапа создания таблицы */
+db_ref_collection ref_collection_by_code(db_table table);
+
+/* setInsertValues */
+/** \brief Шаблонная функция сбора insert_setup по структуре БД
+  * \note Шаблон закрыт, разрешены только спецификации ниже */
+template <class T>
+void setInsertValues(db_query_insert_setup *src, const T &select_data);
+
+/** \brief Собрать вектор 'values' значений столбцов БД,
+  *   по переданным строкам model_info */
+template<>
+void setInsertValues<model_info>(db_query_insert_setup *src,
+    const model_info &select_data);
+/** \brief Собрать вектор 'values' значений столбцов БД,
+  *   по переданным строкам calculation_info */
+template<>
+void setInsertValues<calculation_info>(db_query_insert_setup *src,
+    const calculation_info &select_data);
+/** \brief Собрать вектор 'values' значений столбцов БД,
+  *   по переданным строкам calculation_state_log */
+template<>
+void setInsertValues<calculation_state_log >(db_query_insert_setup *src,
+    const calculation_state_log &select_data);
+
+template <class DataInfo, class Table>
+db_query_insert_setup *init(Table t, db_query_insert_setup *src,
+    const std::vector<DataInfo> &insert_data) {
+  if (haveConflict(insert_data))
+    return nullptr;
+  db_query_insert_setup *ins_setup = new db_query_insert_setup(
+      t, *table_fields_setup::get_fields_collection(t));
+  if (ins_setup)
+    for (const auto &x: insert_data)
+      setInsertValues<Table>(src, x);
+  return ins_setup;
+}
+
+/* db_query_insert_setup queries */
+template <class TableI>
+db_query_insert_setup *InitInsertSetup(
+    const std::vector<TableI> &insert_data) {
+  if (db_query_insert_setup::haveConflict(insert_data))
+    return nullptr;
+  auto table = get_table_code<TableI>();
+  db_query_insert_setup *ins_setup = new db_query_insert_setup(table,
+      *table_fields_setup::get_fields_collection(table));
+  if (ins_setup)
+    for (auto &x: insert_data)
+      setInsertValues<TableI>(ins_setup, x);
+  return ins_setup;
+}
+
+/* select result */
+/** \brief Записать в out_vec строки model_info из данных values_vec,
+  *   полученных из БД
+  * \note Обратная операция для db_query_insert_setup::setValues */
+void SetSelectData(db_query_select_result *src, std::vector<model_info> *out_vec);
+/** \brief Записать в out_vec строки calculation_info из данных values_vec,
+  *   полученных из БД */
+void SetSelectData(db_query_select_result *src,
+    std::vector<calculation_info> *out_vec);
+/** \brief Записать в out_vec строки calculation_state_log из данных values_vec,
+  *   полученных из БД */
+void SetSelectData(db_query_select_result *src,
+    std::vector<calculation_state_log> *out_vec);
+
+/* db_where_tree */
+template <class TableI>
+db_where_tree *InitWhereTree(const TableI &where) {
+  std::unique_ptr<db_query_insert_setup> qis(
+      InitInsertSetup<TableI>({where}));
+  return db_where_tree::init(qis.get());
+}
 
 #endif  // !_DATABASE__DB_TABLES_H_

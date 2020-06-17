@@ -1,6 +1,7 @@
 /**
  * asp_therm - implementation of real gas equations of state
  * ===================================================================
+ * * db_queries_setup  *
  *   Здесь прописана логика создания абстрактных запросов к БД,
  * которые создаются классом управляющим подключением к БД
  * ===================================================================
@@ -24,18 +25,6 @@
 
 
 #define OWNER(x) friend class x
-
-struct model_info;
-struct calculation_info;
-struct calculation_state_log;
-
-namespace table_fields_setup {
-extern const db_fields_collection model_info_fields;
-extern const db_fields_collection calculation_info_fields;
-extern const db_fields_collection calculation_state_log_fields;
-
-const db_fields_collection *get_fields_collection(db_table dt);
-}  // namespace table_fields_setup
 
 /** \brief Сетап для добавления точки сохранения */
 struct db_save_point {
@@ -171,9 +160,6 @@ struct db_table_create_setup {
   };
 
 public:
-  /** \brief Получить сетап на создание таблицы */
-  static const db_table_create_setup &get_table_create_setup(db_table dt);
-
   /** \brief Конструктор для записи данных из БД */
   db_table_create_setup(db_table table);
   /** \brief Конструктор для добавления таблицы в БД */
@@ -251,33 +237,6 @@ public:
 /** \brief Структура для сборки INSERT запросов */
 struct db_query_insert_setup: public db_query_basesetup {
 public:
-  static db_query_insert_setup *Init(
-      const std::vector<model_info> &insert_data);
-  static db_query_insert_setup *Init(
-      const std::vector<calculation_info> &insert_data);
-  static db_query_insert_setup *Init(
-      const std::vector<calculation_state_log> &insert_data);
-
-  size_t RowsSize() const;
-
-  virtual ~db_query_insert_setup() = default;
-
-protected:
-  db_query_insert_setup(db_table _table, const db_fields_collection &_fields);
-
-  template <class DataInfo, class Table>
-  static db_query_insert_setup *init(Table t,
-      const std::vector<DataInfo> &insert_data) {
-    if (haveConflict(insert_data))
-      return nullptr;
-    db_query_insert_setup *ins_setup = new db_query_insert_setup(
-        t, *table_fields_setup::get_fields_collection(t));
-    if (ins_setup)
-      for (const auto &x: insert_data)
-        ins_setup->setValues(x);
-    return ins_setup;
-  }
-
   /** \brief Проверить соответствие значений полей initialized в векторе
     *   элементов данных выборки. Для всех должны быть одинаковы */
   template <class DataInfo>
@@ -290,15 +249,11 @@ protected:
     }
     return false;
   }
-  /** \brief Собрать вектор 'values' значений столбцов БД,
-    *   по переданным строкам model_info */
-  void setValues(const model_info &select_data);
-  /** \brief Собрать вектор 'values' значений столбцов БД,
-    *   по переданным строкам calculation_info */
-  void setValues(const calculation_info &select_data);
-  /** \brief Собрать вектор 'values' значений столбцов БД,
-    *   по переданным строкам calculation_state_log */
-  void setValues(const calculation_state_log &select_data);
+
+  db_query_insert_setup(db_table _table, const db_fields_collection &_fields);
+  virtual ~db_query_insert_setup() = default;
+
+  size_t RowsSize() const;
 
 public:
   /** \brief Набор значений для операций INSERT|SELECT|DELETE */
@@ -356,18 +311,6 @@ public:
 
   virtual ~db_query_select_result() = default;
 
-  /** \brief Записать в out_vec строки model_info из данных values_vec,
-    *   полученных из БД
-    * \note Обратная операция для db_query_insert_setup::setValues */
-  void SetData(std::vector<model_info> *out_vec);
-  /** \brief Записать в out_vec строки calculation_info из данных values_vec,
-    *   полученных из БД */
-  void SetData(std::vector<calculation_info> *out_vec);
-  /** \brief Записать в out_vec строки calculation_state_log из данных values_vec,
-    *   полученных из БД */
-  void SetData(std::vector<calculation_state_log> *out_vec);
-
-protected:
   /** \brief Проверить соответствие строки strname и имени поля
     * \note todo: Заменить строки на int идентификаторы */
   bool isFieldName(const std::string &strname, const db_variable &var);
@@ -389,10 +332,6 @@ inline bool db_query_select_result::isFieldName(
   *     представлено в коде, поэтому оставим возможность их менять */
 class db_where_tree {
 public:
-  static db_where_tree *Init(const model_info &where);
-  static db_where_tree *Init(const calculation_info &where);
-  static db_where_tree *Init(const calculation_state_log &where);
-
   ~db_where_tree();
 
   db_where_tree(const db_where_tree &) = delete;
@@ -410,46 +349,14 @@ public:
   /** \brief Условно(не упорядочены), конечная нода коллекции дерева */
   std::vector<db_condition_node *>::iterator TreeEnd();
 
-protected:
-  db_where_tree();
-
-  /** \brief Шаблон функции собирающей обычное дерево where условий
+  /** \brief Функция собирающая обычное дерево where условий
     *   разнесённых операторами AND
     * \badcode Не понятно как собрать шикарное дерево с множеством
     *   разнообразных условий */
-  template <class TableT>
-  static db_where_tree *init(const TableT &where) {
-    /* todo: это конечно мрак */
-    std::unique_ptr<db_query_insert_setup> qis(
-        db_query_insert_setup::Init({where}));
-    if (!qis)
-      return nullptr;
-    if (qis->values_vec.empty())
-      return nullptr;
-    db_where_tree *wt = new db_where_tree();
-    auto &row = qis->values_vec[0];
-    const auto &fields = qis->fields;
-    for (const auto &x : row) {
-      auto i = x.first;
-      if (i != db_query_basesetup::field_index_end && i < fields.size()) {
-        auto &f = fields[i];
-        wt->source_.push_back(new db_condition_node(
-            f.type, f.fname, x.second));
-      }
-    }
-    if (wt->source_.size() == 1) {
-      // только одно условие выборки
-      wt->root_ = wt->source_[0];
-    } else if (wt->source_.size() > 1) {
-      std::generate_n(std::back_insert_iterator<std::vector<db_condition_node *>>
-          (wt->source_), wt->source_.size() - 1,
-          []() { return new db_condition_node(
-              db_condition_node::db_operator_t::op_and); });
-      wt->construct();
-    }
-    return wt;
-  }
+  static db_where_tree *init(db_query_insert_setup *ins_ptr);
 
+protected:
+  db_where_tree();
   /** \brief Собрать дерево условий по вектору узлов условий source_ */
   void construct();
 

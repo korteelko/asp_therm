@@ -11,6 +11,7 @@
 
 #include "configuration_strtpl.h"
 #include "db_query.h"
+#include "db_tables.h"
 #include "file_structs.h"
 #include "models_configurations.h"
 #include "program_state.h"

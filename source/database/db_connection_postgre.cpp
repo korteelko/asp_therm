@@ -272,7 +272,7 @@ mstatus_t DBConnectionPostgre::GetTableFormat(db_table t,
           t, &constrains, &DBConnectionPostgre::setupGetConstrainsString,
           &DBConnectionPostgre::execGetConstrainsString);
   // обход по ограничениям - первичным и внешним ключам, уникальным комплексам
-  merror_t error = ERROR_SUCCESS_T;
+  merror_t error;
   if (is_status_ok(res)) {
     for (pqxx::const_result_iterator::reference row: constrains) {
       // массив индексов
@@ -356,18 +356,21 @@ mstatus_t DBConnectionPostgre::GetTableFormat(db_table t,
         }
       }
     }
+  } else {
+    if (!(error = error_.GetErrorCode()))
+      error = ERROR_DB_OPERATION;
   }
   //   ограничения закончили
 
   //   внешние ключи
   pqxx::result fkeys;
-  error = ERROR_SUCCESS_T;
-  res = exec_wrap<db_table, pqxx::result,
-    std::stringstream (DBConnectionPostgre::*)(db_table),
-    void (DBConnectionPostgre::*)(const std::stringstream &, pqxx::result *)>(
-        t, &fkeys, &DBConnectionPostgre::setupGetForeignKeys,
-        &DBConnectionPostgre::execGetForeignKeys);
-  if (is_status_ok(res)) {
+  if (!error)
+    res = exec_wrap<db_table, pqxx::result,
+      std::stringstream (DBConnectionPostgre::*)(db_table),
+      void (DBConnectionPostgre::*)(const std::stringstream &, pqxx::result *)>(
+          t, &fkeys, &DBConnectionPostgre::setupGetForeignKeys,
+          &DBConnectionPostgre::execGetForeignKeys);
+  if (!error && is_status_ok(res)) {
     // foreign_column_name, foreign_table_name
     for (pqxx::const_result_iterator::reference row: fkeys) {
       bool success = false;
@@ -385,8 +388,9 @@ mstatus_t DBConnectionPostgre::GetTableFormat(db_table t,
               std::string f_col = row_it.as<std::string>();
               auto du = fk_map.find(col_name);
               if (du != fk_map.end()) {
-                db_reference(col_name, get_table_code(f_table), f_col,
-                    true, du->second.up, du->second.del);
+                fields->ref_strings.push_back(
+                    db_reference(col_name, str_to_table_code(f_table), f_col,
+                    true, du->second.up, du->second.del));
                 success = true;
               } else {
                 error = ERROR_DB_REFER_FIELD;

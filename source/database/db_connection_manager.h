@@ -1,6 +1,10 @@
 /**
  * asp_therm - implementation of real gas equations of state
- *
+ * ===================================================================
+ * * db_connection_manager *
+ *   В файле реализован API доступа к базе данных для
+ * проекта asp_therm
+ * ===================================================================
  *
  * Copyright (c) 2020 Mishutinski Yurii
  *
@@ -12,6 +16,7 @@
 
 #include "db_connection.h"
 #include "db_query.h"
+#include "db_tables.h"
 #include "ErrorWrap.h"
 #include "ThreadWrap.h"
 
@@ -162,18 +167,17 @@ private:
 
   /** \brief Собрать запрос на выборку данных */
   template <class DataT>
-  mstatus_t selectData(db_table t, DataT &where,
-      std::vector<DataT> *res) {
+  mstatus_t selectData(db_table t, DataT &where, std::vector<DataT> *res) {
     std::unique_ptr<db_query_select_setup> dss(db_query_select_setup::Init(t));
     if (dss)
-      dss->where_condition.reset(db_where_tree::Init(where));
+      dss->where_condition.reset(InitWhereTree(where));
     db_query_select_result result(*dss);
     auto st = exec_wrap<const db_query_select_setup &, db_query_select_result,
         void (DBConnectionManager::*)(Transaction *, const db_query_select_setup &,
         db_query_select_result *)>(*dss, &result, &DBConnectionManager::selectRows,
         nullptr);
     if (st == STATUS_OK)
-      result.SetData(res);
+      SetSelectData(&result, res);
     return st;
   }
 
