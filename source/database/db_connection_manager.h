@@ -27,9 +27,11 @@
 #include <stdint.h>
 
 
+/* todo: вынести db_connection_manager вне модуля 'database' */
 /** \brief Класс инкапсулирующий конечную высокоуровневую операцию с БД
   * \note Определения 'Query' и 'Transaction' в программе условны:
-  *   Query - примит обращения к БД, Transaction - связный набор примитивов */
+  *   Query - примит обращения к БД, Transaction - связный набор примитивов
+  * \todo Переместить класс в другой файл */
 class Transaction {
 public:
   class TransactionInfo;

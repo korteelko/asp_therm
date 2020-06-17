@@ -448,7 +448,7 @@ mstatus_t DBConnectionPostgre::InsertRows(
   mstatus_t status = exec_wrap<db_query_insert_setup, pqxx::result,
       std::stringstream (DBConnectionPostgre::*)(const db_query_insert_setup &),
       void (DBConnectionPostgre::*)(const std::stringstream &, pqxx::result *)>(
-          insert_data, nullptr, &DBConnectionPostgre::setupInsertString,
+          insert_data, &result, &DBConnectionPostgre::setupInsertString,
           &DBConnectionPostgre::execInsert);
   for (pqxx::const_result_iterator::reference row: result)
     id_vec->id_vec.push_back(row[0].as<int>());
@@ -597,7 +597,7 @@ std::stringstream DBConnectionPostgre::setupInsertString(
     value.replace(value.size() - 2, value.size(), "),");
     vals.emplace_back(value);
   }
-  vals.back().replace(vals.back().size() - 1, vals.back().size(), ";");
+  vals.back().replace(vals.back().size() - 1, vals.back().size(), " ");
   std::stringstream sstr;
   sstr << fnames << " VALUES ";
   for (const auto &x: vals)
