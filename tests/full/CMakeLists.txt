@@ -8,6 +8,7 @@ project(${MAIN_PROJECT}-fulltests)
 
 include(gtest_setup.cmake)
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../)
+set(ASP_THERM_CMAKE_ROOT ${ASP_THERM_ROOT}/cmake)
 set(ASP_THERM_FULLTEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(MODULES_DIR ${ASP_THERM_ROOT}/lib)
 set(FULLTEST_LIBRARIES "")
@@ -17,7 +18,7 @@ add_compile_options(-fprofile-arcs -ftest-coverage)
 list(APPEND FULLTEST_LIBRARIES gcov)
 
 if(${GTEST_FOUND})
-  include(${ASP_THERM_ROOT}/atherm_setup.cmake)
+  include(${ASP_THERM_CMAKE_ROOT}/atherm_setup.cmake)
 
   find_package(Threads REQUIRED)
   list(APPEND FULLTEST_LIBRARIES Threads::Threads)

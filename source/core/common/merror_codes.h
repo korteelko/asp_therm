@@ -19,7 +19,7 @@
 #endif  // !ERROR_GENERAL_T
 
 // error type
-#define ERROR_MASK_TYPE       0x000f
+#define ERROR_MASK_TYPE       0x00ff
 /** \brief ошибка файлового ввода/вывода */
 #define ERROR_FILEIO_T        0x0002
 /** \brief ошибка при проведении расчётов */
@@ -34,16 +34,8 @@
 /** \brief ошибка работы с базой данных */
 #define ERROR_DATABASE_T      0x0007
 
-// type gas / gas_mix
-#define ERROR_MASK_GAS_MIX    0x00f0
-// посути просто маркер
-//   смеси газов
-// #define ERROR_GAS_PURE      0x0000
-// assert UDOLI
-#define ERROR_GAS_MIX         0x0010
-
 // error subtype
-#define ERROR_MASK_SUBTYPE    0x0f00
+#define ERROR_MASK_SUBTYPE    0xff00
 //   fileio errors
 /** \brief ошибка чтения файла */
 #define ERROR_FILE_IN_ST      (0x0100 | ERROR_FILEIO_T)

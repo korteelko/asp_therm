@@ -16,12 +16,6 @@
 using namespace file_utils;
 namespace fs = std::filesystem;
 
-TEST(merror_codes, init) {
-  EXPECT_EQ(GetCustomErrorMsg(0x1111), nullptr);
-  EXPECT_NE(GetCustomErrorMsg(ERROR_SUCCESS_T), nullptr);
-  EXPECT_NE(GetCustomErrorMsg(ERROR_GENERAL_T), nullptr);
-}
-
 TEST(ErrorWrap, Full) {
   ErrorWrap ew;
   /* конструктор по умолчанию */
@@ -64,6 +58,9 @@ TEST(Logging, Full) {
   Logging::Append(io_loglvl::debug_logs, sstr);
   EXPECT_EQ(fs::file_size("testolog"), 0);
   Logging::Append(sstr);
+  EXPECT_NE(fs::file_size("testolog"), 0);
+  Logging::ClearLogfile();
+  Logging::Append(io_loglvl::err_logs, std::string("Нелогируемая ошибка"));
   EXPECT_NE(fs::file_size("testolog"), 0);
   /* логирование ошибки */
   Logging::ClearLogfile();

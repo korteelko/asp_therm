@@ -152,7 +152,7 @@ void Redlich_Kwong_Soave::update_gasmix_coef_a(double t) {
   GasParameters_mix_dyn *gp =
       dynamic_cast<GasParameters_mix_dyn *>(parameters_.get());
   if (!gp) {
-    error_.SetError(ERROR_GAS_MIX | ERROR_CALC_MIX_ST, "dyn_cast");
+    error_.SetError(ERROR_CALC_MIX_ST, "dyn_cast");
     error_.LogIt(io_loglvl::debug_logs);
     status_ = STATUS_HAVE_ERROR;
     return;
@@ -235,7 +235,7 @@ void Redlich_Kwong_Soave::gasmix_model_coefs_rps(const model_input &mi) {
     fm /= const_rks_vals_rps_.ftp_sum;
   } else {
     status_ = STATUS_HAVE_ERROR;
-    error_.SetError(ERROR_GAS_MIX | ERROR_INIT_ZERO_ST,
+    error_.SetError(ERROR_INIT_ZERO_ST,
         "Инициализация газовой смеси для уравенея Соаве-Редлиха-Квонга");
   }
   model_coef_b_ = result_b_coef;

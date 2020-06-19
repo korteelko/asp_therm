@@ -51,10 +51,6 @@ public:
 };
 
 
-struct model_info;
-struct calculation_info;
-struct calculation_state_log;
-
 /* develop: может ещё интерфейс сделать, а потом
  *   абстрактный класс */
  /* TODO: rename class */

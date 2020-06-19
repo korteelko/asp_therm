@@ -11,6 +11,7 @@ add_definitions(-DBYCMAKE_CXX17)
 set(CMAKE_BUILD_TYPE Debug)
 
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
+set(ASP_THERM_CMAKE_ROOT ${ASP_THERM_ROOT}/cmake)
 
 # todo: maybe split in separate asp_therm_modules.cmake ???
 # todo: add full clear step(ninja cannot clear
@@ -49,7 +50,7 @@ set_build_options("${BUILD_OPTIONS}")
 #======================================================
 # set compiler requirements, source subdirectories
 #   file of error codes
-include(${ASP_THERM_ROOT}/atherm_setup.cmake)
+include(${ASP_THERM_CMAKE_ROOT}/atherm_setup.cmake)
 
 # setup utils
 # LIBS_DIR - для библиотеки atherm
@@ -84,54 +85,9 @@ include_directories(
 #======================================================
 # SOURCE
 #======================================================
-set(MODELS_SRC
-# common sources
-  ${THERMCORE_SOURCE_DIR}/common/common.cpp
-  ${THERMCORE_SOURCE_DIR}/common/program_state.cpp
-  ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
+# set variable 'MODELS_SRC' - general source files of project
+include(${ASP_THERM_CMAKE_ROOT}/models_src.cmake)
 
-# gas_parameters sources
-  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description.cpp
-  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_dynamic.cpp
-  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_static.cpp
-  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_ng_gost.cpp
-  ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_ng_gost_defines.cpp
-  ${THERMCORE_SOURCE_DIR}/gas_parameters/gasmix_init.cpp
-
-# phase_diagram sources
-  ${THERMCORE_SOURCE_DIR}/phase_diagram/phase_diagram.cpp
-  ${THERMCORE_SOURCE_DIR}/phase_diagram/phase_diagram_models.cpp
-
-# subroutins sources
-  ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
-
-# models sources
-  ${THERMCORE_SOURCE_DIR}/models/calculation_info.cpp
-  ${THERMCORE_SOURCE_DIR}/models/model_general.cpp
-  ${THERMCORE_SOURCE_DIR}/models/model_ideal_gas.cpp
-  ${THERMCORE_SOURCE_DIR}/models/model_ng_gost.cpp
-  ${THERMCORE_SOURCE_DIR}/models/model_peng_robinson.cpp
-  ${THERMCORE_SOURCE_DIR}/models/model_redlich_kwong.cpp
-  ${THERMCORE_SOURCE_DIR}/models/model_redlich_kwong_soave.cpp
-  ${THERMCORE_SOURCE_DIR}/models/models_configurations.cpp
-  ${THERMCORE_SOURCE_DIR}/models/models_creator.cpp
-
-# utils sources
-  ${THERMUTILS_SOURCE_DIR}/ErrorWrap.cpp
-  ${THERMUTILS_SOURCE_DIR}/FileURL.cpp
-  ${THERMUTILS_SOURCE_DIR}/Logging.cpp
-
-# database sources
-  ${THERMDB_SOURCE_DIR}/db_connection.cpp
-  ${THERMDB_SOURCE_DIR}/db_connection_manager.cpp
-  ${THERMDB_SOURCE_DIR}/db_defines.cpp
-  ${THERMDB_SOURCE_DIR}/db_queries_setup.cpp
-  ${THERMDB_SOURCE_DIR}/db_query.cpp
-  ${THERMDB_SOURCE_DIR}/db_tables.cpp
-
-# plot sources
-# maybe OpenGL libs
-)
 if(INCLUDE_ERRORCODES)
   LIST(APPEND MODELS_SRC
       ${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp)
