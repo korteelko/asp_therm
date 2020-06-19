@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<program_config name="test_common">
+  <parameter name="debug_mode"> true </parameter>
+  <parameter name="rk_soave_mod"> false </parameter>
+  <parameter name="pr_binary_coefs"> true </parameter>
+  <parameter name="include_iso_20765"> true </parameter>
+  <parameter name="log_level"> debug </parameter>
+  <parameter name="log_file"> test_log </parameter>
+  <group name="database">
+    <parameter name="dry_run"> true </parameter>
+    <parameter name="client"> postgresql </parameter>
+    <parameter name="name"> africae </parameter>
+    <parameter name="username"> jorge </parameter>
+    <parameter name="password"> my_pass </parameter>
+    <parameter name="host"> 127.0.0.1 </parameter>
+    <parameter name="port"> 5432 </parameter>
+  </group>
+</program_config>

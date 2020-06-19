@@ -106,9 +106,3 @@ TEST_F(CardanoMethodTest, Simple) {
       {-0.892279, 0.0}, {0.99614, -1.25912}, {0.99614, 1.25912}};
   EXPECT_EQ(eq_roots(ans, expect, 3), true);
 }
-
-
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

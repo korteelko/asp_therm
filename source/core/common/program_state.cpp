@@ -9,6 +9,7 @@
  */
 #include "program_state.h"
 
+
 /* ProgramState */
 int ProgramState::calc_key = 0;
 
@@ -20,16 +21,37 @@ ProgramState &ProgramState::Instance() {
 ProgramState::ProgramState()
   : error_(ERROR_SUCCESS_T), program_config_(nullptr) {}
 
+void ProgramState::SetWorkDir(const file_utils::FileURLRoot &orig) {
+  work_dir_.reset(new file_utils::FileURLRoot(orig));
+  if (work_dir_->IsInitialized()) {
+    if (is_status_aval(status_)) {
+      status_ = STATUS_OK;
+    }
+  } else {
+    error_.SetError(ERROR_FILE_EXISTS_ST,
+        "Ошибка инициализации корневой директории программы");
+  }
+}
+
 merror_t ProgramState::ReloadConfiguration(
     const std::string &config_file) {
-  program_config_ = std::unique_ptr<ProgramConfiguration>(
-      new ProgramConfiguration(config_file));
-  if (program_config_) {
-    if (program_config_->error.GetErrorCode()) {
-      error_.SetError(program_config_->error.GetErrorCode(),
-          "Ошибка инициализации конфига программы");
-      error_.LogIt();
+  if (work_dir_) {
+    auto path = work_dir_->CreateFileURL(config_file);
+    program_config_ = std::unique_ptr<ProgramConfiguration>(
+        new ProgramConfiguration(path.GetURL()));
+    if (program_config_) {
+      if (program_config_->error.GetErrorCode()) {
+        error_.SetError(program_config_->error.GetErrorCode(),
+            "Ошибка инициализации конфига программы\n"
+            "Сообщение: " + program_config_->error.GetMessage());
+      } else {
+        if (is_status_aval(status_))
+          status_ = STATUS_OK;
+      }
     }
+  } else {
+    error_.SetError(ERROR_INIT_NULLP_ST,
+        "Не инициализирована рабочая директория программы");
   }
   return error_.GetErrorCode();
 }
@@ -53,7 +75,14 @@ int ProgramState::AddCalculationSetup(CalculationSetup &&setup) {
 #endif  // _DEBUG
 
 bool ProgramState::IsInitialized() const {
-  return (program_config_) ? program_config_->is_initialized : false;
+  mstatus_t st = status_;
+  if (program_config_) {
+    if (!program_config_->is_initialized)
+      st = STATUS_NOT;
+  } else {
+    st = STATUS_NOT;
+  }
+  return (error_.GetErrorCode()) ? false : is_status_ok(st);
 }
 
 bool ProgramState::IsDebugMode() const {
@@ -68,6 +97,10 @@ bool ProgramState::IsDryRunDBConn() const {
 
 merror_t ProgramState::GetErrorCode() const {
   return error_.GetErrorCode();
+}
+
+std::string ProgramState::GetErrorMessage() const {
+  return error_.GetMessage();
 }
 
 const program_configuration ProgramState::GetConfiguration() const {
@@ -85,6 +118,10 @@ const db_parameters ProgramState::GetDatabaseConfiguration() const {
       program_config_->db_parameters_conf : db_parameters();
 }
 
+void ProgramState::LogError() {
+  error_.LogIt();
+}
+
 /* ProgramState::ProgramConfiguration */
 using PSConfiguration = ProgramState::ProgramConfiguration;
 
@@ -97,7 +134,8 @@ PSConfiguration::ProgramConfiguration(
     const std::string &config_file)
   : error(ERROR_SUCCESS_T), config_filename(config_file),
     is_initialized(false) {
-  ResetConfigFile(config_file);
+  if (ResetConfigFile(config_file))
+    error.LogIt();
 }
 
 merror_t PSConfiguration::ResetConfigFile(
@@ -106,20 +144,23 @@ merror_t PSConfiguration::ResetConfigFile(
   is_initialized = false;
   config_by_file = std::unique_ptr<ConfigurationByFile<XMLReader>>(
       ConfigurationByFile<XMLReader>::Init(config_filename));
-  if (config_by_file) {
-    if (config_by_file->GetErrorWrap().GetErrorCode()) {
-      error.SetError(ERROR_INIT_T,
-          "Ошибка инициализации конфигурации программы");
-      error.LogIt();
+  if (is_exist(config_filename)) {
+    if (config_by_file) {
+      if (config_by_file->GetErrorWrap().GetErrorCode()) {
+        error.SetError(ERROR_INIT_T,
+            "Ошибка инициализации конфигурации программы");
+      } else {
+        initProgramConfig();
+        initDatabaseConfig();
+        is_initialized = true;
+      }
     } else {
-      initProgramConfig();
-      initDatabaseConfig();
-      is_initialized = true;
+      error.SetError(ERROR_FILE_IN_ST, "Ошибка чтения файла конфигурации "
+          "программы для файла" + config_filename);
     }
   } else {
-    error.SetError(ERROR_FILE_IN_ST,
-        "Ошибка чтения файла конфигурации программы");
-    error.LogIt();
+    error.SetError(ERROR_FILE_EXISTS_ST,
+        "Файл не существует: " + config_filename);
   }
   return error.GetErrorCode();
 }

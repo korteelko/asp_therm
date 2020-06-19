@@ -259,7 +259,7 @@ std::string DBConnection::db_unique_constrain_to_string(
   for (const auto &x: cs.unique_constrains) {
     std::stringstream sstr;
     sstr << "UNIQUE(";
-    for (const auto y: x)
+    for (const auto &y: x)
       sstr << y << ", ";
     result += sstr.str();
     result.replace(result.size() - 2, result.size() - 1, "),");

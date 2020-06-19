@@ -336,6 +336,8 @@ int test_models_mix() {
 int main(int argc, char *argv[]) {
   cwd = fs::path(argv[0]).parent_path();
   fs::current_path(cwd);
+  ProgramState::Instance().SetWorkDir(
+      file_utils::FileURLRoot(file_utils::url_t::fs_path, cwd.string()));
   if (!test_program_configuration()) {
     Logging::Append(io_loglvl::debug_logs, "Запускаю тесты сборки");
     //*

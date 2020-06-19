@@ -1,6 +1,10 @@
 /**
  * asp_therm - implementation of real gas equations of state
- *
+ * ===================================================================
+ * * FileURL *
+ *   В файле описан функционал оборачивающий адрессацию данных
+ * из внешних источников
+ * ===================================================================
  *
  * Copyright (c) 2020 Mishutinski Yurii
  *
@@ -17,6 +21,7 @@
 
 
 namespace file_utils {
+/* todo: create class file_utils exception */
 class FileURLRoot;
 
 /** \brief тип задания адреса файла, буффера памяти и т.п. */
@@ -96,6 +101,7 @@ inline merror_t FileURL::GetError() const { return error_.GetErrorCode(); }
 class FileURLRoot {
 public:
   FileURLRoot(const SetupURL &setup);
+  FileURLRoot(url_t url_type, const std::string &root);
 
   /** \brief Инициализация прошла успешно */
   bool IsInitialized();
@@ -107,6 +113,8 @@ private:
   void check_fs_root();
   /** \brief Собрать адрес файла для случая файловой системы */
   FileURL set_fs_path(const std::string &relative_path);
+  /** \brief Проверить что путь относительный, а не абсолютный */
+  bool is_absolute_path(const std::string &path);
 
 private:
   mstatus_t status_;

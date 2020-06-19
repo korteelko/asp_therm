@@ -1,6 +1,10 @@
 /**
  * asp_therm - implementation of real gas equations of state
- *
+ * ===================================================================
+ * * program_state *
+ *   В файле описан класс состояния программы, инкапсулирующий
+ * взаимодействие всех основных модулей программы
+ * ===================================================================
  *
  * Copyright (c) 2020 Mishutinski Yurii
  *
@@ -13,8 +17,9 @@
 #include "common.h"
 #include "configuration_by_file.h"
 #include "db_connection_manager.h"
-#include "models_configurations.h"
 #include "ErrorWrap.h"
+#include "FileURL.h"
+#include "models_configurations.h"
 #include "XMLReader.h"
 
 #include <memory>
@@ -32,16 +37,19 @@
   *   конфигурации расчётов(области, используемые модели etc) */
 class ProgramState {
 public:
-  /** \brief синглетончик инст */
+  /** \brief Синглетончик инст */
   static ProgramState &Instance();
 
+  /** \brief Инициализировать рабочую директорию приложения */
+  void SetWorkDir(const file_utils::FileURLRoot &orig);
   /** \brief Загрузить или перезагрузить конфигурацию программы */
   merror_t ReloadConfiguration(const std::string &config_file);
   /** \brief Добавить сетап расчёта
     * \return id расчётных параметров или -1 в случае ошибки */
   int AddCalculationSetup(const calculation_setup &calc_setup);
 #ifdef _DEBUG
-  /** \brief Добавить сэтап расчёта в список используемых */
+  /** \brief Добавить сэтап расчёта в список используемых
+    * \todo В глобальной идее он здесь инициализируется */
   int AddCalculationSetup(CalculationSetup &&setup);
 #endif  // _DEBUG
 
@@ -54,11 +62,20 @@ public:
   /** \brief Приложение работает без подключения к бд
     * \return true да, false нет */
   bool IsDryRunDBConn() const;
-  /** \brief Получить код ошибки */
-  merror_t GetErrorCode() const;
   const program_configuration GetConfiguration() const;
   const calculation_configuration GetCalcConfiguration() const;
   const db_parameters GetDatabaseConfiguration() const;
+
+  /** \brief Получить статус */
+  inline mstatus_t GetStatus() const {
+    return status_;
+  }
+  /** \brief Получить код ошибки */
+  merror_t GetErrorCode() const;
+  /** \brief Получить сообщение ошибки */
+  std::string GetErrorMessage() const;
+  /** \brief Залогировать ошибку */
+  void LogError();
 
 public:
   /** \brief класс конфигурации расчёта */
@@ -68,19 +85,27 @@ private:
   ProgramState();
 
 private:
+  /** \brief Статическая переменная id ключей расчётного набора(calc_setups_)
+    * \todo Она не нужна здесь, переместить её в сам объект */
   static int calc_key;
   ErrorWrap error_;
-  /** \brief набор данных для проведения расчётов */
-  /* они не связаны между собой, можно распараллелить */
+  mstatus_t status_ = STATUS_DEFAULT;
+  /** \brief Объект инициализации путей, привязан к корневой
+    *   директории программы, т.е. от неё отсчитываем пути
+    *   к файлам конфигурации, данным, ресурсам и т.п. */
+  std::unique_ptr<file_utils::FileURLRoot> work_dir_ = nullptr;
+  /** \brief Набор данных для проведения расчётов */
+  /* todo: они не связаны между собой, можно распараллелить
+   *   also, всё-таки речь идёт не о контейнере, а о полноценном объекте */
   Calculations calc_setups_;
-  /** \brief конфигурация программы - модели, бд, опции */
-  std::unique_ptr<ProgramConfiguration> program_config_;
-  /** \brief объект подключения к БД */
+  /** \brief Конфигурация программы - модели, бд, опции */
+  std::unique_ptr<ProgramConfiguration> program_config_ = nullptr;
+  /** \brief Объект подключения к БД */
   DBConnectionManager db_manager_;
 };
 
 
-/** \brief внктренний(nested) класс конфигурации
+/** \brief Внутренний(nested) класс конфигурации
   *   в классе состояния программы */
 class ProgramState::ProgramConfiguration {
 public:
