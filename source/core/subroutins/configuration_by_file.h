@@ -112,10 +112,11 @@ private:
   db_parameters db_parameters_;
 };
 
+/* todo: убрать это и переделать инициализацию по xml */
 template <template<class config_node> class ConfigReader>
 std::set<std::string> ConfigurationByFile<ConfigReader>::config_params =
     std::set<std::string> {
-    STRTPL_CONFIG_DEBUG_MODE, STRTPL_CONFIG_RK_SOAVE_MOD,
+    STRTPL_CONFIG_DEBUG_MODE, STRTPL_CONFIG_RK_ORIG_MOD, STRTPL_CONFIG_RK_SOAVE_MOD,
     STRTPL_CONFIG_PR_BINARYCOEFS, STRTPL_CONFIG_INCLUDE_ISO_20765,
     STRTPL_CONFIG_LOG_LEVEL, STRTPL_CONFIG_LOG_FILE, STRTPL_CONFIG_DATABASE
 };

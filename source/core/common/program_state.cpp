@@ -19,7 +19,7 @@ ProgramState &ProgramState::Instance() {
 }
 
 ProgramState::ProgramState()
-  : error_(ERROR_SUCCESS_T), program_config_(nullptr) {}
+  : status_(STATUS_DEFAULT) {}
 
 void ProgramState::SetWorkDir(const file_utils::FileURLRoot &orig) {
   work_dir_.reset(new file_utils::FileURLRoot(orig));
@@ -37,17 +37,11 @@ merror_t ProgramState::ReloadConfiguration(
     const std::string &config_file) {
   if (work_dir_) {
     auto path = work_dir_->CreateFileURL(config_file);
-    program_config_ = std::unique_ptr<ProgramConfiguration>(
-        new ProgramConfiguration(path.GetURL()));
-    if (program_config_) {
-      if (program_config_->error.GetErrorCode()) {
-        error_.SetError(program_config_->error.GetErrorCode(),
-            "Ошибка инициализации конфига программы\n"
-            "Сообщение: " + program_config_->error.GetMessage());
-      } else {
-        if (is_status_aval(status_))
-          status_ = STATUS_OK;
-      }
+    program_config_.ResetConfigFile(path.GetURL());
+    if (program_config_.error.GetErrorCode()) {
+      error_.SetError(program_config_.error.GetErrorCode(),
+          "Ошибка инициализации конфига программы\n"
+          "Сообщение: " + program_config_.error.GetMessage());
     }
   } else {
     error_.SetError(ERROR_INIT_NULLP_ST,
@@ -76,23 +70,33 @@ int ProgramState::AddCalculationSetup(CalculationSetup &&setup) {
 
 bool ProgramState::IsInitialized() const {
   mstatus_t st = status_;
-  if (program_config_) {
-    if (!program_config_->is_initialized)
-      st = STATUS_NOT;
-  } else {
+  if (!program_config_.is_initialized)
     st = STATUS_NOT;
-  }
   return (error_.GetErrorCode()) ? false : is_status_ok(st);
 }
 
 bool ProgramState::IsDebugMode() const {
-  return (program_config_) ?
-      program_config_->configuration.calc_cfg.is_debug_mode : true;
+  return program_config_.configuration.calc_cfg.is_debug_mode;
 }
 
 bool ProgramState::IsDryRunDBConn() const {
-  return (program_config_) ?
-      program_config_->db_parameters_conf.is_dry_run : true;
+  return program_config_.db_parameters_conf.is_dry_run;
+}
+
+const program_configuration &ProgramState::GetConfiguration() const {
+  return program_config_.configuration;
+}
+
+const calculation_configuration &ProgramState::GetCalcConfiguration() const {
+  return program_config_.configuration.calc_cfg;
+}
+
+const db_parameters &ProgramState::GetDatabaseConfiguration() const {
+  return program_config_.db_parameters_conf;
+}
+
+mstatus_t ProgramState::GetStatus() const {
+  return status_;
 }
 
 merror_t ProgramState::GetErrorCode() const {
@@ -103,21 +107,6 @@ std::string ProgramState::GetErrorMessage() const {
   return error_.GetMessage();
 }
 
-const program_configuration ProgramState::GetConfiguration() const {
-  return (program_config_) ?
-      program_config_->configuration : program_configuration();
-}
-
-const calculation_configuration ProgramState::GetCalcConfiguration() const {
-  return (program_config_) ?
-      program_config_->configuration.calc_cfg : calculation_configuration();
-}
-
-const db_parameters ProgramState::GetDatabaseConfiguration() const {
-  return (program_config_) ?
-      program_config_->db_parameters_conf : db_parameters();
-}
-
 void ProgramState::LogError() {
   error_.LogIt();
 }
@@ -126,16 +115,17 @@ void ProgramState::LogError() {
 using PSConfiguration = ProgramState::ProgramConfiguration;
 
 PSConfiguration::ProgramConfiguration()
-  : error(ERROR_SUCCESS_T), config_filename(""), is_initialized(false) {
+  : status(STATUS_DEFAULT), config_filename(""), is_initialized(false) {
   setDefault();
 }
 
 PSConfiguration::ProgramConfiguration(
     const std::string &config_file)
-  : error(ERROR_SUCCESS_T), config_filename(config_file),
+  : status(STATUS_DEFAULT), config_filename(config_file),
     is_initialized(false) {
-  if (ResetConfigFile(config_file))
-    error.LogIt();
+  if (ResetConfigFile(config_file)) {
+    status = STATUS_HAVE_ERROR;
+  }
 }
 
 merror_t PSConfiguration::ResetConfigFile(

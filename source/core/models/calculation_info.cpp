@@ -18,6 +18,9 @@
 bool calculation_configuration::IsDebug() const {
   return is_debug_mode;
 }
+bool calculation_configuration::RK_IsEnableOriginMod() const {
+  return rk_enable_origin_mod;
+}
 bool calculation_configuration::RK_IsEnableSoaveMod() const {
   return rk_enable_soave_mod;
 }

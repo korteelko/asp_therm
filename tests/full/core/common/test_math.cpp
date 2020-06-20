@@ -83,6 +83,27 @@ TEST_F(CardanoMethodTest, RootsCount3) {
   EXPECT_EQ(rk == 3, true);
   EXPECT_EQ(eq_roots(res, expect, 3), true);
 }
+TEST_F(CardanoMethodTest, RootsCount3_1) {
+  c[0] = 1.0; c[1] = 1.5; c[2] = -5.5; c[3] = -3.0;
+  int rk = 0;
+  double res[3] = {0.0, 0.0, 0.0};
+  EXPECT_EQ(CardanoMethod_roots_count(c, res, &rk), ERROR_SUCCESS_T);
+  double expect[3] = {-3.0, -0.5, 2.0};
+  EXPECT_EQ(rk == 3, true);
+  EXPECT_EQ(eq_roots(res, expect, 3), true);
+}
+/** \brief Проверить возвращаемый результат для функции
+  *   CardanoMethod_roots_count с входными параметрами
+  *   дающими один обычный корень и один кратный */
+TEST_F(CardanoMethodTest, RootsCount3_2) {
+  c[0] = 1.0; c[1] = -19; c[2] = 0.0; c[3] = 0.0;
+  int rk = 0;
+  double res[3] = {0.0, 0.0, 0.0};
+  EXPECT_EQ(CardanoMethod_roots_count(c, res, &rk), ERROR_SUCCESS_T);
+  double expect[3] = {0.0, 0.0, 19.0};
+  EXPECT_EQ(rk == 3, true);
+  EXPECT_EQ(eq_roots(res, expect, 3), true);
+}
 
 /** \brief Проверить возвращаемый результат для функции
   *   CardanoMethod_roots_count с входными параметрами

@@ -23,7 +23,7 @@ const unsigned int error_types[] = {
   ERROR_STRTPL_T,
   ERROR_DATABASE_T
 };
-#define error_types_size sizeof(error_types)/sizeof(error_types[0])
+#define error_types_size sizeof(error_types) / sizeof(error_types[0])
 
 
 /** \brief Проверим работу дефолтных сообщений групп */
@@ -78,6 +78,7 @@ protected:
       f << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
       f << "<program_config name=\"test_common\">\n";
       f << "  <parameter name=\"debug_mode\"> true </parameter>\n";
+      f << "  <parameter name=\"rk_orig_mod\"> true </parameter>\n";
       f << "  <parameter name=\"rk_soave_mod\"> false </parameter>\n";
       f << "  <parameter name=\"pr_binary_coefs\"> true </parameter>\n";
       f << "  <parameter name=\"include_iso_20765\"> true </parameter>\n";
@@ -107,10 +108,47 @@ protected:
 TEST_F(ProgramStateTest, InitCheck) {
   ASSERT_TRUE(is_status_ok(status));
   ProgramState &state = ProgramState::Instance();
-  EXPECT_TRUE(state.IsInitialized());
+  ASSERT_TRUE(state.IsInitialized());
   EXPECT_TRUE(state.IsDebugMode());
   EXPECT_TRUE(state.IsDryRunDBConn());
+  const auto config = state.GetConfiguration();
 }
+
+/** \brief Инициализация состояния программы */
+TEST_F(ProgramStateTest, ModelsInit) {
+  ProgramState &state = ProgramState::Instance();
+  if (state.IsInitialized()) {
+    /* program_configuration */
+    auto prog_config = state.GetConfiguration();
+
+    EXPECT_TRUE(prog_config.log_level == io_loglvl::debug_logs);
+    EXPECT_TRUE(prog_config.log_file == "test_log");
+
+    /* calculation_configuration */
+    auto calc_config = state.GetCalcConfiguration();
+    EXPECT_TRUE(calc_config.IsDebug());
+    EXPECT_TRUE(calc_config.RK_IsEnableOriginMod());
+    EXPECT_FALSE(calc_config.RK_IsEnableSoaveMod());
+    EXPECT_TRUE(calc_config.PR_IsEnableByBinaryCoefs());
+    EXPECT_TRUE(calc_config.IsEnableISO20765());
+
+    /* db_parameters */
+    auto db_config = state.GetDatabaseConfiguration();
+    EXPECT_TRUE(db_config.is_dry_run);
+    EXPECT_TRUE(db_config.supplier == db_client::POSTGRESQL);
+    EXPECT_TRUE(db_config.name == "africae");
+    EXPECT_TRUE(db_config.username == "jorge");
+    EXPECT_TRUE(db_config.password == "my_pass");
+    EXPECT_TRUE(db_config.host == "127.0.0.1");
+    EXPECT_TRUE(db_config.port == 5432);
+  }
+}
+
+/** \brief Сборка моделей */
+TEST_F(ProgramStateTest, AddModels) {
+  calculation_setup cs;
+}
+
 
 int main(int argc, char **argv) {
   cwd = fs::path(argv[0]).parent_path();

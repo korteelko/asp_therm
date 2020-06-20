@@ -36,6 +36,9 @@ merror_t update_debug_mode(program_configuration *mc, const std::string &val) {
 merror_t update_rk_soave_mod(program_configuration *mc, const std::string &val) {
   return (mc) ? set_bool(val, &mc->calc_cfg.rk_enable_soave_mod) : ERROR_INIT_ZERO_ST;
 }
+merror_t update_rk_orig_mod(program_configuration *mc, const std::string &val) {
+  return (mc) ? set_bool(val, &mc->calc_cfg.rk_enable_origin_mod) : ERROR_INIT_ZERO_ST;
+}
 merror_t update_pr_binary_coefs(program_configuration *mc, const std::string &val) {
   return (mc) ? set_bool(val, &mc->calc_cfg.pr_enable_by_binary_coefs) : ERROR_INIT_ZERO_ST;
 }
@@ -59,6 +62,7 @@ struct config_setup_fuctions {
 static std::map<const std::string, config_setup_fuctions> map_config_fuctions =
     std::map<const std::string, config_setup_fuctions> {
   {STRTPL_CONFIG_DEBUG_MODE, {update_debug_mode}},
+  {STRTPL_CONFIG_RK_ORIG_MOD, {update_rk_orig_mod}},
   {STRTPL_CONFIG_RK_SOAVE_MOD, {update_rk_soave_mod}},
   {STRTPL_CONFIG_PR_BINARYCOEFS, {update_pr_binary_coefs}},
   {STRTPL_CONFIG_INCLUDE_ISO_20765, {update_enable_iso_20765}},

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <program_config name="test_common">
   <parameter name="debug_mode"> true </parameter>
+  <parameter name="rk_orig_mod"> true </parameter>
   <parameter name="rk_soave_mod"> false </parameter>
   <parameter name="pr_binary_coefs"> true </parameter>
   <parameter name="include_iso_20765"> true </parameter>
