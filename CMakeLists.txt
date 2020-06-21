@@ -73,6 +73,7 @@ set(THERMCORE_INCLUDES
   "${THERMCORE_SOURCE_DIR}/gas_parameters"
   "${THERMCORE_SOURCE_DIR}/models"
   "${THERMCORE_SOURCE_DIR}/phase_diagram"
+  "${THERMCORE_SOURCE_DIR}/service"
   "${THERMCORE_SOURCE_DIR}/subroutins"
 )
 include_directories(

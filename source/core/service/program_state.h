@@ -11,17 +11,20 @@
  * This library is distributed under the MIT License.
  * See LICENSE file in the project root for full license information.
  */
-#ifndef _CORE__COMMON__PROGRAM_STATE_H_
-#define _CORE__COMMON__PROGRAM_STATE_H_
+#ifndef _CORE__SERVICE__PROGRAM_STATE_H_
+#define _CORE__SERVICE__PROGRAM_STATE_H_
 
+#include "calculation_setup.h"
 #include "common.h"
 #include "configuration_by_file.h"
 #include "db_connection_manager.h"
 #include "ErrorWrap.h"
 #include "FileURL.h"
 #include "models_configurations.h"
+#include "ThreadWrap.h"
 #include "XMLReader.h"
 
+#include <atomic>
 #include <memory>
 
 
@@ -121,7 +124,7 @@ private:
 private:
   /** \brief Статическая переменная id ключей расчётного набора(calc_setups_)
     * \todo Она не нужна здесь, переместить её в сам объект */
-  static int calc_key;
+  Mutex mutex;
   ErrorWrap error_;
   mstatus_t status_ = STATUS_DEFAULT;
   /** \brief Объект инициализации путей, привязан к корневой
@@ -131,6 +134,7 @@ private:
   /** \brief Набор данных для проведения расчётов */
   /* todo: они не связаны между собой, можно распараллелить
    *   also, всё-таки речь идёт не о контейнере, а о полноценном объекте */
+  std::atomic<int> calc_key;
   Calculations calc_setups_;
   /** \brief Конфигурация программы - модели, бд, опции */
   ProgramConfiguration program_config_;
@@ -138,4 +142,4 @@ private:
   DBConnectionManager db_manager_;
 };
 
-#endif  // !_CORE__COMMON__PROGRAM_STATE_H_
+#endif  // !_CORE__SERVICE__PROGRAM_STATE_H_

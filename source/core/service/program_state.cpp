@@ -11,8 +11,6 @@
 
 
 /* ProgramState */
-int ProgramState::calc_key = 0;
-
 ProgramState &ProgramState::Instance() {
   static ProgramState state;
   return state;
@@ -22,6 +20,7 @@ ProgramState::ProgramState()
   : status_(STATUS_DEFAULT) {}
 
 void ProgramState::SetWorkDir(const file_utils::FileURLRoot &orig) {
+  std::lock_guard<Mutex> lock(mutex);
   work_dir_.reset(new file_utils::FileURLRoot(orig));
   if (work_dir_->IsInitialized()) {
     if (is_status_aval(status_)) {
@@ -35,6 +34,7 @@ void ProgramState::SetWorkDir(const file_utils::FileURLRoot &orig) {
 
 merror_t ProgramState::ReloadConfiguration(
     const std::string &config_file) {
+  std::lock_guard<Mutex> lock(mutex);
   if (work_dir_) {
     auto path = work_dir_->CreateFileURL(config_file);
     program_config_.ResetConfigFile(path.GetURL());
@@ -51,17 +51,17 @@ merror_t ProgramState::ReloadConfiguration(
 }
 
 int ProgramState::AddCalculationSetup(const calculation_setup &calc_setup) {
+  std::lock_guard<Mutex> lock(ProgramState::mutex);
   int key = ProgramState::calc_key++;
-  calc_setups_.emplace(key, CalculationSetup(calc_setup));
-  if (calc_setups_[key].GetError()) {
-    calc_setups_.erase(key);
-    key = -1;
-  }
+  CalculationSetup &&cs(calc_setup);
+  if (!cs.GetError())
+    calc_setups_.emplace(key, cs);
   return key;
 }
 
 #ifdef _DEBUG
 int ProgramState::AddCalculationSetup(CalculationSetup &&setup) {
+  std::lock_guard<Mutex> lock(mutex);
   int key = ProgramState::calc_key++;
   calc_setups_.emplace(key, setup);
   return key;

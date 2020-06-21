@@ -7,8 +7,6 @@
  * This library is distributed under the MIT License.
  * See LICENSE file in the project root for full license information.
  */
-#include "target_sys.h"
-
 #include "db_connection_manager.h"
 #include "db_queries_setup.h"
 #include "gas_by_file.h"

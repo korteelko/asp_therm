@@ -11,7 +11,7 @@ add_executable(
 
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description.cpp
 
-  ${THERMCORE_SOURCE_DIR}/models/calculation_info.cpp
+  ${THERMCORE_SOURCE_DIR}/service/calculation_info.cpp
 
   ${THERMUTILS_SOURCE_DIR}/ErrorWrap.cpp
   ${THERMUTILS_SOURCE_DIR}/Logging.cpp

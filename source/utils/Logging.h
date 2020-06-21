@@ -21,7 +21,7 @@
 
 #if defined (OS_NIX)
 #  include <sys/param.h>
-#elif defined(_OS_WIN)
+#elif defined(OS_WIN)
 //   don'checked
 #  include <climits>
 #endif  // OS_NIX

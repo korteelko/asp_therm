@@ -8,8 +8,9 @@ set (COMMON_SRC
 
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description.cpp
 
-  ${THERMCORE_SOURCE_DIR}/models/calculation_info.cpp
   ${THERMCORE_SOURCE_DIR}/models/models_configurations.cpp
+
+  ${THERMCORE_SOURCE_DIR}/service/calculation_info.cpp
 
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
 

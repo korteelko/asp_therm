@@ -146,7 +146,7 @@ TEST_F(ProgramStateTest, ModelsInit) {
 
 /** \brief Сборка моделей */
 TEST_F(ProgramStateTest, AddModels) {
-  calculation_setup cs;
+  // calculation_setup cs;
 }
 
 

@@ -1,7 +1,6 @@
 set(MODELS_SRC
 # common sources
   ${THERMCORE_SOURCE_DIR}/common/common.cpp
-  ${THERMCORE_SOURCE_DIR}/common/program_state.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 
 # gas_parameters sources
@@ -19,8 +18,12 @@ set(MODELS_SRC
 # subroutins sources
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
 
+# service sources
+  ${THERMCORE_SOURCE_DIR}/service/calculation_info.cpp
+  ${THERMCORE_SOURCE_DIR}/service/calculation_setup.cpp
+  ${THERMCORE_SOURCE_DIR}/service/program_state.cpp
+
 # models sources
-  ${THERMCORE_SOURCE_DIR}/models/calculation_info.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_general.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_ideal_gas.cpp
   ${THERMCORE_SOURCE_DIR}/models/model_ng_gost.cpp
