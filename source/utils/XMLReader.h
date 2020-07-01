@@ -10,7 +10,7 @@
 #ifndef UTILS__XMLREADER_H
 #define UTILS__XMLREADER_H
 
-#include "common.h"
+#include "Common.h"
 #include "file_structs.h"
 #include "ErrorWrap.h"
 #include "Logging.h"
@@ -26,6 +26,8 @@
 #include <stdint.h>
 #include <string.h>
 
+
+#define XMLFILE_LAST_OBJECT       0x1000
 
 template <class xml_node_t>
 class gasxml_node {
@@ -151,7 +153,7 @@ public:
           strpath += strnode + " --> ";
         Logging::Append(io_loglvl::debug_logs, strpath);
     #endif  // READERS_TEST
-        return FILE_LAST_OBJECT;
+        return XMLFILE_LAST_OBJECT;
       }
     }
     *outstr = tmp_gas_node->GetValue();

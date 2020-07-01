@@ -1,7 +1,6 @@
 #ifndef TESTS__UTILS__INODE_IMP_H
 #define TESTS__UTILS__INODE_IMP_H
 
-#include "common.h"
 #include "ErrorWrap.h"
 #include "INode.h"
 #include "JSONReader.h"

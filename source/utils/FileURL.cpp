@@ -8,7 +8,6 @@
  * See LICENSE file in the project root for full license information.
  */
 #include "FileURL.h"
-#
 
 #include <assert.h>
 

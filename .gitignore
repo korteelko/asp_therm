@@ -16,6 +16,9 @@ soft/*
 
 CMakeLists.txt.user*
 
+CHANGELOG.md
+HISTORY.md
+
 configuration.json
 configuration.xml
 CMakeSettings.json

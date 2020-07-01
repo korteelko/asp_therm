@@ -1,6 +1,6 @@
 set(MODELS_SRC
 # common sources
-  ${THERMCORE_SOURCE_DIR}/common/common.cpp
+  ${THERMCORE_SOURCE_DIR}/common/atherm_common.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 
 # gas_parameters sources
@@ -34,6 +34,7 @@ set(MODELS_SRC
   ${THERMCORE_SOURCE_DIR}/models/models_creator.cpp
 
 # utils sources
+  ${THERMUTILS_SOURCE_DIR}/Common.cpp
   ${THERMUTILS_SOURCE_DIR}/ErrorWrap.cpp
   ${THERMUTILS_SOURCE_DIR}/FileURL.cpp
   ${THERMUTILS_SOURCE_DIR}/Logging.cpp

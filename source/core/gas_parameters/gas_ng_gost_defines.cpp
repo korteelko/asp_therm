@@ -9,7 +9,7 @@
  */
 #include "gas_ng_gost_defines.h"
 
-#include "common.h"
+#include "atherm_common.h"
 #include "gas_defines.h"
 
 #include <stdint.h>

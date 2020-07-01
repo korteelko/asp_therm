@@ -9,10 +9,8 @@
  */
 #include "model_ideal_gas.h"
 
-#include "common.h"
-#include "gasmix_init.h"
 #include "gas_description_dynamic.h"
-#include "ErrorWrap.h"
+#include "gasmix_init.h"
 #include "models_math.h"
 
 #include <cmath>

@@ -1,5 +1,4 @@
-#include "common.h"
-#include "file_structs.h"
+#include "Common.h"
 #include "inode_imp.h"
 #include "JSONReader.h"
 

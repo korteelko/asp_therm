@@ -1,6 +1,6 @@
 #include "models_math.h"
 
-#include "common.h"
+#include "Common.h"
 
 #include "gtest/gtest.h"
 

@@ -10,7 +10,7 @@
 #ifndef _CORE__GAS_PARAMETERS__GAS_DEFINES_H_
 #define _CORE__GAS_PARAMETERS__GAS_DEFINES_H_
 
-#include "common.h"
+#include "atherm_common.h"
 
 #include <array>
 

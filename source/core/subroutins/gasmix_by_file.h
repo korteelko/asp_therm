@@ -10,7 +10,7 @@
 #ifndef _CORE__SUBROUTINS__GASMIX_BY_FILE_H_
 #define _CORE__SUBROUTINS__GASMIX_BY_FILE_H_
 
-#include "common.h"
+#include "atherm_common.h"
 #include "file_structs.h"
 #include "gas_by_file.h"
 #include "gas_description.h"
@@ -240,7 +240,7 @@ private:
         }
         gasmix_files_.emplace_back(gasmix_file(trim_str(gasname), gaspath, part));
       }
-      if (error == FILE_LAST_OBJECT) {
+      if (error == XMLFILE_LAST_OBJECT) {
         error = ERROR_SUCCESS_T;
         setup_gasmix_files(gasmix_file_dir);
       }

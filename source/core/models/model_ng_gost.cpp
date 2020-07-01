@@ -9,11 +9,8 @@
  */
 #include "model_ng_gost.h"
 
-#include "common.h"
 #include "gas_description.h"
 #include "gas_description_dynamic.h"
-#include "gasmix_init.h"
-#include "ErrorWrap.h"
 #include "models_math.h"
 
 #include <map>

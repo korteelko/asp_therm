@@ -1,9 +1,8 @@
-#include "common.h"
 #include "configuration_strtpl.h"
 #include "ErrorWrap.h"
-#include "Logging.h"
 #include "file_structs.h"
 #include "FileURL.h"
+#include "Logging.h"
 
 #include "gtest/gtest.h"
 

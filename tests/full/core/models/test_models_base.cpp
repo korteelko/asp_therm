@@ -1,5 +1,5 @@
 #include "calculation_info.h"
-#include "common.h"
+#include "atherm_common.h"
 
 #include "gtest/gtest.h"
 

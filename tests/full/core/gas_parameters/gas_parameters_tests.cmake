@@ -6,7 +6,7 @@ add_executable(
 
   ${ASP_THERM_FULLTEST_DIR}/core/gas_parameters/test_gasmix.cpp
 
-  ${THERMCORE_SOURCE_DIR}/common/common.cpp
+  ${THERMCORE_SOURCE_DIR}/common/atherm_common.cpp
   ${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 
@@ -17,6 +17,7 @@ add_executable(
 
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
 
+  ${THERMUTILS_SOURCE_DIR}/Common.cpp
   ${THERMUTILS_SOURCE_DIR}/ErrorWrap.cpp
   ${THERMUTILS_SOURCE_DIR}/Logging.cpp
 )

@@ -10,8 +10,8 @@
 #ifndef _CORE__MODELS__MODELS_CONFIGURATIONS_H_
 #define _CORE__MODELS__MODELS_CONFIGURATIONS_H_
 
+#include "atherm_common.h"
 #include "calculation_info.h"
-#include "common.h"
 #include "ErrorWrap.h"
 
 #include <ctime>

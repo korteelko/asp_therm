@@ -10,7 +10,7 @@
 #ifndef UTILS__LOGGING_H
 #define UTILS__LOGGING_H
 
-#include "common.h"
+#include "Common.h"
 #include "ErrorWrap.h"
 #include "ThreadWrap.h"
 

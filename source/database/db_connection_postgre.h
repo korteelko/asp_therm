@@ -10,11 +10,9 @@
 #ifndef _DATABASE__DB_CONNECTION_POSTGRESQL_H_
 #define _DATABASE__DB_CONNECTION_POSTGRESQL_H_
 
-#include "common.h"
+#include "Common.h"
 
-#if defined(WITH_POSTGRESQL)
 #include "db_connection.h"
-#include "program_state.h"
 
 #include "ErrorWrap.h"
 #include "Logging.h"
@@ -26,6 +24,10 @@
 #include <sstream>
 #include <string>
 
+
+#ifndef IS_DEBUG_MODE
+#  define IS_DEBUG_MODE false
+#endif  // !IS_DEBUG_MODE
 
 // смотри страницу:
 // https://www.tutorialspoint.com/postgresql/postgresql_c_cpp.htm
@@ -126,7 +128,7 @@ private:
              + "\nexception what: " + e.what());
       }
     } else {
-      if (is_dry_run_) {
+      if (isDryRun()) {
         status_ = STATUS_OK;
         // dry_run_ programm setup
         if (sstr_len) {
@@ -242,5 +244,4 @@ private:
   // add result data for select queries for example, or IsTableExist
 };
 
-#endif  // WITH_POSTGRESQL
 #endif  // !_DATABASE__DB_CONNECTION_POSTGRESQL_H_

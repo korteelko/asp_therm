@@ -10,10 +10,9 @@
 #ifndef _CORE__SUBROUTINS__FILE_STRUCTS_H_
 #define _CORE__SUBROUTINS__FILE_STRUCTS_H_
 
-#include "common.h"
+#include "atherm_common.h"
 #include "db_connection.h"
 #include "ErrorWrap.h"
-#include "INode.h"
 
 #include <array>
 #include <map>
@@ -44,6 +43,13 @@ public:
   static std::string get_root_name();
   static node_type get_node_type(std::string type);
 };
+
+/** \brief По паре строковых аргументов записать в структуру dst
+  *   новое значение параметра, представленого аргументами
+  * \param param_strtpl Строковое представление параметра(ключ)
+  * \param param_value Строковое значение параметра */
+merror_t set_db_parameter(db_parameters *dst, const std::string &param_strtpl,
+    const std::string &param_value);
 
 /// class for initializing gas component by file
 class gas_node {
@@ -77,6 +83,7 @@ public:
   static node_type get_node_type(std::string type);
 };
 
+
 /** \brief искать в переданной в аргументах мапе
   *   ключ 'v', если он там записать его по адресу 
   *   переданного параметра 'a' 
@@ -98,9 +105,7 @@ merror_t set_by_map(const std::map<const std::string, T> &m,
   return error;
 }
 
-/* PARSE TEMPLATE VALUES
- *   TODO: дописать на основе документации 
- *   UPD: остался то только double*/
+/* PARSE TEMPLATE VALUES */
 /** \brief проверить соответствие 'val' допустимым значениям
   *   шаблона для bool : "true" или "false"
   * \param val текстовый шаблон значения

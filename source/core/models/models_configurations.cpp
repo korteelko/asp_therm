@@ -12,8 +12,8 @@
 #include "configuration_by_file.h"
 #include "configuration_strtpl.h"
 #include "file_structs.h"
-#include "model_general.h"
 #include "Logging.h"
+#include "model_general.h"
 
 #include <functional>
 #include <map>

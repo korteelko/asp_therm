@@ -10,7 +10,7 @@
 #ifndef _CORE__MODELS__MODEL_NG_GOST_H_
 #define _CORE__MODELS__MODEL_NG_GOST_H_
 
-#include "common.h"
+#include "atherm_common.h"
 #include "gas_ng_gost.h"
 #include "gasmix_init.h"
 #include "model_general.h"

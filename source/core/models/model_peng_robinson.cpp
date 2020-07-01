@@ -9,10 +9,8 @@
  */
 #include "model_peng_robinson.h"
 
-#include "common.h"
 #include "gas_description.h"
 #include "gas_description_dynamic.h"
-#include "ErrorWrap.h"
 #include "models_math.h"
 
 #ifdef _DEBUG

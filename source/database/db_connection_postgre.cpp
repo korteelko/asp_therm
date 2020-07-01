@@ -11,14 +11,12 @@
 
 #include "db_queries_setup.h"
 #include "db_query.h"
-#include "file_structs.h"
-#include "models_configurations.h"
+#include "db_tables.h"
 
 #include <algorithm>
 #include <iterator>
 #include <map>
 #include <numeric>
-#include <sstream>
 #include <vector>
 
 #include <assert.h>
@@ -160,7 +158,7 @@ void DBConnectionPostgre::RollbackToSavePoint(const db_save_point &sp) {
 
 mstatus_t DBConnectionPostgre::SetupConnection() {
   auto connect_str = setupConnectionString();
-  if (!is_dry_run_ ) {
+  if (!isDryRun()) {
     try {
       pqxx_work.InitConnection(connect_str);
       if (!error_.GetErrorCode()) {
@@ -209,7 +207,7 @@ void DBConnectionPostgre::CloseConnection() {
       Logging::Append(io_loglvl::debug_logs, "Закрытие соединения c БД "
           + parameters_.name);
   }
-  if (is_dry_run_) {
+  if (isDryRun()) {
     status_ = STATUS_OK;
     Logging::Append(io_loglvl::debug_logs, "dry_run commit and disconect");
   }
@@ -224,9 +222,10 @@ mstatus_t DBConnectionPostgre::IsTableExists(db_table t, bool *is_exists) {
 }
 
 // todo: в методе смешаны уровни абстракции,
-//   разбить на парочку/другую
+//   разбить на парочку/другую методов или функций
 mstatus_t DBConnectionPostgre::GetTableFormat(db_table t,
     db_table_create_setup *fields) {
+  assert(0 && "не оттестированно");
   // такс, собираем
   //   колонки
   std::vector<db_field_info> exists_cols;

@@ -10,7 +10,7 @@
 #ifndef _CORE__SUBROUTINS__GAS_BY_FILE_H_
 #define _CORE__SUBROUTINS__GAS_BY_FILE_H_
 
-#include "common.h"
+#include "atherm_common.h"
 #include "file_structs.h"
 #include "gas_description.h"
 #include "gasmix_init.h"

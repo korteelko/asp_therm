@@ -10,7 +10,7 @@
 #ifndef _CORE__COMMON__MODELS_MATH_H_
 #define _CORE__COMMON__MODELS_MATH_H_
 
-#include "common.h"
+#include "Common.h"
 #include "ErrorWrap.h"
 
 #include <cmath>
@@ -21,6 +21,7 @@
 #include <assert.h>
 
 
+/* todo: move to utils and rename file */
 bool is_equal(double a, double b, double accur = FLOAT_ACCURACY);
 bool is_equal(std::complex<double> a, std::complex<double> b,
     double accur = FLOAT_ACCURACY);

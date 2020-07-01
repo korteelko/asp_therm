@@ -10,8 +10,8 @@
 #ifndef _CORE__SERVICE__CALCULATION_SETUP_H_
 #define _CORE__SERVICE__CALCULATION_SETUP_H_
 
+#include "atherm_common.h"
 #include "calculation_info.h"
-#include "common.h"
 #include "model_general.h"
 
 #include <map>

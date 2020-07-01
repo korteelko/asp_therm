@@ -36,6 +36,7 @@
 #define STRTPL_CONFIG_DB_HOST "host"
 #define STRTPL_CONFIG_DB_PORT "port"
 
+
 /* VALUES */
 /* bool */
 #define STRTPL_BOOL_TRUE "true"

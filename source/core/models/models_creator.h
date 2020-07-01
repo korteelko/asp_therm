@@ -10,17 +10,15 @@
 #ifndef _CORE__MODELS__MODELS_CREATOR_H_
 #define _CORE__MODELS__MODELS_CREATOR_H_
 
+#include "ErrorWrap.h"
 #include "gas_description.h"
 #include "model_general.h"
 #include "phase_diagram.h"
-#include "ErrorWrap.h"
+
 
 class ModelsCreator {
-/* TODO:
- *   заменить тип на ErrorWrap */
+  /** \brief Ошибка инициализации модели */
   static ErrorWrap error_;
-  // for multithread
-  // std::mutex_t
 
 private:
   static modelGeneral *set_model(const model_input &mi,

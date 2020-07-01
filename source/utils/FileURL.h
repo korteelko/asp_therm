@@ -14,7 +14,7 @@
 #ifndef UTILS__FILEURL_H
 #define UTILS__FILEURL_H
 
-#include "common.h"
+#include "Common.h"
 #include "ErrorWrap.h"
 
 #include <string>

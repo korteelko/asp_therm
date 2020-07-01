@@ -9,9 +9,8 @@
  */
 #include "gas_ng_gost.h"
 
-#include "common.h"
+#include "atherm_common.h"
 #include "gas_ng_gost_defines.h"
-#include "ErrorWrap.h"
 #include "Logging.h"
 
 #include <array>

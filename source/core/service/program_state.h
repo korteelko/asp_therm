@@ -15,7 +15,7 @@
 #define _CORE__SERVICE__PROGRAM_STATE_H_
 
 #include "calculation_setup.h"
-#include "common.h"
+#include "Common.h"
 #include "configuration_by_file.h"
 #include "db_connection_manager.h"
 #include "ErrorWrap.h"

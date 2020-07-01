@@ -1,5 +1,4 @@
-#include "common.h"
-#include "file_structs.h"
+#include "Common.h"
 #include "XMLReader.h"
 
 #include "gtest/gtest.h"

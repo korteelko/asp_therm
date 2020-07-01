@@ -9,7 +9,7 @@
  */
 #include "gasmix_init.h"
 
-#include "common.h"
+#include "atherm_common.h"
 #include "ErrorWrap.h"
 #include "model_general.h"
 

@@ -9,7 +9,6 @@
  */
 #include "gas_description.h"
 
-#include "ErrorWrap.h"
 #include "models_math.h"
 
 #include <map>

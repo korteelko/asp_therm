@@ -10,7 +10,7 @@
 #ifndef _CORE__MODELS__MODEL_REDLICH_KWONG_SOAVE_H_
 #define _CORE__MODELS__MODEL_REDLICH_KWONG_SOAVE_H_
 
-#include "common.h"
+#include "atherm_common.h"
 #include "gasmix_init.h"
 #include "model_general.h"
 

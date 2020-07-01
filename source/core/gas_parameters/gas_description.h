@@ -10,9 +10,9 @@
 #ifndef _CORE__GAS_PARAMETERS__GAS_DESCRIPTION_H_
 #define _CORE__GAS_PARAMETERS__GAS_DESCRIPTION_H_
 
-#include "common.h"
-#include "gas_defines.h"
+#include "atherm_common.h"
 #include "ErrorWrap.h"
+#include "gas_defines.h"
 
 #include <map>
 #include <string>

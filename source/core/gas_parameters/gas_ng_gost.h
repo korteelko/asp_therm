@@ -10,14 +10,14 @@
 #ifndef _CORE__GAS_PARAMETERS__GAS_NG_GOST_H_
 #define _CORE__GAS_PARAMETERS__GAS_NG_GOST_H_
 
-#include "gas_description_static.h"
 #include "ErrorWrap.h"
+#include "gas_description_static.h"
 
 #include <vector>
-// TODO: rename file --> delete postfix '_init'
 
-// размерности, константы, параметры при НФУ см.
-//   в ГОСТ 30319.1-2015 (!!! коэффициенты в третьем(30319.3) а константы в первом)
+
+// Размерности, константы, параметры при НФУ см. в первой части ГОСТ 30319,
+//   т.е. в 30319.1-2015. Коэффициенты в третьей части(30319.3-2015)
 
 struct ng_gost_params {
   double A0,

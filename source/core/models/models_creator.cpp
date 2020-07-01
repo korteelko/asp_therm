@@ -17,11 +17,6 @@
 #include "model_redlich_kwong.h"
 #include "model_redlich_kwong_soave.h"
 #include "models_configurations.h"
-#include "XMLReader.h"
-
-// #include "dynamic_modeling.h"
-// #include "models_output.h"
-// #include "inputdata_by_file.h"
 
 #include <functional>
 #include <map>

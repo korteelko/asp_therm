@@ -9,12 +9,9 @@
  */
 #include "model_general.h"
 
-#include "common.h"
 #include "gas_description_dynamic.h"
-#include "gasmix_init.h"
 #include "gas_ng_gost.h"
 #include "models_math.h"
-#include "ErrorWrap.h"
 
 #include <algorithm>
 #ifdef _DEBUG

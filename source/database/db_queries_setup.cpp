@@ -170,7 +170,7 @@ void db_table_create_setup::checkReferences() {
         }
       } else {
         error.SetError(ERROR_DB_REFER_FIELD,
-            "Неверное собственное имя поля для reference" + STRING_DEBUG_INFO);
+            "Неверное собственное имя поля для reference");
         break;
       }
     }

@@ -7,19 +7,16 @@
  * This library is distributed under the MIT License.
  * See LICENSE file in the project root for full license information.
  */
-#ifndef _CORE__COMMON__COMMON_H_
-#define _CORE__COMMON__COMMON_H_
+#ifndef _CORE__COMMON__ATHERM_COMMON_H_
+#define _CORE__COMMON__ATHERM_COMMON_H_
 
 #include <sstream>
-#include <string>
 
-#include <stdint.h>
+#include "Common.h"
 
-// separate calculation of parameters of mix
-//   просто интересно
 
 // original of CSI gost 30319-2015
-/* TODO: remove to config file */
+/* todo: remove to config file */
 #define ISO_20765
 #if defined(ISO_20765)
 // natural gas may contain components
@@ -48,27 +45,6 @@
 // ГОСТ 30319.3-2015
 #define GAS_NG_GOST_MARK      0x00000400
 
-//  math defines
-#define FLOAT_ACCURACY        0.00001
-#define DOUBLE_ACCURACY       0.000000001
-
-// logging defines
-#define DEFAULT_LOGLVL        0x01
-#define DEBUG_LOGLVL          0x0f
-
-typedef uint32_t mstatus_t;
-/** \brief статус при инициализации */
-#define STATUS_DEFAULT        0x00000001
-/** \brief статус удачного результата операции */
-#define STATUS_OK             0x00000002
-/** \brief статус неудачного результата операции */
-#define STATUS_NOT            0x00000003
-/** \brief статус наличия ошибки при выполнении операции */
-#define STATUS_HAVE_ERROR     0x00000004
-
-/* todo: rename, remove */
-#define FILE_LAST_OBJECT       0x1000
-
 /*  приоритет уравнения сосотяния по умолчанию,
  *    если не задан при инициализации */
 /** \brief целочисленный тип приоритета [-1, 127] */
@@ -85,9 +61,6 @@ typedef int8_t priority_var;
 
 
 /* дефайны из файла CMakeLists.txt */
-#if defined(BYCMAKE_DEBUG)
-#  define _DEBUG
-#endif  // BYCMAKE_DEBUG
 #if defined(BYCMAKE_WITH_PUGIXML)
 #  define WITH_PUGIXML
 #endif  // BYCMAKE_WITH_PUGIXML
@@ -100,11 +73,9 @@ typedef int8_t priority_var;
 #if defined(BYCMAKE_TESTS_ENABLED)
 #  define TESTS_ENABLED
 #endif  // BYCMAKE_TESTS_ENABLED
-#if defined(BYCMAKE_CXX17)
-#  define CXX17
-#endif  // BYCMAKE_CXX17
 
 
+// deprecated
 #if defined(OS_WIN)
 #  define PATH_SEPARATOR '\\'
 #elif defined(OS_NIX)
@@ -165,48 +136,4 @@ struct rg_model_id {
   rg_model_id(rg_model_t t, rg_model_subtype subt);
 };
 
-typedef enum {
-  /** \brief no messages */
-  no_log = 0,
-  /** \brief only errors */
-  err_logs = DEFAULT_LOGLVL,
-  /** \brief warning, errors */
-  warn_logs,
-  /** \brief all mesages, default for debug */
-  debug_logs = DEBUG_LOGLVL
-} io_loglvl;
-
-/** \brief Вывести целочисленное значение в шестнадцеричном формате */
-template <typename Integer,
-    typename = std::enable_if_t<std::is_integral<Integer>::value>>
-std::string hex2str(Integer hex) {
-  std::stringstream hex_stream;
-  hex_stream << "0x" << std::hex << hex;
-  return hex_stream.str();
-}
-
-/** \brief Проверить допустимость текущего состояния статуса
-  * \return true если st == STATUS_DEFAULT или st == STATUS_OK */
-inline bool is_status_aval(mstatus_t status) {
-  return status == STATUS_DEFAULT || status == STATUS_OK;
-}
-/** \brief Проверить валидность статуса
-  * \return true если st == STATUS_OK */
-inline bool is_status_ok(mstatus_t status) {
-  return status == STATUS_OK;
-}
-/** \brief Строка str заканчивается подстрокой ending */
-inline bool ends_with(const std::string &str, const std::string &ending) {
-  if (ending.size() > str.size())
-    return false;
-  return std::equal(ending.rbegin(), ending.rend(), str.rbegin());
-}
-/** \brief Обрезать пробелы с обоих концов */
-std::string trim_str(const std::string &str);
-/** \brief Проверить что объект файловой системы(файл, директория, соккет,
-  *   линк, character_dev) существует */
-bool is_exist(const std::string &path);
-/** \brief Вернуть путь к директории содержащей файл */
-std::string dir_by_path(const std::string &path);
-
-#endif  // !_CORE__COMMON__COMMON_H_
+#endif  // !_CORE__COMMON__ATHERM_COMMON_H_

@@ -18,7 +18,7 @@
 #ifndef _CORE__SERVICE__CALCULATION_INFO_H_
 #define _CORE__SERVICE__CALCULATION_INFO_H_
 
-#include "common.h"
+#include "atherm_common.h"
 #include "ErrorWrap.h"
 #include "FileURL.h"
 #include "gas_description.h"

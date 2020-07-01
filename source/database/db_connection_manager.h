@@ -14,6 +14,7 @@
 #ifndef _DATABASE__DB_CONNECTION_MANAGER_H_
 #define _DATABASE__DB_CONNECTION_MANAGER_H_
 
+#include "atherm_common.h"
 #include "db_connection.h"
 #include "db_query.h"
 #include "db_tables.h"

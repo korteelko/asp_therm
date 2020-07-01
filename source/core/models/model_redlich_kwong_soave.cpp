@@ -9,9 +9,7 @@
  */
 #include "model_redlich_kwong_soave.h"
 
-#include "common.h"
 #include "gas_description_dynamic.h"
-#include "ErrorWrap.h"
 #include "models_math.h"
 
 #include <numeric>

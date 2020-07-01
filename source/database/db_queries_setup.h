@@ -14,7 +14,7 @@
 #ifndef _DATABASE__DB_QUERIES_SETUP_H_
 #define _DATABASE__DB_QUERIES_SETUP_H_
 
-#include "common.h"
+#include "Common.h"
 #include "db_defines.h"
 #include "ErrorWrap.h"
 

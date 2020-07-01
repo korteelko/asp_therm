@@ -10,7 +10,7 @@
 #ifndef UTILS__ERRORWRAP_H
 #define UTILS__ERRORWRAP_H
 
-#include "common.h"
+#include "Common.h"
 #include "ThreadWrap.h"
 /** \note Для разных проектов разные коды ошибок,
   *   поэтому дефайны вынесены в отдельный файл */

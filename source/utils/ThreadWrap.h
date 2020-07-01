@@ -10,7 +10,7 @@
 #ifndef UTILS__THREADWRAP_H
 #define UTILS__THREADWRAP_H
 
-#include "common.h"
+#include "Common.h"
 
 #include <mutex>
 #if defined(CXX17)
@@ -39,9 +39,9 @@ public:
 using Mutex = MutexTemplate<std::mutex>;
 /** \brief Обёртка над рекурсивным мьютексом */
 using RecursiveMutex = MutexTemplate<std::recursive_mutex>;
+#if defined(CXX17)
 /** \brief Обёртка над разделяемым мьютексом
   * \note В С++11 его нет, реализовать отвельным классом */
-#if defined(CXX17)
 template<>
 class MutexTemplate<std::shared_mutex> {
 public:

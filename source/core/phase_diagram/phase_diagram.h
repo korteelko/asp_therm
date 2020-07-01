@@ -10,7 +10,7 @@
 #ifndef _CORE__PHASE_DIAGRAM__PHASE_DIAGRAM_H_
 #define _CORE__PHASE_DIAGRAM__PHASE_DIAGRAM_H_
 
-#include "common.h"
+#include "atherm_common.h"
 #include "gasmix_init.h"
 #include "ErrorWrap.h"
 #include "phase_diagram_models.h"

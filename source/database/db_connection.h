@@ -1,6 +1,7 @@
 /**
  * asp_therm - implementation of real gas equations of state
  * ===================================================================
+ * * db_connection *
  *   Здесь прописан функционал инициализации подключения,
  * в том числе чтения файла конфигурации и API взаимодействия с БД.
  *   API юзерских операций прописан в файле DBConnectionManager
@@ -14,7 +15,7 @@
 #ifndef _DATABASE__DB_CONNECTION_H_
 #define _DATABASE__DB_CONNECTION_H_
 
-#include "common.h"
+#include "Common.h"
 #include "db_defines.h"
 #include "db_queries_setup.h"
 #include "db_query.h"
@@ -25,10 +26,10 @@
 #include <vector>
 
 
-/** \brief структура содержит параметры коннектинга */
+/** \brief Структура содержит параметры подключения */
 struct db_parameters {
 public:
-  /** \brief не подключаться к базе данных, просто
+  /** \brief Флаг блокирования физического подключения к базе данных, просто
     * выводить получившееся запросы в stdout(или логировать) */
   bool is_dry_run;
   /** \brief тип клиента */
@@ -44,8 +45,6 @@ public:
 public:
   db_parameters();
 
-  merror_t SetConfigurationParameter(const std::string &param_strtpl,
-      const std::string &param_value);
   /** \brief Получить информацию о параметрах соединения с БД */
   std::string GetInfo() const;
 };
@@ -53,8 +52,7 @@ public:
 
 /* develop: может ещё интерфейс сделать, а потом
  *   абстрактный класс */
- /* TODO: rename class */
-/** \brief абстрактный класс подключения к БД */
+/** \brief Абстрактный класс подключения к БД */
 class DBConnection {
 public:
   virtual ~DBConnection();
@@ -157,6 +155,8 @@ protected:
   /** \brief собрать строку первичного ключа */
   virtual std::string db_primarykey_to_string(const db_complex_pk &pk);
 
+  /** \brief Подключение к БД сымитировано */
+  bool isDryRun();
 
 protected:
   ErrorWrap error_;
@@ -166,8 +166,6 @@ protected:
   db_parameters parameters_;
   /** \brief флаг подключения к бд */
   bool is_connected_;
-  /** \brief флаг работы без подключения к бд */
-  bool is_dry_run_;
 };
 
 #endif  // !_DATABASE__DB_CONNECTION_H_

@@ -1,4 +1,4 @@
-#include "common.h"
+#include "atherm_common.h"
 #include "db_connection.h"
 #include "db_connection_manager.h"
 #include "models_configurations.h"

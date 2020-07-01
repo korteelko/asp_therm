@@ -93,7 +93,7 @@ private:
     for (const auto &param : config_database) {
       param_path[1] = param;
       config_doc_->GetValueByPath(param_path, &tmp_str);
-      error = db_parameters_.SetConfigurationParameter(param, tmp_str);
+      error = set_db_parameter(&db_parameters_, param, tmp_str);
       if (error)
         break;
     }

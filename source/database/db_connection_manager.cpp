@@ -10,6 +10,10 @@
 #include "db_connection_manager.h"
 
 #include "db_connection_postgre.h"
+#include "models_configurations.h"
+#if defined(WITH_POSTGRESQL)
+#  include "db_connection_postgre.h"
+#endif  // WITH_POSTGRESQL
 
 #include <ctime>
 

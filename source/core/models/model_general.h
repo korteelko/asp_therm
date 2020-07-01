@@ -10,7 +10,8 @@
 #ifndef _CORE__MODELS__MODEL_GENERAL_H_
 #define _CORE__MODELS__MODEL_GENERAL_H_
 
-#include "common.h"
+#include "atherm_common.h"
+#include "ErrorWrap.h"
 #include "gas_description.h"
 #include "gas_description_static.h"
 #include "gasmix_init.h"
