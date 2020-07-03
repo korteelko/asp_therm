@@ -14,6 +14,7 @@ set (COMMON_SRC
 
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
 
+  ${THERMDB_SOURCE_DIR}/atherm_db_tables.cpp
   ${THERMDB_SOURCE_DIR}/db_connection.cpp
   ${THERMDB_SOURCE_DIR}/db_connection_manager.cpp
   ${THERMDB_SOURCE_DIR}/db_connection_postgre.cpp

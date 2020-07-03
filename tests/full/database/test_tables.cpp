@@ -1,4 +1,5 @@
 #include "atherm_common.h"
+#include "atherm_db_tables.h"
 #include "db_connection.h"
 #include "db_connection_manager.h"
 #include "models_configurations.h"
@@ -12,11 +13,13 @@
 
 #include <assert.h>
 
+AthermDBTables adb_;
 
 /** \brief Тестинг работы с БД */
 class DatabaseTablesTest: public ::testing::Test {
 protected:
-  DatabaseTablesTest() {
+  DatabaseTablesTest()
+  : dbm_(&adb_) {
     db_parameters db_par;
     db_par.is_dry_run = false;
     db_par.supplier = db_client::POSTGRESQL;
@@ -40,8 +43,8 @@ protected:
 
 TEST_F(DatabaseTablesTest, TableExists) {
   ASSERT_TRUE(dbm_.GetErrorCode() == ERROR_SUCCESS_T);
-  std::vector<db_table> tables { db_table::table_model_info,
-      db_table::table_calculation_info, db_table::table_calculation_state_log };
+  std::vector<db_table> tables { table_model_info,
+      table_calculation_info, table_calculation_state_log };
   for (const auto &x: tables) {
     if (!dbm_.IsTableExist(x)) {
       dbm_.CreateTable(x);

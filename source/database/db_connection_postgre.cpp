@@ -129,8 +129,9 @@ db_reference_act GetReferenceAct(char postgre_symbol) {
 }
 }  // namespace postgresql_impl
 
-DBConnectionPostgre::DBConnectionPostgre(const db_parameters &parameters)
-  : DBConnection(parameters) {}
+DBConnectionPostgre::DBConnectionPostgre(const IDBTables *tables,
+    const db_parameters &parameters)
+  : DBConnection(tables, parameters) {}
 
 DBConnectionPostgre::~DBConnectionPostgre() {
   CloseConnection();
@@ -236,8 +237,8 @@ mstatus_t DBConnectionPostgre::GetTableFormat(db_table t,
           &DBConnectionPostgre::execGetColumnInfo);
   if (is_status_ok(res)) {
     fields->table = t;
-    auto table_name = get_table_name(t);
-    auto ptr_table_fields = table_fields_setup::get_fields_collection(t);
+    auto table_name = tables_->GetTableName(t);
+    auto ptr_table_fields = tables_->GetFieldsCollection(t);
     std::map<std::string, db_variable_id> fields_names_map;
     for (const auto &x: *ptr_table_fields)
       fields_names_map.emplace(x.fname, x.fid);
@@ -387,9 +388,9 @@ mstatus_t DBConnectionPostgre::GetTableFormat(db_table t,
               std::string f_col = row_it.as<std::string>();
               auto du = fk_map.find(col_name);
               if (du != fk_map.end()) {
-                fields->ref_strings.push_back(
-                    db_reference(col_name, str_to_table_code(f_table), f_col,
-                    true, du->second.up, du->second.del));
+                fields->ref_strings->push_back(
+                    db_reference(col_name, tables_->StrToTableCode(f_table),
+                    f_col, true, du->second.up, du->second.del));
                 success = true;
               } else {
                 error = ERROR_DB_REFER_FIELD;
@@ -510,13 +511,13 @@ std::stringstream DBConnectionPostgre::setupTableExistsString(db_table t) {
   std::stringstream select_ss;
   select_ss << "SELECT EXISTS ( SELECT 1 FROM information_schema.tables "
       "WHERE table_schema = 'public' AND table_name = '" <<
-      get_table_name(t) << "');";
+      tables_->GetTableName(t) << "');";
   return select_ss;
 }
 std::stringstream DBConnectionPostgre::setupGetColumnsInfoString(db_table t) {
   std::stringstream select_ss;
   select_ss << "SELECT column_name, data_type FROM INFORMATION_SCHEMA.COLUMNS "
-      "WHERE TABLE_NAME = '" << get_table_name(t) << "';";
+      "WHERE TABLE_NAME = '" << tables_->GetTableName(t) << "';";
   return select_ss;
 }
 std::stringstream DBConnectionPostgre::setupGetConstrainsString(db_table t) {
@@ -528,7 +529,7 @@ std::stringstream DBConnectionPostgre::setupGetConstrainsString(db_table t) {
             "INNER JOIN pg_catalog.pg_namespace nsp " <<
                        "ON nsp.oid = connamespace ";
   sstr << "WHERE nsp.nspname = 'public' AND rel.relname = ";
-  sstr << "'" << get_table_name(t) << "';";
+  sstr << "'" << tables_->GetTableName(t) << "';";
   return sstr;
 }
 
@@ -551,7 +552,7 @@ std::stringstream DBConnectionPostgre::setupGetForeignKeys(db_table t) {
         "ON ccu.constraint_name = tc.constraint_name " <<
         "AND ccu.table_schema = tc.table_schema ";
   sstr << "WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name = ";
-  sstr << "'" << get_table_name(t) << "';";
+  sstr << "'" << tables_->GetTableName(t) << "';";
   return sstr;
 }
 
@@ -561,7 +562,7 @@ std::stringstream DBConnectionPostgre::setupInsertString(
     error_.SetError(ERROR_DB_VARIABLE, "Нет данных для INSERT операции");
     return std::stringstream();
   }
-  std::string fnames = "INSERT INTO " + get_table_name(fields.table) + " (";
+  std::string fnames = "INSERT INTO " + tables_->GetTableName(fields.table) + " (";
   std::vector<std::string> vals;
   std::vector<std::string> rows(fields.values_vec.size());
   db_variable::db_var_type t;
@@ -590,7 +591,7 @@ std::stringstream DBConnectionPostgre::setupInsertString(
         }
       } else {
         Logging::Append(io_loglvl::debug_logs, "Ошибка индекса операции INSERT.\n"
-            "\tДля таблицы " + get_table_name(fields.table));
+            "\tДля таблицы " + tables_->GetTableName(fields.table));
       }
     }
     value.replace(value.size() - 2, value.size(), "),");
@@ -601,7 +602,7 @@ std::stringstream DBConnectionPostgre::setupInsertString(
   sstr << fnames << " VALUES ";
   for (const auto &x: vals)
     sstr << x;
-  sstr << "RETURNING " << get_id_column_name(fields.table) << ";";
+  sstr << "RETURNING " << tables_->GetIdColumnName(fields.table) << ";";
   return sstr;
 }
 
@@ -609,7 +610,7 @@ std::stringstream DBConnectionPostgre::setupDeleteString(
     const db_query_delete_setup &fields) {
   std::stringstream sstr;
   postgresql_impl::where_string_set ws(pqxx_work.GetTransaction());
-  sstr << "DELETE FROM " << get_table_name(fields.table);
+  sstr << "DELETE FROM " << tables_->GetTableName(fields.table);
   if (fields.where_condition != nullptr)
     sstr << " WHERE " << fields.where_condition->GetString(ws);
   sstr << ";";
@@ -619,7 +620,7 @@ std::stringstream DBConnectionPostgre::setupSelectString(
     const db_query_select_setup &fields) {
   std::stringstream sstr;
   postgresql_impl::where_string_set ws(pqxx_work.GetTransaction());
-  sstr << "SELECT * FROM " << get_table_name(fields.table);
+  sstr << "SELECT * FROM " << tables_->GetTableName(fields.table);
   if (fields.where_condition != nullptr)
     sstr << " WHERE " << fields.where_condition->GetString(ws);
   sstr << ";";
@@ -630,7 +631,7 @@ std::stringstream DBConnectionPostgre::setupUpdateString(
   postgresql_impl::where_string_set ws(pqxx_work.GetTransaction());
   std::stringstream sstr;
   if (!fields.values.empty()) {
-    sstr << "UPDATE " << get_table_name(fields.table)
+    sstr << "UPDATE " << tables_->GetTableName(fields.table)
         << " SET ";
     std::string set_str = "";
     for (const auto &x: fields.values)

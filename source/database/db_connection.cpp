@@ -9,8 +9,6 @@
  */
 #include "db_connection.h"
 
-#include "db_query.h"
-#include "db_tables.h"
 #include "Logging.h"
 
 #include <functional>
@@ -34,8 +32,12 @@ std::string db_parameters::GetInfo() const {
 }
 
 /* DBConnection */
-DBConnection::DBConnection(const db_parameters &parameters)
-  : status_(STATUS_DEFAULT), parameters_(parameters), is_connected_(false) {}
+DBConnection::DBConnection(const IDBTables *tables,
+    const db_parameters &parameters)
+  : status_(STATUS_DEFAULT), parameters_(parameters),
+    tables_(tables), is_connected_(false) {
+  assert(0 && "check tables != nullptr");
+}
 
 DBConnection::~DBConnection() {}
 
@@ -71,14 +73,14 @@ std::stringstream DBConnection::setupRollbackToSavePoint(
 std::stringstream DBConnection::setupAddColumnString(
     const std::pair<db_table, const db_variable &> &pdv) {
   std::stringstream sstr;
-  sstr << "ALTER TABLE " << get_table_name(pdv.first) << " ADD COLUMN "
+  sstr << "ALTER TABLE " << tables_->GetTableName(pdv.first) << " ADD COLUMN "
       << db_variable_to_string(pdv.second) << ";";
   return sstr;
 }
 std::stringstream DBConnection::setupCreateTableString(
     const db_table_create_setup &fields) {
   std::stringstream sstr;
-  sstr << "CREATE TABLE " << get_table_name(fields.table) << " (";
+  sstr << "CREATE TABLE " << tables_->GetTableName(fields.table) << " (";
   // сначала забить все поля
   for (const auto &field : fields.fields) {
     if (!error_.GetErrorCode()) {
@@ -91,8 +93,8 @@ std::stringstream DBConnection::setupCreateTableString(
     // UNIQUE constraint
     sstr << db_unique_constrain_to_string(fields);
     // REFERENCES
-    if (!fields.ref_strings.empty()) {
-      for (const auto &ref : fields.ref_strings) {
+    if (!fields.ref_strings) {
+      for (const auto &ref : *fields.ref_strings) {
         sstr << db_reference_to_string(ref) << ", ";
         if (error_.GetErrorCode())
           break;
@@ -108,7 +110,7 @@ std::stringstream DBConnection::setupCreateTableString(
 std::stringstream DBConnection::setupDropTableString(
     const db_table_drop_setup &drop) {
   std::stringstream sstr;
-  sstr << "DROP TABLE " << get_table_name(drop.table) << " " <<
+  sstr << "DROP TABLE " << tables_->GetTableName(drop.table) << " " <<
       db_reference::GetReferenceActString(drop.act) << ";";
   return sstr;
 }
@@ -118,7 +120,7 @@ std::stringstream DBConnection::setupInsertString(
     error_.SetError(ERROR_DB_VARIABLE, "Нет данных для INSERT операции");
     return std::stringstream();
   }
-  std::string fnames = "INSERT INTO " + get_table_name(fields.table) + " (";
+  std::string fnames = "INSERT INTO " + tables_->GetTableName(fields.table) + " (";
   std::string values = "VALUES (";
   std::vector<std::string> rows(fields.values_vec.size());
   for (const auto &row: fields.values_vec) {
@@ -128,7 +130,7 @@ std::stringstream DBConnection::setupInsertString(
         values += x.second + ", ";
       } else {
         Logging::Append(io_loglvl::debug_logs, "Ошибка индекса операции INSERT.\n"
-            "\tДля таблицы " + get_table_name(fields.table));
+            "\tДля таблицы " + tables_->GetTableName(fields.table));
       }
     }
   }
@@ -142,17 +144,17 @@ std::stringstream DBConnection::setupDeleteString(
     const db_query_delete_setup &fields) {
   std::stringstream sstr;
   if (fields.where_condition != nullptr) {
-    sstr << "DELETE FROM " << get_table_name(fields.table) <<
+    sstr << "DELETE FROM " << tables_->GetTableName(fields.table) <<
         " WHERE " << fields.where_condition->GetString() << ";";
   } else {
-    sstr << "DELETE * FROM " << get_table_name(fields.table) << ";";
+    sstr << "DELETE * FROM " << tables_->GetTableName(fields.table) << ";";
   }
   return sstr;
 }
 std::stringstream DBConnection::setupSelectString(
     const db_query_select_setup &fields) {
   std::stringstream sstr;
-  sstr << "SELECT * FROM " << get_table_name(fields.table);
+  sstr << "SELECT * FROM " << tables_->GetTableName(fields.table);
   if (fields.where_condition != nullptr)
     sstr << " WHERE " << fields.where_condition->GetString();
   sstr << ";";
@@ -162,7 +164,7 @@ std::stringstream DBConnection::setupUpdateString(
     const db_query_update_setup &fields) {
   std::stringstream sstr;
   if (!fields.values.empty()) {
-    sstr << "UPDATE " << get_table_name(fields.table)
+    sstr << "UPDATE " << tables_->GetTableName(fields.table)
         << " SET ";
     std::string set_str = "";
     for (const auto &x: fields.values)
@@ -198,8 +200,8 @@ std::string DBConnection::db_reference_to_string(
   if (!ew) {
     if (ref.is_foreign_key)
       str += "FOREIGN KEY ";
-    str += "(" + ref.fname + ") REFERENCES " + get_table_name(ref.foreign_table) +
-        " (" + ref.foreign_fname + ")";
+    str += "(" + ref.fname + ") REFERENCES " + tables_->GetTableName(
+        ref.foreign_table) + " (" + ref.foreign_fname + ")";
     if (ref.has_on_delete)
       str += " ON DELETE " + ref.GetReferenceActString(ref.delete_method);
     if (ref.has_on_update)

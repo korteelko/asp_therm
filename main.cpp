@@ -7,6 +7,7 @@
  * This library is distributed under the MIT License.
  * See LICENSE file in the project root for full license information.
  */
+#include "atherm_db_tables.h"
 #include "db_connection_manager.h"
 #include "db_queries_setup.h"
 #include "gas_by_file.h"
@@ -191,11 +192,12 @@ int test_database_with_models(DBConnectionManager &dbm) {
 int test_database() {
   std::string filename = (cwd / xml_path / xml_configuration).string();
   ProgramState &ps = ProgramState::Instance();
+  AthermDBTables adb;
   // merror_t err = ps.ResetConfigFile(filename);
   // if (err)
   //   std::cerr << "update config error: " << hex2str(err) << std::endl;
   // db_parameters p = ps.GetDatabaseConfiguration();
-  DBConnectionManager dbm;
+  DBConnectionManager dbm(&adb);
   dbm.ResetConnectionParameters(
       ps.GetDatabaseConfiguration());
   auto st = dbm.CheckConnection();
@@ -205,8 +207,8 @@ int test_database() {
     std::cerr << "  message: " << dbm.GetErrorMessage() << std::endl;
     return 1;
   }
-  std::vector<db_table> tables { db_table::table_model_info,
-      db_table::table_calculation_info, db_table::table_calculation_state_log };
+  std::vector<db_table> tables { table_model_info,
+      table_calculation_info, table_calculation_state_log };
   for (const auto &x : tables) {
     if (!dbm.IsTableExist(x)) {
       if (dbm.GetErrorCode())

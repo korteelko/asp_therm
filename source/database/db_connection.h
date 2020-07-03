@@ -19,12 +19,17 @@
 #include "db_defines.h"
 #include "db_queries_setup.h"
 #include "db_query.h"
+#include "db_tables.h"
 #include "ErrorWrap.h"
 
 #include <string>
 #include <utility>
 #include <vector>
 
+
+#ifndef IS_DEBUG_MODE
+#  define IS_DEBUG_MODE false
+#endif  // !IS_DEBUG_MODE
 
 /** \brief Структура содержит параметры подключения */
 struct db_parameters {
@@ -105,7 +110,7 @@ protected:
   /* todo: add to parameters of constructor link to class
    *   DBConnectionCreator for closing all
    *   DBConnection inheritance classes */
-  DBConnection(const db_parameters &parameters);
+  DBConnection(const IDBTables *tables, const db_parameters &parameters);
 
   /* функции сбора строки запроса */
   /** \brief Сбор строки запроса создания точки сохранения */
@@ -160,11 +165,13 @@ protected:
 
 protected:
   ErrorWrap error_;
-  /** \brief статус подключения */
+  /** \brief Статус подключения */
   mstatus_t status_;
-  /** \brief параметры подключения к базе данных */
+  /** \brief Параметры подключения к базе данных */
   db_parameters parameters_;
-  /** \brief флаг подключения к бд */
+  /** \brief Указатель на имплементацию таблиц */
+  const IDBTables *tables_;
+  /** \brief Флаг подключения к бд */
   bool is_connected_;
 };
 

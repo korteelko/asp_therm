@@ -14,6 +14,7 @@ add_executable(
 
   ${MODELS_SRC}
   ${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp
+  ${THERMDB_SOURCE_DIR}/atherm_db_tables.cpp
   ${THERMDB_SOURCE_DIR}/db_connection_postgre.cpp
 )
 

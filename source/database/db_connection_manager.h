@@ -19,6 +19,7 @@
 #include "db_query.h"
 #include "db_tables.h"
 #include "ErrorWrap.h"
+#include "models_configurations.h"
 #include "ThreadWrap.h"
 
 #include <functional>
@@ -80,7 +81,7 @@ private:
   *   на все допустимые операции */
 class DBConnectionManager {
 public:
-  DBConnectionManager();
+  DBConnectionManager(const IDBTables *tables);
   // API DB
   mstatus_t CheckConnection();
   // static const std::vector<std::string> &GetJSONKeys();
@@ -171,16 +172,17 @@ private:
   /** \brief Собрать запрос на выборку данных */
   template <class DataT>
   mstatus_t selectData(db_table t, DataT &where, std::vector<DataT> *res) {
-    std::unique_ptr<db_query_select_setup> dss(db_query_select_setup::Init(t));
+    std::unique_ptr<db_query_select_setup> dss(
+        db_query_select_setup::Init(tables_, t));
     if (dss)
-      dss->where_condition.reset(InitWhereTree(where));
+      dss->where_condition.reset(tables_->InitWhereTree<DataT>(where));
     db_query_select_result result(*dss);
     auto st = exec_wrap<const db_query_select_setup &, db_query_select_result,
         void (DBConnectionManager::*)(Transaction *, const db_query_select_setup &,
         db_query_select_result *)>(*dss, &result, &DBConnectionManager::selectRows,
         nullptr);
     if (st == STATUS_OK)
-      SetSelectData(&result, res);
+      tables_->SetSelectData(&result, res);
     return st;
   }
 
@@ -212,6 +214,8 @@ private:
   SharedMutex connect_init_lock_;
   /** \brief Параметры текущего подключения к БД */
   db_parameters parameters_;
+  /** \brief */
+  const IDBTables *tables_;
   /* todo: replace with connection pull */
   /** \brief Указатель иницианилизированное подключение */
   std::unique_ptr<DBConnection> db_connection_;
@@ -225,7 +229,8 @@ class DBConnectionManager::DBConnectionCreator {
 private:
   DBConnectionCreator();
 
-  DBConnection *InitDBConnection(const db_parameters &parameters);
+  DBConnection *InitDBConnection(const IDBTables *tables,
+      const db_parameters &parameters);
 };
 
 #endif  // !_DATABASE__DB_CONNECTION_MANAGER_H_

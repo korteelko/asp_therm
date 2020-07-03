@@ -23,8 +23,8 @@
 #include <stdint.h>
 
 
-/** \brief Перечисление всех таблиц из файла db_tables.h */
-enum class db_table;
+/** \brief Идентификатор таблиц */
+typedef uint32_t db_table;
 
 /** \brief Уникальный идентификатор поля БД */
 typedef uint32_t db_variable_id;

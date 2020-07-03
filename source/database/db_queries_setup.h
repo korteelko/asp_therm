@@ -26,6 +26,7 @@
 
 #define OWNER(x) friend class x
 
+class IDBTables;
 /** \brief Сетап для добавления точки сохранения */
 struct db_save_point {
 public:
@@ -164,10 +165,14 @@ public:
   db_table_create_setup(db_table table);
   /** \brief Конструктор для добавления таблицы в БД */
   db_table_create_setup(db_table table, const db_fields_collection &fields,
-      const uniques_container &unique_constrains);
+      const uniques_container &unique_constrains,
+      const std::shared_ptr<db_ref_collection> &ref_strings);
 
   /** \brief Сравнить сетапы таблиц */
   std::map<compare_field, bool> Compare(const db_table_create_setup &r);
+
+  /** \brief Проверить ссылки */
+  void CheckReferences(const IDBTables *tables);
 
 public:
   ErrorWrap error;
@@ -181,13 +186,11 @@ public:
   /** \brief Наборы уникальных комплексов */
   uniques_container unique_constrains;
   /** \brief Набор внешних ссылок */
-  db_ref_collection ref_strings;
+  std::shared_ptr<db_ref_collection> ref_strings;
 
 private:
   /** \brief Собрать поле 'pk_string' */
   void setupPrimaryKeyString();
-  /** \brief Проверить ссылки */
-  void checkReferences();
   /** \brief Шаблон сравения массивов */
   template<class ArrayT>
   static bool IsSame(const ArrayT &l, const ArrayT &r) {
@@ -272,7 +275,7 @@ public:
 /** \brief структура для сборки SELECT(и DELETE) запросов */
 struct db_query_select_setup: public db_query_basesetup {
 public:
-  static db_query_select_setup *Init(db_table _table);
+  static db_query_select_setup *Init(const IDBTables *tables, db_table _table);
 
   virtual ~db_query_select_setup() = default;
 

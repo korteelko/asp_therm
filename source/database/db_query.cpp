@@ -10,8 +10,6 @@
 #include "db_query.h"
 
 #include "db_connection.h"
-#include "models_configurations.h"
-#include "program_state.h"
 #include "Logging.h"
 
 DBQuery::DBQuery(DBConnection *db_ptr)

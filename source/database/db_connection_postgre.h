@@ -25,10 +25,6 @@
 #include <string>
 
 
-#ifndef IS_DEBUG_MODE
-#  define IS_DEBUG_MODE false
-#endif  // !IS_DEBUG_MODE
-
 // смотри страницу:
 // https://www.tutorialspoint.com/postgresql/postgresql_c_cpp.htm
 /** \brief Реализация DBConnection для postgresql */
@@ -46,7 +42,7 @@ class DBConnectionPostgre final: public DBConnection {
   };
 
 public:
-  DBConnectionPostgre(const db_parameters &parameters);
+  DBConnectionPostgre(const IDBTables *tables, const db_parameters &parameters);
   ~DBConnectionPostgre() override;
 
   mstatus_t AddSavePoint(const db_save_point &sp) override;

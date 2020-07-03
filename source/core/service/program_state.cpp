@@ -9,6 +9,10 @@
  */
 #include "program_state.h"
 
+#include "atherm_db_tables.h"
+
+static AthermDBTables db;
+
 
 /* ProgramState */
 ProgramState &ProgramState::Instance() {
@@ -17,7 +21,7 @@ ProgramState &ProgramState::Instance() {
 }
 
 ProgramState::ProgramState()
-  : status_(STATUS_DEFAULT) {}
+  : status_(STATUS_DEFAULT), db_manager_(&db) {}
 
 void ProgramState::SetWorkDir(const file_utils::FileURLRoot &orig) {
   std::lock_guard<Mutex> lock(mutex);

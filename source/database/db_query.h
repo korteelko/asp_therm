@@ -12,7 +12,6 @@
 
 #include "db_defines.h"
 #include "db_queries_setup.h"
-#include "gas_description.h"
 #include "ErrorWrap.h"
 
 #include <memory>

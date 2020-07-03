@@ -30,8 +30,10 @@
 
 /** \brief Макро на определение режима отладки */
 #if defined(DATABASE_TEST)
+#  undef IS_DEBUG_MODE
 #  define IS_DEBUG_MODE true
 #else
+#  undef IS_DEBUG_MODE
 #  define IS_DEBUG_MODE (ProgramState::Instance().IsDebugMode())
 #endif
 /** \brief Класс состояния программы:

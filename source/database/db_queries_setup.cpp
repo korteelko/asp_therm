@@ -123,17 +123,17 @@ std::string db_condition_node::GetString(DataToStrF dts) const {
 
 /* db_table_create_setup */
 db_table_create_setup::db_table_create_setup(db_table table)
-  : table(table) {}
+  : table(table) {
+  ref_strings = std::unique_ptr<db_ref_collection>(new db_ref_collection);
+}
 
 db_table_create_setup::db_table_create_setup(db_table table,
-    const db_fields_collection &fields, const uniques_container &unique_constrains)
-  : table(table), fields(fields), unique_constrains(unique_constrains) {
-  ref_strings = ref_collection_by_code(table);
+    const db_fields_collection &fields,
+    const uniques_container &unique_constrains,
+    const std::shared_ptr<db_ref_collection> &ref_strings)
+  : table(table), fields(fields), unique_constrains(unique_constrains),
+    ref_strings(ref_strings) {
   setupPrimaryKeyString();
-  checkReferences();
-  if (error.GetErrorCode()) {
-    error.LogIt();
-  }
 }
 
 void db_table_create_setup::setupPrimaryKeyString() {
@@ -147,25 +147,25 @@ void db_table_create_setup::setupPrimaryKeyString() {
         "Пустой сетап элементов первичного ключа");
 }
 
-void db_table_create_setup::checkReferences() {
-  if (!ref_strings.empty()) {
-    for (auto const &tref: ref_strings) {
+void db_table_create_setup::CheckReferences(const IDBTables *tables) {
+  if (ref_strings) {
+    for (auto const &tref: *ref_strings) {
       // check fname present in fields
       bool exist = std::find_if(fields.begin(), fields.end(),
           [&tref](const db_variable &v)
               {return v.fname == tref.fname;}) != fields.end();
       if (exist) {
         const db_fields_collection *ffields =
-            table_fields_setup::get_fields_collection(tref.foreign_table);
+            tables->GetFieldsCollection(tref.foreign_table);
         exist = std::find_if(ffields->begin(), ffields->end(),
             [&tref](const db_variable &v)
                 {return v.fname == tref.foreign_fname;}) != ffields->end();
         if (!exist) {
           error.SetError(ERROR_DB_REFER_FIELD,
               "Неверное имя внешнего поля для reference.\n"
-              "Таблица - " + get_table_name(table) + "\n"
-              "Внешняя таблица - " + get_table_name(tref.foreign_table) + "\n"
-              + STRING_DEBUG_INFO);
+              "Таблица - " + tables->GetTableName(table) + "\n"
+              "Внешняя таблица - " + tables->GetTableName(tref.foreign_table)
+              + "\n" + STRING_DEBUG_INFO);
           break;
         }
       } else {
@@ -193,8 +193,9 @@ std::map<db_table_create_setup::compare_field, bool>
       unique_constrains, r.unique_constrains));
 
   // ref_strings
-  result.emplace(cf_unique_constrains, db_table_create_setup::IsSame(
-      ref_strings, r.ref_strings));
+  if (ref_strings && r.ref_strings)
+    result.emplace(cf_unique_constrains, db_table_create_setup::IsSame(
+        *ref_strings, *r.ref_strings));
   return result;
 }
 
@@ -225,9 +226,10 @@ size_t db_query_insert_setup::RowsSize() const {
 }
 
 /* db_table_select_setup */
-db_query_select_setup *db_query_select_setup::Init(db_table _table) {
+db_query_select_setup *db_query_select_setup::Init(
+    const IDBTables *tables, db_table _table) {
   return new db_query_select_setup(_table,
-      *table_fields_setup::get_fields_collection(_table));
+      *tables->GetFieldsCollection(_table));
 }
 
 db_query_select_setup::db_query_select_setup(db_table _table,

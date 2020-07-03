@@ -123,7 +123,6 @@ typedef int64_t rg_model_subtype;
 #define MODEL_PR_SUBTYPE_BINASSOC    0x00000001
 /* расширение ГОСТ 30319-2015 */
 #define MODEL_GOST_SUBTYPE_ISO_20765 0x00000001
-
 struct rg_model_id {
   rg_model_t type;
   /** \brief subtypenumber(subml_typenumber) - наверное привязаться к

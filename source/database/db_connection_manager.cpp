@@ -123,7 +123,7 @@ mstatus_t DBConnectionManager::UpdateTableFormat(db_table dt) {
 
 mstatus_t DBConnectionManager::SaveModelInfo(model_info &mi) {
   std::unique_ptr<db_query_insert_setup> dis(
-      InitInsertSetup<model_info>({mi}));
+      tables_->InitInsertSetup<model_info>({mi}));
   db_save_point sp("save_model_info");
   id_container id_vec;
   mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
@@ -139,7 +139,7 @@ mstatus_t DBConnectionManager::SaveModelInfo(model_info &mi) {
 mstatus_t DBConnectionManager::SaveCalculationInfo(calculation_info &ci) {
   std::vector<calculation_info> ci_vec { ci };
   std::unique_ptr<db_query_insert_setup> dis(
-      InitInsertSetup<calculation_info >(ci_vec));
+      tables_->InitInsertSetup<calculation_info >(ci_vec));
   db_save_point sp("save_calculation_info");
   id_container id_vec;
   mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
@@ -155,7 +155,7 @@ mstatus_t DBConnectionManager::SaveCalculationInfo(calculation_info &ci) {
 mstatus_t DBConnectionManager::SaveCalculationStateLog(
     std::vector<calculation_state_log> &csi) {
   std::unique_ptr<db_query_insert_setup> dis(
-      InitInsertSetup<calculation_state_log>(csi));
+      tables_->InitInsertSetup<calculation_state_log>(csi));
   db_save_point sp("save_calculation_state_log");
   id_container id_vec;
   mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
@@ -172,24 +172,24 @@ mstatus_t DBConnectionManager::SaveCalculationStateLog(
 
 mstatus_t DBConnectionManager::SelectModelInfo(model_info &where,
     std::vector<model_info> *res) {
-  return selectData(db_table::table_model_info, where, res);
+  return selectData(tables_->GetTableCode<model_info>(), where, res);
 }
 
 mstatus_t DBConnectionManager::SelectCalculationInfo(calculation_info &where,
     std::vector<calculation_info> *res) {
-  return selectData(db_table::table_calculation_info, where, res);
+  return selectData(tables_->GetTableCode<calculation_info>(), where, res);
 }
 
 mstatus_t DBConnectionManager::SelectCalculationStateLog(
     calculation_state_log &where, std::vector<calculation_state_log> *res) {
-  return selectData(db_table::table_calculation_state_log, where, res);
+  return selectData(tables_->GetTableCode<calculation_state_log>(), where, res);
 }
 
 mstatus_t DBConnectionManager::DeleteModelInfo(model_info &where) {
   std::unique_ptr<db_query_delete_setup> dds(
-      db_query_delete_setup::Init(db_table::table_model_info));
+      db_query_delete_setup::Init(tables_, tables_->GetTableCode<model_info>()));
   if (dds)
-    dds->where_condition.reset(InitWhereTree(where));
+    dds->where_condition.reset(tables_->InitWhereTree<model_info>(where));
   db_save_point sp("delete_rows");
   return exec_wrap<const db_query_delete_setup &, void,
       void (DBConnectionManager::*)(Transaction *, const db_query_delete_setup &,
@@ -208,13 +208,14 @@ std::string DBConnectionManager::GetErrorMessage() {
   return error_.GetMessage();
 }
 
-DBConnectionManager::DBConnectionManager() {}
+DBConnectionManager::DBConnectionManager(const IDBTables *tables)
+  : tables_(tables) {}
 
 void DBConnectionManager::initDBConnection() {
   std::unique_lock<SharedMutex> lock(connect_init_lock_);
   status_ = STATUS_OK;
   db_connection_ = std::unique_ptr<DBConnection>(
-      DBConnectionCreator().InitDBConnection(parameters_));
+      DBConnectionCreator().InitDBConnection(tables_, parameters_));
   if (!db_connection_) {
     status_ = STATUS_HAVE_ERROR;
     error_.SetError(ERROR_DB_CONNECTION,
@@ -230,7 +231,7 @@ void DBConnectionManager::isTableExist(Transaction *tr,
 
 void DBConnectionManager::createTable(Transaction *tr, db_table dt, void *) {
   tr->AddQuery(QuerySmartPtr(new DBQueryCreateTable(db_connection_.get(),
-      create_setup_by_code(dt))));
+      tables_->CreateSetupByCode(dt))));
 }
 
 void DBConnectionManager::getTableFormat(Transaction *tr, db_table dt,
@@ -285,14 +286,14 @@ mstatus_t DBConnectionManager::tryExecuteTransaction(Transaction &tr) {
 DBConnectionManager::DBConnectionCreator::DBConnectionCreator() {}
 
 DBConnection *DBConnectionManager::DBConnectionCreator::InitDBConnection(
-    const db_parameters &parameters) {
+    const IDBTables *tables, const db_parameters &parameters) {
   DBConnection *connect = nullptr;
   switch (parameters.supplier) {
     case db_client::NOONE:
       break;
   #if defined(WITH_POSTGRESQL)
     case db_client::POSTGRESQL:
-      connect = new DBConnectionPostgre(parameters);
+      connect = new DBConnectionPostgre(tables, parameters);
       break;
   #endif  // WITH_POSTGRESQL
     // TODO: можно тут ошибку установить
