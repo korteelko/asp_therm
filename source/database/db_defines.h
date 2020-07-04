@@ -16,13 +16,13 @@
 
 #include "ErrorWrap.h"
 
-#include <exception>
 #include <string>
 #include <vector>
 
 #include <stdint.h>
 
 
+namespace asp_db {
 /** \brief Идентификатор таблиц */
 typedef uint32_t db_table;
 
@@ -200,23 +200,9 @@ public:
   static std::string GetReferenceActString(db_reference_act act);
 };
 
-/** \brief Класс исключений для выполнения операций с БД */
-class db_exception: public std::exception {
-public:
-  db_exception(merror_t error, const std::string &msg);
-  db_exception(const std::string &msg);
-
-  void LogException();
-  merror_t GetError() const;
-  std::string GetErrorMessage() const;
-
-private:
-  /** \brief Ошибка, сюда же пишется сообщение */
-  ErrorWrap error_;
-};
-
 typedef std::vector<db_variable> db_fields_collection;
 typedef std::vector<db_reference> db_ref_collection;
 using db_type = db_variable::db_var_type;
+}  // namespace asp_db
 
 #endif  // !_DATABASE__DB_DEFINES_H_

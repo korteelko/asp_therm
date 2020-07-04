@@ -13,6 +13,7 @@
 
 
 using namespace file_utils;
+using namespace asp_db;
 namespace fs = std::filesystem;
 
 TEST(ErrorWrap, Full) {

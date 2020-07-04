@@ -12,6 +12,8 @@
 #include "db_connection.h"
 #include "Logging.h"
 
+
+namespace asp_db {
 DBQuery::DBQuery(DBConnection *db_ptr)
   : status_(STATUS_DEFAULT), db_ptr_(db_ptr), is_performed_(false) {}
 
@@ -182,3 +184,4 @@ mstatus_t DBQueryDeleteRows::exec() {
 std::string DBQueryDeleteRows::q_info() {
   return "DeleteRows";
 }
+}  // namespace asp_db

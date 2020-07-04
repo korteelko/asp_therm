@@ -67,9 +67,6 @@ typedef int8_t priority_var;
 #if defined(BYCMAKE_WITH_RAPIDJSON)
 #  define WITH_RAPIDJSON
 #endif  // BYCMAKE_WITH_RAPIDJSON
-#if defined(BYCMAKE_WITH_POSTGRESQL)
-#  define WITH_POSTGRESQL
-#endif  // BYCMAKE_WITH_POSTGRESQL
 #if defined(BYCMAKE_TESTS_ENABLED)
 #  define TESTS_ENABLED
 #endif  // BYCMAKE_TESTS_ENABLED

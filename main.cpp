@@ -13,12 +13,12 @@
 #include "gas_by_file.h"
 #include "gasmix_by_file.h"
 #include "inode_imp.h"
+#include "JSONReader.h"
 #include "model_redlich_kwong.h"
 #include "model_peng_robinson.h"
 #include "models_configurations.h"
 #include "models_creator.h"
 #include "program_state.h"
-#include "JSONReader.h"
 
 #include <filesystem>
 #include <vector>
@@ -103,7 +103,7 @@ int test_database_with_models(DBConnectionManager &dbm) {
   // todo: это стандартный сетап на добавление так что его можно
   //   сохранить и использовать
   mi.initialized = mi.f_full & (~mi.f_model_id);
-  dbm.SaveModelInfo(mi);
+  dbm.SaveSingleRow(mi);
 
   /* select test */
   auto mi2 = model_info::GetDefault();
@@ -111,7 +111,7 @@ int test_database_with_models(DBConnectionManager &dbm) {
   mi2.short_info.model_type.subtype = MODEL_SUBTYPE_DEFAULT;
   mi2.initialized = model_info::f_model_type | model_info::f_model_subtype;
   std::vector<model_info> r;
-  dbm.SelectModelInfo(mi, &r);
+  dbm.SelectRows(mi, &r);
   r.clear();
 
   mk.reset(ModelsCreator::GetCalculatingModel(rks_str, filename, INPUT_P_T));
@@ -120,20 +120,20 @@ int test_database_with_models(DBConnectionManager &dbm) {
   // todo: это стандартный сетап на добавление так что его можно
   //   сохранить и использовать
   mis.initialized = mis.f_full & (~mis.f_model_id);
-  dbm.SaveModelInfo(mis);
+  dbm.SaveSingleRow(mis);
 
-  dbm.SelectModelInfo(mi2, &r);
-  dbm.DeleteModelInfo(mi2);
+  dbm.SelectRows(mi2, &r);
+  dbm.DeleteRows(mi2);
 
   std::string str = "Тестовая строка";
   model_info mi3 = model_info::GetDefault();
   mi3.short_info.short_info = str;
   mi3.initialized = mi.f_full & (~mi.f_model_id);
-  dbm.SaveModelInfo(mi3);
+  dbm.SaveSingleRow(mi3);
 
   /* select */
   std::vector<model_info> r1;
-  dbm.SelectModelInfo(mi3, &r1);
+  dbm.SelectRows(mi3, &r1);
 
   /* add calculation_info */
   calculation_info ci;
@@ -141,11 +141,11 @@ int test_database_with_models(DBConnectionManager &dbm) {
     ci.model_id = r1[0].id;
     ci.initialized = ci.f_model_id;
     ci.initialized |= ci.f_date | ci.f_time;
-    dbm.SaveCalculationInfo(ci);
+    dbm.SaveSingleRow(ci);
   }
   /* add state_log */
   std::vector<calculation_info> rc;
-  dbm.SelectCalculationInfo(ci, &rc);
+  dbm.SelectRows(ci, &rc);
   if (rc.size()) {
     calculation_state_log log;
     log.info_id = rc[0].id;
@@ -175,7 +175,7 @@ int test_database_with_models(DBConnectionManager &dbm) {
       x.dyn_pars.parm.volume = v;
       x.dyn_pars.parm.pressure = p;
     }
-    dbm.SaveCalculationStateLog(logs);
+    dbm.SaveVectorOfRows(logs);
   }
 
   /* delete */
@@ -183,7 +183,7 @@ int test_database_with_models(DBConnectionManager &dbm) {
     model_info mi_del = model_info::GetDefault();
     mi_del.id = r1[0].id;
     mi_del.initialized = mi_del.f_model_id;
-    dbm.DeleteModelInfo(mi_del);
+    dbm.DeleteRows(mi_del);
   }
 #endif  // RK2_TEST
   return res;
@@ -209,7 +209,7 @@ int test_database() {
   }
   std::vector<db_table> tables { table_model_info,
       table_calculation_info, table_calculation_state_log };
-  for (const auto &x : tables) {
+  for (const auto &x: tables) {
     if (!dbm.IsTableExist(x)) {
       if (dbm.GetErrorCode())
         std::cerr << "\nerror ocurred for tableExist command #" << int(x);

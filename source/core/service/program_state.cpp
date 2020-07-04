@@ -95,7 +95,7 @@ const calculation_configuration &ProgramState::GetCalcConfiguration() const {
   return program_config_.configuration.calc_cfg;
 }
 
-const db_parameters &ProgramState::GetDatabaseConfiguration() const {
+const asp_db::db_parameters &ProgramState::GetDatabaseConfiguration() const {
   return program_config_.db_parameters_conf;
 }
 

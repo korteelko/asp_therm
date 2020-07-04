@@ -61,11 +61,11 @@ TEST_F(DatabaseTablesTest, InsertModelInfo) {
   mi.short_info.short_info = str;
   mi.short_info.model_type.subtype = 0xf;
   mi.initialized = mi.f_full & (~mi.f_model_id);
-  dbm_.SaveModelInfo(mi);
+  dbm_.SaveSingleRow(mi);
 
   /* select */
   std::vector<model_info> r;
-  auto st = dbm_.SelectModelInfo(mi, &r);
+  auto st = dbm_.SelectRows(mi, &r);
 
   ASSERT_TRUE(r.size() > 0);
   EXPECT_GT(r[0].id, 0);
@@ -80,7 +80,7 @@ TEST_F(DatabaseTablesTest, InsertModelInfo) {
   mi_del.id = r[0].id;
   mi_del.initialized = mi_del.f_model_id;
   mi_del.initialized = mi_del.f_short_info;
-  st = dbm_.DeleteModelInfo(mi_del);
+  st = dbm_.DeleteRows(mi_del);
   ASSERT_TRUE(is_status_ok(st));
 }
 
@@ -89,14 +89,14 @@ TEST_F(DatabaseTablesTest, InsertCalculation) {
   model_info mis = model_info::GetDefault();
   mis.short_info.short_info = "Тестовая строка";
   mis.initialized = mis.f_full & (~mis.f_model_id);
-  dbm_.SaveModelInfo(mis);
+  dbm_.SaveSingleRow(mis);
 
   std::vector<model_info> r;
   model_info mi = model_info::GetDefault();
   mi.short_info.model_type.type = rg_model_t::EMPTY;
   mi.short_info.model_type.subtype = MODEL_SUBTYPE_DEFAULT;
   mi.initialized = mi.f_model_type | mi.f_model_subtype;
-  dbm_.SelectModelInfo(mi, &r);
+  dbm_.SelectRows(mi, &r);
   ASSERT_TRUE(r.size() > 0);
 
   /* calculation_info */
@@ -104,11 +104,11 @@ TEST_F(DatabaseTablesTest, InsertCalculation) {
   ci.model_id = r[0].id;
   ci.initialized = ci.f_model_id;
   ci.initialized |= ci.f_date | ci.f_time;
-  dbm_.SaveCalculationInfo(ci);
+  dbm_.SaveSingleRow(ci);
 
   std::vector<calculation_info> rc;
   ci.initialized = ci.f_model_id;
-  dbm_.SelectCalculationInfo(ci, &rc);
+  dbm_.SelectRows(ci, &rc);
   ASSERT_TRUE(rc.size() > 0);
   ASSERT_TRUE(rc[0].id != -1);
 
@@ -142,7 +142,7 @@ TEST_F(DatabaseTablesTest, InsertCalculation) {
     x.dyn_pars.parm.volume = v;
     x.dyn_pars.parm.pressure = p;
   }
-  EXPECT_EQ(dbm_.SaveCalculationStateLog(logs), STATUS_OK);
+  EXPECT_EQ(dbm_.SaveVectorOfRows(logs), STATUS_OK);
 }
 
 int main(int argc, char **argv) {

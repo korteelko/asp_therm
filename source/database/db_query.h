@@ -19,6 +19,7 @@
 #include <vector>
 
 
+namespace asp_db {
 class DBConnection;
 struct db_table_create_setup;
 
@@ -180,5 +181,6 @@ protected:
 private:
   const db_query_delete_setup &delete_setup;
 };
+}  // namespace asp_db
 
 #endif  // !_DATABASE__DB_QUERY_H_

@@ -16,9 +16,6 @@
   *   поэтому дефайны вынесены в отдельный файл */
 #if defined(INCLUDE_ERRORCODES)
 #  include "merror_codes.h"
-#else
-#  define ERROR_SUCCESS_T    0x0000
-#  define ERROR_GENERAL_T    0x0001
 #endif  // INCLUDE_ERRORCODES
 
 #include <string>

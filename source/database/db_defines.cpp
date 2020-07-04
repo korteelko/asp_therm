@@ -7,6 +7,7 @@
  * This library is distributed under the MIT License.
  * See LICENSE file in the project root for full license information.
  */
+#include "db_connection_manager.h"
 #include "db_defines.h"
 #include "Logging.h"
 
@@ -16,6 +17,7 @@
 #include <string.h>
 
 
+namespace asp_db {
 std::string db_client_to_string(db_client client) {
   std::string name = "";
   switch (client) {
@@ -26,7 +28,7 @@ std::string db_client_to_string(db_client client) {
       name = "postgresql";
       break;
     default:
-      assert(0);
+      throw DBException("Неизвестный клиент БД");
       name = "undefined";
   }
   return name;
@@ -142,21 +144,4 @@ bool db_reference::operator==(const db_reference &r) const {
 bool db_reference::operator!=(const db_reference &r) const {
   return !(*this == r);
 }
-
-/* db_exception */
-db_exception::db_exception(merror_t error, const std::string &msg)
-  : error_(error, msg) {}
-db_exception::db_exception(const std::string &msg)
-  : db_exception(ERROR_GENERAL_T, msg) {}
-
-void db_exception::LogException() {
-  error_.LogIt();
-}
-
-merror_t db_exception::GetError() const {
-  return error_.GetErrorCode();
-}
-
-std::string db_exception::GetErrorMessage() const {
-  return error_.GetMessage();
-}
+}  // namespace asp_db

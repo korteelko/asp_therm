@@ -21,7 +21,6 @@ set (COMMON_SRC
   ${THERMDB_SOURCE_DIR}/db_defines.cpp
   ${THERMDB_SOURCE_DIR}/db_queries_setup.cpp
   ${THERMDB_SOURCE_DIR}/db_query.cpp
-  ${THERMDB_SOURCE_DIR}/db_tables.cpp
 
   ${THERMUTILS_SOURCE_DIR}/Common.cpp
   ${THERMUTILS_SOURCE_DIR}/ErrorWrap.cpp

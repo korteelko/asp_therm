@@ -16,6 +16,9 @@
 #include <stdint.h>
 
 
+#define ERROR_SUCCESS_T     0x0000
+#define ERROR_GENERAL_T     0x0001
+
 #if defined(BYCMAKE_DEBUG)
 /** \brief Режим отладки */
 #  define _DEBUG
@@ -24,6 +27,10 @@
 /** \brief Использовать стандарт C++17 */
 #  define CXX17
 #endif  // BYCMAKE_CXX17
+#if defined(BYCMAKE_WITH_POSTGRESQL)
+/** \brief Использовать библиотеку libpqxx */
+#  define WITH_POSTGRESQL
+#endif  // BYCMAKE_WITH_POSTGRESQL
 
 //  math defines
 #define FLOAT_ACCURACY        0.00001

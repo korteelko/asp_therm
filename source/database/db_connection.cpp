@@ -9,6 +9,7 @@
  */
 #include "db_connection.h"
 
+#include "db_connection_manager.h"
 #include "Logging.h"
 
 #include <functional>
@@ -18,6 +19,7 @@
 #include <assert.h>
 
 
+namespace asp_db {
 /* db_parameters */
 db_parameters::db_parameters()
   : is_dry_run(true), supplier(db_client::NOONE) {}
@@ -36,7 +38,10 @@ DBConnection::DBConnection(const IDBTables *tables,
     const db_parameters &parameters)
   : status_(STATUS_DEFAULT), parameters_(parameters),
     tables_(tables), is_connected_(false) {
-  assert(0 && "check tables != nullptr");
+  if (!tables_)
+    throw DBException(ERROR_DB_CONNECTION,
+        "Попытка инициализовать DBConnection пустым "
+        "указатедем на функционал таблиц");
 }
 
 DBConnection::~DBConnection() {}
@@ -231,3 +236,4 @@ std::string DBConnection::db_primarykey_to_string(
 bool DBConnection::isDryRun() {
   return parameters_.is_dry_run;
 }
+}  // namespace asp_db

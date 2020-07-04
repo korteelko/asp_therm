@@ -135,7 +135,7 @@ TEST_F(ProgramStateTest, ModelsInit) {
     /* db_parameters */
     auto db_config = state.GetDatabaseConfiguration();
     EXPECT_TRUE(db_config.is_dry_run);
-    EXPECT_TRUE(db_config.supplier == db_client::POSTGRESQL);
+    EXPECT_TRUE(db_config.supplier == asp_db::db_client::POSTGRESQL);
     EXPECT_TRUE(db_config.name == "africae");
     EXPECT_TRUE(db_config.username == "jorge");
     EXPECT_TRUE(db_config.password == "my_pass");

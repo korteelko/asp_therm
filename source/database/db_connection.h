@@ -31,6 +31,7 @@
 #  define IS_DEBUG_MODE false
 #endif  // !IS_DEBUG_MODE
 
+namespace asp_db {
 /** \brief Структура содержит параметры подключения */
 struct db_parameters {
 public:
@@ -174,5 +175,6 @@ protected:
   /** \brief Флаг подключения к бд */
   bool is_connected_;
 };
+}  // namespace asp_db
 
 #endif  // !_DATABASE__DB_CONNECTION_H_

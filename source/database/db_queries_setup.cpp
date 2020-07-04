@@ -9,6 +9,7 @@
  */
 #include "db_queries_setup.h"
 
+#include "db_connection_manager.h"
 #include "db_tables.h"
 #include "Logging.h"
 
@@ -18,7 +19,7 @@
 #include <assert.h>
 
 
-
+namespace asp_db {
 /* db_save_point */
 db_save_point::db_save_point(const std::string &_name)
   : name("") {
@@ -143,8 +144,8 @@ void db_table_create_setup::setupPrimaryKeyString() {
       pk_string.fnames.push_back(field.fname);
   }
   if (pk_string.fnames.empty())
-    throw db_exception(ERROR_DB_TABLE_PKEY,
-        "Пустой сетап элементов первичного ключа");
+    throw DBException(ERROR_DB_TABLE_PKEY,
+        "Пустой сетап элементов первичного ключа").AddTableCode(table);
 }
 
 void db_table_create_setup::CheckReferences(const IDBTables *tables) {
@@ -319,3 +320,4 @@ void db_where_tree::construct() {
   }
   root_ = st.top();
 }
+}  // namespace asp_db

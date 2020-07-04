@@ -9,6 +9,7 @@
  */
 #include "db_connection_postgre.h"
 
+#include "db_connection_manager.h"
 #include "db_queries_setup.h"
 #include "db_query.h"
 #include "db_tables.h"
@@ -22,6 +23,7 @@
 #include <assert.h>
 
 
+namespace asp_db {
 #define types_pair(x, y) { x, y }
 // #define reverse_types_pair(x, y) { y, x }
 
@@ -122,7 +124,7 @@ db_reference_act GetReferenceAct(char postgre_symbol) {
       act = db_reference_act::ref_act_restrict;
       break;
     default:
-      throw db_exception(ERROR_DB_REFER_FIELD,
+      throw DBException(ERROR_DB_REFER_FIELD,
           "Не зарегистрированное действие для внешнего ключа");
   }
   return act;
@@ -337,7 +339,7 @@ mstatus_t DBConnectionPostgre::GetTableFormat(db_table t,
                       error = ERROR_GENERAL_T;
                     }
                     fk_map.emplace(trim_str(name[0]), ud);
-                  } catch (db_exception &e) {
+                  } catch (DBException &e) {
                     e.LogException();
                     error = e.GetError();
                   }
@@ -811,3 +813,4 @@ std::string DBConnectionPostgre::PostgreDateToDate(const std::string &pdate) {
 std::string DBConnectionPostgre::PostgreTimeToTime(const std::string &ptime) {
   return ptime;
 }
+}  // namespace asp_db

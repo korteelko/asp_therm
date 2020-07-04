@@ -48,7 +48,7 @@ public:
   *   новое значение параметра, представленого аргументами
   * \param param_strtpl Строковое представление параметра(ключ)
   * \param param_value Строковое значение параметра */
-merror_t set_db_parameter(db_parameters *dst, const std::string &param_strtpl,
+merror_t set_db_parameter(asp_db::db_parameters *dst, const std::string &param_strtpl,
     const std::string &param_value);
 
 /// class for initializing gas component by file
@@ -117,7 +117,7 @@ merror_t set_bool(const std::string &val, bool *ans);
   * \param val текстовый шаблон значения
   * \param ans out db_client параметр значения */
 [[nodiscard]]
-merror_t set_db_client(const std::string &val, db_client *ans);
+merror_t set_db_client(const std::string &val, asp_db::db_client *ans);
 /** \brief проверить соответствие 'val' допустимым значениям double
   * \param val текстовый шаблон значения
   * \param ans out double параметр значения */

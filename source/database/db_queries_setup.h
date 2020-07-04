@@ -24,6 +24,7 @@
 #include <string>
 
 
+namespace asp_db {
 #define OWNER(x) friend class x
 
 class IDBTables;
@@ -371,5 +372,6 @@ protected:
   /** \brief Результирующая строка собранная из дерева условий */
   std::string data_;
 };
+}  // namespace asp_db
 
 #endif  // !_DATABASE__DB_QUERIES_SETUP_H_

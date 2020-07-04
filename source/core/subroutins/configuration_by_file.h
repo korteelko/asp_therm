@@ -44,7 +44,7 @@ public:
 
   program_configuration GetConfiguration() const { return configuration_; }
 
-  db_parameters GetDBConfiguration() const { return db_parameters_; }
+  asp_db::db_parameters GetDBConfiguration() const { return db_parameters_; }
 
   const ErrorWrap &GetErrorWrap() const { return error_; }
 
@@ -109,7 +109,7 @@ private:
   ErrorWrap error_;
   std::unique_ptr<ConfigReader<config_node>> config_doc_;
   program_configuration configuration_;
-  db_parameters db_parameters_;
+  asp_db::db_parameters db_parameters_;
 };
 
 /* todo: убрать это и переделать инициализацию по xml */

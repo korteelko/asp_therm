@@ -23,9 +23,9 @@
 #include <stdint.h>
 
 
+namespace asp_db {
 #define UNDEFINED_TABLE         0x00000000
 #define UNDEFINED_COLUMN        0x00000000
-
 
 /** \brief Интерфейс объекта-связи для модуля базы данных */
 class IDBTables {
@@ -44,7 +44,14 @@ public:
   //virtual db_ref_collection RefCollectionByCode(db_table table) const = 0;
   virtual const db_table_create_setup &CreateSetupByCode(db_table dt) const = 0;
 
-  /** \brief */
+  /** \brief Шаблон функции получения имени таблицы по типу.
+    *   Шаблон специализируется классами используемых
+    *   таблиц в основной программе */
+  template <class T>
+  std::string GetTableName() const { return ""; }
+  /** \brief Шаблон функции получения кода таблицы по типу.
+    *   Шаблон специализируется классами используемых
+    *   таблиц в основной программе */
   template <class T>
   db_table GetTableCode() const { return UNDEFINED_TABLE; }
 
@@ -94,5 +101,6 @@ protected:
     return ins_setup;
   }
 };
+}  // namespace asp_db
 
 #endif  // !_DATABASE__DB_TABLES_H_

@@ -25,6 +25,7 @@
 #include <string>
 
 
+namespace asp_db {
 // смотри страницу:
 // https://www.tutorialspoint.com/postgresql/postgresql_c_cpp.htm
 /** \brief Реализация DBConnection для postgresql */
@@ -239,5 +240,6 @@ private:
   } pqxx_work;
   // add result data for select queries for example, or IsTableExist
 };
+}  // namespace asp_db
 
 #endif  // !_DATABASE__DB_CONNECTION_POSTGRESQL_H_

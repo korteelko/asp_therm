@@ -10,7 +10,6 @@
 #include "db_connection_manager.h"
 
 #include "db_connection_postgre.h"
-#include "models_configurations.h"
 #if defined(WITH_POSTGRESQL)
 #  include "db_connection_postgre.h"
 #endif  // WITH_POSTGRESQL
@@ -20,6 +19,7 @@
 #include <assert.h>
 
 
+namespace asp_db {
 // db_parameters::db_parameters()
 //   : supplier(db_client::NOONE) {}
 
@@ -48,6 +48,28 @@ mstatus_t Transaction::ExecuteQueries() {
     }
   }
   return status_;
+}
+
+/* DBException */
+DBException::DBException(merror_t error, const std::string &msg)
+  : error_(error, msg) {}
+DBException::DBException(const std::string &msg)
+  : DBException(ERROR_GENERAL_T, msg) {}
+
+DBException &DBException::AddTableCode(db_table table) {
+  table_ = table;
+}
+
+void DBException::LogException() {
+  error_.LogIt();
+}
+
+merror_t DBException::GetError() const {
+  return error_.GetErrorCode();
+}
+
+std::string DBException::GetErrorMessage() const {
+  return error_.GetMessage();
 }
 
 mstatus_t DBConnectionManager::CheckConnection() {
@@ -121,70 +143,8 @@ mstatus_t DBConnectionManager::UpdateTableFormat(db_table dt) {
   return result;
 }
 
-mstatus_t DBConnectionManager::SaveModelInfo(model_info &mi) {
-  std::unique_ptr<db_query_insert_setup> dis(
-      tables_->InitInsertSetup<model_info>({mi}));
-  db_save_point sp("save_model_info");
-  id_container id_vec;
-  mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
-      void (DBConnectionManager::*)(Transaction *, const db_query_insert_setup &,
-      id_container *)>(*dis, &id_vec, &DBConnectionManager::saveRows, &sp);
-  if (id_vec.id_vec.size()) {
-    mi.id = id_vec.id_vec[0];
-    mi.initialized |= model_info::f_model_id;
-  }
-  return st;
-}
 
-mstatus_t DBConnectionManager::SaveCalculationInfo(calculation_info &ci) {
-  std::vector<calculation_info> ci_vec { ci };
-  std::unique_ptr<db_query_insert_setup> dis(
-      tables_->InitInsertSetup<calculation_info >(ci_vec));
-  db_save_point sp("save_calculation_info");
-  id_container id_vec;
-  mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
-      void (DBConnectionManager::*)(Transaction *, const db_query_insert_setup &,
-      id_container *)>(*dis, &id_vec, &DBConnectionManager::saveRows, &sp);
-  if (id_vec.id_vec.size()) {
-    ci.id = id_vec.id_vec[0];
-    ci.initialized |= calculation_info::f_calculation_info_id;
-  }
-  return st;
-}
-
-mstatus_t DBConnectionManager::SaveCalculationStateLog(
-    std::vector<calculation_state_log> &csi) {
-  std::unique_ptr<db_query_insert_setup> dis(
-      tables_->InitInsertSetup<calculation_state_log>(csi));
-  db_save_point sp("save_calculation_state_log");
-  id_container id_vec;
-  mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
-      void (DBConnectionManager::*)(Transaction *, const db_query_insert_setup &,
-      id_container *)>(*dis, &id_vec, &DBConnectionManager::saveRows, &sp);
-  if (id_vec.id_vec.size() == csi.size()) {
-    for (size_t i = 0; i < csi.size(); ++i) {
-      csi[i].id = id_vec.id_vec[i];
-      csi[i].initialized |= calculation_state_log::f_calculation_state_log_id;
-    }
-  }
-  return st;
-}
-
-mstatus_t DBConnectionManager::SelectModelInfo(model_info &where,
-    std::vector<model_info> *res) {
-  return selectData(tables_->GetTableCode<model_info>(), where, res);
-}
-
-mstatus_t DBConnectionManager::SelectCalculationInfo(calculation_info &where,
-    std::vector<calculation_info> *res) {
-  return selectData(tables_->GetTableCode<calculation_info>(), where, res);
-}
-
-mstatus_t DBConnectionManager::SelectCalculationStateLog(
-    calculation_state_log &where, std::vector<calculation_state_log> *res) {
-  return selectData(tables_->GetTableCode<calculation_state_log>(), where, res);
-}
-
+/*
 mstatus_t DBConnectionManager::DeleteModelInfo(model_info &where) {
   std::unique_ptr<db_query_delete_setup> dds(
       db_query_delete_setup::Init(tables_, tables_->GetTableCode<model_info>()));
@@ -195,6 +155,7 @@ mstatus_t DBConnectionManager::DeleteModelInfo(model_info &where) {
       void (DBConnectionManager::*)(Transaction *, const db_query_delete_setup &,
       void *)>(*dds, nullptr, &DBConnectionManager::deleteRows, &sp);
 }
+*/
 
 merror_t DBConnectionManager::GetErrorCode() {
   return error_.GetErrorCode();
@@ -214,8 +175,14 @@ DBConnectionManager::DBConnectionManager(const IDBTables *tables)
 void DBConnectionManager::initDBConnection() {
   std::unique_lock<SharedMutex> lock(connect_init_lock_);
   status_ = STATUS_OK;
-  db_connection_ = std::unique_ptr<DBConnection>(
-      DBConnectionCreator().InitDBConnection(tables_, parameters_));
+  try {
+    db_connection_ = std::unique_ptr<DBConnection>(
+        DBConnectionCreator().InitDBConnection(tables_, parameters_));
+  } catch (DBException &e) {
+    e.LogException();
+    // если даже объект подключения был создан - затереть его
+    db_connection_ = nullptr;
+  }
   if (!db_connection_) {
     status_ = STATUS_HAVE_ERROR;
     error_.SetError(ERROR_DB_CONNECTION,
@@ -302,3 +269,4 @@ DBConnection *DBConnectionManager::DBConnectionCreator::InitDBConnection(
   }
   return connect;
 }
+}  // namespace asp_db

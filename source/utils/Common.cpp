@@ -22,6 +22,8 @@ std::string trim_str(const std::string &str) {
       [](int c){return std::isspace(c);}).base());
 }
 
+/* todo: add else case */
+#ifdef CXX17
 bool is_exist(const std::string &path) {
   return std::filesystem::exists(path);
 }
@@ -29,3 +31,4 @@ bool is_exist(const std::string &path) {
 std::string dir_by_path(const std::string &path) {
   return std::filesystem::path(path).parent_path();
 }
+#endif  // CXX17

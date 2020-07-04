@@ -14,14 +14,15 @@
 #ifndef _DATABASE__DB_CONNECTION_MANAGER_H_
 #define _DATABASE__DB_CONNECTION_MANAGER_H_
 
-#include "atherm_common.h"
+#include "Common.h"
 #include "db_connection.h"
+#include "db_defines.h"
 #include "db_query.h"
 #include "db_tables.h"
 #include "ErrorWrap.h"
-#include "models_configurations.h"
 #include "ThreadWrap.h"
 
+#include <exception>
 #include <functional>
 #include <string>
 #include <vector>
@@ -29,7 +30,7 @@
 #include <stdint.h>
 
 
-/* todo: вынести db_connection_manager вне модуля 'database' */
+namespace asp_db {
 /** \brief Класс инкапсулирующий конечную высокоуровневую операцию с БД
   * \note Определения 'Query' и 'Transaction' в программе условны:
   *   Query - примит обращения к БД, Transaction - связный набор примитивов
@@ -77,6 +78,33 @@ private:
 };
 
 
+/** \brief Класс исключений модуля БД
+  * \note Move this class to another file */
+class DBException: public std::exception {
+public:
+  DBException(merror_t error, const std::string &msg);
+  DBException(const std::string &msg);
+
+  /* build options */
+  /** \brief Добавить к исключению информацию о таблице */
+  DBException &AddTableCode(db_table table);
+
+  /** \brief Залогировать ошибку */
+  void LogException();
+  /** \brief Получить код ошибки */
+  merror_t GetError() const;
+  /** \brief Получить сообщение об ошибке */
+  std::string GetErrorMessage() const;
+
+
+private:
+  /** \brief Ошибка, сюда же пишется сообщение */
+  ErrorWrap error_;
+  /** \brief Тип таблицы */
+  db_table table_ = UNDEFINED_TABLE;
+};
+
+
 /** \brief Класс взаимодействия с БД, предоставляет API
   *   на все допустимые операции */
 class DBConnectionManager {
@@ -93,32 +121,57 @@ public:
   mstatus_t CreateTable(db_table dt);
 
   /* insert operations */
-  /** \brief Сохранить в БД строку model_info */
-  mstatus_t SaveModelInfo(model_info &mi);
-  /** \brief Сохранить в БД строку calculation_info */
-  mstatus_t SaveCalculationInfo(calculation_info &ci);
-  /** \brief Сохранить в БД строку calculation_info */
-  mstatus_t SaveCalculationStateLog(std::vector<calculation_state_log> &csi);
+  /** \brief Сохранить в БД строку */
+  template<class TableI>
+  mstatus_t SaveSingleRow(TableI &ti) {
+    std::unique_ptr<db_query_insert_setup> dis(
+        tables_->InitInsertSetup<TableI>({ti}));
+    db_save_point sp("save_" + tables_->GetTableName<TableI>());
+    id_container id_vec;
+    mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
+        void (DBConnectionManager::*)(Transaction *, const db_query_insert_setup &,
+        id_container *)>(*dis, &id_vec, &DBConnectionManager::saveRows, &sp);
+    return st;
+  }
+  /** \brief Сохранить в БД вектор строк.
+    * \todo replace with generic container */
+  template<class TableI>
+  mstatus_t SaveVectorOfRows(const std::vector<TableI> &tis) {
+    std::unique_ptr<db_query_insert_setup> dis(
+        tables_->InitInsertSetup<TableI>(tis));
+    db_save_point sp("save_" + tables_->GetTableName<TableI>());
+    id_container id_vec;
+    mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
+        void (DBConnectionManager::*)(Transaction *, const db_query_insert_setup &,
+        id_container *)>(*dis, &id_vec, &DBConnectionManager::saveRows, &sp);
+    return st;
+  }
 
   /* select operations */
-  /** \brief Вытащить из БД строки model_info по 'where' условиям */
-  mstatus_t SelectModelInfo(model_info &where,
-      std::vector<model_info> *res);
-  /** \brief Вытащить из БД строки calculation_info по 'where' условиям */
-  mstatus_t SelectCalculationInfo(calculation_info &where,
-      std::vector<calculation_info> *res);
-  /** \brief Вытащить из БД строки calculation_state_log по 'where' условиям */
-  mstatus_t SelectCalculationStateLog(calculation_state_log &where,
-      std::vector<calculation_state_log> *res);
-
+  /** \brief Вытащить из БД строки TableI по условиям из 'where' */
+  template<class TableI, class ContainerT = std::vector<TableI>>
+  mstatus_t SelectRows(TableI &where, ContainerT *res) {
+    return selectData(tables_->GetTableCode<TableI>(), where, res);
+  }
   /* table format */
   /** \brief Проверить формат таблицы */
   bool CheckTableFormat(db_table dt);
   /** \brief Обновить формат таблицы */
   mstatus_t UpdateTableFormat(db_table dt);
 
+  template <class TableI>
+  mstatus_t DeleteRows(TableI &where) {
+    std::unique_ptr<db_query_delete_setup> dds(
+        db_query_delete_setup::Init(tables_, tables_->GetTableCode<TableI>()));
+    if (dds)
+      dds->where_condition.reset(tables_->InitWhereTree<TableI>(where));
+    db_save_point sp("delete_rows");
+    return exec_wrap<const db_query_delete_setup &, void,
+        void (DBConnectionManager::*)(Transaction *, const db_query_delete_setup &,
+        void *)>(*dds, nullptr, &DBConnectionManager::deleteRows, &sp);
+  }
   /** \brief Удалить строки */
-  mstatus_t DeleteModelInfo(model_info &where);
+  // mstatus_t DeleteModelInfo(model_info &where);
 
   /* rename method to GetError */
   merror_t GetErrorCode();
@@ -232,5 +285,6 @@ private:
   DBConnection *InitDBConnection(const IDBTables *tables,
       const db_parameters &parameters);
 };
+}  // namespace asp_db
 
 #endif  // !_DATABASE__DB_CONNECTION_MANAGER_H_

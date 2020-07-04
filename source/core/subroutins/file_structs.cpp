@@ -17,6 +17,7 @@
 #include <string.h>
 
 
+using namespace asp_db;
 std::array<std::string, GAS_NODE_COUNT> gas_node::node_t_list = {
   "gas", "section", "group", "subgroup", "parameter"
 };

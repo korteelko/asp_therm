@@ -68,7 +68,7 @@ public:
   bool IsDryRunDBConn() const;
   const program_configuration &GetConfiguration() const;
   const calculation_configuration &GetCalcConfiguration() const;
-  const db_parameters &GetDatabaseConfiguration() const;
+  const asp_db::db_parameters &GetDatabaseConfiguration() const;
 
   /** \brief Получить статус */
   mstatus_t GetStatus() const;
@@ -109,7 +109,7 @@ public:
     /** \brief Конфигурация программы */
     program_configuration configuration;
     /** \brief Параметры коннекта к БД */
-    db_parameters db_parameters_conf;
+    asp_db::db_parameters db_parameters_conf;
     /** \brief По-сути - декоратор над объектом чтения xml(или других форматов)
       *   файлов для конфигурации программы
       * \note На тестинг инстанцируем шаблон заранее */
@@ -141,7 +141,7 @@ private:
   /** \brief Конфигурация программы - модели, бд, опции */
   ProgramConfiguration program_config_;
   /** \brief Объект подключения к БД */
-  DBConnectionManager db_manager_;
+  asp_db::DBConnectionManager db_manager_;
 };
 
 #endif  // !_CORE__SERVICE__PROGRAM_STATE_H_

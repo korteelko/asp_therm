@@ -10,8 +10,6 @@
  * This library is distributed under the MIT License.
  * See LICENSE file in the project root for full license information.
  */
-
-
 #ifndef _DATABASE__ATHERM_DB_TABLES_H_
 #define _DATABASE__ATHERM_DB_TABLES_H_
 
@@ -20,6 +18,8 @@
 
 #include <string>
 
+
+using namespace asp_db;
 
 /** \brief Макро на получение имени поля по его id */
 #define TABLE_FIELD_NAME(x) x ## _NAME
@@ -121,7 +121,14 @@ public:
 
 
 /* Специализация шаблонов базового класса таблиц */
-/* get_table_name */
+/* GetTableName */
+template <>
+std::string IDBTables::GetTableName<model_info>() const;
+template <>
+std::string IDBTables::GetTableName<calculation_info>() const;
+template <>
+std::string IDBTables::GetTableName<calculation_state_log>() const;
+/* GetTableCode */
 template <>
 db_table IDBTables::GetTableCode<model_info>() const;
 template <>
@@ -129,6 +136,7 @@ db_table IDBTables::GetTableCode<calculation_info>() const;
 template <>
 db_table IDBTables::GetTableCode<calculation_state_log>() const;
 
+/* setInsertValues */
 /** \brief Собрать вектор 'values' значений столбцов БД,
   *   по переданным строкам model_info */
 template <>
@@ -145,6 +153,7 @@ template <>
 void IDBTables::setInsertValues<calculation_state_log>(db_query_insert_setup *src,
     const calculation_state_log &select_data) const;
 
+/* SetSelectData */
 /** \brief Записать в out_vec строки model_info из данных values_vec,
   *   полученных из БД
   * \note Обратная операция для db_query_insert_setup::setValues */

@@ -10,6 +10,7 @@
 #include "atherm_db_tables.h"
 
 #include "models_configurations.h"
+#include "db_connection_manager.h"
 
 #include <map>
 #include <memory>
@@ -183,7 +184,7 @@ const db_fields_collection *AthermDBTables::GetFieldsCollection(db_table dt) con
       break;
     case table_undefiend:
     default:
-      throw db_exception(ERROR_DB_TABLE_EXISTS, "Неизвестный код таблицы");
+      throw DBException(ERROR_DB_TABLE_EXISTS, "Неизвестный код таблицы");
       break;
   }
   return result;
@@ -224,7 +225,7 @@ const db_table_create_setup &AthermDBTables::CreateSetupByCode(db_table dt) cons
       return table_create_calculation_state_log();
     case table_undefiend:
     default:
-      throw db_exception(ERROR_DB_TABLE_EXISTS, "Неизвестный код таблицы");
+      throw DBException(ERROR_DB_TABLE_EXISTS, "Неизвестный код таблицы");
   }
 }
 
@@ -247,6 +248,22 @@ db_ref_collection AthermDBTables::RefCollectionByCode(db_table table) {
   }
 }
 */
+
+template <>
+std::string IDBTables::GetTableName<model_info>() const {
+  auto x = ns_tfs::str_tables.find(table_model_info);
+  return (x != ns_tfs::str_tables.end()) ? x->second: "";
+}
+template <>
+std::string IDBTables::GetTableName<calculation_info>() const {
+  auto x = ns_tfs::str_tables.find(table_calculation_info);
+  return (x != ns_tfs::str_tables.end()) ? x->second: "";
+}
+template <>
+std::string IDBTables::GetTableName<calculation_state_log>() const {
+  auto x = ns_tfs::str_tables.find(table_calculation_state_log);
+  return (x != ns_tfs::str_tables.end()) ? x->second: "";
+}
 
 template <>
 db_table IDBTables::GetTableCode<model_info>() const {
