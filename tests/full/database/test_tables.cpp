@@ -61,7 +61,7 @@ TEST_F(DatabaseTablesTest, InsertModelInfo) {
   mi.short_info.short_info = str;
   mi.short_info.model_type.subtype = 0xf;
   mi.initialized = mi.f_full & (~mi.f_model_id);
-  dbm_.SaveSingleRow(mi);
+  dbm_.SaveSingleRow(mi, nullptr);
 
   /* select */
   std::vector<model_info> r;
@@ -89,7 +89,7 @@ TEST_F(DatabaseTablesTest, InsertCalculation) {
   model_info mis = model_info::GetDefault();
   mis.short_info.short_info = "Тестовая строка";
   mis.initialized = mis.f_full & (~mis.f_model_id);
-  dbm_.SaveSingleRow(mis);
+  dbm_.SaveSingleRow(mis, nullptr);
 
   std::vector<model_info> r;
   model_info mi = model_info::GetDefault();
@@ -104,7 +104,7 @@ TEST_F(DatabaseTablesTest, InsertCalculation) {
   ci.model_id = r[0].id;
   ci.initialized = ci.f_model_id;
   ci.initialized |= ci.f_date | ci.f_time;
-  dbm_.SaveSingleRow(ci);
+  dbm_.SaveSingleRow(ci, nullptr);
 
   std::vector<calculation_info> rc;
   ci.initialized = ci.f_model_id;

@@ -452,8 +452,9 @@ mstatus_t DBConnectionPostgre::InsertRows(
       void (DBConnectionPostgre::*)(const std::stringstream &, pqxx::result *)>(
           insert_data, &result, &DBConnectionPostgre::setupInsertString,
           &DBConnectionPostgre::execInsert);
-  for (pqxx::const_result_iterator::reference row: result)
-    id_vec->id_vec.push_back(row[0].as<int>());
+  if (id_vec)
+    for (pqxx::const_result_iterator::reference row: result)
+      id_vec->id_vec.push_back(row[0].as<int>());
   return status;
 }
 

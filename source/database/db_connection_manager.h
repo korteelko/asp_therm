@@ -123,7 +123,7 @@ public:
   /* insert operations */
   /** \brief Сохранить в БД строку */
   template<class TableI>
-  mstatus_t SaveSingleRow(TableI &ti) {
+  mstatus_t SaveSingleRow(TableI &ti, int *id_p) {
     std::unique_ptr<db_query_insert_setup> dis(
         tables_->InitInsertSetup<TableI>({ti}));
     db_save_point sp("save_" + tables_->GetTableName<TableI>());
@@ -131,19 +131,21 @@ public:
     mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
         void (DBConnectionManager::*)(Transaction *, const db_query_insert_setup &,
         id_container *)>(*dis, &id_vec, &DBConnectionManager::saveRows, &sp);
+    if (id_vec.id_vec.size() && id_p)
+      *id_p = id_vec.id_vec[0];
     return st;
   }
   /** \brief Сохранить в БД вектор строк.
     * \todo replace with generic container */
   template<class TableI>
-  mstatus_t SaveVectorOfRows(const std::vector<TableI> &tis) {
+  mstatus_t SaveVectorOfRows(const std::vector<TableI> &tis,
+      id_container *id_vec_p = nullptr) {
     std::unique_ptr<db_query_insert_setup> dis(
         tables_->InitInsertSetup<TableI>(tis));
     db_save_point sp("save_" + tables_->GetTableName<TableI>());
-    id_container id_vec;
     mstatus_t st = exec_wrap<const db_query_insert_setup &, id_container,
         void (DBConnectionManager::*)(Transaction *, const db_query_insert_setup &,
-        id_container *)>(*dis, &id_vec, &DBConnectionManager::saveRows, &sp);
+        id_container *)>(*dis, id_vec_p, &DBConnectionManager::saveRows, &sp);
     return st;
   }
 

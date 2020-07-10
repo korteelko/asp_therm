@@ -6,6 +6,7 @@ project(${PROJECT_NAME})
 
 add_compile_options(-Wall)
 
+# todo: both options also can be placed in 'BUILD_OPTION' list
 add_definitions(-DBYCMAKE_DEBUG)
 add_definitions(-DBYCMAKE_CXX17)
 set(CMAKE_BUILD_TYPE Debug)

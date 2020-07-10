@@ -103,7 +103,7 @@ int test_database_with_models(DBConnectionManager &dbm) {
   // todo: это стандартный сетап на добавление так что его можно
   //   сохранить и использовать
   mi.initialized = mi.f_full & (~mi.f_model_id);
-  dbm.SaveSingleRow(mi);
+  dbm.SaveSingleRow(mi, nullptr);
 
   /* select test */
   auto mi2 = model_info::GetDefault();
@@ -120,7 +120,7 @@ int test_database_with_models(DBConnectionManager &dbm) {
   // todo: это стандартный сетап на добавление так что его можно
   //   сохранить и использовать
   mis.initialized = mis.f_full & (~mis.f_model_id);
-  dbm.SaveSingleRow(mis);
+  dbm.SaveSingleRow(mis, nullptr);
 
   dbm.SelectRows(mi2, &r);
   dbm.DeleteRows(mi2);
@@ -129,7 +129,7 @@ int test_database_with_models(DBConnectionManager &dbm) {
   model_info mi3 = model_info::GetDefault();
   mi3.short_info.short_info = str;
   mi3.initialized = mi.f_full & (~mi.f_model_id);
-  dbm.SaveSingleRow(mi3);
+  dbm.SaveSingleRow(mi3, nullptr);
 
   /* select */
   std::vector<model_info> r1;
@@ -141,7 +141,7 @@ int test_database_with_models(DBConnectionManager &dbm) {
     ci.model_id = r1[0].id;
     ci.initialized = ci.f_model_id;
     ci.initialized |= ci.f_date | ci.f_time;
-    dbm.SaveSingleRow(ci);
+    dbm.SaveSingleRow(ci, nullptr);
   }
   /* add state_log */
   std::vector<calculation_info> rc;
