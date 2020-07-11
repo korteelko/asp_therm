@@ -74,8 +74,6 @@ public:
 
   /** \brief Путь отмечен как невалидный */
   bool IsInvalidPath() const;
-  /** \brief Установить код ошибки 'error' */
-  void SetError(merror_t error);
   /** \brief Установить код ошибки 'error' и сообщение ошибки 'msg' */
   void SetError(merror_t error, const std::string &msg);
   /** \brief Залогировать ошибки */

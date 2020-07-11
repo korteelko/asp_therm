@@ -244,7 +244,7 @@ double Peng_Robinson::get_volume(
   CardanoMethod_roots_count(&coef[0], &coef[4], &roots_count);
 #ifdef _DEBUG
   if (!is_above0(coef[4])) {
-    error_.SetError(ERROR_CALC_MODEL_ST);
+    error_.SetError(ERROR_PAIR_DEFAULT(ERROR_CALC_MODEL_ST));
     error_.LogIt(io_loglvl::debug_logs);
     return 0.0;
   }
@@ -328,7 +328,7 @@ void Peng_Robinson::SetPressure(double v, double t) {
 
 double Peng_Robinson::GetVolume(double p, double t) {
   if (!is_above0(p, t)) {
-    error_.SetError(ERROR_CALC_MODEL_ST);
+    error_.SetError(ERROR_PAIR_DEFAULT(ERROR_CALC_MODEL_ST));
     return 0.0;
   }
   double alf = std::pow(1.0 + model_coef_k_*(1.0 -
@@ -345,7 +345,7 @@ double Peng_Robinson::GetVolume(double p, double t) {
   CardanoMethod_roots_count(&coef[0], &coef[4], &roots_count);
 #ifdef _DEBUG
   if (!is_above0(coef[4])) {
-    error_.SetError(ERROR_CALC_MODEL_ST);
+    error_.SetError(ERROR_PAIR_DEFAULT(ERROR_CALC_MODEL_ST));
     error_.LogIt();
     return 0.0;
   }
@@ -355,7 +355,7 @@ double Peng_Robinson::GetVolume(double p, double t) {
 
 double Peng_Robinson::GetPressure(double v, double t) {
   if (!is_above0(v, t)) {
-    error_.SetError(ERROR_CALC_MODEL_ST);
+    error_.SetError(ERROR_PAIR_DEFAULT(ERROR_CALC_MODEL_ST));
     return 0.0;
   }
   const double a = std::pow(1.0 + model_coef_k_ * std::pow(1.0 -

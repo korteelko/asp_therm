@@ -302,7 +302,7 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
   GasParameters_mix_dyn *mix = nullptr;
   merror_t err = ERROR_SUCCESS_T;
   if (gpi.const_dyn.components->empty() || mg == nullptr)
-    err = init_error.SetError(ERROR_INIT_NULLP_ST);
+    err = init_error.SetError(ERROR_PAIR_DEFAULT(ERROR_INIT_NULLP_ST));
   std::unique_ptr<const_parameters> tmp_cgp = nullptr;
   if (!err) {
     // рассчитать средние критические параметры смеси
@@ -317,13 +317,13 @@ GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
         avr_vals[ns_avg::index_zk], avr_vals[ns_avg::index_mol],
         avr_vals[ns_avg::index_accent]));
     } else {
-      err = init_error.SetError(ERROR_CALC_GAS_P_ST);
+      err = init_error.SetError(ERROR_PAIR_DEFAULT(ERROR_CALC_GAS_P_ST));
   }
   if (!err) {
     mix = new GasParameters_mix_dyn({0.0, gpi.p, gpi.t},
         *tmp_cgp, dyn_parameters(), *gpi.const_dyn.components, mg);
   } else {
-    err = init_error.SetError(ERROR_CALC_GAS_P_ST);
+    err = init_error.SetError(ERROR_PAIR_DEFAULT(ERROR_CALC_GAS_P_ST));
   }
   return mix;
 }

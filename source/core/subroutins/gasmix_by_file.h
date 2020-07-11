@@ -109,7 +109,7 @@ private:
         std::shared_ptr<dyn_parameters>> ret_val{nullptr, nullptr};
     gas_t gost_mix_component;
     if (xf == nullptr) {
-      error_.SetError(ERROR_FILEIO_T | ERROR_FILE_IN_ST, "gas config init\n");
+      error_.SetError(ERROR_FILE_IN_ST, "gas config init\n");
     } else {
       // unique_ptrs
       auto cp = xf->GetConstParameters();
@@ -209,7 +209,7 @@ private:
       std::string error_str = "ошибка инициализации директории файла"
           "описывающего газовую смесь:\n  файл:" + config_doc_->GetFileName() +
           "\n  директория:" + gasmix_file_dir;
-      error_.SetError(ERROR_FILEIO_T | ERROR_FILE_IN_ST, error_str);
+      error_.SetError(ERROR_FILE_IN_ST, error_str);
       error_.LogIt();
     } else {
       gasmix_files_.clear();
@@ -236,7 +236,7 @@ private:
         try {
           part = std::stod(part_str);
         } catch (std::out_of_range &) {
-          error = error_.SetError(ERROR_STRING_T | ERROR_STR_PARSE_ST);
+          error = error_.SetError(ERROR_PAIR_DEFAULT(ERROR_STR_PARSE_ST));
         }
         gasmix_files_.emplace_back(gasmix_file(trim_str(gasname), gaspath, part));
       }
@@ -245,7 +245,7 @@ private:
         setup_gasmix_files(gasmix_file_dir);
       }
       if (error) {
-        error_.SetError(error);
+        error_.SetError(error, "ошибка инициализации компонентов смеси");
         error_.LogIt();
       }
     }
@@ -257,7 +257,7 @@ private:
       x.part /= 100.0;
     }
     if (gasmix_files_.empty()) {
-      error_.SetError(ERROR_FILEIO_T | ERROR_FILE_IN_ST,
+      error_.SetError(ERROR_FILE_IN_ST,
           "gasmix input file is empty or broken\n");
     } else {
       files_handler_ = std::unique_ptr<GasMixByFiles<ConfigReader>>(

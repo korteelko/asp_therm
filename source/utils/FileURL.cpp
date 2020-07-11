@@ -27,11 +27,6 @@ bool FileURL::IsInvalidPath() const {
   return !is_status_aval(status_);
 }
 
-void FileURL::SetError(merror_t error) {
-  error_.SetError(error);
-  status_ = STATUS_HAVE_ERROR;
-}
-
 void FileURL::SetError(merror_t error, const std::string &msg) {
   error_.SetError(error, msg);
   status_ = STATUS_HAVE_ERROR;

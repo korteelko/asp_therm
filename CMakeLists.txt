@@ -13,6 +13,7 @@ set(CMAKE_BUILD_TYPE Debug)
 
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(ASP_THERM_CMAKE_ROOT ${ASP_THERM_ROOT}/cmake)
+set(ASP_DB_ROOT ${ASP_THERM_ROOT}/subprojects/asp_db)
 
 # todo: maybe split in separate asp_therm_modules.cmake ???
 # todo: add full clear step(ninja cannot clear
@@ -24,9 +25,13 @@ function(set_build_options)
   message(STATUS "\t${PROJECT_NAME} build configuration:")
   foreach(mod ${ARGN})
     message(STATUS "\t\t${mod}")
+    # прокинуть дефайн вида 'BYCMAKE_${OPTION}' компилятору.
+    #   Префикс BYCMAKE для удобства поиска по проекту
     add_definitions(-DBYCMAKE_${mod})
+    set(${mod} TRUE PARENT_SCOPE)
   endforeach()
 endfunction()
+
 
 list(APPEND
   BUILD_OPTIONS
@@ -35,15 +40,22 @@ list(APPEND
   #   now pugi is necessarily, not comment it
   WITH_PUGIXML
   # use rapidjson
-  WITH_RAPIDJSON
+  # WITH_RAPIDJSON
   # build postgresql module and link pqxx library
   WITH_POSTGRESQL
   # enable tests
-  TESTS_ENABLED
+  # TESTS_ENABLED
 )
 
 # SETUP BUILD_OPTIONS
 set_build_options("${BUILD_OPTIONS}")
+
+#function(is_option_enabled build_option)
+#  if(${build_option} IN_LIST BUILD_OPTIONS)
+#    return(TRUE)
+#  endif()
+#  return(FALSE)
+#endfunction()
 
 
 #======================================================
@@ -87,13 +99,20 @@ include_directories(
 #======================================================
 # SOURCE
 #======================================================
+# add general sources
 # set variable 'MODELS_SRC' - general source files of project
 include(${ASP_THERM_CMAKE_ROOT}/models_src.cmake)
+# add database sources
+include(${ASP_DB_ROOT}/db_source.cmake)
+#list(TRANSFORM DATABASE_SOURCE PREPEND " ${ASP_DB_ROOT}/source/")
+list(APPEND MODELS_SRC "${DATABASE_SOURCE}")
+# add utils sources
+include(${ASP_DB_ROOT}/utils_source.cmake)
+#list(TRANSFORM UTILS_SOURCE PREPEND ${ASP_DB_ROOT})
+list(APPEND MODELS_SRC "${UTILS_SOURCE}")
 
-if(INCLUDE_ERRORCODES)
-  LIST(APPEND MODELS_SRC
-      ${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp)
-endif()
+# utils
+list(APPEND MODELS_SRC "${ASP_THERM_ROOT}/source/utils/FileURL.cpp")
 
 
 #======================================================
@@ -102,7 +121,9 @@ endif()
 # modules
 #   pugixml
 #   http://pugixml.org
-if(WITH_PUGIXML IN_LIST BUILD_OPTIONS)
+#if(is_option_enabled(WITH_PUGIXML))
+if(WITH_PUGIXML)
+  message(STATUS "Add library pugixml")
   set(PUGIXML_DIR "${MODULES_DIR}/pugixml")
   add_subdirectory(${PUGIXML_DIR})
   include_directories(${PUGIXML_DIR}/src)
@@ -111,7 +132,7 @@ endif()
 
 #   rapidjson
 #   https://github.com/Tencent/rapidjson
-if(WITH_RAPIDJSON IN_LIST BUILD_OPTIONS)
+if(WITH_RAPIDJSON)
   # rapidjson header-only
   set(RAPIDJSON_DIR "${MODULES_DIR}/rapidjson")
   add_subdirectory(${RAPIDJSON_DIR})
@@ -120,10 +141,11 @@ endif()
 
 #   pqxx
 #   http://pqxx.org/development/libpqxx/
-if(WITH_POSTGRESQL IN_LIST BUILD_OPTIONS)
+if(WITH_POSTGRESQL)
   set(PQXX_LIBS pqxx pq)
-  list(APPEND MODELS_SRC
-      ${THERMDB_SOURCE_DIR}/db_connection_postgre.cpp)
+else()
+  message(WARNING "Exclude all .cpp files matched with regex: '*postgre.cpp'")
+  list(FILTER MODEL_SRC EXCLUDE REGEX "postgre.cpp")
 endif()
 
 #   thread
@@ -135,7 +157,11 @@ find_package(Threads REQUIRED)
 # OUTPUT SETUP
 #======================================================
 # build result library
-add_library(${RESULT_LIB} STATIC ${MODELS_SRC})
+add_library(${RESULT_LIB} STATIC
+  ${MODELS_SRC}
+  ${DATABASE_SOURCE}
+  ${UTILS_SOURCE}
+)
 set_target_properties(${RESULT_LIB} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY ${LIBS_DIR}
     ARCHIVE_OUTPUT_DIRECTORY ${LIBS_DIR}
@@ -150,11 +176,11 @@ foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
 endforeach()
 
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-  include_directories(${ASP_THERM_ROOT}/tests/full/utils)
   # build test executable
   add_executable(${PROJECT_NAME}
     ${MODELS_SRC}
-    ${ASP_THERM_ROOT}/tests/full/utils/inode_imp.cpp
+    ${DATABASE_SOURCE}
+    ${UTILS_SOURCE}
     main.cpp
   )
 endif()
@@ -169,6 +195,6 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 # run tests
-if(TESTS_ENABLED IN_LIST BUILD_OPTIONS)
+if(TESTS_ENABLED)
   add_subdirectory(${ASP_THERM_ROOT}/tests/full)
 endif()

@@ -12,12 +12,10 @@ set(THERMUTILS_SOURCE_DIR "${ASP_THERM_ROOT}/source/utils")
 
 # setup file paths and cmake
 #   error codes
-set(DEFINES_SOURCE "")
 set(ERRORCODES_FILE "merror_codes.h")
 set(ERRORCODES_PATH "${THERMCORE_SOURCE_DIR}/common/${ERRORCODES_FILE}")
 if(EXISTS ${ERRORCODES_PATH})
   message(STATUS "Add file with codes of errors: ${ERRORCODES_PATH}")
-  # include(${ERRORCODES_PATH})
   set(INCLUDE_ERRORCODES TRUE)
   add_definitions(-DINCLUDE_ERRORCODES)
 endif()

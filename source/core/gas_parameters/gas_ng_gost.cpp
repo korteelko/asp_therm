@@ -140,7 +140,7 @@ GasParameters_NG_Gost_dyn::GasParameters_NG_Gost_dyn(
 GasParameters_NG_Gost_dyn *GasParameters_NG_Gost_dyn::Init(
     gas_params_input gpi) {
   if (gpi.const_dyn.ng_gost_components->empty()) {
-    GasParameters::init_error.SetError(ERROR_INIT_NULLP_ST);
+    GasParameters::init_error.SetError(ERROR_PAIR_DEFAULT(ERROR_INIT_NULLP_ST));
     return nullptr;
   }
   if (!is_valid_limits(*gpi.const_dyn.ng_gost_components)) {

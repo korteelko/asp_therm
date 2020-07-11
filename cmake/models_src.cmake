@@ -33,17 +33,6 @@ set(MODELS_SRC
   ${THERMCORE_SOURCE_DIR}/models/models_configurations.cpp
   ${THERMCORE_SOURCE_DIR}/models/models_creator.cpp
 
-# utils sources
-  ${THERMUTILS_SOURCE_DIR}/Common.cpp
-  ${THERMUTILS_SOURCE_DIR}/ErrorWrap.cpp
-  ${THERMUTILS_SOURCE_DIR}/FileURL.cpp
-  ${THERMUTILS_SOURCE_DIR}/Logging.cpp
-
 # database sources
-  ${THERMDB_SOURCE_DIR}/db_connection.cpp
-  ${THERMDB_SOURCE_DIR}/db_connection_manager.cpp
-  ${THERMDB_SOURCE_DIR}/db_defines.cpp
-  ${THERMDB_SOURCE_DIR}/db_queries_setup.cpp
-  ${THERMDB_SOURCE_DIR}/db_query.cpp
   ${THERMDB_SOURCE_DIR}/atherm_db_tables.cpp
 )

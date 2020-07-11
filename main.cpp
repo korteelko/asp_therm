@@ -12,8 +12,6 @@
 #include "db_queries_setup.h"
 #include "gas_by_file.h"
 #include "gasmix_by_file.h"
-#include "inode_imp.h"
-#include "JSONReader.h"
 #include "model_redlich_kwong.h"
 #include "model_peng_robinson.h"
 #include "models_configurations.h"
@@ -59,38 +57,6 @@ static model_str pr_str(rg_model_id(rg_model_t::PENG_ROBINSON,
 
 static fs::path cwd;
 
-
-int test_json() {
-  file_utils::FileURLRoot file_c(file_utils::SetupURL(
-      file_utils::url_t::fs_path, cwd / xml_path));
-  auto path =  file_c.CreateFileURL(json_test.string());
-  std::unique_ptr<JSONReaderSample<json_test_node<>>> jr(
-    JSONReaderSample<json_test_node<>>::Init(&path));
-  if (jr) {
-    if (!jr->GetErrorCode()) {
-      jr->InitData();
-      std::vector<std::string> path_emp;
-      std::string res = "";
-      if (jr->GetValueByPath(path_emp, &res))
-        std::cerr << "vector of paths empty";
-      /* вытянуть обычный параметр */
-      std::vector<std::string> path_f = {"first", "t"};
-      if (jr->GetValueByPath(path_f, &res))
-        std::cerr << "vector of paths error";
-      if (!res.empty()) {
-        std::cerr << "On json path:";
-        for (const auto &x : path_f)
-          std::cerr << " " << x;
-        std::cerr << "\nwe have: " << res << std::endl;
-      }
-    }
-  } else {
-    std::cerr << "bad init" << std::endl;
-    return ERROR_GENERAL_T;
-  }
-  std::cerr << "JSON test finish succesfully\n";
-  return ERROR_SUCCESS_T;
-}
 
 int test_database_with_models(DBConnectionManager &dbm) {
   int res = 0;
@@ -210,7 +176,7 @@ int test_database() {
   std::vector<db_table> tables { table_model_info,
       table_calculation_info, table_calculation_state_log };
   for (const auto &x: tables) {
-    if (!dbm.IsTableExist(x)) {
+    if (!dbm.IsTableExists(x)) {
       if (dbm.GetErrorCode())
         std::cerr << "\nerror ocurred for tableExist command #" << int(x);
       dbm.CreateTable(x);

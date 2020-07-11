@@ -164,7 +164,8 @@ merror_t modelGeneral::check_input(const model_input &mi) {
     }
   }
   if (!(err || is_above0(mi.gpi.p, mi.gpi.t)))
-    err = modelGeneral::init_error.SetError(ERROR_INIT_T | ERROR_INIT_ZERO_ST);
+    err = modelGeneral::init_error.SetError(
+        ERROR_PAIR_DEFAULT(ERROR_INIT_ZERO_ST));
   return err;
 }
 

@@ -12,93 +12,53 @@
 
 
 #if not defined(ERROR_SUCCESS_T)
-#  define ERROR_SUCCESS_T     0x0000
+#  define ERROR_SUCCESS_T         0x0000
+#  define ERROR_SUCCESS_T_MSG     "there are not any errors "
 #endif  // !ERROR_SUCCESS_T
 #if not defined(ERROR_GENERAL_T)
-#  define ERROR_GENERAL_T     0x0001
+#  define ERROR_GENERAL_T         0x0001
+#  define ERROR_GENERAL_T_MSG     "general error "
 #endif  // !ERROR_GENERAL_T
 
 // error type
-#define ERROR_MASK_TYPE       0x00ff
-/** \brief ошибка файлового ввода/вывода */
-#define ERROR_FILEIO_T        0x0002
+#define ERROR_MASK_TYPE           0x00ff
 /** \brief ошибка при проведении расчётов */
-#define ERROR_CALCULATE_T     0x0003
-/** \brief ошибка при работе со строками */
-#define ERROR_STRING_T        0x0004
-/** \brief ошибка инициализации */
-#define ERROR_INIT_T          0x0005
+#define ERROR_CALCULATE_T         0x0003
+#define ERROR_CALCULATE_T_MSG     "calculation error "
 /** \brief ошибка работы со стоковыми шаблонами.
   *   строковые шаблоны - текстовые значения в xml и json файлах */
-#define ERROR_STRTPL_T        0x0006
-/** \brief ошибка работы с базой данных */
-#define ERROR_DATABASE_T      0x0007
+#define ERROR_STRTPL_T            0x0006
+#define ERROR_STRTPL_T_MSG        "string template error "
 
 // error subtype
-#define ERROR_MASK_SUBTYPE    0xff00
+#define ERROR_MASK_SUBTYPE        0xff00
 //   fileio errors
-/** \brief ошибка чтения файла */
-#define ERROR_FILE_IN_ST      (0x0100 | ERROR_FILEIO_T)
-/** \brief ошибка записи в файл */
-#define ERROR_FILE_OUT_ST     (0x0200 | ERROR_FILEIO_T)
-/** \brief ошибка операции с файлом логирования */
-#define ERROR_FILE_LOGGING_ST (0x0300 | ERROR_FILEIO_T)
-/** \brief ошибка существования файла */
-#define ERROR_FILE_EXISTS_ST  (0x0400 | ERROR_FILEIO_T)
-/** \brief ошибка парсинга json файла */
-#define ERROR_JSON_PARSE_ST   (0x0500 | ERROR_FILEIO_T)
 /** \brief ошибка несоответствия форматов в json файле */
-#define ERROR_JSON_FORMAT_ST  (0x0600 | ERROR_FILEIO_T)
+#define ERROR_JSON_FORMAT_ST      (0x0600 | ERROR_FILEIO_T)
+#define ERROR_JSON_FORMAT_ST_MSG  "json format error "
 /** \brief ошибка поиска подузла в какой-либо подноде */
-#define ERROR_SEARCH_CHILD_ST (0x0700 | ERROR_FILEIO_T)
+#define ERROR_SEARCH_CHILD_ST     (0x0700 | ERROR_FILEIO_T)
+#define ERROR_SEARCH_CHILD_ST_MSG "search child in tree structure error "
 
 //   calculate errors
-#define ERROR_CALC_GAS_P_ST   (0x0100 | ERROR_CALCULATE_T)
-#define ERROR_CALC_PHASE_ST   (0x0200 | ERROR_CALCULATE_T)
-#define ERROR_CALC_MODEL_ST   (0x0300 | ERROR_CALCULATE_T)
-#define ERROR_CALC_MIX_ST     (0x0400 | ERROR_CALCULATE_T)
-
-//   string errors
-#define ERROR_STR_MAX_LEN_ST  (0x0100 | ERROR_STRING_T)
-#define ERROR_STR_PARSE_ST    (0x0200 | ERROR_STRING_T)
-#define ERROR_STR_NULL_ST     (0x0300 | ERROR_STRING_T)
-#define ERROR_STR_TOINT_ST    (0x0400 | ERROR_STRING_T)
-
-//   init errors
-#define ERROR_INIT_ZERO_ST    (0x0100 | ERROR_INIT_T)
-#define ERROR_INIT_NULLP_ST   (0x0200 | ERROR_INIT_T)
+#define ERROR_CALC_GAS_P_ST       (0x0100 | ERROR_CALCULATE_T)
+#define ERROR_CALC_GAS_P_ST_MSG   "parameters error "
+#define ERROR_CALC_PHASE_ST       (0x0200 | ERROR_CALCULATE_T)
+#define ERROR_CALC_PHASE_ST_MSG   "phase diagram error "
+#define ERROR_CALC_MODEL_ST       (0x0300 | ERROR_CALCULATE_T)
+#define ERROR_CALC_MODEL_ST_MSG   "model error "
+#define ERROR_CALC_MIX_ST         (0x0400 | ERROR_CALCULATE_T)
+#define ERROR_CALC_MIX_ST_MSG     "gas mix error "
 
 // string templates error
 /** \brief пустой текстовый шаблон */
-#define ERROR_STRTPL_TPLNULL  (0x0100 | ERROR_STRTPL_T)
+#define ERROR_STRTPL_TPLNULL      (0x0100 | ERROR_STRTPL_T)
+#define ERROR_STRTPL_TPLNULL_MSG  "empty string template "
 /** \brief неизвестный текстовый шаблон */
-#define ERROR_STRTPL_TPLUNDEF (0x0200 | ERROR_STRTPL_T)
+#define ERROR_STRTPL_TPLUNDEF     (0x0200 | ERROR_STRTPL_T)
+#define ERROR_STRTPL_TPLUNDEF_MSG "undefined string template "
 /** \brief недопустимое значение текстового шаблона */
-#define ERROR_STRTPL_VALWRONG (0x0300 | ERROR_STRTPL_T)
-
-// database connection
-/** \brief Ошибка подключения к базе данных */
-#define ERROR_DB_CONNECTION   (0x0100 | ERROR_DATABASE_T)
-/** \brief Ошибка переменной БД */
-#define ERROR_DB_VARIABLE     (0x0200 | ERROR_DATABASE_T)
-/** \brief Ошибка поля ссылки */
-#define ERROR_DB_REFER_FIELD  (0x0300 | ERROR_DATABASE_T)
-/** \brief Ошибка во время выполнения операции "существование таблицы" */
-#define ERROR_DB_TABLE_EXISTS (0x0400 | ERROR_DATABASE_T)
-/** \brief Ошибка составления запроса */
-#define ERROR_DB_QUERY_NULLP  (0x0500 | ERROR_DATABASE_T)
-/** \brief Ошибка первичного ключа */
-#define ERROR_DB_TABLE_PKEY   (0x0600 | ERROR_DATABASE_T)
-/** \brief Ошибка SQL запроса */
-#define ERROR_DB_SQL_QUERY    (0x0700 | ERROR_DATABASE_T)
-/** \brief Ошибочная операция СУБД */
-#define ERROR_DB_OPERATION    (0x0800 | ERROR_DATABASE_T)
-/** \brief Колонка не существует */
-#define ERROR_DB_COL_EXISTS   (0x0900 | ERROR_DATABASE_T)
-/** \brief Ошибка конфигурации точки сохранения */
-#define ERROR_DB_SAVE_POINT   (0x0A00 | ERROR_DATABASE_T)
-
-
-const char *GetCustomErrorMsg(unsigned int error);
+#define ERROR_STRTPL_VALWRONG     (0x0300 | ERROR_STRTPL_T)
+#define ERROR_STRTPL_VALWRONG_MSG "wrong string template value "
 
 #endif  // !UTILS__MERROR_CODES_H
