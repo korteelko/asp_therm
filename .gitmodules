@@ -1,9 +1,6 @@
 [submodule "lib/pugixml"]
 	path = lib/pugixml
 	url = https://github.com/zeux/pugixml
-[submodule "lib/rapidjson"]
-	path = lib/rapidjson
-	url = https://github.com/Tencent/rapidjson
 [submodule "subprojects/asp_db"]
 	path = subprojects/asp_db
 	url = https://gitlab.com/korteelko/asp_db
