@@ -19,6 +19,7 @@ list(APPEND FULLTEST_LIBRARIES gcov)
 
 if(${GTEST_FOUND})
   include(${ASP_THERM_CMAKE_ROOT}/atherm_setup.cmake)
+  include(${ASP_THERM_ROOT}/subprojects/asp_db/utils_source.cmake)
 
   find_package(Threads REQUIRED)
   list(APPEND FULLTEST_LIBRARIES Threads::Threads)

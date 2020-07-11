@@ -24,9 +24,9 @@ TEST(ErrorWrap, Full) {
   EXPECT_EQ(ew.GetMessage(), "");
 
   /* накопить изменения */
-  ew.SetError(ERROR_GENERAL_T);
+  ew.SetError(ERROR_PAIR_DEFAULT(ERROR_GENERAL_T));
   EXPECT_EQ(ew.GetErrorCode(), ERROR_GENERAL_T);
-  EXPECT_EQ(ew.GetMessage(), "");
+  EXPECT_FALSE(ew.GetMessage() == "");
 
   ew.SetErrorMessage("Тест ошибки");
   EXPECT_EQ(ew.GetMessage(), "Тест ошибки");

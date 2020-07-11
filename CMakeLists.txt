@@ -39,12 +39,10 @@ list(APPEND
   # use pugixml
   #   now pugi is necessarily, not comment it
   WITH_PUGIXML
-  # use rapidjson
-  # WITH_RAPIDJSON
   # build postgresql module and link pqxx library
   WITH_POSTGRESQL
   # enable tests
-  # TESTS_ENABLED
+  TESTS_ENABLED
 )
 
 # SETUP BUILD_OPTIONS

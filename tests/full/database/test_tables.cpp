@@ -46,9 +46,9 @@ TEST_F(DatabaseTablesTest, TableExists) {
   std::vector<db_table> tables { table_model_info,
       table_calculation_info, table_calculation_state_log };
   for (const auto &x: tables) {
-    if (!dbm_.IsTableExist(x)) {
+    if (!dbm_.IsTableExists(x)) {
       dbm_.CreateTable(x);
-      ASSERT_TRUE(dbm_.IsTableExist(x));
+      ASSERT_TRUE(dbm_.IsTableExists(x));
     }
   }
 }

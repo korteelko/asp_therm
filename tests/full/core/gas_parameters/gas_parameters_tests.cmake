@@ -7,7 +7,6 @@ add_executable(
   ${ASP_THERM_FULLTEST_DIR}/core/gas_parameters/test_gasmix.cpp
 
   ${THERMCORE_SOURCE_DIR}/common/atherm_common.cpp
-  ${THERMCORE_SOURCE_DIR}/common/merror_codes.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description.cpp
@@ -17,9 +16,7 @@ add_executable(
 
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
 
-  ${THERMUTILS_SOURCE_DIR}/Common.cpp
-  ${THERMUTILS_SOURCE_DIR}/ErrorWrap.cpp
-  ${THERMUTILS_SOURCE_DIR}/Logging.cpp
+  ${UTILS_SOURCE}
 )
 
 set(PUGIXML_DIR "${MODULES_DIR}/pugixml")
