@@ -31,11 +31,6 @@ bool calculation_configuration::IsEnableISO20765() const {
   return enable_iso_20765;
 }
 
-/* calculation_setup */
-calculation_setup::calculation_setup(const file_utils::FileURL &gasmix_file,
-    const file_utils::FileURL &calculation_config)
-  : gasmix_file(gasmix_file), calculation_config(calculation_config) {}
-
 /* calculation_info */
 calculation_info::calculation_info()
   : datetime(time(0)) {}

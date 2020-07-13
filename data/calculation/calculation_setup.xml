@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<calc_setup name="example">
+  <!-- Setup thermodynamic equations.
+  Available models:
+    'IG'-ideal gas,
+    'RK' - Redlich-Kwong,
+    'SRK' - Soave-Redlich-Kwong,
+    'PR' - Peng-Robinson,
+    'PRb' - Peng-Robinson with binary coefficients,
+    'GOST' - gost 30319,
+    'ISO' - ISO 20765-2005
+    '' - set nothing for use best from available models(search 'priority' in source files)
+  -->
+  <parameter name="models"> PRb, GOST, ISO </parameter>
+  <group name="gasmix_files">
+    <!-- mixtures from gost-30319 root dir is 'data' -->
+    <parameter name="gostmix1"> gost/gostmix1.xml </parameter>
+    <parameter name="gostmix2"> gost/gostmix2.xml </parameter>
+    <parameter name="gostmix3"> gost/gostmix3.xml </parameter>
+  </group>
+  <group name="points">
+    <!-- [p] = Pa, [t] = K -->
+    <point p="100000" t="250.0"/>
+    <point p="100000" t="300.0"/>
+    <point p="100000" t="350.0"/>
+    <point p="5000000" t="250.0"/>
+    <point p="5000000" t="300.0"/>
+    <point p="5000000" t="350.0"/>
+    <point p="15000000" t="250.0"/>
+    <point p="15000000" t="300.0"/>
+    <point p="15000000" t="350.0"/>
+    <point p="30000000" t="250.0"/>
+    <point p="30000000" t="300.0"/>
+    <point p="30000000" t="350.0"/>
+  </group>
+</calc_setup>
+

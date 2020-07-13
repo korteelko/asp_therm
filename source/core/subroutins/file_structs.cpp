@@ -30,6 +30,10 @@ std::array<std::string, CONFIG_NODE_COUNT> config_node::node_t_list = {
   "program_config", "group", "parameter"
 };
 
+std::array<std::string, CALCUL_NODE_COUNT> calc_set_node::node_t_list = {
+  "calc_setup", "group", "parameter", "point"
+};
+
 // config_node
 namespace update_configuration_functional {
 typedef std::function<merror_t(db_parameters *,
@@ -141,6 +145,7 @@ node_type gas_node::get_node_type(std::string type) {
   return NODE_T_UNDEFINED;
 }
 
+// gasmix_node
 gasmix_node::gasmix_node(node_type itype, std::string name)
   : mix_node_type(itype), name(name) {}
 
@@ -164,6 +169,22 @@ node_type gasmix_node::get_node_type(std::string type) {
   return NODE_T_UNDEFINED;
 }
 
+// calculation_node
+calc_set_node::calc_set_node(node_type itype, std::string name)
+  : calc_node_type(itype), name(name) {}
+calc_set_node::calc_set_node(node_type itype, std::string name,
+  std::string value)
+  : calc_node_type(itype), name(name), value(value) {}
+
+std::string calc_set_node::get_root_name() {
+  return calc_set_node::node_t_list[NODE_T_ROOT];
+}
+node_type calc_set_node::get_node_type(std::string type) {
+  for (uint32_t i = 0; i < calc_set_node::node_t_list.size(); ++i)
+    if (calc_set_node::node_t_list[i] == type)
+      return i;
+  return NODE_T_UNDEFINED;
+}
 
 /* PARSE TEMPLATE VALUES */
 /* data */
@@ -178,6 +199,16 @@ static std::map<const std::string, db_client> map_dbclient_tpls =
     std::map<const std::string, db_client> {
   {STRTPL_DB_CLIENT_NOONE, db_client::NOONE},
   {STRTPL_DB_CLIENT_POSTGRESQL, db_client::POSTGRESQL},
+};
+static std::map<const std::string, rg_model_id> map_model_tpls =
+    std::map<const std::string, rg_model_id> {
+  {STRTPL_MODEL_IDEAL_GAS, rg_model_id(rg_model_t::IDEAL_GAS, MODEL_SUBTYPE_DEFAULT)},
+  {STRTPL_MODEL_REDLICH_KWONG, rg_model_id(rg_model_t::REDLICH_KWONG, MODEL_SUBTYPE_DEFAULT)},
+  {STRTPL_MODEL_REDLICH_KWONG_SOAVE, rg_model_id(rg_model_t::REDLICH_KWONG, MODEL_RK_SUBTYPE_SOAVE)},
+  {STRTPL_MODEL_PENG_ROBINSON, rg_model_id(rg_model_t::PENG_ROBINSON, MODEL_SUBTYPE_DEFAULT)},
+  {STRTPL_MODEL_PENG_ROBINSON_B, rg_model_id(rg_model_t::PENG_ROBINSON, MODEL_PR_SUBTYPE_BINASSOC)},
+  {STRTPL_MODEL_GOST, rg_model_id(rg_model_t::NG_GOST, MODEL_SUBTYPE_DEFAULT)},
+  {STRTPL_MODEL_GOST, rg_model_id(rg_model_t::NG_GOST, MODEL_GOST_SUBTYPE_ISO_20765)}
 };
 
 /* functions */
@@ -200,15 +231,24 @@ merror_t set_db_client(const std::string &val, db_client *ans) {
   return set_by_map(map_dbclient_tpls, val, *ans);
 }
 
-/*
 merror_t set_double(const std::string &val, double *ans) {
-  assert(0);
+  merror_t error = ERROR_SUCCESS_T;
+  try {
+    *ans = std::stod(val);
+  } catch (std::invalid_argument &) {
+    error = ERROR_STR_TOINT_ST;
+    Logging::Append(io_loglvl::debug_logs, "Ошибка при конвертации"
+        "строки к типу с плавающей точкой(double): invalid_argument");
+  } catch (std::out_of_range &) {
+    error = ERROR_STR_TOINT_ST;
+    Logging::Append(io_loglvl::debug_logs, "Ошибка при конвертации"
+        "строки к типу с плавающей точкой(double): out_of_range");
+  }
+  return error;
 }
-*/
 
 merror_t set_int(const std::string &val, int *ans) {
   merror_t error = ERROR_SUCCESS_T;
-  /* TODO: separate merrors for different exceptions */
   try {
     *ans = std::stoi(val);
   } catch (std::invalid_argument &) {
@@ -225,4 +265,8 @@ merror_t set_int(const std::string &val, int *ans) {
 
 merror_t set_loglvl(const std::string &val, io_loglvl *ans) {
   return set_by_map(map_loglvl_tpls, val, *ans);
+}
+
+merror_t set_model(const std::string &val, rg_model_id *ans) {
+  return set_by_map(map_model_tpls, val, *ans);
 }

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gasmix name="example" version="1.0">
+  <group name="component1">
+     <parameter name="name"> methane </parameter>
+     <parameter name="path"> gases/methane.xml </parameter>
+     <parameter name="part"> 93.5 </parameter>
+  </group>
+  <group name="component2">
+     <parameter name="name"> ethane </parameter>
+     <parameter name="path"> gases/ethane.xml </parameter>
+     <parameter name="part"> 4.4 </parameter>
+  </group>
+  <group name="component3">
+     <parameter name="name"> propane </parameter>
+     <parameter name="path"> gases/propane.xml </parameter>
+     <parameter name="part"> 2.1 </parameter>
+  </group>
+</gasmix> 

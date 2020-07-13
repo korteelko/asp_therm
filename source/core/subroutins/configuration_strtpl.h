@@ -1,6 +1,10 @@
 /**
  * asp_therm - implementation of real gas equations of state
- *
+ * ===================================================================
+ * * configuration_strtpl *
+ *   В файл выписаны текстовые представления строк допустимых
+ * в файлах конфигурации ПО или расчёта
+ * ===================================================================
  *
  * Copyright (c) 2020 Mishutinski Yurii
  *
@@ -17,7 +21,8 @@
        состояние скипать в текстовое... интересная идея для дампов состояния */
 
 /* TEMPLATES */
-/* параметры конфигурации */
+/* configuration */
+/*   параметры конфигурации */
 #define STRTPL_CONFIG_DEBUG_MODE "debug_mode"
 #define STRTPL_CONFIG_RK_ORIG_MOD "rk_orig_mod"
 #define STRTPL_CONFIG_RK_SOAVE_MOD "rk_soave_mod"
@@ -27,7 +32,7 @@
 #define STRTPL_CONFIG_LOG_FILE "log_file"
 #define STRTPL_CONFIG_DATABASE "database"
 
-/* параметры конфигурации базы данных */
+/*   параметры конфигурации базы данных */
 #define STRTPL_CONFIG_DB_DRY_RUN "dry_run"
 #define STRTPL_CONFIG_DB_CLIENT "client"
 #define STRTPL_CONFIG_DB_NAME "name"
@@ -36,6 +41,9 @@
 #define STRTPL_CONFIG_DB_HOST "host"
 #define STRTPL_CONFIG_DB_PORT "port"
 
+
+/* calculation */
+#define STRTPL_CALCUL_MODELS "models"
 
 /* VALUES */
 /* bool */
@@ -47,6 +55,15 @@
 #define STRTPL_LOG_LEVEL_ERR "err"
 #define STRTPL_LOG_LEVEL_WARN "warn"
 #define STRTPL_LOG_LEVEL_DEBUG "debug"
+
+/* models */
+#define STRTPL_MODEL_IDEAL_GAS "IG"
+#define STRTPL_MODEL_REDLICH_KWONG "RK"
+#define STRTPL_MODEL_REDLICH_KWONG_SOAVE "RKS"
+#define STRTPL_MODEL_PENG_ROBINSON "PR"
+#define STRTPL_MODEL_PENG_ROBINSON_B "PRb"  // PR with binary coefs
+#define STRTPL_MODEL_GOST "GOST"
+#define STRTPL_MODEL_ISO "ISO"
 
 /* clients */
 #define STRTPL_DB_CLIENT_NOONE "noone"

@@ -1,6 +1,10 @@
 /**
  * asp_therm - implementation of real gas equations of state
- *
+ * ===================================================================
+ * * configuration_by_file *
+ *   В файле описан шаблон класса, предоставляющего функционал
+ * инициализации конфигурации программы из текстового файла.
+ * ===================================================================
  *
  * Copyright (c) 2020 Mishutinski Yurii
  *
@@ -12,6 +16,7 @@
 
 #include "configuration_strtpl.h"
 #include "db_connection.h"
+#include "ErrorWrap.h"
 #include "file_structs.h"
 #include "models_configurations.h"
 

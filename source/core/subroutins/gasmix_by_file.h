@@ -17,9 +17,6 @@
 #include "gasmix_init.h"
 #include "models_math.h"
 #include "ErrorWrap.h"
-#if defined (WITH_RAPIDJSON)
-#  include "JSONReader.h"
-#endif  // WITH_RAPIDJSON
 #if defined (WITH_PUGIXML)
 #  include "XMLReader.h"
 #endif  // WITH_PUGIXML
@@ -148,14 +145,8 @@ template <template<class gas_node> class ConfigReader>
 ErrorWrap GasMixByFiles<ConfigReader>::init_error;
 
 
-/* todo: redo this(hide) */
+/* TODO: redo this(hide) */
 namespace {
-#if defined (_DEBUG_SUBROUTINS)
-const char *gases_root_dir = "../../asp_therm/data/gases/";
-#elif defined (_RELEASE)
-const char *gases_root_dir = "data/gases/";
-#endif  // _DEBUG_SUBROUTINS
-
 std::string gasmix_component = "component";
 std::string gasmix_parameter_name = "name";
 std::string gasmix_parameter_path = "path";
@@ -276,14 +267,20 @@ private:
   // void setup_gost_mix();
 
 private:
-  std::unique_ptr<ConfigReader<gasmix_node>> config_doc_;
-  /* maybe remove files_handler_ */
-  std::unique_ptr<GasMixByFiles<ConfigReader>> files_handler_;
-  /* containers
-   * UPD: lol, we can recalculate gasmix_files_ by gost model */
-  std::vector<gasmix_file> gasmix_files_;
-  rg_model_t model_t_;
   ErrorWrap error_;
+  std::unique_ptr<ConfigReader<gasmix_node>> config_doc_;
+  /** \brief Объект инициализирующий смесь
+    * \note Имя его неподходящее */
+  std::unique_ptr<GasMixByFiles<ConfigReader>> files_handler_;
+  /** \brief Контейнер считанных данных */
+  std::vector<gasmix_file> gasmix_files_;
+  /** \brief Используемая термодинамическая модель
+    * \note Она не нужна, нужна просто bool переменная на
+    *   считывание файлов, или вообще не нужна, т.к. в файлах миксов
+    *   прописаны пути к компонентам их описывающим. Соответственно,
+    *   если путь не задан то не о чём и говорить
+    * \todo Remove it. You can replace with `bool should_read_components_`) */
+  rg_model_t model_t_;
 };
 
 #endif  // !_CORE__SUBROUTINS__GASMIX_BY_FILE_H_

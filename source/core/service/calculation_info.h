@@ -108,16 +108,12 @@ public:
 /** \brief Набор данных инициализации расчёта */
 struct calculation_setup {
 public:
-  calculation_setup(const file_utils::FileURL &gasmix_file,
-      const file_utils::FileURL &calculation_config);
-
-public:
+  /** \brief Используемые модели */
+  std::vector<rg_model_id> models;
   /** \brief Файл иниициализации газовой смеси */
-  file_utils::FileURL gasmix_file;
-  /** \brief Файл описывающий области расчёта */
-  file_utils::FileURL calculation_config;
-  /** \brief Файл иниициализации используемых моделей */
-  // std::string models_file;
+  std::vector<file_utils::FileURL> gasmix_files;
+  /** \brief Точки расчёта */
+  std::vector<parameters> points;
 };
 
 /** \brief информация о предыдущих расчётах */

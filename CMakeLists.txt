@@ -48,13 +48,6 @@ list(APPEND
 # SETUP BUILD_OPTIONS
 set_build_options("${BUILD_OPTIONS}")
 
-#function(is_option_enabled build_option)
-#  if(${build_option} IN_LIST BUILD_OPTIONS)
-#    return(TRUE)
-#  endif()
-#  return(FALSE)
-#endfunction()
-
 
 #======================================================
 # PLATFORM
@@ -119,22 +112,12 @@ list(APPEND MODELS_SRC "${ASP_THERM_ROOT}/source/utils/FileURL.cpp")
 # modules
 #   pugixml
 #   http://pugixml.org
-#if(is_option_enabled(WITH_PUGIXML))
 if(WITH_PUGIXML)
   message(STATUS "Add library pugixml")
   set(PUGIXML_DIR "${MODULES_DIR}/pugixml")
   add_subdirectory(${PUGIXML_DIR})
   include_directories(${PUGIXML_DIR}/src)
   set(PUGIXML_LIB "pugixml")
-endif()
-
-#   rapidjson
-#   https://github.com/Tencent/rapidjson
-if(WITH_RAPIDJSON)
-  # rapidjson header-only
-  set(RAPIDJSON_DIR "${MODULES_DIR}/rapidjson")
-  add_subdirectory(${RAPIDJSON_DIR})
-  include_directories(${RAPIDJSON_DIR}/include)
 endif()
 
 #   pqxx
@@ -155,15 +138,17 @@ find_package(Threads REQUIRED)
 # OUTPUT SETUP
 #======================================================
 # build result library
-add_library(${RESULT_LIB} STATIC
-  ${MODELS_SRC}
-  ${DATABASE_SOURCE}
-  ${UTILS_SOURCE}
-)
-set_target_properties(${RESULT_LIB} PROPERTIES
-    LIBRARY_OUTPUT_DIRECTORY ${LIBS_DIR}
-    ARCHIVE_OUTPUT_DIRECTORY ${LIBS_DIR}
-)
+if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+  add_library(${RESULT_LIB} STATIC
+    ${MODELS_SRC}
+    ${DATABASE_SOURCE}
+    ${UTILS_SOURCE}
+  )
+  set_target_properties(${RESULT_LIB} PROPERTIES
+      LIBRARY_OUTPUT_DIRECTORY ${LIBS_DIR}
+      ARCHIVE_OUTPUT_DIRECTORY ${LIBS_DIR}
+  )
+endif()
 
 foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
   string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)

@@ -25,6 +25,7 @@ typedef uint32_t node_type;
 #define CONFIG_NODE_COUNT   3
 #define GAS_NODE_COUNT      5
 #define GASMIX_NODE_COUNT   3
+#define CALCUL_NODE_COUNT   4
 #define NODE_T_ROOT         0
 #define NODE_T_UNDEFINED    0xff
 
@@ -48,8 +49,8 @@ public:
   *   новое значение параметра, представленого аргументами
   * \param param_strtpl Строковое представление параметра(ключ)
   * \param param_value Строковое значение параметра */
-merror_t set_db_parameter(asp_db::db_parameters *dst, const std::string &param_strtpl,
-    const std::string &param_value);
+merror_t set_db_parameter(asp_db::db_parameters *dst,
+    const std::string &param_strtpl, const std::string &param_value);
 
 /// class for initializing gas component by file
 class gas_node {
@@ -82,6 +83,23 @@ public:
   static std::string get_root_name();
   static node_type get_node_type(std::string type);
 };
+
+/// class for initializing gasmix by file
+class calc_set_node {
+  static std::array<std::string, CALCUL_NODE_COUNT> node_t_list;
+
+public:
+  node_type calc_node_type;
+  std::string name,
+              value;
+
+  calc_set_node(node_type itype, std::string name);
+  calc_set_node(node_type itype, std::string name, std::string value);
+
+  static std::string get_root_name();
+  static node_type get_node_type(std::string type);
+};
+
 
 
 /** \brief искать в переданной в аргументах мапе
@@ -121,18 +139,24 @@ merror_t set_db_client(const std::string &val, asp_db::db_client *ans);
 /** \brief проверить соответствие 'val' допустимым значениям double
   * \param val текстовый шаблон значения
   * \param ans out double параметр значения */
-// [[nodiscard]]
-// merror_t set_double(const std::string &val, double *ans);
+[[nodiscard]]
+merror_t set_double(const std::string &val, double *ans);
 /** \brief проверить соответствие 'val' допустимым значениям int
   * \param val текстовый шаблон значения
   * \param ans out int параметр значения */
 [[nodiscard]]
 merror_t set_int(const std::string &val, int *ans);
 /** \brief проверить соответствие 'val' допустимым значениям
-  *   шаблона для io_loglvl: "debug",
+  *   шаблона для io_loglvl: "debug", ...
   * \param val текстовый шаблон значения
   * \param ans out bool параметр значения */
 [[nodiscard]]
 merror_t set_loglvl(const std::string &val, io_loglvl *ans);
+/** \brief проверить соответствие 'val' допустимым значениям
+  *   шаблона для модели расчёта
+  * \param val текстовый шаблон значения
+  * \param ans out bool параметр значения */
+[[nodiscard]]
+merror_t set_model(const std::string &val, rg_model_id *ans);
 
 #endif  // !_CORE__SUBROUTINS__FILE_STRUCTS_H_
