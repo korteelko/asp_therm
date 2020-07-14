@@ -21,16 +21,23 @@ class InpConfig:
 
 
 def parse_input(arguments, inp_config):
+    """
+    Распарсить инпут
+
+    :param
+    :param
+    :return
+    """
     output_dir = str(arguments[0])
     if not output_dir:
         raise Exception('Не задана директория вывода')
     if not os.path.exists(output_dir) or not os.path.isdir(output_dir):
         print('Директория ' + output_dir + ' не существует.')
         print('Попробую создать')
-        os.mkdir(output_path)
+        os.mkdir(output_dir)
     source_root = inp_config.GetSourceRoot()
     objects_root = inp_config.GetObjectsRoot()
-    # set directory of script as current dir 
+    # set directory of script as current dir
     if not source_root and not objects_root:
         source_root = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../source')
         objects_root = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../build')
@@ -42,6 +49,7 @@ def parse_input(arguments, inp_config):
     index_file = os.path.join(output_dir, 'index.html')
     # test
     if (0):
+        print('Тестовый запуск скрипта')
         print('В результате строка запуска gcovr имеет вид:')
         print('gcovr -r ' + source_root + objects_root + ' --html --html-details -o ' + index_file)
     #release

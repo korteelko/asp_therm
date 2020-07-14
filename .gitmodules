@@ -3,4 +3,4 @@
 	url = https://github.com/zeux/pugixml
 [submodule "subprojects/asp_db"]
 	path = subprojects/asp_db
-	url = https://gitlab.com/korteelko/asp_db
+	url = https://github.com/sinkarl/asp_db

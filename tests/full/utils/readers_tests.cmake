@@ -2,6 +2,7 @@ message(STATUS "\t\tRun Readers test")
 
 add_definitions(-DREADERS_TEST)
 set (COMMON_SRC
+  ${THERMCORE_SOURCE_DIR}/common/atherm_common.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
