@@ -108,6 +108,8 @@ public:
 /** \brief Набор данных инициализации расчёта */
 struct calculation_setup {
 public:
+  /** \brief Корневая директория текстовых файлов */
+  std::shared_ptr<file_utils::FileURLRoot> root;
   /** \brief Используемые модели */
   std::vector<rg_model_id> models;
   /** \brief Файл иниициализации газовой смеси */

@@ -9,6 +9,7 @@
  */
 #include "file_structs.h"
 
+#include "atherm_common.h"
 #include "configuration_strtpl.h"
 #include "Logging.h"
 

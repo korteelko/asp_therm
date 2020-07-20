@@ -33,12 +33,6 @@
 // error subtype
 #define ERROR_MASK_SUBTYPE        0xff00
 //   fileio errors
-/** \brief ошибка несоответствия форматов в json файле */
-#define ERROR_JSON_FORMAT_ST      (0x0600 | ERROR_FILEIO_T)
-#define ERROR_JSON_FORMAT_ST_MSG  "json format error "
-/** \brief ошибка поиска подузла в какой-либо подноде */
-#define ERROR_SEARCH_CHILD_ST     (0x0700 | ERROR_FILEIO_T)
-#define ERROR_SEARCH_CHILD_ST_MSG "search child in tree structure error "
 
 //   calculate errors
 #define ERROR_CALC_GAS_P_ST       (0x0100 | ERROR_CALCULATE_T)

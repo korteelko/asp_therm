@@ -18,6 +18,7 @@
 #include "ErrorWrap.h"
 
 #include <string>
+#include <vector>
 
 
 namespace file_utils {
@@ -98,6 +99,30 @@ inline merror_t FileURL::GetError() const { return error_.GetErrorCode(); }
 /** \brief Фабрика инициализации файловых адресов */
 class FileURLRoot {
 public:
+  /** \brief Контейнер содержимого директории */
+  struct ContentContainer {
+    typedef std::vector<FileURL> ContainerT;
+  public:
+    ContainerT content;
+
+  public:
+    /** \brief Добавить элемент к контейнеру */
+    template<class T>
+    void add(T &&element) {
+      content.push_back(element);
+    }
+    /** \brief Container begin */
+    template<class T>
+    ContainerT::iterator begin() {
+      return content.begin();
+    }
+    /** \brief Container end */
+    template<class T>
+    ContainerT::iterator end() {
+      return content.end();
+    }
+  };
+public:
   FileURLRoot(const SetupURL &setup);
   FileURLRoot(url_t url_type, const std::string &root);
 
@@ -105,6 +130,9 @@ public:
   bool IsInitialized();
   /** \brief Собрать адрес файла по относительному пути */
   FileURL CreateFileURL(const std::string &relative_path);
+  /** \brief Список файлов в директории
+    * \todo можно добавить относительный путь и глубину обхода(сейчас 1) */
+  ContentContainer GetContent();
 
 private:
   /** \brief Проверить root директорию файловой системы */

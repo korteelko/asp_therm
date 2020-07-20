@@ -44,6 +44,8 @@
 
 /* calculation */
 #define STRTPL_CALCUL_MODELS "models"
+#define STRTPL_CALCUL_GASMIX "gasmix_files"
+#define STRTPL_CALCUL_POINTS "points"
 
 /* VALUES */
 /* bool */

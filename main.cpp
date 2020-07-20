@@ -8,6 +8,7 @@
  * See LICENSE file in the project root for full license information.
  */
 #include "atherm_db_tables.h"
+#include "calculation_by_file.h"
 #include "db_connection_manager.h"
 #include "db_queries_setup.h"
 #include "gas_by_file.h"
@@ -27,10 +28,11 @@
 // #define JSON_READER_DEBUG
 // #define MODELS_DEBUG
 #define RK2_DEBUG
-//#define PR_DEBUG  // доделать для смесей
+// #define PR_DEBUG  // доделать для смесей
 #define RKS_DEBUG
-//#define NG_GOST_DEBUG
-#define DATABASE_DEBUG
+// #define NG_GOST_DEBUG
+// #define DATABASE_DEBUG
+#define CALCULATION_DEBUG
 
 #define INPUT_P_T  3000000, 350
 #define NEW_PARAMS 500000, 250
@@ -38,13 +40,14 @@
 namespace fs = std::filesystem;
 
 // maybe set to:
-// const fs::path xml_path = "../data/gases";
-const fs::path xml_path = "../../asp_therm/data/gases";
+const fs::path xml_gases_dir = "../../asp_therm/data/gases";
+const fs::path xml_calculations_dir = "../../asp_therm/data/calculation";
 const fs::path xml_methane = "methane.xml";
 const fs::path xml_ethane  = "ethane.xml";
 const fs::path xml_propane = "propane.xml";
 
 const fs::path xml_gasmix = "../gasmix_inp_example.xml";
+const fs::path xml_calculation = "calculation_setup.xml";
 const fs::path xml_configuration = "../../configuration.xml";
 const fs::path json_test = "../../tests/full/utils/data/test_json.json";
 
@@ -57,10 +60,20 @@ static model_str pr_str(rg_model_id(rg_model_t::PENG_ROBINSON,
 
 static fs::path cwd;
 
+int test_calculation_init() {
+  std::string filename = (cwd / xml_calculations_dir / xml_calculation).string();
+  std::unique_ptr<CalculationByFile<XMLReader>> cb(
+      CalculationByFile<XMLReader>::Init(filename));
+
+
+  assert(0);
+  return 0;
+}
+
 
 int test_database_with_models(DBConnectionManager &dbm) {
   int res = 0;
-  std::string filename = (cwd / xml_path / xml_gasmix).string();
+  std::string filename = (cwd / xml_gases_dir / xml_gasmix).string();
 #if defined(RK2_DEBUG)
   std::unique_ptr<modelGeneral> mk(
       ModelsCreator::GetCalculatingModel(rk2_str, filename, INPUT_P_T));
@@ -156,7 +169,7 @@ int test_database_with_models(DBConnectionManager &dbm) {
 }
 
 int test_database() {
-  std::string filename = (cwd / xml_path / xml_configuration).string();
+  std::string filename = (cwd / xml_gases_dir / xml_configuration).string();
   ProgramState &ps = ProgramState::Instance();
   AthermDBTables adb;
   // merror_t err = ps.ResetConfigFile(filename);
@@ -196,7 +209,7 @@ int test_database() {
 int test_program_configuration() {
   std::cerr << "test_program_configuration start\n";
   ProgramState &ps = ProgramState::Instance();
-  ps.ReloadConfiguration((cwd / xml_path / xml_configuration).string());
+  ps.ReloadConfiguration((cwd / xml_gases_dir / xml_configuration).string());
   merror_t e = ps.GetErrorCode();
   if (e) {
     std::cerr << "program state bida " << e << std::endl;
@@ -207,7 +220,7 @@ int test_program_configuration() {
 
 int test_models() {
   std::vector<std::unique_ptr<modelGeneral>> test_vec;
-  std::string filename = (cwd / xml_path / xml_gasmix).string();
+  std::string filename = (cwd / xml_gases_dir / xml_gasmix).string();
 #if defined(RK2_DEBUG)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(rk2_str, filename, INPUT_P_T)));
@@ -260,10 +273,10 @@ int test_models() {
 int test_models_mix() {
   std::vector<std::unique_ptr<modelGeneral>> test_vec;
   std::vector<gasmix_file> xml_files = std::vector<gasmix_file> {
-    gasmix_file("metane", (cwd / xml_path / xml_methane).string(), 0.988),
+    gasmix_file("metane", (cwd / xml_gases_dir / xml_methane).string(), 0.988),
     // add more (summ = 1.00)
-    gasmix_file("ethane", (cwd / xml_path / xml_ethane).string(), 0.009),
-    gasmix_file("propane", (cwd / xml_path / xml_propane).string(), 0.003)
+    gasmix_file("ethane", (cwd / xml_gases_dir / xml_ethane).string(), 0.009),
+    gasmix_file("propane", (cwd / xml_gases_dir / xml_propane).string(), 0.003)
   };
 #if defined(RK2_DEBUG)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
@@ -317,6 +330,10 @@ int main(int argc, char *argv[]) {
   #if defined(JSON_READER_DEBUG)
     if (test_json()) return 4;
   #endif  // JSON_READER
+
+  #if defined(CALCULATION_DEBUG)
+    if (test_calculation_init()) return 5;;
+  #endif  // CALCULATION_DEBUG
     Logging::Append(io_loglvl::debug_logs, "Ни одной ошибки не заметил");
   //*/
   }

@@ -214,6 +214,7 @@ private:
         gasname = "";
         part = 0.0;
         memset(buf, 0, sizeof(buf));
+        // todo: решение просто 10/10
         sprintf(buf, "%s%d", gasmix_component.c_str(), i+1);
         param_path[0] = std::string(buf);
         param_path[1] = gasmix_parameter_name;
