@@ -134,3 +134,7 @@ std::string calculation_info::GetTime() const {
   sprintf(t, "%02d:%02d", as_tm->tm_hour, as_tm->tm_min);
   return std::string(t);
 }
+
+calculation_setup::calculation_setup(
+    std::shared_ptr<file_utils::FileURLRoot> &root)
+  : root(root) {}

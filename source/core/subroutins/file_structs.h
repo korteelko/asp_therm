@@ -84,27 +84,11 @@ public:
   static node_type get_node_type(std::string type);
 };
 
-/// class for initializing gasmix by file
-class calc_set_node {
-  static std::array<std::string, CALCUL_NODE_COUNT> node_t_list;
-
-public:
-  node_type calc_node_type;
-  std::string name,
-              value;
-
-  calc_set_node(node_type itype, std::string name);
-  calc_set_node(node_type itype, std::string name, std::string value);
-
-  static std::string get_root_name();
-  static node_type get_node_type(std::string type);
-};
-
 
 
 /** \brief искать в переданной в аргументах мапе
-  *   ключ 'v', если он там записать его по адресу 
-  *   переданного параметра 'a' 
+  *   ключ 'v', если он там записать его по адресу
+  *   переданного параметра 'a'
   * \param v ключ из xml(или другого) файла, может
   *   содержать пробелы
   * \param a out переменная по адресу расположения

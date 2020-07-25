@@ -43,9 +43,14 @@
 
 
 /* calculation */
+#define STRTPL_CALCUL_ROOT "calc_setup"
 #define STRTPL_CALCUL_MODELS "models"
 #define STRTPL_CALCUL_GASMIX "gasmix_files"
 #define STRTPL_CALCUL_POINTS "points"
+#define STRTPL_CALCUL_MIXFILE "mixfile"
+#define STRTPL_CALCUL_POINT "point"
+#define STRTPL_CALCUL_P "p"
+#define STRTPL_CALCUL_T "t"
 
 /* VALUES */
 /* bool */

@@ -42,7 +42,7 @@ list(APPEND
   # build postgresql module and link pqxx library
   WITH_POSTGRESQL
   # enable tests
-  TESTS_ENABLED
+  #TESTS_ENABLED
 )
 
 # SETUP BUILD_OPTIONS
@@ -84,6 +84,7 @@ include_directories(
   ${THERMCORE_INCLUDES}
   ${THERMUTILS_SOURCE_DIR}
   ${THERMDB_SOURCE_DIR}
+  ${THERMREADER_SOURCE_DIR}
 )
 
 

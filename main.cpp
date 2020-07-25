@@ -61,12 +61,17 @@ static model_str pr_str(rg_model_id(rg_model_t::PENG_ROBINSON,
 static fs::path cwd;
 
 int test_calculation_init() {
-  std::string filename = (cwd / xml_calculations_dir / xml_calculation).string();
-  std::unique_ptr<CalculationByFile<XMLReader>> cb(
-      CalculationByFile<XMLReader>::Init(filename));
-
-
-  assert(0);
+  std::string calc_dir = (cwd / xml_calculations_dir ).string();
+  std::shared_ptr<file_utils::FileURLRoot> root_shp(
+      new file_utils::FileURLRoot(file_utils::url_t::fs_path, calc_dir));
+  calculation_setup cs(root_shp);
+  CalculationBuilder builder(&cs);
+  auto path = root_shp->CreateFileURL(xml_calculation.string());
+  std::unique_ptr<ReaderSample<pugi::xml_node, calculation_node<pugi::xml_node>,
+      CalculationBuilder>> rs(ReaderSample<pugi::xml_node,
+      calculation_node<pugi::xml_node>, CalculationBuilder>::Init(&path, &builder));
+  if (rs)
+    rs->InitData();
   return 0;
 }
 

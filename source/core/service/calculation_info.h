@@ -108,6 +108,9 @@ public:
 /** \brief Набор данных инициализации расчёта */
 struct calculation_setup {
 public:
+  calculation_setup(std::shared_ptr<file_utils::FileURLRoot> &root);
+
+public:
   /** \brief Корневая директория текстовых файлов */
   std::shared_ptr<file_utils::FileURLRoot> root;
   /** \brief Используемые модели */

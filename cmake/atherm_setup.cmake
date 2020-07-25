@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(THERMCORE_SOURCE_DIR "${ASP_THERM_ROOT}/source/core")
 set(THERMDB_SOURCE_DIR "${ASP_THERM_ROOT}/source/database")
 set(THERMUTILS_SOURCE_DIR "${ASP_THERM_ROOT}/source/utils")
+set(THERMREADER_SOURCE_DIR "${ASP_THERM_ROOT}/source/reader")
 
 # setup file paths and cmake
 #   error codes

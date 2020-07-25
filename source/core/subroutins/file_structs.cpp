@@ -31,10 +31,6 @@ std::array<std::string, CONFIG_NODE_COUNT> config_node::node_t_list = {
   "program_config", "group", "parameter"
 };
 
-std::array<std::string, CALCUL_NODE_COUNT> calc_set_node::node_t_list = {
-  "calc_setup", "group", "parameter", "point"
-};
-
 // config_node
 namespace update_configuration_functional {
 typedef std::function<merror_t(db_parameters *,
@@ -166,23 +162,6 @@ std::string gasmix_node::get_root_name() {
 node_type gasmix_node::get_node_type(std::string type) {
   for (uint32_t i = 0; i < gasmix_node::node_t_list.size(); ++i)
     if (gasmix_node::node_t_list[i] == type)
-      return i;
-  return NODE_T_UNDEFINED;
-}
-
-// calculation_node
-calc_set_node::calc_set_node(node_type itype, std::string name)
-  : calc_node_type(itype), name(name) {}
-calc_set_node::calc_set_node(node_type itype, std::string name,
-  std::string value)
-  : calc_node_type(itype), name(name), value(value) {}
-
-std::string calc_set_node::get_root_name() {
-  return calc_set_node::node_t_list[NODE_T_ROOT];
-}
-node_type calc_set_node::get_node_type(std::string type) {
-  for (uint32_t i = 0; i < calc_set_node::node_t_list.size(); ++i)
-    if (calc_set_node::node_t_list[i] == type)
       return i;
   return NODE_T_UNDEFINED;
 }
