@@ -21,10 +21,11 @@
 #include <assert.h>
 #include <string.h>
 
-gasmix_file::gasmix_file(const std::string &name, const std::string &path,
+
+gasmix_component_info::gasmix_component_info(const std::string &name, const std::string &path,
     const double part): name(name), path(path), part(part) {}
 
-bool operator< (const gasmix_file &lg, const gasmix_file &rg) {
+bool operator< (const gasmix_component_info &lg, const gasmix_component_info &rg) {
   return strcmp(lg.name.c_str(), rg.name.c_str()) <= 0;
 }
 

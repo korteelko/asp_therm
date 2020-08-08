@@ -24,6 +24,7 @@ protected:
 
 public:
   static Ideal_Gas *Init(const model_input &mi);
+  static model_str GetModelShortInfo(const rg_model_id &);
 
   model_str GetModelShortInfo() const override;
 

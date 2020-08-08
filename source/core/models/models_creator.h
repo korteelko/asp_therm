@@ -15,10 +15,26 @@
 #include "model_general.h"
 #include "phase_diagram.h"
 
+#include <exception>
 
+
+/**
+ * \brief Класс инициализации моделей
+ * */
 class ModelsCreator {
-  /** \brief Ошибка инициализации модели */
-  static ErrorWrap error_;
+public:
+  static modelGeneral *GetCalculatingModel(model_str ms,
+      std::vector<gasmix_component_info> components, double p, double t);
+  static modelGeneral *GetCalculatingModel(model_str ms,
+      std::vector<gasmix_component_info> components);
+  static modelGeneral *GetCalculatingModel(model_str ms,
+      const std::string &gasmix_xml, double p, double t);
+  static modelGeneral *GetCalculatingModel(model_str ms,
+      const std::string &gasmix_xml);
+  static modelGeneral *GetCalculatingModel(model_str ms,
+      const ng_gost_mix &ngg, double p, double t);
+  static modelGeneral *GetCalculatingModel(model_str ms,
+      const ng_gost_mix &ngg);
 
 private:
   static modelGeneral *set_model(const model_input &mi,
@@ -64,18 +80,5 @@ private:
   static modelGeneral *initModel(model_str ms, binodalpoints *bp,
       double p, double t, const_dyn_union cdu);
 
-public:
-  static modelGeneral *GetCalculatingModel(model_str ms,
-      std::vector<gasmix_file> components, double p, double t);
-  static modelGeneral *GetCalculatingModel(model_str ms,
-      std::vector<gasmix_file> components);
-  static modelGeneral *GetCalculatingModel(model_str ms,
-      const std::string &gasmix_xml, double p, double t);
-  static modelGeneral *GetCalculatingModel(model_str ms,
-      const std::string &gasmix_xml);
-  static modelGeneral *GetCalculatingModel(model_str ms,
-      const ng_gost_mix &ngg, double p, double t);
-  static modelGeneral *GetCalculatingModel(model_str ms,
-      const ng_gost_mix &ngg);
 };
 #endif  // !_CORE__MODELS__MODELS_CREATOR_H_

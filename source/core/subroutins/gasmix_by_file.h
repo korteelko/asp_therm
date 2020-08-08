@@ -38,7 +38,7 @@ class GasMixByFiles {
   GasMixByFiles &operator=(const GasMixByFiles &) = delete;
 
 public:
-  static GasMixByFiles *Init(const std::vector<gasmix_file> &parts) {
+  static GasMixByFiles *Init(const std::vector<gasmix_component_info> &parts) {
     if (check_composition(parts))
       return nullptr;
     return new GasMixByFiles(parts);
@@ -57,7 +57,7 @@ public:
 
 private:
   /** \brief проверить состав газовой смеси */
-  static merror_t check_composition(const std::vector<gasmix_file> &parts) {
+  static merror_t check_composition(const std::vector<gasmix_component_info> &parts) {
     merror_t err = ERROR_SUCCESS_T;
     if (parts.empty())
       GasMixByFiles::init_error.SetError(
@@ -79,7 +79,7 @@ private:
     return err;
   }
 
-  GasMixByFiles(const std::vector<gasmix_file> &parts)
+  GasMixByFiles(const std::vector<gasmix_component_info> &parts)
     : status_(STATUS_DEFAULT) {
     prs_mix_ = std::unique_ptr<parameters_mix>(new parameters_mix());
     gost_mix_ = std::unique_ptr<ng_gost_mix>(new ng_gost_mix());
@@ -230,7 +230,7 @@ private:
         } catch (std::out_of_range &) {
           error = error_.SetError(ERROR_PAIR_DEFAULT(ERROR_STR_PARSE_ST));
         }
-        gasmix_files_.emplace_back(gasmix_file(trim_str(gasname), gaspath, part));
+        gasmix_files_.emplace_back(gasmix_component_info(trim_str(gasname), gaspath, part));
       }
       if (error == XMLFILE_LAST_OBJECT) {
         error = ERROR_SUCCESS_T;
@@ -274,7 +274,7 @@ private:
     * \note Имя его неподходящее */
   std::unique_ptr<GasMixByFiles<ConfigReader>> files_handler_;
   /** \brief Контейнер считанных данных */
-  std::vector<gasmix_file> gasmix_files_;
+  std::vector<gasmix_component_info> gasmix_files_;
   /** \brief Используемая термодинамическая модель
     * \note Она не нужна, нужна просто bool переменная на
     *   считывание файлов, или вообще не нужна, т.к. в файлах миксов

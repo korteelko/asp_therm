@@ -107,6 +107,11 @@ struct model_str {
 public:
   model_str(rg_model_id ml, int32_t vmaj, int32_t vmin,
       const std::string &info);
+
+  /**
+   * \brief Собрать информационную строку по данным
+   * */
+  std::string GetString() const;
 };
 
 /** \brief конфигурация прораммы,

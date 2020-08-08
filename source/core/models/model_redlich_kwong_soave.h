@@ -26,6 +26,7 @@ class Redlich_Kwong_Soave final: public modelGeneral {
 #endif  // RKS_UNITTEST
 public:
   static Redlich_Kwong_Soave *Init(const model_input &mi);
+  static model_str GetModelShortInfo(const rg_model_id &);
 
   model_str GetModelShortInfo() const override;
 

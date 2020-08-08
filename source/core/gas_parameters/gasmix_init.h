@@ -23,22 +23,26 @@
 #define GASMIX_PERSENT_AVR  0.99
 #define GASMIX_PERCENT_EPS  0.02
 
-/** \brief параметры компонента газовой смеси описанные
-  *   в файле ининициализации смеси */
-struct gasmix_file {
+/**
+ * \brief Параметры компонента газовой смеси описанные
+ *   в файле ининициализации смеси
+ * */
+struct gasmix_component_info {
   std::string name;
   std::string path;
   double part;
 
 public:
-  gasmix_file(const std::string &name,
+  gasmix_component_info(const std::string &name,
       const std::string &path, const double part);
 };
-bool operator<(const gasmix_file &lg, const gasmix_file &rg);
+bool operator<(const gasmix_component_info &lg, const gasmix_component_info &rg);
 
 
-/** \brief функции расчёта средних параметров по методам из
-  *   книги "Свойства газов и жидкостей" Рида, Праусница, Шервуда */
+/**
+ * \brief Функции расчёта средних параметров по методам из
+ *   книги "Свойства газов и жидкостей" Рида, Праусница, Шервуда
+ * */
 namespace ns_avg {
 /* методика применяемая к классической модели Редлиха-Квонга */
 /** \brief Рассчитать среднюю критическую температуру по

@@ -10,6 +10,7 @@
 #include "model_redlich_kwong_soave.h"
 
 #include "gas_description_dynamic.h"
+#include "Logging.h"
 #include "models_math.h"
 
 #include <numeric>
@@ -276,8 +277,12 @@ Redlich_Kwong_Soave::Redlich_Kwong_Soave(const model_input &mi)
 }
 
 Redlich_Kwong_Soave *Redlich_Kwong_Soave::Init(const model_input &mi) {
-  if (check_input(mi))
+  try {
+    check_input(mi);
+  } catch (const model_init_exception &e) {
+    Logging::Append(e.what());
     return nullptr;
+  }
   Redlich_Kwong_Soave *rk = new Redlich_Kwong_Soave(mi);
   if (rk)
     if (rk->parameters_ == nullptr) {
@@ -285,7 +290,11 @@ Redlich_Kwong_Soave *Redlich_Kwong_Soave::Init(const model_input &mi) {
       rk = nullptr;
     }
   return rk;
- }
+}
+
+model_str Redlich_Kwong_Soave::GetModelShortInfo(const rg_model_id &) {
+  return redlich_kwong_soave_mi;
+}
 
 model_str Redlich_Kwong_Soave::GetModelShortInfo() const {
   return redlich_kwong_soave_mi;

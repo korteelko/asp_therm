@@ -11,6 +11,10 @@
 
 #include "gas_description_dynamic.h"
 #include "gas_ng_gost.h"
+#include "model_ideal_gas.h"
+#include "model_ng_gost.h"
+#include "model_peng_robinson.h"
+#include "model_redlich_kwong.h"
 #include "models_math.h"
 
 #include <algorithm>
@@ -19,16 +23,25 @@
 #endif  // _DEBUG
 
 
-/** \brief ошибка ининициализации модели - на проверке входных данных,
-  *   проверяется modelsCreator */
-ErrorWrap modelGeneral::init_error;
-
 DerivateFunctor::~DerivateFunctor() {}
 
 model_input::model_input(gas_marks_t gm, binodalpoints *bp,
     gas_params_input gpi, model_str ms)
   : gm(gm), bp(bp), gpi(gpi), ms(ms) {}
 
+/* model_init_exception */
+modelGeneral::model_init_exception::model_init_exception(
+    const model_str *info, const std::string &_msg)
+  : msg(_msg) {
+  if (info)
+    msg += "\n\tМодель:" + info->GetString();
+}
+
+const char *modelGeneral::model_init_exception::what() const noexcept {
+  return msg.c_str();
+}
+
+/* modelGeneral */
 modelGeneral::modelGeneral(model_str model_config,
     gas_marks_t gm, binodalpoints *bp)
   : status_(STATUS_DEFAULT), model_config_(model_config),
@@ -126,47 +139,59 @@ void modelGeneral::set_gasparameters(const gas_params_input &gpi,
   }
 }
 
-void modelGeneral::ResetInitError() {
-  init_error.Reset();
+model_str modelGeneral::GetModelShortInfo(const rg_model_id model_type) {
+  switch (model_type.type) {
+    case rg_model_t::IDEAL_GAS:
+      return Ideal_Gas::GetModelShortInfo(model_type);
+    case rg_model_t::REDLICH_KWONG:
+      // На модификацию Соаве тоже получаем отсюда
+      return Redlich_Kwong2::GetModelShortInfo(model_type);
+    case rg_model_t::PENG_ROBINSON:
+      return Peng_Robinson::GetModelShortInfo(model_type);
+    case rg_model_t::NG_GOST:
+      return NG_Gost::GetModelShortInfo(model_type);
+    default:
+      break;
+  }
+  return model_str(rg_model_id(rg_model_t::EMPTY, MODEL_SUBTYPE_DEFAULT), 1, 0, "");
 }
 
-merror_t modelGeneral::check_input(const model_input &mi) {
-  merror_t err = ERROR_SUCCESS_T;
+void modelGeneral::check_input(const model_input &mi) {
+  // Проверка флагов
   if (HasGasMixMark(mi.gm) && HasGostModelMark(mi.gm))
-     err = modelGeneral::init_error.SetError(ERROR_INIT_T,
+    throw modelGeneral::model_init_exception(&mi.ms,
         "options GAS_MIX_MARK and GAS_NG_GOST_MARK not compatible\n");
-  if ((!err) && HasGasMixMark(mi.gm)) {
+  // Проверка установленных доль
+  if (is_equal(modelGeneral::calculate_parts_sum(mi),
+      GASMIX_PERSENT_AVR, GASMIX_PERCENT_EPS))
+    throw modelGeneral::model_init_exception(&mi.ms,
+        "gasmix sum of parts != 100%\n");
+  // Проверка стартовых параметров
+  if (!is_above0(mi.gpi.p, mi.gpi.t))
+    throw modelGeneral::model_init_exception(&mi.ms, ERROR_INIT_ZERO_ST_MSG);
+}
+
+double modelGeneral::calculate_parts_sum(const model_input &mi) {
+  double parts_sum = 0.0;
+  if (HasGasMixMark(mi.gm)) {
     if (!mi.gpi.const_dyn.components->empty()) {
-      // для проверки установленных доль
-      double parts_sum = 0.0;
       std::for_each(mi.gpi.const_dyn.components->begin(),
           mi.gpi.const_dyn.components->end(),
           [&parts_sum] (const std::pair<const double, const_dyn_parameters> &x)
                { parts_sum += x.first; });
-      if (parts_sum < (GASMIX_PERSENT_AVR - GASMIX_PERCENT_EPS) ||
-          parts_sum > (GASMIX_PERSENT_AVR + GASMIX_PERCENT_EPS))
-        err = modelGeneral::init_error.SetError(ERROR_INIT_T,
-            "gasmix sum of parts != 100%\n");
     }
-  }
-  if ((!err) && HasGostModelMark(mi.gm)) {
+  } else if (HasGostModelMark(mi.gm)) {
     if (!mi.gpi.const_dyn.ng_gost_components->empty()) {
-      // для проверки установленных доль
-      double parts_sum = 0.0;
       std::for_each(mi.gpi.const_dyn.ng_gost_components->begin(),
           mi.gpi.const_dyn.ng_gost_components->end(),
           [&parts_sum] (const std::pair<gas_t, double> &x)
               { parts_sum += x.second; });
-      if (parts_sum < (GASMIX_PERSENT_AVR - GASMIX_PERCENT_EPS) ||
-          parts_sum > (GASMIX_PERSENT_AVR + GASMIX_PERCENT_EPS))
-        err = modelGeneral::init_error.SetError(ERROR_INIT_T,
-            "gasmix sum of parts != 100%\n");
     }
+  } else {
+    // смеси нет - только один компонент
+    parts_sum = 1.0;
   }
-  if (!(err || is_above0(mi.gpi.p, mi.gpi.t)))
-    err = modelGeneral::init_error.SetError(
-        ERROR_PAIR_DEFAULT(ERROR_INIT_ZERO_ST));
-  return err;
+  return parts_sum;
 }
 
 priority_var modelGeneral::GetPriority() const {

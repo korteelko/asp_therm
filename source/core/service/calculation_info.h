@@ -6,8 +6,6 @@
  *     - Общие параметры из файла конфигурации программы. Вывод
  *   отладочной информации, используемые модификации уравнений состояния.
  *     - Структура параметров расчёта для добавления в БД
- *     -(планы) Инициализация расчётов. Задание области расчёта,
- *   компонентов газовой смеси. (м.б. настройку моделей)
  * ===================================================================
  *
  * Copyright (c) 2020 Mishutinski Yurii
@@ -105,21 +103,6 @@ public:
   uint32_t initialized = f_empty;
 };
 
-/** \brief Набор данных инициализации расчёта */
-struct calculation_setup {
-public:
-  calculation_setup(std::shared_ptr<file_utils::FileURLRoot> &root);
-
-public:
-  /** \brief Корневая директория текстовых файлов */
-  std::shared_ptr<file_utils::FileURLRoot> root;
-  /** \brief Используемые модели */
-  std::vector<rg_model_id> models;
-  /** \brief Файл иниициализации газовой смеси */
-  std::vector<file_utils::FileURL> gasmix_files;
-  /** \brief Точки расчёта */
-  std::vector<parameters> points;
-};
 
 /** \brief информация о предыдущих расчётах */
 /* todo: сейчас это заглушка */

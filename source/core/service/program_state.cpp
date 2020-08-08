@@ -11,109 +11,8 @@
 
 #include "atherm_db_tables.h"
 
+
 static AthermDBTables db;
-
-
-/* ProgramState */
-ProgramState &ProgramState::Instance() {
-  static ProgramState state;
-  return state;
-}
-
-ProgramState::ProgramState()
-  : status_(STATUS_DEFAULT), db_manager_(&db) {}
-
-void ProgramState::SetWorkDir(const file_utils::FileURLRoot &orig) {
-  std::lock_guard<Mutex> lock(mutex);
-  work_dir_.reset(new file_utils::FileURLRoot(orig));
-  if (work_dir_->IsInitialized()) {
-    if (is_status_aval(status_)) {
-      status_ = STATUS_OK;
-    }
-  } else {
-    error_.SetError(ERROR_FILE_EXISTS_ST,
-        "Ошибка инициализации корневой директории программы");
-  }
-}
-
-merror_t ProgramState::ReloadConfiguration(
-    const std::string &config_file) {
-  std::lock_guard<Mutex> lock(mutex);
-  if (work_dir_) {
-    auto path = work_dir_->CreateFileURL(config_file);
-    program_config_.ResetConfigFile(path.GetURL());
-    if (program_config_.error.GetErrorCode()) {
-      error_.SetError(program_config_.error.GetErrorCode(),
-          "Ошибка инициализации конфига программы\n"
-          "Сообщение: " + program_config_.error.GetMessage());
-    }
-  } else {
-    error_.SetError(ERROR_INIT_NULLP_ST,
-        "Не инициализирована рабочая директория программы");
-  }
-  return error_.GetErrorCode();
-}
-
-int ProgramState::AddCalculationSetup(const calculation_setup &calc_setup) {
-  std::lock_guard<Mutex> lock(ProgramState::mutex);
-  int key = ProgramState::calc_key++;
-  CalculationSetup &&cs(calc_setup);
-  if (!cs.GetError())
-    calc_setups_.emplace(key, cs);
-  return key;
-}
-
-#ifdef _DEBUG
-int ProgramState::AddCalculationSetup(CalculationSetup &&setup) {
-  std::lock_guard<Mutex> lock(mutex);
-  int key = ProgramState::calc_key++;
-  calc_setups_.emplace(key, setup);
-  return key;
-}
-#endif  // _DEBUG
-
-bool ProgramState::IsInitialized() const {
-  mstatus_t st = status_;
-  if (!program_config_.is_initialized)
-    st = STATUS_NOT;
-  return (error_.GetErrorCode()) ? false : is_status_ok(st);
-}
-
-bool ProgramState::IsDebugMode() const {
-  return program_config_.configuration.calc_cfg.is_debug_mode;
-}
-
-bool ProgramState::IsDryRunDBConn() const {
-  return program_config_.db_parameters_conf.is_dry_run;
-}
-
-const program_configuration &ProgramState::GetConfiguration() const {
-  return program_config_.configuration;
-}
-
-const calculation_configuration &ProgramState::GetCalcConfiguration() const {
-  return program_config_.configuration.calc_cfg;
-}
-
-const asp_db::db_parameters &ProgramState::GetDatabaseConfiguration() const {
-  return program_config_.db_parameters_conf;
-}
-
-mstatus_t ProgramState::GetStatus() const {
-  return status_;
-}
-
-merror_t ProgramState::GetErrorCode() const {
-  return error_.GetErrorCode();
-}
-
-std::string ProgramState::GetErrorMessage() const {
-  return error_.GetMessage();
-}
-
-void ProgramState::LogError() {
-  error_.LogIt();
-}
 
 /* ProgramState::ProgramConfiguration */
 using PSConfiguration = ProgramState::ProgramConfiguration;
@@ -177,6 +76,118 @@ void PSConfiguration::initDatabaseConfig() {
   db_parameters_conf = config_by_file->GetDBConfiguration();
 }
 
-model_str PSConfiguration::initModelStr() {
-  // assert(0);
+// model_str PSConfiguration::initModelStr() {}
+
+/* ProgramState */
+ProgramState &ProgramState::Instance() {
+  static ProgramState state;
+  return state;
+}
+
+ProgramState::ProgramState()
+  : status_(STATUS_DEFAULT), db_manager_(&db) {}
+
+void ProgramState::SetWorkDir(const file_utils::FileURLRoot &work_dir) {
+  std::lock_guard<Mutex> lock(mutex);
+  work_dir_.reset(new file_utils::FileURLRoot(work_dir));
+  if (work_dir_->IsInitialized()) {
+    if (is_status_aval(status_)) {
+      status_ = STATUS_OK;
+    }
+  } else {
+    error_.SetError(ERROR_FILE_EXISTS_ST,
+        "Ошибка инициализации корневой директории программы");
+  }
+}
+
+merror_t ProgramState::ReloadConfiguration(
+    const std::string &config_file) {
+  std::lock_guard<Mutex> lock(mutex);
+  if (work_dir_) {
+    auto path = work_dir_->CreateFileURL(config_file);
+    program_config_.ResetConfigFile(path.GetURL());
+    if (program_config_.error.GetErrorCode()) {
+      error_.SetError(program_config_.error.GetErrorCode(),
+          "Ошибка инициализации конфига программы\n"
+          "Сообщение: " + program_config_.error.GetMessage());
+    }
+  } else {
+    error_.SetError(ERROR_INIT_NULLP_ST,
+        "Не инициализирована рабочая директория программы");
+  }
+  return error_.GetErrorCode();
+}
+
+bool ProgramState::IsInitialized() const {
+  mstatus_t st = status_;
+  if (!program_config_.is_initialized)
+    st = STATUS_NOT;
+  return (error_.GetErrorCode()) ? false : is_status_ok(st);
+}
+
+bool ProgramState::IsDebugMode() const {
+  return program_config_.configuration.calc_cfg.is_debug_mode;
+}
+
+bool ProgramState::IsDryRunDBConn() const {
+  return program_config_.db_parameters_conf.is_dry_run;
+}
+
+const program_configuration &ProgramState::GetConfiguration() const {
+  return program_config_.configuration;
+}
+
+const calculation_configuration &ProgramState::GetCalcConfiguration() const {
+  return program_config_.configuration.calc_cfg;
+}
+
+const asp_db::db_parameters &ProgramState::GetDatabaseConfiguration() const {
+  return program_config_.db_parameters_conf;
+}
+
+int ProgramState::AddCalculationSetup(const std::string &filepath) {
+  /* todo: а если другие потоки используют инициализированные модели? */
+  std::lock_guard<Mutex> lock(ProgramState::mutex);
+  int key = ProgramState::calc_key++;
+  auto s = CalculationSetup(work_dir_, filepath);
+  //auto res = calc_setups_.emplace(key, std::move(s));
+  auto res = calc_setups_.emplace(key, CalculationSetup(work_dir_, filepath));
+  if (res.second) {
+    // добавили успешно
+    if (res.first->second.GetError())
+      // если была ошибка, то этот элемент удалить
+      calc_setups_.erase(res.first);
+  }
+  return key;
+}
+
+void ProgramState::RunCalculationSetup(int num) {
+  // auto cs = calc_setups_[num];
+  auto cs = calc_setups_.find(num);
+  // реализовать что-то похожее на:
+  // if (cs != calc_setups_.end())
+  //   cs->run();
+  assert(0);
+}
+
+void ProgramState::RemoveCalculationSetup(int num) {
+  auto cs = calc_setups_.find(num);
+  if (cs != calc_setups_.end())
+    calc_setups_.erase(cs);
+}
+
+mstatus_t ProgramState::GetStatus() const {
+  return status_;
+}
+
+merror_t ProgramState::GetErrorCode() const {
+  return error_.GetErrorCode();
+}
+
+std::string ProgramState::GetErrorMessage() const {
+  return error_.GetMessage();
+}
+
+void ProgramState::LogError() {
+  error_.LogIt();
 }

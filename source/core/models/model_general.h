@@ -22,6 +22,7 @@
 #include <functional>
 #include <memory>
 
+
 /* // flow dynamic modeling
 typedef std::array<double, 2> difresult_t;
 typedef std::function<void (const difresult_t &x, difresult_t &dxdt,
@@ -40,11 +41,30 @@ public:
   virtual ~DerivateFunctor();
 };
 
+/**
+ * \brief Обёртка над данными инициализации
+ */
 struct model_input {
+  /**
+   * \brief Флаги газовой смеси
+   * */
   gas_marks_t gm;
-  binodalpoints *bp;
+  /**
+   * \brief Указатель на точки бинодали
+   * \note Всё-таки для газовых смесей вещь лишняя
+   * */
+  binodalpoints *bp = nullptr;
+  /**
+   * \brief Данные параметров газовой смеси
+   * */
   gas_params_input gpi;
+  /**
+   * \brief Краткая информация о используемом уравнении состояния
+   * */
   model_str ms;
+  /**
+   * \brief Приоритетом модели
+   * */
   model_priority mpri;
 
   /* todo: add model_priority */
@@ -60,38 +80,27 @@ class modelGeneral {
   modelGeneral &operator=(const modelGeneral &) = delete;
 
 public:
-  static ErrorWrap init_error;
+  /**
+   * \brief Исключения создания расчётных моделей
+   * */
+  class model_init_exception final: public std::exception {
+  public:
+    model_init_exception(const model_str *info, const std::string &_msg);
 
-protected:
-  ErrorWrap error_;
-  mstatus_t status_;
-  /** \brief Информация о данной модели:
-    *   тип, модификация, версия имплементации в данной программе */
-  model_str model_config_;
-  gas_marks_t gm_;
-  model_priority priority_;
-  std::unique_ptr<GasParameters> parameters_;
-  std::unique_ptr<binodalpoints> bp_;
+    const char *what() const noexcept;
 
-protected:
-  modelGeneral(model_str model_config, gas_marks_t gm, binodalpoints *bp);
-
-  double vapor_part(int32_t index);
-  state_phase set_state_phase(double v, double p, double t);
-  int32_t set_state_phasesub(double p);
-  void set_parameters(double v, double p, double t);
-  void set_enthalpy();
-  /** \brief Инициализировать структуру параметров газа parameters_ */
-  void set_gasparameters(const gas_params_input &gpi, modelGeneral *mg);
-  const GasParameters *get_gasparameters() const;
-
-  /** \brief Проверить входные параметры */
-  static merror_t check_input(const model_input &mi);
+  private:
+    std::string msg;
+  };
 
 public:
-  static void ResetInitError();
+  static model_str GetModelShortInfo(const rg_model_id model_type);
 
-  /** \brief Функции обновления динамических параметров */
+  virtual ~modelGeneral();
+
+  /**
+   * \brief Функции обновления динамических параметров
+   * */
   virtual void update_dyn_params(dyn_parameters &prev_state,
       const parameters new_state) = 0;
   virtual void update_dyn_params(dyn_parameters &prev_state,
@@ -151,7 +160,40 @@ public:
   std::string ConstParametersString() const;
   static std::string sParametersStringHead();
 
-  virtual ~modelGeneral();
+protected:
+  /**
+   * \brief Проверить входные параметры:
+   *   - флаги(ошибка в коде)
+   *   - количественную составляющую смеси(ГОСТовскую или простой микс)
+   * \note throw model_init_exception
+   * */
+  static void check_input(const model_input &mi);
+  /**
+   * \brief Пересчитать сумму компонентов
+   * */
+  static double calculate_parts_sum(const model_input &mi);
+
+  modelGeneral(model_str model_config, gas_marks_t gm, binodalpoints *bp);
+
+  double vapor_part(int32_t index);
+  state_phase set_state_phase(double v, double p, double t);
+  int32_t set_state_phasesub(double p);
+  void set_parameters(double v, double p, double t);
+  void set_enthalpy();
+  /** \brief Инициализировать структуру параметров газа parameters_ */
+  void set_gasparameters(const gas_params_input &gpi, modelGeneral *mg);
+  const GasParameters *get_gasparameters() const;
+
+protected:
+  ErrorWrap error_;
+  mstatus_t status_;
+  /** \brief Информация о данной модели:
+    *   тип, модификация, версия имплементации в данной программе */
+  model_str model_config_;
+  gas_marks_t gm_;
+  model_priority priority_;
+  std::unique_ptr<GasParameters> parameters_;
+  std::unique_ptr<binodalpoints> bp_;
 };
 
 #endif  // !_CORE__MODELS__MODEL_GENERAL_H_

@@ -21,6 +21,7 @@
 class Redlich_Kwong2 final: public modelGeneral {
 public:
   static Redlich_Kwong2 *Init(const model_input &mi);
+  static model_str GetModelShortInfo(const rg_model_id &model_type);
 
   model_str GetModelShortInfo() const override;
 

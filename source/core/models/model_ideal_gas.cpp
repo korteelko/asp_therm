@@ -11,6 +11,7 @@
 
 #include "gas_description_dynamic.h"
 #include "gasmix_init.h"
+#include "Logging.h"
 #include "models_math.h"
 
 #include <cmath>
@@ -35,15 +36,23 @@ Ideal_Gas::Ideal_Gas(const model_input &mi)
 }
 
 Ideal_Gas *Ideal_Gas::Init(const model_input &mi) {
-  if (check_input(mi))
+  try {
+    check_input(mi);
+  } catch (const model_init_exception &e) {
+    Logging::Append(e.what());
     return nullptr;
+  }
   Ideal_Gas *ig = new Ideal_Gas(mi);
   if (ig)
     if (ig->parameters_ == nullptr) {
       delete ig;
       ig = nullptr;
     }
-  return ig; 
+  return ig;
+}
+
+model_str Ideal_Gas::GetModelShortInfo(const rg_model_id &) {
+  return ideal_gas_mi;
 }
 
 model_str Ideal_Gas::GetModelShortInfo() const {

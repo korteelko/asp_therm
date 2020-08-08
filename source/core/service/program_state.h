@@ -36,49 +36,12 @@
 #  undef IS_DEBUG_MODE
 #  define IS_DEBUG_MODE (ProgramState::Instance().IsDebugMode())
 #endif
-/** \brief Класс состояния программы:
-  *   конфигурация программы, информация о моделях, подключение к БД,
-  *   конфигурации расчётов(области, используемые модели etc) */
+/**
+ * \brief Класс состояния программы:
+ *   конфигурация программы, информация о моделях, подключение к БД,
+ *   конфигурации расчётов(области, используемые модели etc)
+ */
 class ProgramState {
-public:
-  /** \brief Синглетончик инст */
-  static ProgramState &Instance();
-
-  /** \brief Инициализировать рабочую директорию приложения */
-  void SetWorkDir(const file_utils::FileURLRoot &orig);
-  /** \brief Загрузить или перезагрузить конфигурацию программы */
-  merror_t ReloadConfiguration(const std::string &config_file);
-  /** \brief Добавить сетап расчёта
-    * \return id расчётных параметров или -1 в случае ошибки */
-  int AddCalculationSetup(const calculation_setup &calc_setup);
-#ifdef _DEBUG
-  /** \brief Добавить сэтап расчёта в список используемых
-    * \todo В глобальной идее он здесь инициализируется */
-  int AddCalculationSetup(CalculationSetup &&setup);
-#endif  // _DEBUG
-
-  /** \brief Конфигурация из файла была загружена
-    * \return true да, false нет */
-  bool IsInitialized() const;
-  /** \brief Приложение запущено в режиме отладки
-    * \return true да, false нет */
-  bool IsDebugMode() const;
-  /** \brief Приложение работает без подключения к бд
-    * \return true да, false нет */
-  bool IsDryRunDBConn() const;
-  const program_configuration &GetConfiguration() const;
-  const calculation_configuration &GetCalcConfiguration() const;
-  const asp_db::db_parameters &GetDatabaseConfiguration() const;
-
-  /** \brief Получить статус */
-  mstatus_t GetStatus() const;
-  /** \brief Получить код ошибки */
-  merror_t GetErrorCode() const;
-  /** \brief Получить сообщение ошибки */
-  std::string GetErrorMessage() const;
-  /** \brief Залогировать ошибку */
-  void LogError();
-
 public:
   /** \brief Внутренний(nested) класс конфигурации
     *   в классе состояния программы */
@@ -99,7 +62,7 @@ public:
       *   коннекта к базе данных */
     void initDatabaseConfig();
     /** \brief Считать и инициализировать конфигурацию модели */
-    model_str initModelStr();
+    // model_str initModelStr();
 
   public:
     ErrorWrap error;
@@ -120,6 +83,68 @@ public:
     bool is_initialized;
   };
 
+public:
+  /** \brief Синглетончик инст */
+  static ProgramState &Instance();
+
+  /* Инициализация */
+  /**
+   * \brief
+   * Инициализировать рабочую директорию приложения
+   */
+  void SetWorkDir(const file_utils::FileURLRoot &work_dir);
+  /**
+   * \brief Загрузить или перезагрузить конфигурацию программы
+   * */
+  merror_t ReloadConfiguration(const std::string &config_file);
+  /**
+   * \brief Конфигурация из файла была загружена
+   * \return true да, false нет
+   * */
+  bool IsInitialized() const;
+
+  /* Конфигурация программы */
+  /**
+   * \brief Приложение запущено в режиме отладки
+   * \return true да, false нет
+   * */
+  bool IsDebugMode() const;
+  /**
+   * \brief Приложение работает без подключения к бд
+   * \return true да, false нет
+   */
+  bool IsDryRunDBConn() const;
+  const program_configuration &GetConfiguration() const;
+  const calculation_configuration &GetCalcConfiguration() const;
+  const asp_db::db_parameters &GetDatabaseConfiguration() const;
+
+  /* Расчёт */
+  /**
+   * \brief Добавить сетап расчёта
+   * \return id расчётных параметров или -1 в случае ошибки
+   * */
+  int AddCalculationSetup(const std::string &filepath);
+  /**
+   * \brief Запустить расчёт
+   * \param num Номер сетапа расчёта
+   * */
+  void RunCalculationSetup(int num);
+  /**
+   * \brief Удалить сетап расчёта
+   * \param num Номер сетапа расчёта
+   * */
+  void RemoveCalculationSetup(int num);
+
+  /* Состояние программы */
+  /** \brief Получить статус */
+  mstatus_t GetStatus() const;
+  /** \brief Получить код ошибки */
+  merror_t GetErrorCode() const;
+  /** \brief Получить сообщение ошибки */
+  std::string GetErrorMessage() const;
+  /** \brief Залогировать ошибку */
+  void LogError();
+
 private:
   ProgramState();
 
@@ -132,11 +157,11 @@ private:
   /** \brief Объект инициализации путей, привязан к корневой
     *   директории программы, т.е. от неё отсчитываем пути
     *   к файлам конфигурации, данным, ресурсам и т.п. */
-  std::unique_ptr<file_utils::FileURLRoot> work_dir_ = nullptr;
-  /** \brief Набор данных для проведения расчётов */
+  std::shared_ptr<file_utils::FileURLRoot> work_dir_ = nullptr;
   /* todo: они не связаны между собой, можно распараллелить
    *   also, всё-таки речь идёт не о контейнере, а о полноценном объекте */
   std::atomic<int> calc_key;
+  /** \brief Набор данных для проведения расчётов */
   Calculations calc_setups_;
   /** \brief Конфигурация программы - модели, бд, опции */
   ProgramConfiguration program_config_;

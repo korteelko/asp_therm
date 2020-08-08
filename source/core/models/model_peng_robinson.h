@@ -19,6 +19,7 @@
 class Peng_Robinson final: public modelGeneral {
 public:
   static Peng_Robinson *Init(const model_input &mi);
+  static model_str GetModelShortInfo(const rg_model_id &model_type);
 
   model_str GetModelShortInfo() const override;
 

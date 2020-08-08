@@ -30,6 +30,7 @@ protected:
 public:
   static NG_Gost *Init(const model_input &mi);
 
+  static model_str GetModelShortInfo(const rg_model_id &model_type);
   model_str GetModelShortInfo() const override;
 
   void DynamicflowAccept(class DerivateFunctor &df) override;

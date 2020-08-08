@@ -64,12 +64,14 @@ int test_calculation_init() {
   std::string calc_dir = (cwd / xml_calculations_dir ).string();
   std::shared_ptr<file_utils::FileURLRoot> root_shp(
       new file_utils::FileURLRoot(file_utils::url_t::fs_path, calc_dir));
+
   calculation_setup cs(root_shp);
-  CalculationBuilder builder(&cs);
+  CalculationSetupBuilder builder(&cs);
+
   auto path = root_shp->CreateFileURL(xml_calculation.string());
   std::unique_ptr<ReaderSample<pugi::xml_node, calculation_node<pugi::xml_node>,
-      CalculationBuilder>> rs(ReaderSample<pugi::xml_node,
-      calculation_node<pugi::xml_node>, CalculationBuilder>::Init(&path, &builder));
+      CalculationSetupBuilder>> rs(ReaderSample<pugi::xml_node,
+      calculation_node<pugi::xml_node>, CalculationSetupBuilder>::Init(&path, &builder));
   if (rs)
     rs->InitData();
   return 0;
@@ -277,11 +279,11 @@ int test_models() {
 
 int test_models_mix() {
   std::vector<std::unique_ptr<modelGeneral>> test_vec;
-  std::vector<gasmix_file> xml_files = std::vector<gasmix_file> {
-    gasmix_file("metane", (cwd / xml_gases_dir / xml_methane).string(), 0.988),
+  std::vector<gasmix_component_info> xml_files = std::vector<gasmix_component_info> {
+    gasmix_component_info("metane", (cwd / xml_gases_dir / xml_methane).string(), 0.988),
     // add more (summ = 1.00)
-    gasmix_file("ethane", (cwd / xml_gases_dir / xml_ethane).string(), 0.009),
-    gasmix_file("propane", (cwd / xml_gases_dir / xml_propane).string(), 0.003)
+    gasmix_component_info("ethane", (cwd / xml_gases_dir / xml_ethane).string(), 0.009),
+    gasmix_component_info("propane", (cwd / xml_gases_dir / xml_propane).string(), 0.003)
   };
 #if defined(RK2_DEBUG)
   test_vec.push_back(std::unique_ptr<modelGeneral>(

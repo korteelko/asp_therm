@@ -14,7 +14,7 @@
 #ifndef _CORE__SUBROUTINS__CALCULATION_BY_FILE_H_
 #define _CORE__SUBROUTINS__CALCULATION_BY_FILE_H_
 
-#include "calculation_info.h"
+#include "calculation_setup.h"
 #include "Common.h"
 #include "configuration_strtpl.h"
 #include "ErrorWrap.h"
@@ -22,29 +22,14 @@
 #include "Reader.h"
 
 
-/*
-<calc_setup name="example">
-  <models> PRb, GOST, ISO </models>
-  <gasmix_files>
-    <mixfile name="1"> gost/gostmix1.xml </mixfile>
-    <mixfile name="2"> gost/gostmix2.xml </mixfile>
-    <mixfile name="3"> gost/gostmix3.xml </mixfile>
-  </gasmix_files>
-  <points>
-    <point p="10000" t="250.0"/>
-    <point p="10000" t="300.0"/>
-    <point p="10000" t="350.0"/>
-  </points>
-</calc_setup>
-*/
 template <class ReaderNodeT>
 class calculation_node;
 /** \brief Класс собирающий сетап расчёта */
-class CalculationBuilder {
+class CalculationSetupBuilder {
   friend class calculation_node<pugi::xml_node>;
-  // otsuda
+
 public:
-  CalculationBuilder(calculation_setup *setup_p)
+  CalculationSetupBuilder(calculation_setup *setup_p)
     : setup_p(setup_p) {}
 
   template <class ReaderNodeT>
@@ -66,7 +51,7 @@ class calculation_node: public INodeInitializer {
 public:
   calculation_node()
     : builder(nullptr) {}
-  calculation_node(CalculationBuilder *builder)
+  calculation_node(CalculationSetupBuilder *builder)
     : builder(builder) {}
   void SetSubnodesNames(inodes_vec *subnodes) override {
     subnodes->clear();
@@ -125,7 +110,7 @@ protected:
   void set_mixfiles() {
     for (auto x: source->children())
       builder->setup_p->gasmix_files.push_back(
-          builder->setup_p->root->CreateFileURL(x.value()));
+          builder->setup_p->root->CreateFileURL(x.value()).GetURL());
   }
   void set_points() {
     for (auto x: source->children()) {
@@ -145,7 +130,7 @@ public:
   /** \brief Указатель на соответствующий узел pugi */
   ReaderNodeT *source = nullptr;
   /** \brief Указатель на инициализатор, хранилище данных */
-  CalculationBuilder *builder = nullptr;
+  CalculationSetupBuilder *builder = nullptr;
   bool have_subnodes_ = false;
 };
 

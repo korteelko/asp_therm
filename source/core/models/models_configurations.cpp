@@ -26,6 +26,12 @@ model_str::model_str(rg_model_id mn, int32_t vmaj, int32_t vmin,
   : model_type(mn), vers_major(vmaj),
     vers_minor(vmin), short_info(info) {}
 
+std::string model_str::GetString() const {
+  return "\nРасчётная модель:\n" + short_info +
+      "\nКод: " + std::to_string((uint64_t)model_type.type) + "." + std::to_string(model_type.subtype) +
+      "\nВерсия: " + std::to_string(vers_major) + "." + std::to_string(vers_minor);
+}
+
 namespace update_configuration_functional {
 typedef std::function<merror_t(program_configuration *,
     const std::string &value)> update_models_config_f;

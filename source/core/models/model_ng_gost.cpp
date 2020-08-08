@@ -11,6 +11,7 @@
 
 #include "gas_description.h"
 #include "gas_description_dynamic.h"
+#include "Logging.h"
 #include "models_math.h"
 
 #include <map>
@@ -47,17 +48,26 @@ NG_Gost::NG_Gost(const model_input &mi)
 }
 
 NG_Gost *NG_Gost::Init(const model_input &mi) {
-  if (check_input(mi))
+  try {
+    check_input(mi);
+  } catch (const model_init_exception &e) {
+    Logging::Append(e.what());
     return nullptr;
+  }
   // only for gas_mix
   if (!(HasGostModelMark(mi.gm)))
     return nullptr;
   return new NG_Gost(mi);
 }
 
-model_str NG_Gost::GetModelShortInfo() const {
-  return (model_config_.model_type.subtype == MODEL_GOST_SUBTYPE_ISO_20765) ?
+model_str NG_Gost::GetModelShortInfo(const rg_model_id &model_type) {
+  return (model_type.subtype == MODEL_GOST_SUBTYPE_ISO_20765) ?
       ng_gost_iso20765_mi : ng_gost_mi;
+
+}
+
+model_str NG_Gost::GetModelShortInfo() const {
+  return NG_Gost::GetModelShortInfo(model_config_.model_type);
 }
 
 void NG_Gost::DynamicflowAccept(class DerivateFunctor &df) {

@@ -11,6 +11,7 @@
 
 #include "gas_description.h"
 #include "gas_description_dynamic.h"
+#include "Logging.h"
 #include "models_math.h"
 
 #ifdef _DEBUG
@@ -158,20 +159,28 @@ Peng_Robinson::Peng_Robinson(const model_input &mi)
 }
 
 Peng_Robinson *Peng_Robinson::Init(const model_input &mi) {
-  if (check_input(mi))
+  try {
+    check_input(mi);
+  } catch (const model_init_exception &e) {
+    Logging::Append(e.what());
     return nullptr;
+  }
   Peng_Robinson *pr = new Peng_Robinson(mi);
   if (pr)
     if (pr->parameters_ == nullptr) {
       delete pr;
       pr = nullptr;
     }
-  return pr; 
+  return pr;
+}
+
+model_str Peng_Robinson::GetModelShortInfo(const rg_model_id &model_type) {
+  return (model_type.subtype == MODEL_PR_SUBTYPE_BINASSOC) ?
+      peng_robinson_binary_mi : peng_robinson_mi;
 }
 
 model_str Peng_Robinson::GetModelShortInfo() const {
-  return (model_config_.model_type.subtype == MODEL_PR_SUBTYPE_BINASSOC) ?
-      peng_robinson_binary_mi : peng_robinson_mi;
+  return Peng_Robinson::GetModelShortInfo(model_config_.model_type);
 }
 
 //  расчёт смотри в ежедневнике

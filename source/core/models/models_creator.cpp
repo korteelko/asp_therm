@@ -26,9 +26,9 @@
 
 #include <assert.h>
 
-/** \brief стандартные физические условия */
+
+/** \brief Стандартные физические условия */
 static parameters standard_conds = {0, 100000.0, 314.0};
-ErrorWrap ModelsCreator::error_;
 
 /* todo:
  *   добавить такую же функцию в класс ProgramState */
@@ -55,7 +55,7 @@ model_input ModelsCreator::set_input(model_str ms, binodalpoints *bp,
 }
 
 modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
-    std::vector<gasmix_file> components, double p, double t) {
+    std::vector<gasmix_component_info> components, double p, double t) {
   /* todo: remove implementation! */
   #ifdef _DEBUG
   std::unique_ptr<GasMixByFiles<XMLReader>> gm(
@@ -65,7 +65,7 @@ modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
 }
 
 modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
-    std::vector<gasmix_file> components) {
+    std::vector<gasmix_component_info> components) {
   return ModelsCreator::GetCalculatingModel(ms, components,
       standard_conds.pressure, standard_conds.temperature);
 }
@@ -96,7 +96,6 @@ modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
 
 modelGeneral *ModelsCreator::initModel(model_str ms, binodalpoints *bp,
     double p, double t, const_dyn_union cdu) {
-  modelGeneral::ResetInitError();
   modelGeneral *mg = nullptr;
   switch (ms.model_type.type) {
     case rg_model_t::IDEAL_GAS:
@@ -117,11 +116,6 @@ modelGeneral *ModelsCreator::initModel(model_str ms, binodalpoints *bp,
       break;
     case rg_model_t::EMPTY:
       break;
-  }
-  if (modelGeneral::init_error.GetErrorCode()) {
-    modelGeneral::init_error.LogIt();
-    ModelsCreator::error_.SetError(ERROR_INIT_T,
-        "undefined calculation model in modelCreator");
   }
   if (mg) {
     if (mg->GetError()) {
