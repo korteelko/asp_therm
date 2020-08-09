@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gasmix name="gostmix3" version="1.0">
+  <group name="component1">
+     <parameter name="name">methane</parameter>
+     <parameter name="path">gases/methane.xml</parameter>
+     <parameter name="part">86.41</parameter>
+  </group>
+  <group name="component2">
+     <parameter name="name">ethane</parameter>
+     <parameter name="path">gases/ethane.xml</parameter>
+     <parameter name="part">1.8</parameter>
+  </group>
+  <group name="component3">
+     <parameter name="name">propane</parameter>
+     <parameter name="path">gases/propane.xml</parameter>
+     <parameter name="part">0.45</parameter>
+  </group>
+  <group name="component4">
+     <parameter name="name">iso_butane</parameter>
+     <parameter name="path">gases/iso_butane.xml</parameter>
+     <parameter name="part">0.1</parameter>
+  </group>
+  <group name="component5">
+     <parameter name="name">n_butane</parameter>
+     <parameter name="path">gases/n_butane.xml</parameter>
+     <parameter name="part">0.1</parameter>
+  </group>
+  <group name="component6">
+     <parameter name="name">iso_pentane</parameter>
+     <parameter name="path">gases/iso_pentane.xml</parameter>
+     <parameter name="part">0.03</parameter>
+  </group>
+  <group name="component7">
+     <parameter name="name">n_pentane</parameter>
+     <parameter name="path">gases/n_pentane.xml</parameter>
+     <parameter name="part">0.05</parameter>
+  </group>
+  <group name="component8">
+     <parameter name="name">hexane</parameter>
+     <parameter name="path">gases/hexane.xml</parameter>
+     <parameter name="part">0.12</parameter>
+  </group>
+  <group name="component9">
+     <parameter name="name">nitrogen</parameter>
+     <parameter name="path">gases/nitrogen.xml</parameter>
+     <parameter name="part">0.34</parameter>
+  </group>
+  <group name="component10">
+     <parameter name="name">carbon_dioxide</parameter>
+     <parameter name="path">gases/carbon_dioxide.xml</parameter>
+     <parameter name="part">0.6</parameter>
+  </group>
+  <group name="component11">
+     <parameter name="name">helium</parameter>
+     <parameter name="path">gases/helium.xml</parameter>
+     <parameter name="part">0.5</parameter>
+  </group>
+  <group name="component12">
+     <parameter name="name">hydrogen</parameter>
+     <parameter name="path">gases/hydrogen.xml</parameter>
+     <parameter name="part">9.5</parameter>
+  </group>
+</gasmix>

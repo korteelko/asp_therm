@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gasmix name="gostmix2" version="1.0">
+  <group name="component1">
+     <parameter name="name">methane</parameter>
+     <parameter name="path">gases/methane.xml</parameter>
+     <parameter name="part">81.2</parameter>
+  </group>
+  <group name="component2">
+     <parameter name="name">ethane</parameter>
+     <parameter name="path">gases/ethane.xml</parameter>
+     <parameter name="part">4.3</parameter>
+  </group>
+  <group name="component3">
+     <parameter name="name">propane</parameter>
+     <parameter name="path">gases/propane.xml</parameter>
+     <parameter name="part">0.90</parameter>
+  </group>
+  <group name="component4">
+     <parameter name="name">iso_butane</parameter>
+     <parameter name="path">gases/iso_butane.xml</parameter>
+     <parameter name="part">0.15</parameter>
+  </group>
+  <group name="component5">
+     <parameter name="name">n_butane</parameter>
+     <parameter name="path">gases/n_butane.xml</parameter>
+     <parameter name="part">0.15</parameter>
+  </group>
+  <group name="component6">
+     <parameter name="name">nitrogen</parameter>
+     <parameter name="path">gases/nitrogen.xml</parameter>
+     <parameter name="part">5.7</parameter>
+  </group>
+  <group name="component7">
+     <parameter name="name">carbon_dioxide</parameter>
+     <parameter name="path">gases/carbon_dioxide.xml</parameter>
+     <parameter name="part">7.6</parameter>
+  </group>
+</gasmix>

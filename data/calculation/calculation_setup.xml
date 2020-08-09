@@ -14,9 +14,9 @@
   <models> PRb, GOST, ISO </models>
   <gasmix_files>
     <!-- mixtures from gost-30319 root dir is 'data' -->
-    <mixfile name="gostmix1"> gost/gostmix1.xml </mixfile>
-    <mixfile name="gostmix2"> gost/gostmix2.xml </mixfile>
-    <mixfile name="gostmix3"> gost/gostmix3.xml </mixfile>
+    <mixfile name="gostmix1">gost_test/gostmix1.xml</mixfile>
+    <mixfile name="gostmix2">gost_test/gostmix2.xml</mixfile>
+    <mixfile name="gostmix3">gost_test/gostmix3.xml</mixfile>
   </gasmix_files>
   <points>
     <!-- [p] = Pa, [t] = K -->
