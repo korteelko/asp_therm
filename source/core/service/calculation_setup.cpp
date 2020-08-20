@@ -9,9 +9,12 @@
  */
 #include "calculation_setup.h"
 
+#include "atherm_db_tables.h"
 #include "calculation_by_file.h"
+#include "db_connection_manager.h"
 #include "models_configurations.h"
 #include "models_creator.h"
+#include "program_state.h"
 
 #include <algorithm>
 #include <future>
@@ -22,6 +25,59 @@ calculation_setup::calculation_setup(
   : root(root) {}
 
 /* CalculationSetup */
+void CalculationSetup::gasmix_models_map::CalculatePoints(
+    const std::vector<parameters> &points) {
+  initInfo();
+  if (is_status_aval(status)) {
+    for (auto &p: points)
+      calculatePoint(p);
+  }
+}
+
+mstatus_t CalculationSetup::gasmix_models_map::AddToDatabase(
+    DBConnectionManager *source_ptr) const {
+  mstatus_t st = STATUS_NOT;
+  if (source_ptr != nullptr) {
+    if (is_status_ok(st = source_ptr->CheckConnection())) {
+      st = is_status_ok(source_ptr->SaveVectorOfRows(models_info),
+          source_ptr->SaveVectorOfRows(calc_info),
+          source_ptr->SaveVectorOfRows(result));
+    } else {
+      Logging::Append(io_loglvl::debug_logs, "Ошибка добавления данных в БД "
+          "для смеси: \"" + mixname + "\" при проверке соединения с БД");
+    }
+  } else {
+    Logging::Append(io_loglvl::debug_logs, "Ошибка добавления данных в БД "
+        "для смеси: \"" + mixname + "\" - пустой указатель на БД");
+  }
+  return st;
+}
+
+void CalculationSetup::gasmix_models_map::initInfo() {
+  calculation_info ci;
+  ci.SetCurrentTime();
+  for (auto &m: models) {
+    if (m.second) {
+      models_info.push_back(
+          model_info::GetDefault().SetModelStr(m.second->GetModelShortInfo()));
+      calc_info.push_back(ci.SetModelInfo(&models_info.back()));
+      m.second->SetCalculationSetup(&calc_info.back());
+    }
+  }
+}
+
+void CalculationSetup::gasmix_models_map::calculatePoint(const parameters &p) {
+  for (auto mp = models.begin(); mp != models.end(); ++mp) {
+    if (mp->second) {
+      if (mp->second->IsValid(p)) {
+        mp->second->SetVolume(p.pressure, p.temperature);
+        result.push_back(mp->second->GetStateLog());
+        break;
+      }
+    }
+  }
+}
+
 CalculationSetup::CalculationSetup(std::shared_ptr<file_utils::FileURLRoot> &root,
     const std::string &filepath) {
   init_data_.reset(new calculation_setup(root));
@@ -39,6 +95,34 @@ CalculationSetup::CalculationSetup(std::shared_ptr<file_utils::FileURLRoot> &roo
         " конфигурации расчёта:\n\troot директория не задана " );
     }
   }
+}
+
+void CalculationSetup::Calculate() {
+  // Блокировать изменение данных пока не проведены расчёты
+  std::lock_guard lock(gasmixes_lock_);
+  std::vector<std::future<void>> future_points;
+  for (auto gmix: gasmixes_) {
+    future_points.push_back(std::async(std::launch::async, &CalculationSetup::
+        gasmix_models_map::CalculatePoints, &gmix.second, points_));
+  }
+  for (auto &fp: future_points)
+    // расчитать точки
+    fp.get();
+}
+
+mstatus_t CalculationSetup::AddToDatabase(DBConnectionManager *source_ptr) {
+  std::lock_guard lock(gasmixes_lock_);
+  std::vector<std::future<mstatus_t>> future_points;
+  mstatus_t st = STATUS_OK;
+  for (auto gmix: gasmixes_)
+    future_points.push_back(std::async(std::launch::async, &CalculationSetup::
+        gasmix_models_map::AddToDatabase, &gmix.second, source_ptr));
+
+  for (auto &fp: future_points)
+    // если были ошибки при добавлении данных в бд, отметим это
+    if (!is_status_ok(fp.get()))
+      st = STATUS_NOT;
+  return st;
 }
 
 #if !defined(DATABASE_TEST)
@@ -74,6 +158,31 @@ merror_t CalculationSetup::GetError() const {
   return error_.GetErrorCode();
 }
 
+mstatus_t CalculationSetup::initModel(CalculationSetup::gasmix_models_map *models_map,
+    time_t datetime, const model_str &ms, const std::string &filemix) {
+  std::shared_ptr<modelGeneral> m_ptr = std::shared_ptr<modelGeneral>(
+      ModelsCreator::GetCalculatingModel(ms, filemix));
+  mstatus_t st = STATUS_OK;
+  if (m_ptr) {
+    // обновим структуру моделей models
+    models_map->models.emplace(m_ptr->GetPriority(), m_ptr);
+    // добавить структуру информации в models_info
+    auto ref_model = models_map->models_info.emplace(models_map->models_info.end(),
+        model_info::GetDefault().SetModelStr(ms));
+    // добавить структуру информации о расчёте в calc_info
+    auto ref_calc = models_map->calc_info.emplace(
+        models_map->calc_info.end(), calculation_info());
+    // инициализировать данные структуры расчёта
+    ref_calc->SetDateTime(&datetime).SetModelInfo(ref_model.base());
+  } else {
+    st = STATUS_HAVE_ERROR;
+    Logging::Append(ERROR_INIT_NULLP_ST,
+        "ошибка создания расчётной модели для файла: " + filemix +
+        "\n\t" + modelGeneral::GetModelShortInfo(ms.model_type).GetString());
+  }
+  return st;
+}
+
 merror_t CalculationSetup::initSetup(file_utils::FileURL *filepath_p) {
   // Прячем указатель на calculation_setup
   //   в класс-строитель
@@ -81,16 +190,17 @@ merror_t CalculationSetup::initSetup(file_utils::FileURL *filepath_p) {
   // Инициализируем ридер по адресу пути к файлу и классу строителю выше
   std::unique_ptr<ReaderSample<pugi::xml_node, calculation_node<pugi::xml_node>,
       CalculationSetupBuilder>> rs(ReaderSample<pugi::xml_node,
-      calculation_node<pugi::xml_node>, CalculationSetupBuilder>
-      ::Init(filepath_p, &builder));
+      calculation_node<pugi::xml_node>, CalculationSetupBuilder>::
+      Init(filepath_p, &builder));
   merror_t error = ERROR_SUCCESS_T;
   if (rs) {
     rs->InitData();
     if (!rs->GetErrorCode()) {
       // инициализировать расчётные модели
       if (initData()) {
-        error = error_.SetError(ERROR_INIT_T, "ошибка иницианилизации"
-            " структуры конфигурации расчёта");
+        // возможны не критические ошибки
+        error = error_.GetErrorCode();
+        error_.LogIt();
       }
     } else {
       rs->LogError();
@@ -107,47 +217,48 @@ merror_t CalculationSetup::initSetup(file_utils::FileURL *filepath_p) {
 merror_t CalculationSetup::initData() {
   // инициализация
   std::lock_guard lg(gasmixes_lock_);
-  gasmix_models_map models_map;
+  //gasmix_models_map models_map;
   merror_t error = ERROR_SUCCESS_T;
   for (auto file: init_data_->gasmix_files) {
-    auto path_str = init_data_->root->CreateFileURL(file).GetURL();
-    std::vector<std::pair<std::future<std::shared_ptr<modelGeneral>>,
-        rg_model_id *>> future_models;
-    // todo: is ModelsCreator::GetCalculatingModel throw safe???
-    auto creator_f = [] (const model_str &ms, const std::string &filemix) {
-        return std::shared_ptr<modelGeneral>(
-            ModelsCreator::GetCalculatingModel(ms, filemix)); };
-    for (auto m: init_data_->models)
-      future_models.push_back({ std::async(creator_f,
-          modelGeneral::GetModelShortInfo(m), path_str), &m });
-    for (auto &fm: future_models) {
-      // обрабатываем ошибки создания модели
-      auto m_ptr = fm.first.get();
-      if (m_ptr) {
-        models_map.models.emplace(m_ptr->GetPriority(), m_ptr);
-      } else {
-        Logging::Append(error = ERROR_INIT_NULLP_ST,
-            "ошибка создания расчётной модели для файла: " + path_str +
-            "\n\t" + modelGeneral::GetModelShortInfo(*fm.second).GetString());
+    mstatus_t st = STATUS_OK;
+    auto emplace_pair = gasmixes_.emplace(file, gasmix_models_map());
+    if (emplace_pair.second) {
+      /* todo: название смеси вообще-то подцепляется в xml,
+       *   имя файла не является названием смеси  */
+      emplace_pair.first->second.mixname = file;
+      auto path_str = init_data_->root->CreateFileURL(file).GetURL();
+      std::time_t dt = time(0);
+      std::vector<std::future<mstatus_t>> future_models;
+      for (auto m: init_data_->models)
+        future_models.push_back(std::async(std::launch::async,
+            &CalculationSetup::initModel, &emplace_pair.first->second, dt,
+            modelGeneral::GetModelShortInfo(m), path_str));
+      for (auto &fm: future_models) {
+        // если хотя бы одна из моделей не проинициализирована
+        //   отметим что была ошибка
+        if (!is_status_ok(fm.get()))
+          st = STATUS_NOT;
+      }
+      // во время инициализации моделей была ошибка,
+      //   проверим если с чем работать
+      if (!is_status_ok(st)) {
+        if (emplace_pair.first->second.models.size() == 0) {
+          Logging::Append(ERROR_INIT_T, "Ошибка инициализации расчёта для " +
+              file + " не проинициализирована ни одна модель.");
+          error = ERROR_INIT_T;
+        }
       }
     }
   }
-  // "скопировать" расчётные точки
-  points_ = std::vector<parameters>(std::move(init_data_->points));
-  // удаляем данные сетапа
-  init_data_ = nullptr;
+  if (!gasmixes_.empty()) {
+    // "скопировать" расчётные точки
+    points_ = std::vector<parameters>(std::move(init_data_->points));
+    // удаляем данные сетапа
+    init_data_ = nullptr;
+  } else {
+    status_ = STATUS_HAVE_ERROR;
+    error = error_.SetError(ERROR_INIT_T, "Не проинициализированы "
+        "расчётные данные");
+  }
   return error;
 }
-
-/*
-void CalculationSetup::swapModel() {
-  status_ = STATUS_NOT;
-  auto const model_it = models_.cbegin();
-  while (model_it != models_.cend()) {
-    // первая модель для которой допустимы макропараметры
-    if (model_it->second->IsValid(params_copy_)) {
-      status_ = STATUS_OK;
-    }
-  }
-}
-*/

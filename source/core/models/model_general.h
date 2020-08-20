@@ -127,6 +127,8 @@ public:
   virtual double GetVolume(double p, double t) = 0;
   virtual double GetPressure(double v, double t) = 0;
 
+  void SetCalculationSetup(calculation_info *calculation);
+
   /** \brief Получить приоритет использования ОПРЕДЕЛЁННОЙ модели
     *   в ОПРЕДЕЛЁННОЙ конфигурации.
     * \note Потрясающая по точности модель ГОСТ вообще не
@@ -141,6 +143,10 @@ public:
    *   выбора этого всего, т.к. необходимо учитывать и состав смеси
    *   и макро параметры */
   priority_var GetPriority() const;
+  /**
+   * \brief Получить указатель на конфигурацию модели
+   * */
+  const model_str *GetModelConfig() const;
 
   double GetVolume() const;
   double GetPressure() const;
@@ -154,6 +160,7 @@ public:
   const_parameters GetConstParameters() const;
   calculation_state_log GetStateLog() const;
   merror_t GetError() const;
+  calculation_info *GetCalculationSetup() const;
 
   // todo: maybe remove it in another class
   std::string ParametersString() const;
@@ -186,14 +193,24 @@ protected:
 
 protected:
   ErrorWrap error_;
-  mstatus_t status_;
-  /** \brief Информация о данной модели:
-    *   тип, модификация, версия имплементации в данной программе */
+  mstatus_t status_ = STATUS_DEFAULT;
+  /**
+   * \brief Информация о данной модели:
+   *   тип, модификация, версия имплементации в данной программе
+   * */
   model_str model_config_;
   gas_marks_t gm_;
+  /**
+   * \brief Приоритет модели
+   * */
   model_priority priority_;
-  std::unique_ptr<GasParameters> parameters_;
-  std::unique_ptr<binodalpoints> bp_;
+  /**
+   * \brief Указатель на сетап расчёта
+   * */
+  calculation_info *calculation_ = nullptr;
+
+  std::unique_ptr<GasParameters> parameters_ = nullptr;
+  std::unique_ptr<binodalpoints> bp_ = nullptr;
 };
 
 #endif  // !_CORE__MODELS__MODEL_GENERAL_H_

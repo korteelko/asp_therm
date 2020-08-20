@@ -87,13 +87,14 @@ ProgramState &ProgramState::Instance() {
 ProgramState::ProgramState()
   : status_(STATUS_DEFAULT), db_manager_(&db) {}
 
-void ProgramState::SetWorkDir(const file_utils::FileURLRoot &work_dir) {
-  std::lock_guard<Mutex> lock(mutex);
+void ProgramState::SetProgramDirs(const file_utils::FileURLRoot &work_dir,
+    const file_utils::FileURLRoot &calc_dir) {
+  std::lock_guard<Mutex> lock(ProgramState::state_mutex);
   work_dir_.reset(new file_utils::FileURLRoot(work_dir));
-  if (work_dir_->IsInitialized()) {
-    if (is_status_aval(status_)) {
+  calc_dir_.reset(new file_utils::FileURLRoot(calc_dir));
+  if (work_dir_->IsInitialized() && calc_dir_->IsInitialized()) {
+    if (is_status_aval(status_))
       status_ = STATUS_OK;
-    }
   } else {
     error_.SetError(ERROR_FILE_EXISTS_ST,
         "Ошибка инициализации корневой директории программы");
@@ -102,7 +103,7 @@ void ProgramState::SetWorkDir(const file_utils::FileURLRoot &work_dir) {
 
 merror_t ProgramState::ReloadConfiguration(
     const std::string &config_file) {
-  std::lock_guard<Mutex> lock(mutex);
+  std::lock_guard<Mutex> lock(ProgramState::state_mutex);
   if (work_dir_) {
     auto path = work_dir_->CreateFileURL(config_file);
     program_config_.ResetConfigFile(path.GetURL());
@@ -146,12 +147,11 @@ const asp_db::db_parameters &ProgramState::GetDatabaseConfiguration() const {
 }
 
 int ProgramState::AddCalculationSetup(const std::string &filepath) {
-  /* todo: а если другие потоки используют инициализированные модели? */
-  std::lock_guard<Mutex> lock(ProgramState::mutex);
+  std::lock_guard<Mutex> lock(ProgramState::calc_mutex);
   int key = ProgramState::calc_key++;
-  auto s = CalculationSetup(work_dir_, filepath);
-  //auto res = calc_setups_.emplace(key, std::move(s));
-  auto res = calc_setups_.emplace(key, CalculationSetup(work_dir_, filepath));
+  auto res = calc_setups_.emplace(key, CalculationSetup(work_dir_,
+      // на нормальном яп такого наверное нельзя написать
+      (calc_dir_) ? calc_dir_->CreateFileURL(filepath).GetURL() : filepath));
   if (res.second) {
     // добавили успешно
     if (res.first->second.GetError())
@@ -162,15 +162,17 @@ int ProgramState::AddCalculationSetup(const std::string &filepath) {
 }
 
 void ProgramState::RunCalculationSetup(int num) {
+  ProgramState::calc_mutex.lock();
   // auto cs = calc_setups_[num];
   auto cs = calc_setups_.find(num);
-  // реализовать что-то похожее на:
-  // if (cs != calc_setups_.end())
-  //   cs->run();
-  assert(0);
+  ProgramState::calc_mutex.unlock();
+
+  if (cs != calc_setups_.end())
+    cs->second.Calculate();
 }
 
 void ProgramState::RemoveCalculationSetup(int num) {
+  std::lock_guard<Mutex> lock(ProgramState::calc_mutex);
   auto cs = calc_setups_.find(num);
   if (cs != calc_setups_.end())
     calc_setups_.erase(cs);

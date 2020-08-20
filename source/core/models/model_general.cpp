@@ -49,6 +49,10 @@ modelGeneral::modelGeneral(model_str model_config,
 
 modelGeneral::~modelGeneral() {}
 
+void modelGeneral::SetCalculationSetup(calculation_info *calculation) {
+  calculation_ = calculation;
+}
+
 void modelGeneral::set_parameters(double v, double p, double t) {
   parameters_->csetParameters(v, p, t, set_state_phase(v, p, t));
 }
@@ -198,6 +202,10 @@ priority_var modelGeneral::GetPriority() const {
   return priority_.GetPriority();
 }
 
+const model_str *modelGeneral::GetModelConfig() const {
+  return &model_config_;
+}
+
 double modelGeneral::GetVolume() const {
   return parameters_->cgetVolume();
 }
@@ -234,17 +242,23 @@ const_parameters modelGeneral::GetConstParameters() const {
   return parameters_->cgetConstparameters();
 }
 
+// todo: ??? насчёт энтальпии, вн. энергии и т.д. не совсем прозрачно
 calculation_state_log modelGeneral::GetStateLog() const {
   dyn_parameters dps = parameters_->cgetDynParameters();
-  // пока так
-  return {.id = -1, .calculation = nullptr, .dyn_pars = dps,
+  calculation_state_log s = {.id = -1, .calculation = calculation_,
       .enthalpy = dps.internal_energy * dps.parm.pressure * dps.parm.volume,
-      .state_phase = stateToString[(uint32_t)parameters_->cgetState()],
-      .initialized = calculation_state_log::f_empty};
+      .state_phase = stateToString[(uint32_t)parameters_->cgetState()]};
+  s.initialized |= calculation_state_log::f_state_phase;
+  s.SetDynPars(dps);
+  return s;
 }
 
 merror_t modelGeneral::GetError() const {
   return error_.GetErrorCode();
+}
+
+calculation_info *modelGeneral::GetCalculationSetup() const {
+  return calculation_;
 }
 
 std::string modelGeneral::ParametersString() const {

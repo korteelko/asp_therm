@@ -67,19 +67,29 @@ public:
   public:
     ErrorWrap error;
     mstatus_t status = STATUS_DEFAULT;
-    /** \brief Текущий файл конфигурации */
+    /**
+     * \brief Текущий файл конфигурации
+     * */
     std::string config_filename;
-    /** \brief Конфигурация программы */
+    /**
+     * \brief Конфигурация программы
+     * */
     program_configuration configuration;
-    /** \brief Параметры коннекта к БД */
+    /**
+     * \brief Параметры коннекта к БД
+     * */
     asp_db::db_parameters db_parameters_conf;
-    /** \brief По-сути - декоратор над объектом чтения xml(или других форматов)
-      *   файлов для конфигурации программы
-      * \note На тестинг инстанцируем шаблон заранее */
+    /**
+     * \brief По-сути - декоратор над объектом чтения xml(или других форматов)
+     *   файлов для конфигурации программы
+     * \note На тестинг инстанцируем шаблон заранее
+     * */
     /* todo: remove instance, add template parameter */
     std::unique_ptr<ConfigurationByFile<XMLReader>> config_by_file;
-    /** \brief чтение файла завершилось успешной загрузкой
-      *   конфигуции программы */
+    /**
+     * \brief Чтение файла завершилось успешной загрузкой
+     *   конфигуции программы
+     * */
     bool is_initialized;
   };
 
@@ -89,10 +99,10 @@ public:
 
   /* Инициализация */
   /**
-   * \brief
-   * Инициализировать рабочую директорию приложения
+   * \brief Инициализировать рабочую директорию приложения
    */
-  void SetWorkDir(const file_utils::FileURLRoot &work_dir);
+  void SetProgramDirs(const file_utils::FileURLRoot &work_dir,
+      const file_utils::FileURLRoot &calc_dir);
   /**
    * \brief Загрузить или перезагрузить конфигурацию программы
    * */
@@ -121,6 +131,7 @@ public:
   /* Расчёт */
   /**
    * \brief Добавить сетап расчёта
+   * \param filepath Путь к сетапу расчёта относительно calc_dir_
    * \return id расчётных параметров или -1 в случае ошибки
    * */
   int AddCalculationSetup(const std::string &filepath);
@@ -136,36 +147,55 @@ public:
   void RemoveCalculationSetup(int num);
 
   /* Состояние программы */
-  /** \brief Получить статус */
+  /**
+   * \brief Получить статус
+   * */
   mstatus_t GetStatus() const;
-  /** \brief Получить код ошибки */
+  /**
+   * \brief Получить код ошибки
+   * */
   merror_t GetErrorCode() const;
-  /** \brief Получить сообщение ошибки */
+  /**
+   * \brief Получить сообщение ошибки
+   * */
   std::string GetErrorMessage() const;
-  /** \brief Залогировать ошибку */
+  /**
+   * \brief Залогировать ошибку
+   * */
   void LogError();
 
 private:
   ProgramState();
 
 private:
-  /** \brief Статическая переменная id ключей расчётного набора(calc_setups_)
-    * \todo Она не нужна здесь, переместить её в сам объект */
-  Mutex mutex;
   ErrorWrap error_;
   mstatus_t status_ = STATUS_DEFAULT;
-  /** \brief Объект инициализации путей, привязан к корневой
-    *   директории программы, т.е. от неё отсчитываем пути
-    *   к файлам конфигурации, данным, ресурсам и т.п. */
+  Mutex state_mutex;
+  Mutex calc_mutex;
+  /**
+   * \brief Объект инициализации путей, привязан к корневой
+   *   директории программы, т.е. от неё отсчитываем пути
+   *   к файлам конфигурации, данным, ресурсам и т.п.
+   * */
   std::shared_ptr<file_utils::FileURLRoot> work_dir_ = nullptr;
+  /**
+   * \brief Объект иниализации путей связанных с данными расчётов
+   * */
+  std::shared_ptr<file_utils::FileURLRoot> calc_dir_ = nullptr;
   /* todo: они не связаны между собой, можно распараллелить
    *   also, всё-таки речь идёт не о контейнере, а о полноценном объекте */
   std::atomic<int> calc_key;
-  /** \brief Набор данных для проведения расчётов */
+  /**
+   * \brief Набор данных для проведения расчётов
+   * */
   Calculations calc_setups_;
-  /** \brief Конфигурация программы - модели, бд, опции */
+  /**
+   * \brief Конфигурация программы - модели, бд, опции
+   * */
   ProgramConfiguration program_config_;
-  /** \brief Объект подключения к БД */
+  /**
+   * \brief Менеджер подключения к БД
+   * */
   asp_db::DBConnectionManager db_manager_;
 };
 

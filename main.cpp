@@ -40,8 +40,8 @@
 namespace fs = std::filesystem;
 
 // maybe set to:
-const fs::path xml_gases_dir = "../../asp_therm/data/gases";
-const fs::path xml_calculations_dir = "../../asp_therm/data/calculation";
+const fs::path xml_gases_dir = "../data/gases";
+const fs::path xml_calculations_dir = "../data/calculation";
 const fs::path xml_methane = "methane.xml";
 const fs::path xml_ethane  = "ethane.xml";
 const fs::path xml_propane = "propane.xml";
@@ -60,11 +60,15 @@ static model_str pr_str(rg_model_id(rg_model_t::PENG_ROBINSON,
 
 static fs::path cwd;
 
-int test_calculation_init() {
+
+/**
+ * \brief Функция отладки считывания и инициализации
+ *   входных данных для расчётов
+ * */
+int test_calculation_setup() {
   std::string calc_dir = (cwd / xml_calculations_dir ).string();
   std::shared_ptr<file_utils::FileURLRoot> root_shp(
       new file_utils::FileURLRoot(file_utils::url_t::fs_path, calc_dir));
-
   calculation_setup cs(root_shp);
   CalculationSetupBuilder builder(&cs);
 
@@ -72,9 +76,30 @@ int test_calculation_init() {
   std::unique_ptr<ReaderSample<pugi::xml_node, calculation_node<pugi::xml_node>,
       CalculationSetupBuilder>> rs(ReaderSample<pugi::xml_node,
       calculation_node<pugi::xml_node>, CalculationSetupBuilder>::Init(&path, &builder));
-  if (rs)
-    rs->InitData();
-  return 0;
+  return (rs) ? rs->InitData() : 11;
+}
+
+int test_calculation_init() {
+  int res = 0;
+  std::string calc_dir = (cwd / xml_calculations_dir ).string();
+  std::shared_ptr<file_utils::FileURLRoot> root_shp(
+      new file_utils::FileURLRoot(file_utils::url_t::fs_path, calc_dir));
+
+  /* todo: naming??? */
+  CalculationSetup CS(root_shp, xml_calculation.string());
+  if (!(res = CS.GetError())) {
+    ProgramState &ps = ProgramState::Instance();
+    AthermDBTables adb;
+    DBConnectionManager dbm(&adb);
+    CS.Calculate();
+    dbm.ResetConnectionParameters(
+        ps.GetDatabaseConfiguration());
+    if (is_status_ok(dbm.CheckConnection()))
+      CS.AddToDatabase(&dbm);
+    else
+      res = 12;
+  }
+  return res;
 }
 
 
@@ -322,8 +347,9 @@ int test_models_mix() {
 int main(int argc, char *argv[]) {
   cwd = fs::path(argv[0]).parent_path();
   fs::current_path(cwd);
-  ProgramState::Instance().SetWorkDir(
-      file_utils::FileURLRoot(file_utils::url_t::fs_path, cwd.string()));
+  ProgramState::Instance().SetProgramDirs(
+      file_utils::FileURLRoot(file_utils::url_t::fs_path, cwd.string()),
+      file_utils::FileURLRoot(file_utils::url_t::fs_path, cwd / xml_calculations_dir));
   if (!test_program_configuration()) {
     Logging::Append(io_loglvl::debug_logs, "Запускаю тесты сборки");
     //*

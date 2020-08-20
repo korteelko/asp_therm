@@ -110,7 +110,7 @@ protected:
   void set_mixfiles() {
     for (auto x: source->children())
       builder->setup_p->gasmix_files.push_back(
-          builder->setup_p->root->CreateFileURL(x.value()).GetURL());
+          builder->setup_p->root->CreateFileURL(x.first_child().value()).GetURL());
   }
   void set_points() {
     for (auto x: source->children()) {

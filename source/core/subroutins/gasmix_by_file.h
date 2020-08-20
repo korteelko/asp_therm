@@ -269,12 +269,6 @@ private:
 
 private:
   ErrorWrap error_;
-  std::unique_ptr<ConfigReader<gasmix_node>> config_doc_;
-  /** \brief Объект инициализирующий смесь
-    * \note Имя его неподходящее */
-  std::unique_ptr<GasMixByFiles<ConfigReader>> files_handler_;
-  /** \brief Контейнер считанных данных */
-  std::vector<gasmix_component_info> gasmix_files_;
   /** \brief Используемая термодинамическая модель
     * \note Она не нужна, нужна просто bool переменная на
     *   считывание файлов, или вообще не нужна, т.к. в файлах миксов
@@ -282,6 +276,12 @@ private:
     *   если путь не задан то не о чём и говорить
     * \todo Remove it. You can replace with `bool should_read_components_`) */
   rg_model_t model_t_;
+  std::unique_ptr<ConfigReader<gasmix_node>> config_doc_ = nullptr;
+  /** \brief Объект инициализирующий смесь
+    * \note Имя его неподходящее */
+  std::unique_ptr<GasMixByFiles<ConfigReader>> files_handler_ = nullptr;
+  /** \brief Контейнер считанных данных */
+  std::vector<gasmix_component_info> gasmix_files_;
 };
 
 #endif  // !_CORE__SUBROUTINS__GASMIX_BY_FILE_H_
