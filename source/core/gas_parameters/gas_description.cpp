@@ -228,6 +228,21 @@ bool gas_pair::operator<(const gas_pair &rhs) const {
 
 const_dyn_union::~const_dyn_union() {}
 
+void calculation_state_log::SetDynPars(const dyn_parameters &dp) {
+  dyn_pars = dp;
+  initialized |= (f_vol | f_pres | f_pres);
+  if (dp.setup & DYNAMIC_HEAT_CAP_VOL)
+    initialized |= f_dcv;
+  if (dp.setup & DYNAMIC_HEAT_CAP_PRES)
+    initialized |= f_dcp;
+  if (dp.setup & DYNAMIC_INTERNAL_ENERGY)
+    initialized |= f_din;
+  if (dp.setup & DYNAMIC_BETA_KR)
+    initialized |= f_dbk;
+  if (dp.setup & DYNAMIC_ENTALPHY)
+    initialized |= f_enthalpy;
+}
+
 #define CH(x) (GAS_TYPE_ ## x)
 bool gas_char::IsAromatic(gas_t gas) {
 #ifdef ASSIGNMENT_TRACE_COMPONENTS

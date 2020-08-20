@@ -112,3 +112,10 @@ model_info model_info::GetDefault() {
   return model_info {.short_info = model_str(
       rg_model_id(rg_model_t::EMPTY, MODEL_SUBTYPE_DEFAULT), 1, 0, "")};
 }
+
+model_info &model_info::SetModelStr(const model_str &ms) {
+  short_info = ms;
+  initialized |= (f_model_type | f_model_subtype | f_vers_major |
+      f_vers_minor | f_short_info);
+  return *this;
+}

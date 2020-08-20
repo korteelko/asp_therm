@@ -32,12 +32,28 @@ bool calculation_configuration::IsEnableISO20765() const {
 }
 
 /* calculation_info */
-calculation_info::calculation_info()
-  : datetime(time(0)) {}
+calculation_info::calculation_info() {}
 
-void calculation_info::SetDateTime(std::time_t *dt) {
+calculation_info::calculation_info(std::time_t dt)
+  : datetime(dt) {
+  initialized |= (f_date | f_time);
+}
+
+calculation_info &calculation_info::SetDateTime(std::time_t *dt) {
   datetime = *dt;
   initialized |= (f_date | f_time);
+  return *this;
+}
+
+calculation_info &calculation_info::SetModelInfo(const model_info *mi) {
+  model = mi;
+  return *this;
+}
+
+calculation_info &calculation_info::SetCurrentTime() {
+  datetime = time(0);
+  initialized |= (f_date | f_time);
+  return *this;
 }
 
 /* формат 'yyyy/mm/dd'

@@ -91,9 +91,11 @@ inline bool model_priority::IsForced() const { return is_forced; }
 // inline bool model_priority::IsAvailableModel() const { return priority != -1; }
 
 
-/** \brief Структура идентификации модели(уравнения реального газа)
-  *   параметры прописываются в классе параметров модели
-  *   методом GetModelStr */
+/**
+ * \brief Структура идентификации модели(уравнения реального газа)
+ *   параметры прописываются в классе параметров модели
+ *   методом GetModelStr
+ * */
 struct model_str {
   /** \brief Тип модели */
   rg_model_id model_type;
@@ -135,11 +137,20 @@ public:
       const std::string &param_value);
 };
 
-/** \brief строка для добавления в БД */
+/**
+ * \brief Строка для добавления в БД
+ * */
 struct model_info {
 public:
-  /** \brief Получить стандартную структуру model_info , с пустыми полями */
+  /**
+   * \brief Получить стандартную структуру model_info , с пустыми полями
+   **/
   static model_info GetDefault();
+
+  /**
+   * \brief Добавить данный model_str и соответствующие флаги
+   **/
+  model_info &SetModelStr(const model_str &ms);
 
 public:
   enum model_info_flags {

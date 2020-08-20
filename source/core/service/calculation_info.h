@@ -61,23 +61,44 @@ public:
   bool IsEnableISO20765() const;
 };
 
-/** \brief Структура для добавления в базу данных */
+/**
+ * \brief Структура для добавления в базу данных
+ * */
 struct calculation_info {
 public:
   calculation_info();
+  calculation_info(std::time_t dt);
 
-  /** \brief Установить время/дату */
-  void SetDateTime(std::time_t *dt);
-  /** \brief Установить дату
-    * \param date дата в формате 'yyyy/mm/dd' */
+  /**
+   * \brief Установить время/дату
+   * */
+  calculation_info &SetDateTime(std::time_t *dt);
+  /**
+   * \brief Установить ссылку на используемую модель
+   * */
+  calculation_info &SetModelInfo(const model_info *mi);
+  /**
+   * \brief Установить текущие значения времени и даты
+   * */
+  calculation_info &SetCurrentTime();
+  /**
+   * \brief Установить дату
+   * \param date дата в формате 'yyyy/mm/dd'
+   * */
   mstatus_t SetDate(const std::string &date);
-  /** \brief Установить время
-    * \param time время в формате 'hh:mm' */
+  /**
+   * \brief Установить время
+   * \param time время в формате 'hh:mm'
+   * */
   mstatus_t SetTime(const std::string &time);
 
-  /** \brief Получить строку даты в формате 'yyyy/mm/dd' */
+  /**
+   * \brief Получить строку даты в формате 'yyyy/mm/dd'
+   * */
   std::string GetDate() const;
-  /** \brief Получить строку времени в формате 'hh:mm:ss' */
+  /**
+   * \brief Получить строку времени в формате 'hh:mm:ss'
+   * */
   std::string GetTime() const;
 
 public:
@@ -89,17 +110,29 @@ public:
     f_calculation_info_id = 0x08,
     f_full = 0x0f
   };
-  /** \brief Уникальный id строки расчёта из базы данных */
+  /**
+   * \brief Уникальный id строки расчёта из базы данных
+   * */
   int32_t id = -1;
-  /** \brief Уникальный id модели из базы данных */
+  /**
+   * \brief Уникальный id модели из базы данных
+   * */
   int32_t model_id = -1;
-  /** \brief Указатель на конфигурацию расчёта */
-  const calculation_configuration *configuration = nullptr;
-  /** \brief Указатель на модель */
-  model_info *model = nullptr;
-  /** \brief Время и дата */
+  /**
+   * \brief Указатель на конфигурацию расчёта
+   * */
+  // const calculation_configuration *configuration = nullptr;
+  /**
+   * \brief Указатель на модель
+   * */
+  const model_info *model = nullptr;
+  /**
+   * \brief Время и дата
+   * */
   std::time_t datetime;
-  /** \brief Иницианилизированные поля */
+  /**
+   * \brief Иницианилизированные поля
+   * */
   uint32_t initialized = f_empty;
 };
 

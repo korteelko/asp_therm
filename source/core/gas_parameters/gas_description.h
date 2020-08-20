@@ -21,6 +21,7 @@
 
 #include <stdint.h>
 
+
 gas_t gas_by_name(const std::string &name);
 
 inline double volume_by_compress(double p, double t, double mol, double z) {
@@ -175,6 +176,10 @@ typedef std::map<const gas_pair, double> binary_coef_map;
 struct calculation_info;
 /** \brief Структура для добавления в базу данных */
 struct calculation_state_log {
+public:
+  void SetDynPars(const dyn_parameters &dp);
+
+public:
   enum state_info_flags {
     f_empty = 0x00,
     /** \brief Уникальный id информации по расчёту */
