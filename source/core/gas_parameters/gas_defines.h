@@ -11,6 +11,7 @@
 #define _CORE__GAS_PARAMETERS__GAS_DEFINES_H_
 
 #include "atherm_common.h"
+#include "models_math.h"
 
 #include <array>
 

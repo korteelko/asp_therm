@@ -254,7 +254,8 @@ merror_t CalculationSetup::initData() {
     // "скопировать" расчётные точки
     points_ = std::vector<parameters>(std::move(init_data_->points));
     // удаляем данные сетапа
-    init_data_ = nullptr;
+    // todo: зачем? или хотя бы перенести
+    // init_data_ = nullptr;
   } else {
     status_ = STATUS_HAVE_ERROR;
     error = error_.SetError(ERROR_INIT_T, "Не проинициализированы "

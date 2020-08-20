@@ -118,6 +118,10 @@ struct rg_model_id {
 
   rg_model_id() = delete;
   rg_model_id(rg_model_t t, rg_model_subtype subt);
+
+  inline bool operator==(const rg_model_id &r) const {
+    return (type == r.type) && (subtype == r.subtype);
+  }
 };
 
 #endif  // !_CORE__COMMON__ATHERM_COMMON_H_
