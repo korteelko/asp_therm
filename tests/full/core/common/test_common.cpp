@@ -1,3 +1,4 @@
+#include "calculation_setup.h"
 #include "ErrorWrap.h"
 #include "merror_codes.h"
 #include "program_state.h"
@@ -13,19 +14,43 @@ namespace fs = std::filesystem;
 static fs::path cwd;
 static fs::path asp_therm_root = "../../../tests/full/utils/data/";
 static std::string conf_file = "test_configuration.xml";
+static std::string calc_file = "test_calculation.xml";
 
 
-/** \brief Класс тестов состояния программы */
+/**
+ * \brief Класс для тестинга CalculationSetup
+ * */
+class CalculationSetupProxy {
+public:
+  CalculationSetupProxy(std::shared_ptr<file_utils::FileURLRoot> &root,
+      const std::string &filepath)
+    : cs(CalculationSetup(root, filepath)) {}
+
+  const calculation_setup &GetSetup() const { return *cs.init_data_; }
+
+public:
+  CalculationSetup cs;
+};
+
+
+/**
+ * \brief Класс тестов состояния программы
+ * */
 class ProgramStateTest: public ::testing::Test {
 protected:
   ProgramStateTest() {
     ProgramState &state = ProgramState::Instance();
-    fs::path root = cwd / asp_therm_root;
+    program_root_ = cwd / asp_therm_root;
     if (createConfFile()) {
-      file_utils::FileURLRoot r = file_utils::FileURLRoot(
-          file_utils::url_t::fs_path, root.string());
-      EXPECT_TRUE(r.IsInitialized());
-      state.SetWorkDir(r);
+      data_root_p_.reset(new file_utils::FileURLRoot(
+          file_utils::url_t::fs_path, program_root_.string()));
+      EXPECT_TRUE(data_root_p_->IsInitialized());
+      if (data_root_p_) {
+        // state.SetWorkDir(*data_root_p_);
+      } else {
+        EXPECT_TRUE(false);
+      }
+
       EXPECT_TRUE(is_status_ok(state.GetStatus()));
       state.ReloadConfiguration(conf_file);
       status = state.GetStatus();
@@ -35,6 +60,8 @@ protected:
             << state.GetErrorMessage() << "\n";
         state.LogError();
       }
+      if (!initCalculations())
+        status = STATUS_NOT;
     } else {
       EXPECT_TRUE(false);
       std::cerr << "code error:" << state.GetErrorCode() <<  " \n"
@@ -45,7 +72,7 @@ protected:
 
   bool createConfFile() {
     bool success = false;
-    fs::path p = cwd / asp_therm_root / conf_file;
+    fs::path p = program_root_ / conf_file;
     auto f = std::fstream(p, std::ios_base::out);
     if (f.is_open()) {
       f << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
@@ -73,8 +100,44 @@ protected:
     return success;
   }
 
+  bool initCalculations() {
+    bool success = false;
+    fs::path p = program_root_ / calc_file;
+    auto f = std::fstream(p, std::ios_base::out);
+    if (f.is_open()) {
+      f << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+      f << "<calc_setup name=\"example\">\n";
+      f << "  <models> PRb, GOST, ISO </models>\n";
+      f << "  <gasmix_files>\n";
+      f << "    <!-- mixtures from gost-30319 root dir is 'data' -->\n";
+      f << "    <mixfile name=\"gostmix1\"> ../../data/gost/gostmix1.xml </mixfile>\n";
+      f << "    <mixfile name=\"gostmix2\"> ../../data/gost/gostmix2.xml </mixfile>\n";
+      f << "    <mixfile name=\"gostmix3\"> ../../data/gost/gostmix3.xml </mixfile>\n";
+      f << "  </gasmix_files>\n";
+      f << "  <points>\n";
+      f << "    <!-- [p] = Pa, [t] = K -->\n";
+      f << "    <point p=\"100000\" t=\"250.0\"/>\n";
+      f << "    <point p=\"5000000\" t=\"350.0\"/>\n";
+      f << "    <point p=\"30000000\" t=\"300.0\"/>\n";
+      f << "  </points>\n";
+      f << "</calc_setup>\n";
+      f.close();
+      success = true;
+    }
+    return success;
+  }
+
 protected:
   mstatus_t status = STATUS_DEFAULT;
+  /**
+   * \brief Корневая директория программы, для чтения конфигурационных файлов
+   */
+  fs::path program_root_;
+  /**
+   * \brief Корневая директория дополнительных данных программы,
+   *  для инициализации смесей, расчётов, т.п.
+   */
+  std::shared_ptr<file_utils::FileURLRoot> data_root_p_;
 };
 
 /** \brief Инициализация состояния программы */
@@ -117,9 +180,21 @@ TEST_F(ProgramStateTest, ModelsInit) {
   }
 }
 
-/** \brief Сборка моделей */
-TEST_F(ProgramStateTest, AddModels) {
-  // calculation_setup cs;
+/**
+ * \brief Инициалиазция сетапов расчёта
+ * */
+TEST_F(ProgramStateTest, CalculationSetup) {
+  CalculationSetupProxy cs(data_root_p_, calc_file);
+
+  // todo:
+  //zdesya
+}
+
+/**
+ * \brief Сборка моделей
+ * */
+TEST_F(ProgramStateTest, DISABLED_AddModels) {
+  // calculation_setup cs
 }
 
 

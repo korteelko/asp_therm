@@ -42,7 +42,7 @@ list(APPEND
   # build postgresql module and link pqxx library
   WITH_POSTGRESQL
   # enable tests
-  #TESTS_ENABLED
+  TESTS_ENABLED
 )
 
 # SETUP BUILD_OPTIONS

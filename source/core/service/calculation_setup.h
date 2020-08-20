@@ -64,6 +64,8 @@ public:
  *   компоненты, входные точки
  * */
 class CalculationSetup {
+  ADD_TEST_CLASS(CalculationSetupProxy)
+
 public:
   /**
    * \brief Сетап для обсчёта газовой смеси
