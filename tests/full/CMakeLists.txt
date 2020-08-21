@@ -47,6 +47,8 @@ if(${GTEST_FOUND})
   include(${ASP_THERM_FULLTEST_DIR}/core/common/common_tests.cmake)
   #   gasmix
   include(${ASP_THERM_FULLTEST_DIR}/core/gas_parameters/gas_parameters_tests.cmake)
+  #   state
+  include(${ASP_THERM_FULLTEST_DIR}/core/service/state_tests.cmake)
   #   xml and json reader
   include(${ASP_THERM_FULLTEST_DIR}/utils/fileurl_tests.cmake)
   #   xml and json reader

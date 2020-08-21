@@ -139,3 +139,8 @@ TEST(Subroutins, StringToParam) {
   EXPECT_FALSE(set_int("2147483648", &i) == ERROR_SUCCESS_T);
   EXPECT_FALSE(set_loglvl(e, &ll) == ERROR_SUCCESS_T);
 }
+
+int main(int argc, char **argv) {
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
