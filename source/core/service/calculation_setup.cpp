@@ -49,13 +49,13 @@ mstatus_t CalculationSetup::gasmix_models_map::AddToDatabase(
     if (is_status_ok(st = source_ptr->CheckConnection())) {
       // todo: смешение уровней абстракции
       id_container ids;
-      source_ptr->SaveVectorOfRows(models_info, &ids);
+      source_ptr->SaveNotExistsRows(models_info, &ids);
       if (is_status_aval(ids.status))
         for (size_t i = 0; i < std::min(models_info.size(), ids.id_vec.size()); ++i)
           models_info[i].id = ids.id_vec[i];
       ids.id_vec.clear();
       ids.status = STATUS_DEFAULT;
-      source_ptr->SaveVectorOfRows(calc_info, &ids);
+      source_ptr->SaveNotExistsRows(calc_info, &ids);
       if (is_status_aval(ids.status))
         for (size_t i = 0; i < std::min(calc_info.size(),ids.id_vec.size()) ; ++i)
           calc_info[i].id = ids.id_vec[i];
