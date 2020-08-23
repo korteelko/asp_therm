@@ -217,12 +217,12 @@ merror_t set_double(const std::string &val, double *ans) {
     *ans = std::stod(val);
   } catch (std::invalid_argument &) {
     error = ERROR_STR_TOINT_ST;
-    Logging::Append(io_loglvl::debug_logs, "Ошибка при конвертации"
-        "строки к типу с плавающей точкой(double): invalid_argument");
+    Logging::Append(io_loglvl::debug_logs, "Ошибка при конвертации "
+        "строки к типу с плавающей точкой(double): invalid_argument: " + val);
   } catch (std::out_of_range &) {
     error = ERROR_STR_TOINT_ST;
-    Logging::Append(io_loglvl::debug_logs, "Ошибка при конвертации"
-        "строки к типу с плавающей точкой(double): out_of_range");
+    Logging::Append(io_loglvl::debug_logs, "Ошибка при конвертации "
+        "строки к типу с плавающей точкой(double): out_of_range " + val);
   }
   return error;
 }
@@ -233,12 +233,12 @@ merror_t set_int(const std::string &val, int *ans) {
     *ans = std::stoi(val);
   } catch (std::invalid_argument &) {
     error = ERROR_STR_TOINT_ST;
-    Logging::Append(io_loglvl::debug_logs, "Ошибка при конвертации"
-        "строки к целочисленному типу: invalid_argument");
+    Logging::Append(io_loglvl::debug_logs, "Ошибка при конвертации "
+        "строки к целочисленному типу: invalid_argument " + val);
   } catch (std::out_of_range &) {
     error = ERROR_STR_TOINT_ST;
-    Logging::Append(io_loglvl::debug_logs, "Ошибка при конвертации"
-        "строки к целочисленному типу: out_of_range");
+    Logging::Append(io_loglvl::debug_logs, "Ошибка при конвертации "
+        "строки к целочисленному типу: out_of_range " + val);
   }
   return error;
 }

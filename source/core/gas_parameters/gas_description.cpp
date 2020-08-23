@@ -15,10 +15,12 @@
 
 ErrorWrap const_parameters::init_error;
 
-// todo: add another gases
-/** \brief список газов, для которых прописаны файлы параметров,
-  *   ключ соответствует имени xml файла
-  *   (и строке в БД если мне будет не лень) */
+/**
+ * \brief список газов, для которых прописаны файлы параметров,
+ *   ключ соответствует имени xml файла
+ *   (и строке в БД если мне будет не лень)
+ * \todo ето надо объединить с вектором `valid_gases`
+ * */
 static std::map<std::string, gas_t> gas_names =
     std::map<std::string, gas_t> {
   {"methane", GAS_TYPE_METHANE},
@@ -40,7 +42,6 @@ static std::map<std::string, gas_t> gas_names =
   {"octane", GAS_TYPE_OCTANE}
 };
 
-// todo: add another gases
 static gas_t valid_gases[] = {
   GAS_TYPE_METHANE,
   GAS_TYPE_ETHANE,
@@ -101,7 +102,8 @@ merror_t dyn_parameters::check_input(dyn_setup setup, double cv, double cp,
   cv = (setup & DYNAMIC_HEAT_CAP_VOL) ? cv : 1.0;
   int_eng = (setup & DYNAMIC_INTERNAL_ENERGY) ? int_eng : 1.0;
   bool correct_input = is_above0(cp, cv, int_eng);
-  correct_input &= is_above0(pm.pressure, pm.temperature, pm.volume);
+  // pm.volume мы не проверяем, т.к. можно пересчитать
+  correct_input &= is_above0(pm.pressure, pm.temperature);
   if (!correct_input)
     return ERROR_INIT_T;
   return ERROR_SUCCESS_T;
@@ -142,7 +144,6 @@ void dyn_parameters::Update() {
   }
 }
 
-// const_parameters
 const_parameters::const_parameters(gas_t gas_name, double vk, double pk,
     double tk, double zk, double mol, double R, double af)
   : gas_name(gas_name), V_K(vk), P_K(pk), T_K(tk), Z_K(zk),
@@ -152,7 +153,7 @@ const_parameters *const_parameters::Init(gas_t gas_name, double vk,
     double pk, double tk, double zk, double mol, double af) {
   bool correct_input = false;
   if (gas_name != GAS_TYPE_MIX) {
-    correct_input = is_above0(pk, tk, mol, af);
+    correct_input = const_parameters::check_params(vk, pk, tk, zk, mol, af);
     if (correct_input) {
       if (!is_above0(vk)) {
         if (!is_above0(zk)) {
@@ -183,6 +184,22 @@ const_parameters *const_parameters::Init(gas_t gas_name, double vk,
   return nullptr;
 }
 
+// const_parameters
+bool const_parameters::check_params(double vk, double pk, double tk,
+    double zk, double mol, double af) {
+  // acentic factor can be(for example - helium) < 0.0
+  (void) af;
+  bool is_valid = is_above0(pk, tk, mol);
+  if (is_valid) {
+    if (!is_above0(vk)) {
+      if (!is_above0(zk)) {
+        is_valid = false;
+      }
+    }
+  }
+  return is_valid;
+}
+
 const_parameters::const_parameters(const const_parameters &cgp) 
   : gas_name(cgp.gas_name), V_K(cgp.V_K), P_K(cgp.P_K), T_K(cgp.T_K), 
     Z_K(cgp.Z_K), molecularmass(cgp.molecularmass), R(cgp.R),
@@ -197,10 +214,11 @@ bool const_parameters::IsAbstractGas() const {
 }
 
 bool is_valid_cgp(const const_parameters &cgp) {
-  if (cgp.gas_name != GAS_TYPE_MIX)
-    if (!is_above0(cgp.V_K, cgp.P_K, cgp.T_K, cgp.Z_K, cgp.molecularmass,
-        cgp.R, cgp.acentricfactor))
+  if (cgp.gas_name != GAS_TYPE_MIX) {
+    if (!const_parameters::check_params(cgp.V_K, cgp.P_K, cgp.T_K, cgp.Z_K,
+        cgp.molecularmass, cgp.acentricfactor) || !is_above0(cgp.R))
       return false;
+  }
   return is_valid_gas(cgp.gas_name) ? true : false;
 }
 
@@ -228,7 +246,8 @@ bool gas_pair::operator<(const gas_pair &rhs) const {
 
 const_dyn_union::~const_dyn_union() {}
 
-void calculation_state_log::SetDynPars(const dyn_parameters &dp) {
+calculation_state_log &calculation_state_log::SetDynPars(
+    const dyn_parameters &dp) {
   dyn_pars = dp;
   initialized |= (f_vol | f_pres | f_pres);
   if (dp.setup & DYNAMIC_HEAT_CAP_VOL)
@@ -241,6 +260,13 @@ void calculation_state_log::SetDynPars(const dyn_parameters &dp) {
     initialized |= f_dbk;
   if (dp.setup & DYNAMIC_ENTALPHY)
     initialized |= f_enthalpy;
+  return *this;
+}
+
+calculation_state_log &calculation_state_log::SetCalculationInfo(
+    calculation_info *ci) {
+  calculation = ci;
+  return *this;
 }
 
 #define CH(x) (GAS_TYPE_ ## x)

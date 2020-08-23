@@ -11,6 +11,7 @@
 #define _CORE__MODELS__MODELS_CREATOR_H_
 
 #include "ErrorWrap.h"
+#include "FileURL.h"
 #include "gas_description.h"
 #include "model_general.h"
 #include "phase_diagram.h"
@@ -27,10 +28,26 @@ public:
       std::vector<gasmix_component_info> components, double p, double t);
   static modelGeneral *GetCalculatingModel(model_str ms,
       std::vector<gasmix_component_info> components);
+  /**
+   * \brief Инициализировать расчётную модель по файлу газовой смеси
+   * \param ms Информация об инициализированной модели
+   * \param root_di Указатель на корневую директорию, может быть равен nullptr
+   * \param gasmix_xml Относительный путь к файлу смеси
+   * \param p Давление
+   * \param t Температура
+   * */
   static modelGeneral *GetCalculatingModel(model_str ms,
-      const std::string &gasmix_xml, double p, double t);
+      file_utils::FileURLRoot *root_dir, const std::string &gasmix_xml,
+      double p, double t);
+  /**
+   * \brief Инициализировать расчётную модель по файлу газовой смеси
+   * \param ms Информация об инициализированной модели
+   * \param root_di Указатель на корневую директорию, может быть равен nullptr
+   * \param gasmix_xml Относительный путь к файлу смеси
+   * */
   static modelGeneral *GetCalculatingModel(model_str ms,
-      const std::string &gasmix_xml);
+      file_utils::FileURLRoot *root_dir, const std::string &gasmix_xml);
+
   static modelGeneral *GetCalculatingModel(model_str ms,
       const ng_gost_mix &ngg, double p, double t);
   static modelGeneral *GetCalculatingModel(model_str ms,

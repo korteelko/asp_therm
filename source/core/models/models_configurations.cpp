@@ -119,3 +119,8 @@ model_info &model_info::SetModelStr(const model_str &ms) {
       f_vers_minor | f_short_info);
   return *this;
 }
+
+model_info &model_info::SetModelPtr(modelGeneral *mp) {
+  model_p = mp;
+  return *this;
+}

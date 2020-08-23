@@ -43,7 +43,11 @@ protected:
   calculation_setup *setup_p = nullptr;
 };
 
-/** \brief Структура узла конфигурации расчёте */
+/**
+ * \brief Структура узла конфигурации расчёте
+ * \todo Закрыть конструктор по умолчанию, т.к. указатель
+ *   на builder обязательно должен быть инициализирован
+ * */
 template <class ReaderNodeT>
 class calculation_node: public INodeInitializer {
   static std::map<std::string, rg_model_id> models_ids;
@@ -109,8 +113,7 @@ protected:
   }
   void set_mixfiles() {
     for (auto x: source->children())
-      builder->setup_p->gasmix_files.push_back(
-          builder->setup_p->root->CreateFileURL(x.first_child().value()).GetURL());
+      builder->setup_p->gasmix_files.push_back(x.first_child().value());
   }
   void set_points() {
     for (auto x: source->children()) {

@@ -24,7 +24,9 @@
 #include "model_general.h"
 #include "ThreadWrap.h"
 
+#include <list>
 #include <map>
+#include <vector>
 
 
 namespace asp_db {
@@ -74,6 +76,7 @@ public:
   public:
     /**
      * \brief Рассчитать точки
+     * \param points Контейнер расчётных точек
      * */
     void CalculatePoints(const std::vector<parameters> &points);
     /**
@@ -81,13 +84,13 @@ public:
      * \param source_ptr Указатель на хранилище данных
      * \return Результат добавления
      * */
-    mstatus_t AddToDatabase(asp_db::DBConnectionManager *source_ptr) const;
+    mstatus_t AddToDatabase(asp_db::DBConnectionManager *source_ptr);
 
   private:
     /**
      * \brief Инициализировать `*_info` контейнеры
      * */
-    void initInfo();
+    void initInfoBinding();
     /**
      * \brief Рассчитать параметры в точке `p` по наиболее
      *   приоритетной модели
@@ -189,7 +192,7 @@ protected:
    * \note Собственно условночистая функция для распараллеливания
    * */
   static mstatus_t initModel(gasmix_models_map *models_map, std::time_t datetime,
-      const model_str &ms, const std::string &filemix);
+      const model_str &ms, file_utils::FileURLRoot *root, const std::string &filemix);
 
   /**
    * \brief Инициализировать конфигурацию расчёта
@@ -218,6 +221,11 @@ protected:
    * */
   Mutex gasmixes_lock_;
   /**
+   * \brief Корневая директория от которой отсчитываются
+   *   ВСЕ относительные пути
+   * */
+  std::shared_ptr<file_utils::FileURLRoot> root_;
+  /**
    * \brief Данные инициализации расчёта
    * \note Структура нужна только для инициализации
    * */
@@ -226,7 +234,7 @@ protected:
    * \brief Список смесей для обсчёта
    * \todo Здесь мы параллелим
    * */
-  std::map<std::string, gasmix_models_map> gasmixes_;
+  std::map<std::string, std::shared_ptr<gasmix_models_map>> gasmixes_;
   /**
    * \brief Точки расчёта (p, t)
    * */

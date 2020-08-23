@@ -43,21 +43,30 @@ NG_Gost::NG_Gost(const model_input &mi)
   if (!ng_pars) {
     error_.SetError(ERROR_INIT_T, "Ошибка инициализации ГОСТ модели");
     error_.LogIt(io_loglvl::err_logs);
+  } else {
+    SetVolume(mi.gpi.p, mi.gpi.t);
   }
-  SetVolume(mi.gpi.p, mi.gpi.t);
 }
 
 NG_Gost *NG_Gost::Init(const model_input &mi) {
+  NG_Gost *res = nullptr;
+  bool is_valid = HasGostModelMark(mi.gm);
   try {
     check_input(mi);
   } catch (const model_init_exception &e) {
     Logging::Append(e.what());
-    return nullptr;
+    is_valid = false;
   }
-  // only for gas_mix
-  if (!(HasGostModelMark(mi.gm)))
-    return nullptr;
-  return new NG_Gost(mi);
+  if (is_valid) {
+    res = new NG_Gost(mi);
+    if (res) {
+      if (res->error_.GetErrorCode()) {
+        delete res;
+        res = nullptr;
+      }
+    }
+  }
+  return res;
 }
 
 model_str NG_Gost::GetModelShortInfo(const rg_model_id &model_type) {

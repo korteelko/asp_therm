@@ -21,7 +21,7 @@
 // Итого проверяем тождество :
 //   |0.99 - ${summ_of_components}| < 0.02
 #define GASMIX_PERSENT_AVR  0.99
-#define GASMIX_PERCENT_EPS  0.02
+#define GASMIX_PERCENT_EPS  0.03
 
 /**
  * \brief Параметры компонента газовой смеси описанные

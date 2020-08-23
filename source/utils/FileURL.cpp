@@ -54,6 +54,10 @@ bool FileURLRoot::IsInitialized() {
   return is_status_ok(status_);
 }
 
+FileURL FileURLRoot::GetRootURL() const {
+  return FileURL(setup_.GetURLType(), setup_.GetFullPrefix());
+}
+
 FileURL FileURLRoot::CreateFileURL(const std::string &relative_path) {
   if (is_status_ok(status_)) {
     switch (setup_.GetURLType()) {

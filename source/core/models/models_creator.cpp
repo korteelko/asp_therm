@@ -71,15 +71,19 @@ modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
 }
 
 modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
-    const std::string &gasmix_xml, double p, double t) {
+    file_utils::FileURLRoot *root_dir, const std::string &gasmix_xml,
+    double p, double t) {
+  // zdesya
+  // nujno uchitivat root directory
   std::unique_ptr<GasMixComponentsFile<XMLReader>> gm(
-      GasMixComponentsFile<XMLReader>::Init(ms.model_type.type, gasmix_xml));
+      GasMixComponentsFile<XMLReader>::Init(
+      ms.model_type.type, root_dir, gasmix_xml));
   return (gm) ? getModel(ms, gm.get(), p, t) : nullptr;
 }
 
 modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
-    const std::string &gasmix_xml) {
-  return ModelsCreator::GetCalculatingModel(ms, gasmix_xml,
+    file_utils::FileURLRoot *root_dir, const std::string &gasmix_xml) {
+  return ModelsCreator::GetCalculatingModel(ms, root_dir, gasmix_xml,
       standard_conds.pressure, standard_conds.temperature);
 }
 modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,

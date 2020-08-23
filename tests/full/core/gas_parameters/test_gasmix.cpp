@@ -149,7 +149,7 @@ TEST(mixture_InitTest, RK2MixtureFileInit) {
   ASSERT_TRUE(fs::exists(gasmix_path));
   std::unique_ptr<GasMixComponentsFile<XMLReader>> gasmix_comps(
       GasMixComponentsFile<XMLReader>::Init(
-      rg_model_t::REDLICH_KWONG, gasmix_path.string()));
+      rg_model_t::REDLICH_KWONG, nullptr, gasmix_path.string()));
   ASSERT_TRUE(gasmix_comps != nullptr);
   EXPECT_TRUE(gasmix_comps->GetMixParameters() != nullptr);
 }
@@ -160,7 +160,7 @@ TEST(mixture_InitTest, DISABLED_GOSTMixtureFileInit) {
   ASSERT_TRUE(fs::exists(gasmix_path));
   std::unique_ptr<GasMixComponentsFile<XMLReader>> gasmix_comps(
       GasMixComponentsFile<XMLReader>::Init(
-      rg_model_t::NG_GOST, gasmix_path.string()));
+      rg_model_t::NG_GOST, nullptr, gasmix_path.string()));
   ASSERT_TRUE(gasmix_comps != nullptr);
   EXPECT_TRUE(gasmix_comps->GetMixParameters() != nullptr);
 }

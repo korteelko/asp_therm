@@ -25,11 +25,11 @@
 gas_t gas_by_name(const std::string &name);
 
 inline double volume_by_compress(double p, double t, double mol, double z) {
-  return z * 1000 * GAS_CONSTANT * t / (p * mol);
+  return z * 1000.0 * GAS_CONSTANT * t / (p * mol);
 }
 
 inline double compress_by_volume(double p, double t, double mol, double v) {
-  return v * p * mol / (1000 * GAS_CONSTANT * t);
+  return v * p * mol / (1000.0 * GAS_CONSTANT * t);
 }
 
 /// Динамические параметры вещества, зависящие от
@@ -106,11 +106,32 @@ private:
 public:
   static const_parameters *Init(gas_t gas_name, double vk, double pk,
       double tk, double zk, double mol, double af);
+  /**
+   * \brief Проверить параметры компонента
+   * \param vk Удельный объём в критической точке
+   * \param pk Давление в критической точке
+   * \param tk Температура в критической точке
+   * \param zk Фактор сжимаемость в критической точке
+   * \param mol молекулярная масса
+   * \param af Фактор ацентричности
+   * \return true Для допустимых входных данных
+   * \note Просто проверяем что все данные больше нуля
+   *   за исключением:
+   *   -- фактора ацентричности - может быть меньше 0.0
+   *   -- vk и zk - инициализирован должен быть только один из них
+   * */
+  static bool check_params(double vk, double pk, double tk,
+      double zk, double mol, double af);
+
   const_parameters(const const_parameters &cgp);
 
-  /** \brief Параметры инициализированы для газовой смеси */
+  /**
+   * \brief Параметры инициализированы для газовой смеси
+   * */
   bool IsGasmix() const;
-  /** \brief Параметры инициализированы для неопределённого газа */
+  /**
+   * \brief Параметры инициализированы для неопределённого газа
+   * */
   bool IsAbstractGas() const;
 };
 
@@ -174,10 +195,21 @@ struct gas_pair {
 typedef std::map<const gas_pair, double> binary_coef_map;
 
 struct calculation_info;
-/** \brief Структура для добавления в базу данных */
+/**
+ * \brief Структура для добавления в базу данных
+ * */
 struct calculation_state_log {
 public:
-  void SetDynPars(const dyn_parameters &dp);
+  /**
+   * \brief Установить динамические параметры
+   * \param dp Ссылка на динамические параметры
+   * */
+  calculation_state_log &SetDynPars(const dyn_parameters &dp);
+  /**
+   * \brief Установить указатель на структуру расчётов
+   * \param ci Указатель на структуру информации о расчёте
+   * */
+  calculation_state_log &SetCalculationInfo(calculation_info *ci);
 
 public:
   enum state_info_flags {
@@ -211,7 +243,7 @@ public:
 
   int32_t id;
   int32_t info_id;
-  calculation_info *calculation;
+  const calculation_info *calculation = nullptr;
 
   dyn_parameters dyn_pars;    // p, v, t and cp(p,v,t), cv(p,v,t), u(p,v,t)
   double enthalpy;

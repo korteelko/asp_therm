@@ -157,7 +157,8 @@ model_str modelGeneral::GetModelShortInfo(const rg_model_id model_type) {
     default:
       break;
   }
-  return model_str(rg_model_id(rg_model_t::EMPTY, MODEL_SUBTYPE_DEFAULT), 1, 0, "");
+  return model_str(rg_model_id(rg_model_t::EMPTY,
+      MODEL_SUBTYPE_DEFAULT), 1, 0, "");
 }
 
 void modelGeneral::check_input(const model_input &mi) {
@@ -166,10 +167,10 @@ void modelGeneral::check_input(const model_input &mi) {
     throw modelGeneral::model_init_exception(&mi.ms,
         "options GAS_MIX_MARK and GAS_NG_GOST_MARK not compatible\n");
   // Проверка установленных доль
-  if (is_equal(modelGeneral::calculate_parts_sum(mi),
-      GASMIX_PERSENT_AVR, GASMIX_PERCENT_EPS))
+  float perc = modelGeneral::calculate_parts_sum(mi);
+  if (!is_equal(perc, GASMIX_PERSENT_AVR, GASMIX_PERCENT_EPS))
     throw modelGeneral::model_init_exception(&mi.ms,
-        "gasmix sum of parts != 100%\n");
+        "gasmix sum of parts != 100% -> " + std::to_string(perc) + "\n");
   // Проверка стартовых параметров
   if (!is_above0(mi.gpi.p, mi.gpi.t))
     throw modelGeneral::model_init_exception(&mi.ms, ERROR_INIT_ZERO_ST_MSG);
@@ -257,7 +258,7 @@ merror_t modelGeneral::GetError() const {
   return error_.GetErrorCode();
 }
 
-calculation_info *modelGeneral::GetCalculationSetup() const {
+calculation_info *modelGeneral::GetCalculationInfo() const {
   return calculation_;
 }
 

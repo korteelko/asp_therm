@@ -40,6 +40,7 @@
 namespace fs = std::filesystem;
 
 // maybe set to:
+const fs::path xml_data_dir = "../data";
 const fs::path xml_gases_dir = "../data/gases";
 const fs::path xml_calculations_dir = "../data/calculation";
 const fs::path xml_methane = "methane.xml";
@@ -47,7 +48,7 @@ const fs::path xml_ethane  = "ethane.xml";
 const fs::path xml_propane = "propane.xml";
 
 const fs::path xml_gasmix = "../gasmix_inp_example.xml";
-const fs::path xml_calculation = "calculation_setup.xml";
+const fs::path xml_calculation = "calculation/calculation_setup.xml";
 const fs::path xml_configuration = "../../configuration.xml";
 const fs::path json_test = "../../tests/full/utils/data/test_json.json";
 
@@ -66,9 +67,9 @@ static fs::path cwd;
  *   входных данных для расчётов
  * */
 int test_calculation_setup() {
-  std::string calc_dir = (cwd / xml_calculations_dir ).string();
+  std::string data_dir = (cwd / xml_data_dir).string();
   std::shared_ptr<file_utils::FileURLRoot> root_shp(
-      new file_utils::FileURLRoot(file_utils::url_t::fs_path, calc_dir));
+      new file_utils::FileURLRoot(file_utils::url_t::fs_path, data_dir));
   calculation_setup cs(root_shp);
   CalculationSetupBuilder builder(&cs);
 
@@ -81,9 +82,9 @@ int test_calculation_setup() {
 
 int test_calculation_init() {
   int res = 0;
-  std::string calc_dir = (cwd / xml_calculations_dir ).string();
+  std::string data_dir = (cwd / xml_data_dir).string();
   std::shared_ptr<file_utils::FileURLRoot> root_shp(
-      new file_utils::FileURLRoot(file_utils::url_t::fs_path, calc_dir));
+      new file_utils::FileURLRoot(file_utils::url_t::fs_path, data_dir));
 
   /* todo: naming??? */
   CalculationSetup CS(root_shp, xml_calculation.string());
@@ -92,7 +93,6 @@ int test_calculation_init() {
     AthermDBTables adb;
     DBConnectionManager dbm(&adb);
     // модели не дописаны
-    /*
     CS.Calculate();
     dbm.ResetConnectionParameters(
         ps.GetDatabaseConfiguration());
@@ -100,7 +100,6 @@ int test_calculation_init() {
       CS.AddToDatabase(&dbm);
     else
       res = 12;
-    */
   }
   return res;
 }
@@ -111,7 +110,7 @@ int test_database_with_models(DBConnectionManager &dbm) {
   std::string filename = (cwd / xml_gases_dir / xml_gasmix).string();
 #if defined(RK2_DEBUG)
   std::unique_ptr<modelGeneral> mk(
-      ModelsCreator::GetCalculatingModel(rk2_str, filename, INPUT_P_T));
+      ModelsCreator::GetCalculatingModel(rk2_str, NULL, filename, INPUT_P_T));
   model_info mi {.short_info = mk->GetModelShortInfo()};
   // dbm.SaveModelInfo(mi);
   // todo: это стандартный сетап на добавление так что его можно
@@ -128,7 +127,7 @@ int test_database_with_models(DBConnectionManager &dbm) {
   dbm.SelectRows(mi, &r);
   r.clear();
 
-  mk.reset(ModelsCreator::GetCalculatingModel(rks_str, filename, INPUT_P_T));
+  mk.reset(ModelsCreator::GetCalculatingModel(rks_str, NULL, filename, INPUT_P_T));
   model_info mis {.short_info = mk->GetModelShortInfo()};
   // dbm.SaveModelInfo(mi);
   // todo: это стандартный сетап на добавление так что его можно
@@ -258,11 +257,11 @@ int test_models() {
   std::string filename = (cwd / xml_gases_dir / xml_gasmix).string();
 #if defined(RK2_DEBUG)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(rk2_str, filename, INPUT_P_T)));
+      ModelsCreator::GetCalculatingModel(rk2_str, NULL, filename, INPUT_P_T)));
 #endif  // RK2_TEST
 #if defined(RKS_DEBUG)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(rks_str, filename, INPUT_P_T)));
+      ModelsCreator::GetCalculatingModel(rks_str, NULL, filename, INPUT_P_T)));
 #endif  // RKS_TEST
 #if defined(PR_DEBUG)
   test_vec.push_back(std::unique_ptr<modelGeneral>(

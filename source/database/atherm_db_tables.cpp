@@ -315,6 +315,11 @@ void IDBTables::setInsertValues<calculation_info>(db_query_insert_setup *src,
     return;
   db_query_basesetup::row_values values;
   db_query_basesetup::field_index i;
+  if (select_data.model != nullptr)
+    if (select_data.model->id >= 0 &&
+        (i = src->IndexByFieldId(CI_MODEL_INFO_ID)) != db_query_basesetup::field_index_end)
+      values.emplace(i, std::to_string(select_data.model->id));
+
   if (select_data.initialized & calculation_info::f_calculation_info_id)
     if ((i = src->IndexByFieldId(CI_CALCULATION_ID)) != db_query_basesetup::field_index_end)
       values.emplace(i, std::to_string(select_data.id));
@@ -337,6 +342,11 @@ void IDBTables::setInsertValues<calculation_state_log>(db_query_insert_setup *sr
     return;
   db_query_basesetup::row_values values;
   db_query_basesetup::field_index i;
+  if (select_data.calculation != nullptr)
+    if (select_data.calculation->id >= 0 &&
+        (i = src->IndexByFieldId(CSL_INFO_ID)) != db_query_basesetup::field_index_end)
+      values.emplace(i, std::to_string(select_data.calculation->id));
+
   if (select_data.initialized & calculation_state_log::f_calculation_state_log_id)
     if ((i = src->IndexByFieldId(CSL_LOG_ID)) != db_query_basesetup::field_index_end)
       values.emplace(i, std::to_string(select_data.id));

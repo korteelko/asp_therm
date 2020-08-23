@@ -11,12 +11,13 @@
 #define _CORE__SUBROUTINS__GASMIX_BY_FILE_H_
 
 #include "atherm_common.h"
+#include "ErrorWrap.h"
+#include "FileURL.h"
 #include "file_structs.h"
 #include "gas_by_file.h"
 #include "gas_description.h"
 #include "gasmix_init.h"
 #include "models_math.h"
-#include "ErrorWrap.h"
 #if defined (WITH_PUGIXML)
 #  include "XMLReader.h"
 #endif  // WITH_PUGIXML
@@ -83,50 +84,52 @@ private:
     : status_(STATUS_DEFAULT) {
     prs_mix_ = std::unique_ptr<parameters_mix>(new parameters_mix());
     gost_mix_ = std::unique_ptr<ng_gost_mix>(new ng_gost_mix());
-    for (const auto &x : parts) {
+    for (const auto &x: parts) {
       auto cdp = init_pars(x.part, x.path);
       if (cdp.first == nullptr) {
-        error_.SetError(ERROR_INIT_T,
-            "One component of gas mix:\n  " + x.name);
         error_.LogIt();
         status_ = STATUS_HAVE_ERROR;
         break;
       }
       prs_mix_->insert({x.part, {*cdp.first, *cdp.second}});
     }
-    if (!error_.GetErrorCode())
+    if (status_ == STATUS_DEFAULT)
       status_ = STATUS_OK;
   }
 
   std::pair<std::shared_ptr<const_parameters>, std::shared_ptr<dyn_parameters>>
-      init_pars(double part, const std::string &filename) {
+  init_pars(double part, const std::string &filename) {
     std::shared_ptr<ComponentByFile<ConfigReader>>
         xf(ComponentByFile<ConfigReader>::Init(filename));
     std::pair<std::shared_ptr<const_parameters>,
         std::shared_ptr<dyn_parameters>> ret_val{nullptr, nullptr};
     gas_t gost_mix_component;
     if (xf == nullptr) {
-      error_.SetError(ERROR_FILE_IN_ST, "gas config init\n");
+      error_.SetError(ERROR_FILE_IN_ST, "Ошибка инициализации файла "
+          "компонента смеси: " + filename);
     } else {
       // unique_ptrs
       auto cp = xf->GetConstParameters();
       auto dp = xf->GetDynParameters();
       if ((cp == nullptr) || (dp == nullptr)) {
-        error_.SetError(ERROR_INIT_T, "config format and const/dyn -parameters\n");
+        error_.SetError(ERROR_INIT_T, "Ошибка инициализации const/dyn "
+            "параметров смеси для " + filename);
       } else {
         ret_val = {cp, dp};
+        gost_mix_component = gas_by_name(gasname_by_path(filename));
+        if (gost_mix_component != GAS_TYPE_UNDEFINED)
+          gost_mix_->emplace_back(ng_gost_component{gost_mix_component, part});
       }
     }
-    gost_mix_component = gas_by_name(gasname_by_path(filename));
-    if (gost_mix_component != GAS_TYPE_UNDEFINED)
-     gost_mix_->emplace_back(ng_gost_component{gost_mix_component, part});
     return ret_val;
   }
 
-/** \warning DEPRECATED(remove this)
-  * \brief Возвращает имя компонента газовой смеси по
-  * путь к дефолтному файлу параметров
-  * \param path путь к дефолтному файлу параметров компонентов */
+/**
+ * \brief Возвращает имя компонента газовой смеси по
+ *   путь к дефолтному файлу параметров
+ * \param path путь к дефолтному файлу параметров компонентов
+ * \warning DEPRECATED(remove this)
+ * */
   static std::string gasname_by_path(const std::string &path) {
     std::string reader_ext = ConfigReader<gas_node>::GetFilenameExtension();
     auto x = path.rfind(reader_ext);
@@ -154,22 +157,32 @@ std::string gasmix_parameter_part = "part";
 }  // unnamed namespace
 
 
-/** \brief шаблон(по модулю чтения) класса инициализации файловой смеси
-  * \note привязан шаблон к 'gas_node' нерушимой связью
-  *   и можно псевдоним ввести для этого */
+/**
+ * \brief Шаблон(по модулю чтения) класса инициализации файловой смеси
+ * \note Привязан шаблон к 'gas_node' нерушимой связью
+ *   и можно псевдоним ввести для этого
+ * */
 template <template<class gas_node> class ConfigReader>
 class GasMixComponentsFile {
   GasMixComponentsFile(const GasMixComponentsFile &) = delete;
   GasMixComponentsFile &operator=(const GasMixComponentsFile &) = delete;
 
 public:
-  static GasMixComponentsFile *Init(rg_model_t mn,
+  /**
+   * \brief Инициализировать параметры газовой смеси
+   * \param mn Идентификатор модели
+   * \param root Указатель на корневую директорию компонентов
+   *   газовой смеси(может быть равен нулю)
+   * \param filename Путь к файлу конфигурации газовой смеси
+   * \return Указатель на модель
+   * */
+  static GasMixComponentsFile *Init(rg_model_t mn, file_utils::FileURLRoot *root,
       const std::string &filename) {
     ConfigReader<gasmix_node> *config_doc =
         ConfigReader<gasmix_node>::Init(filename);
     if (config_doc == nullptr)
       return nullptr;
-    return new GasMixComponentsFile(mn, config_doc);
+    return new GasMixComponentsFile(mn, root, config_doc);
   }
 
   std::shared_ptr<parameters_mix> GetMixParameters() {
@@ -186,15 +199,25 @@ public:
   }
 
 private:
-  GasMixComponentsFile(rg_model_t mn, ConfigReader<gasmix_node> *config_doc)
-    : config_doc_(config_doc), files_handler_(nullptr),
-      model_t_(mn), error_(ERROR_SUCCESS_T) {
-    init_components();
+  GasMixComponentsFile(rg_model_t mn, file_utils::FileURLRoot *root,
+      ConfigReader<gasmix_node> *config_doc)
+    : model_t_(mn), config_doc_(config_doc) {
+    init_components(root);
   }
-  /** \brief */
-  void init_components() {
-    std::string gasmix_file_dir = (config_doc_) ?
-        dir_by_path(config_doc_->GetFileName()) : "";
+  /**
+   * \brief Инициализировать компоненты смеси
+   * \param root Указатель на корневую директорию компонентов
+   *   газовой смеси(может быть равен нулю)
+   * */
+  void init_components(file_utils::FileURLRoot *root) {
+    std::string gasmix_file_dir = "";
+    if (root != nullptr) {
+      gasmix_file_dir = root->GetRootURL().GetURL();
+    } else {
+      if (config_doc_ != nullptr)
+        gasmix_file_dir = dir_by_path(config_doc_->GetFileName());
+    }
+
     merror_t error = ERROR_SUCCESS_T;
     if (gasmix_file_dir.empty() || !is_exist(gasmix_file_dir)) {
       std::string error_str = "ошибка инициализации директории файла"
@@ -206,7 +229,7 @@ private:
       gasmix_files_.clear();
       char buf[64] = {0};
       std::string gasname;
-      std::string gaspath;
+      std::string gpath;
       std::string part_str = "";
       double part = 0.0;
       std::vector<std::string> param_path(2);
@@ -220,7 +243,7 @@ private:
         param_path[1] = gasmix_parameter_name;
         error = config_doc_->GetValueByPath(param_path, &gasname);
         param_path[1] = gasmix_parameter_path;
-        error = config_doc_->GetValueByPath(param_path, &gaspath);
+        error = config_doc_->GetValueByPath(param_path, &gpath);
         param_path[1] = gasmix_parameter_part;
         error |= config_doc_->GetValueByPath(param_path, &part_str);
         if (error)
@@ -230,7 +253,8 @@ private:
         } catch (std::out_of_range &) {
           error = error_.SetError(ERROR_PAIR_DEFAULT(ERROR_STR_PARSE_ST));
         }
-        gasmix_files_.emplace_back(gasmix_component_info(trim_str(gasname), gaspath, part));
+        gasmix_files_.emplace_back(
+            gasmix_component_info(trim_str(gasname), trim_str(gpath), part));
       }
       if (error == XMLFILE_LAST_OBJECT) {
         error = ERROR_SUCCESS_T;
@@ -256,11 +280,13 @@ private:
           GasMixByFiles<ConfigReader>::Init(gasmix_files_));
     }
   }
-  /** \brief Возвращает имя компонента газовой смеси по
-    *   путь к файлу файлу газовой смеси и относительному пути указанному в нём
-    * \param gasmix_file_dir директория расположения файла газовой смеси
-    * \param gaspath путь к файлу параметров компонентов из файла описываюшего
-    *   газовую смесь */
+  /**
+   * \brief Возвращает имя компонента газовой смеси по
+   *   путь к файлу файлу газовой смеси и относительному пути указанному в нём
+   * \param gasmix_file_dir директория расположения файла газовой смеси
+   * \param gaspath путь к файлу параметров компонентов из файла описываюшего
+   *   газовую смесь
+   * */
   std::string set_gaspath(const std::string &gasmix_file_dir,
       const std::string &gaspath) {
     return gasmix_file_dir + "/" + trim_str(gaspath);
@@ -269,18 +295,27 @@ private:
 
 private:
   ErrorWrap error_;
-  /** \brief Используемая термодинамическая модель
-    * \note Она не нужна, нужна просто bool переменная на
-    *   считывание файлов, или вообще не нужна, т.к. в файлах миксов
-    *   прописаны пути к компонентам их описывающим. Соответственно,
-    *   если путь не задан то не о чём и говорить
-    * \todo Remove it. You can replace with `bool should_read_components_`) */
+  /**
+   * \brief Используемая термодинамическая модель
+   * \note Она не нужна, нужна просто bool переменная на
+   *   считывание файлов, или вообще не нужна, т.к. в файлах миксов
+   *   прописаны пути к компонентам их описывающим. Соответственно,
+   *   если путь не задан то не о чём и говорить
+   * \todo Remove it. You can replace with `bool should_read_components_`)
+   * */
   rg_model_t model_t_;
+  /**
+   * \brief Указатель на объект инициализации компонента смеси
+   * */
   std::unique_ptr<ConfigReader<gasmix_node>> config_doc_ = nullptr;
-  /** \brief Объект инициализирующий смесь
-    * \note Имя его неподходящее */
+  /**
+   * \brief Объект инициализирующий смесь
+   * \todo Имя его неподходящее
+   * */
   std::unique_ptr<GasMixByFiles<ConfigReader>> files_handler_ = nullptr;
-  /** \brief Контейнер считанных данных */
+  /**
+   * \brief Контейнер считанных данных
+   * */
   std::vector<gasmix_component_info> gasmix_files_;
 };
 

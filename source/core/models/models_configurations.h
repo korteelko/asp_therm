@@ -151,6 +151,10 @@ public:
    * \brief Добавить данный model_str и соответствующие флаги
    **/
   model_info &SetModelStr(const model_str &ms);
+  /**
+   * \brief Добавить данный model_str и соответствующие флаги
+   **/
+  model_info &SetModelPtr(modelGeneral *mp);
 
 public:
   enum model_info_flags {
@@ -164,13 +168,25 @@ public:
     f_model_id = 0x20,
     f_full = 0x3F
   };
-  /** \brief Уникальный id строки из базы данных */
+  /**
+   * \brief Уникальный id строки из базы данных
+   * */
   int32_t id = -1;
-  /** \brief Информация о модели */
-  /* todo: переименовать */
+  /**
+   * \brief Информация о модели
+   * \todo Переименовать
+   * */
   model_str short_info;
+  /**
+   * \brief Указатель на модель
+   * \note Слабый указатель на модель для инициализации связанных
+   *   объектов и таблиц
+   * */
+  modelGeneral *model_p = nullptr;
   // dyn_setup dynamic_vars;
-  /** \brief Инициализированные поля, для операций SELECT, UPDATE, INSERT */
+  /**
+   * \brief Инициализированные поля, для операций SELECT, UPDATE, INSERT
+   * */
   uint32_t initialized = f_empty;
 };
 

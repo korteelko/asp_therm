@@ -21,8 +21,8 @@
 #include <math.h>
 
 
-/** \brief параметры давления и температуры в пределах допустимости
-  *   для ГОСТ 30319-2015 */
+/* Параметры давления и температуры в пределах допустимости
+ *  для ГОСТ 30319-2015 */
 #define gost_30319_within(p, t) \
     ((p >= 100000 && p <= 30000000) && (t >= 250 && t <= 350))
 
@@ -385,7 +385,8 @@ void GasParameters_NG_Gost_dyn::set_viscosity0() {
     for (int k = 0; k < 4; ++k)
       mui += coef->k0 * pow(vpte_.temperature / 100.0, k);
   }
-  assert(0);
+  // todo: доделать
+  // assert(0);
 }
 
 double GasParameters_NG_Gost_dyn::get_Dn(size_t n) const {
@@ -443,8 +444,6 @@ void GasParameters_NG_Gost_dyn::update_dynamic() {
   ng_gost_params_.k = t / ng_gost_params_.z;
   ng_gost_params_.u = sqrt(1000 * t * GAS_CONSTANT *
       vpte_.temperature / ng_molar_mass_);
-
-  assert(0);
 }
 
 merror_t GasParameters_NG_Gost_dyn::check_pt_limits(double p, double t) {

@@ -87,7 +87,7 @@ public:
   public:
     model_init_exception(const model_str *info, const std::string &_msg);
 
-    const char *what() const noexcept;
+    const char *what() const noexcept override;
 
   private:
     std::string msg;
@@ -160,7 +160,7 @@ public:
   const_parameters GetConstParameters() const;
   calculation_state_log GetStateLog() const;
   merror_t GetError() const;
-  calculation_info *GetCalculationSetup() const;
+  calculation_info *GetCalculationInfo() const;
 
   // todo: maybe remove it in another class
   std::string ParametersString() const;

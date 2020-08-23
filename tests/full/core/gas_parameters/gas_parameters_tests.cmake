@@ -1,6 +1,8 @@
 message(STATUS "\t\tRun gasmix test")
 
 add_definitions(-DGASMIX_TEST)
+
+
 add_executable(
   test_gasmix
 
@@ -15,6 +17,8 @@ add_executable(
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gasmix_init.cpp
 
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
+
+  ${ASP_THERM_ROOT}/source/utils/FileURL.cpp
 
   ${UTILS_SOURCE}
 )
