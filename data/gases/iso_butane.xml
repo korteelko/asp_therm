@@ -7,7 +7,7 @@
         <parameter name="volume"> 0.259 </parameter>
         <parameter name="pressure"> 3640000 </parameter>
         <parameter name="temperature"> 408.0 </parameter>
-        <parameter name="compress_factor"> </parameter>
+        <parameter name="compress_factor"> 0.0 </parameter>
       </subgroup>
       <subgroup name="const_parameters">
         <parameter name="molec_mass"> 58.123 </parameter>
@@ -16,7 +16,7 @@
     </group>
     <group name="dynamics">
       <subgroup name="point">
-        <parameter name="volume"> 0.36495 </parameter>        
+        <parameter name="volume"> 0.36495 </parameter>
         <parameter name="pressure"> 10132.5 </parameter>
         <parameter name="temperature"> 270 </parameter>
       </subgroup>

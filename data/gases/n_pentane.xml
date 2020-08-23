@@ -4,7 +4,7 @@
     <!-- [v]=m3/kg [p]=MPa [t]=K -->
     <group name="constants">
       <subgroup name="critical_point">
-        <parameter name="volume"> </parameter>
+        <parameter name="volume"> 0.0 </parameter>
         <parameter name="pressure"> 3380000 </parameter>
         <parameter name="temperature"> 470.0 </parameter>
         <parameter name="compress_factor"> 0.262 </parameter>
@@ -16,7 +16,7 @@
     </group>
     <group name="dynamics">
       <subgroup name="point">
-        <parameter name="volume"> </parameter>        
+        <parameter name="volume"> 0.0 </parameter>
         <parameter name="pressure"> 100000 </parameter>
         <parameter name="temperature"> 288 </parameter>
       </subgroup>

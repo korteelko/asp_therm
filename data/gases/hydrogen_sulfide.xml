@@ -16,7 +16,7 @@
     </group>
     <group name="dynamics">
       <subgroup name="point">
-        <parameter name="volume"> </parameter>        
+        <parameter name="volume"> 0.0 </parameter>
         <parameter name="pressure"> 100000 </parameter>
         <parameter name="temperature"> 298 </parameter>
       </subgroup>
