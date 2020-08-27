@@ -249,7 +249,7 @@ const_dyn_union::~const_dyn_union() {}
 calculation_state_log &calculation_state_log::SetDynPars(
     const dyn_parameters &dp) {
   dyn_pars = dp;
-  initialized |= (f_vol | f_pres | f_pres);
+  initialized |= (f_vol | f_pres | f_temp);
   if (dp.setup & DYNAMIC_HEAT_CAP_VOL)
     initialized |= f_dcv;
   if (dp.setup & DYNAMIC_HEAT_CAP_PRES)
@@ -269,7 +269,6 @@ calculation_state_log &calculation_state_log::SetCalculationInfo(
   return *this;
 }
 
-#define CH(x) (GAS_TYPE_ ## x)
 bool gas_char::IsAromatic(gas_t gas) {
 #ifdef ASSIGNMENT_TRACE_COMPONENTS
   return gas_char::is_in(gas, {

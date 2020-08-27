@@ -126,7 +126,7 @@ void modelGeneral::set_gasparameters(const gas_params_input &gpi,
     modelGeneral *mg) {
   if (HasGostModelMark(gm_)) {
     parameters_ = std::unique_ptr<GasParameters>(
-        GasParameters_NG_Gost_dyn::Init(gpi));
+        GasParametersGost30319Dyn::Init(gpi, HasGostISO20765Mark(gm_)));
   } else if (HasGasMixMark(gm_)) {
     // todo: самое интересное здесь, т.к. для различных моделей
     //   реаализуется различный подход

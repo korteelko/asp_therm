@@ -47,7 +47,7 @@ private:
     * \note просто dynamic_cast<GasParameters_NG_Gost_dyn>
     *   чтобы не делать тонну перегрузок базового класса,
     *   т.к. для случая этой модели разница методологическая */
-  GasParameters_NG_Gost_dyn *ng_pars;
+  GasParametersGost30319Dyn *ng_pars;
 };
 
 #endif  // !_CORE__MODELS__MODEL_NG_GOST_H_

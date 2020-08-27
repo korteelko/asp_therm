@@ -18,41 +18,54 @@
 
 // Размерности, константы, параметры при НФУ см. в первой части ГОСТ 30319,
 //   т.е. в 30319.1-2015. Коэффициенты в третьей части(30319.3-2015)
-
 struct ng_gost_params {
+  /* Параметры используемые ГОСТ моделью */
   double A0,
          A1,
          A2,
          A3;
-  double z,     // фактор сжимаемости
-         k,     // показатель адиабаты
-         u,     // скорорсть звука
-         cp0r,  // изобарная теплоёмкость (в идеальном состоянии)
-         mu;    // динамическая вязкость
+         /// фактор сжимаемости
+  double z,
+         /// показатель адиабаты
+         k,
+         /// Скорорсть звука
+         u,
+         /// Изобарная теплоёмкость (в идеальном состоянии)
+         cp0r,
+         /// Динамическая вязкость
+         mu;
+#if defined(ISO_20765)
+  /* Параметры используемые в ISO 20765 */
+  /// Свободная энергия Гельмгольца для идеального газа
+  double fi0r,
+  /// Свободная энергия Гельмгольца
+         fi;
+#endif  // ISO_20765
 };
 
 
 // const_dyn_parameters init_natural_gas(const gost_ng_components &comps);
-/* todo: уродское название */
-class GasParameters_NG_Gost_dyn : public GasParameters {
-private:
-  ng_gost_mix components_;
-  parameters pseudocrit_vpte_;
-  ng_gost_params ng_gost_params_;
+class GasParametersGost30319Dyn: public GasParameters {
+  ADD_TEST_CLASS(GasParameters_NG_Gost_dynProxy);
 
-  double ng_molar_mass_;
-  double coef_kx_;
-  double coef_V_,
-         coef_Q_,
-         coef_F_,
-         coef_G_,
-         coef_p0m_;
-  std::vector<double> Bn_;
-  std::vector<double> Cn_;
+public:
+  static GasParametersGost30319Dyn *Init(gas_params_input gpi, bool useISO);
+  void csetParameters(double v, double p, double t, state_phase) override;
+  double cCalculateVolume(double p, double t) override;
+
+  /**
+   * \brief Проверить текущие параметры смеси
+   * */
+  bool IsValid();
+  /**
+   * \brief Проверить допустимость использования
+   *   параметров prs
+   * */
+  bool IsValid(parameters prs);
 
 private:
-  GasParameters_NG_Gost_dyn(parameters prs, const_parameters cgp,
-      dyn_parameters dgp, ng_gost_mix components);
+  GasParametersGost30319Dyn(parameters prs, const_parameters cgp,
+      dyn_parameters dgp, ng_gost_mix components, bool use_iso);
   // init methods
   //   call 1 time in ctor
   void set_V();
@@ -70,29 +83,62 @@ private:
   // init methods end
   double get_Dn(size_t n) const;
   double get_Un(size_t n) const;
+  /**
+   * \brief Установить нулевое значение удельной теплоёмкости
+   * */
+  merror_t set_cp0r();
+  /**
+   * \brief Установить нулевое значение энергии Гельмгольца
+   * */
+  merror_t set_fi0r();
+  /**
+   * \brief Пересчитать параметры газовой смеси для новых значений
+   *   давления и температуры
+   * */
   merror_t set_volume();
+  /**
+   * \brief Пересчитать приведённую плотность
+   * \return Приведённая плотность
+   * */
+  double calculate_sigma(double p, double t);
+  /**
+   * \brief Обновить динамические параметры смеси
+   * */
   void update_dynamic();
   /* TODO: add accuracy  */
   merror_t check_pt_limits(double p, double t);
-  merror_t set_cp0r();
-  // calculating sigma(it is volume)
-  double sigma_start() const;
+  /**
+   * \brief Получить первое приблежение для итерационной процедуры
+   *   поиска приведённой плотности
+   * */
+  double sigma_start(double p, double t) const;
   double calculate_d_sigm(double sigm) const;
   double calculate_A0(double sigm) const;
   double calculate_A1(double sigm) const;
   double calculate_A2(double sigm) const;
   double calculate_A3(double sigm) const;
+  //void update_parametrs();
 
-public:
-  static GasParameters_NG_Gost_dyn *Init(gas_params_input gpi);
-  void csetParameters(double v, double p, double t, state_phase) override;
-  double cCalculateVolume(double p, double t) override;
-
-  /** \brief Проверить текущие параметры смеси */
-  bool IsValid();
-  /** \brief Проверить допустимость использования
-    *   параметров prs */
-  bool IsValid(parameters prs);
+private:
+  ng_gost_mix components_;
+  parameters pseudocrit_vpte_;
+  ng_gost_params ng_gost_params_;
+  /**
+   * \brief Молярная масса смеси
+   * */
+  double ng_molar_mass_;
+  double coef_kx_;
+  double coef_V_,
+         coef_Q_,
+         coef_F_,
+         coef_G_,
+         coef_p0m_;
+  std::vector<double> Bn_;
+  std::vector<double> Cn_;
+  /**
+   * \brief Расчёт по методике ISO 20765
+   * */
+  bool use_iso20765_;
 };
 
 #endif  // !_CORE__GAS_PARAMETERS__GAS_NG_GOST_H_

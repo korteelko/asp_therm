@@ -16,7 +16,10 @@
 
 
 // original of CSI gost 30319-2015
-/* todo: remove to config file */
+/* todo: remove to config file
+ *   also: дефайн не просто так - если вычисления должны быть
+ *   исполнены исключительно по ГОСТ модели, то его вообще лучше
+ *   убрать */
 #define ISO_20765
 #if defined(ISO_20765)
 // natural gas may contain components
@@ -38,12 +41,11 @@
 #define MODEL_NG_GOST         0x00000004
 
 
-/* todo: переделать установку/чтение флажков -
- *   вынести всё в отдельную функцию */
+/* Флажки конфигурации газовой смеси */
 #define MARK_MASK             0x0000FF00
 #define GAS_MIX_MARK          0x00000100
-// ГОСТ 30319.3-2015
 #define GAS_NG_GOST_MARK      0x00000400
+#define GAS_NG_ISO_MARK       0x00000800
 
 /*  приоритет уравнения сосотяния по умолчанию,
  *    если не задан при инициализации */
@@ -73,11 +75,15 @@ typedef int8_t priority_var;
 typedef uint64_t gas_marks_t;
 /** \brief Проверить, установлен ли флаг использования модели ГОСТ 30319 */
 bool HasGostModelMark(const gas_marks_t m);
+/** \brief Проверить, установлен ли флаг использования модели ISO */
+bool HasGostISO20765Mark(const gas_marks_t m);
 /** \brief Проверить, установлен ли флаг смеси газов */
 bool HasGasMixMark(const gas_marks_t m);
 
 /** \brief Установить флаг использования модели ГОСТ 30319 */
 void AddGostModelMark(gas_marks_t *m);
+/** \brief Установить флаг использования модели ISO */
+void AddGostISO20765Mark(gas_marks_t *m);
 /** \brief Установлен флаг смеси газов */
 void AddGasMixMark(gas_marks_t *m);
 

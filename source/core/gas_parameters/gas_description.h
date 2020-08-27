@@ -162,11 +162,12 @@ typedef std::vector<ng_gost_component> ng_gost_mix;
  * wrap defines
  */
 /**
- implementation of input for gas( -
- - .compononents - parameters_mix;  -
- - .ng_gost_components - ng_gost_mix; -
- - .cdp{.cgp, .dgp} - single const and dynamic  )
-*/
+ * \brief implementation of input for gas( -
+ *   - .compononents - parameters_mix;  -
+ *   - .ng_gost_components - ng_gost_mix; -
+ *   - .cdp{.cgp, .dgp} - single const and dynamic  )
+ * \todo мэйби от union в 2к20 отказаться уже
+ * */
 union const_dyn_union {
   const parameters_mix *components;
   const ng_gost_mix *ng_gost_components;
@@ -177,8 +178,19 @@ union const_dyn_union {
   ~const_dyn_union();
 };
 
+/**
+ * \brief Входные данные инициализации газовой смеси
+ * */
 struct gas_params_input {
+public:
+  /**
+   * \brief Первые значение давления и температуры
+   * */
   double p, t;
+  /**
+   * \brief Обёртка указателя на константные данные смеси и
+   *   стартовые динамические
+   * */
   const_dyn_union const_dyn;
 };
 
