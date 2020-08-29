@@ -4,3 +4,6 @@
 [submodule "subprojects/asp_db"]
 	path = subprojects/asp_db
 	url = https://github.com/sinkarl/asp_db
+[submodule "lib/gtest"]
+	path = lib/gtest
+	url = https://github.com/google/googletest

@@ -33,7 +33,6 @@ set(PUGIXML_LIB "pugixml")
 target_link_libraries(test_gasmix
 
   ${PUGIXML_LIB}
-  ${GTEST_LIBRARIES}
   ${FULLTEST_LIBRARIES}
 )
 

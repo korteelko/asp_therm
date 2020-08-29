@@ -21,7 +21,6 @@ add_executable(
 
 target_link_libraries(test_common
 
-  ${GTEST_LIBRARIES}
   ${FULLTEST_LIBRARIES}
 )
 

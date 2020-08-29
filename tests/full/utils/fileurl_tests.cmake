@@ -20,7 +20,6 @@ add_executable(
 
 target_link_libraries(test_fileurl
 
-  ${GTEST_LIBRARIES}
   ${FULLTEST_LIBRARIES}
 )
 

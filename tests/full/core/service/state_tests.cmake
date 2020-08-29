@@ -33,7 +33,6 @@ target_link_libraries(${PROJECT_NAME}
 
   ${PUGIXML_LIB}
   ${PQXX_LIBS}
-  ${GTEST_LIBRARIES}
   ${FULLTEST_LIBRARIES}
 )
 

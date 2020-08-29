@@ -14,6 +14,6 @@ add_executable(
 
   ${UTILS_SOURCE}
 )
-target_link_libraries(test_models ${GTEST_LIBRARIES} ${FULLTEST_LIBRARIES})
+target_link_libraries(test_models ${FULLTEST_LIBRARIES})
 
 add_test(test_models "core/test_models")
