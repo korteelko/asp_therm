@@ -18,9 +18,9 @@ namespace fs = std::filesystem;
 
 static std::string calc_file = "test_calculation.xml";
 
-static std::string path_gost1 = "../../../data/calculation/gost_test/gostmix1.xml";
-static std::string path_gost2 = "../../../data/calculation/gost_test/gostmix2.xml";
-static std::string path_gost3 = "../../../data/calculation/gost_test/gostmix3.xml";
+static std::string path_gost1 = "calculation/gost_test/gostmix1.xml";
+static std::string path_gost2 = "calculation/gost_test/gostmix2.xml";
+static std::string path_gost3 = "calculation/gost_test/gostmix3.xml";
 
 /**
  * \brief Класс для тестинга CalculationSetup
@@ -33,6 +33,7 @@ public:
 
   CalculationSetup &GetSetup() { return cs; }
   calculation_setup *GetInitData() { return cs.init_data_.get(); }
+  std::vector<parameters> &GetPoints() { return cs.points_;}
 
 public:
   CalculationSetup cs;
@@ -45,13 +46,13 @@ class CalculationSetupTest: public ::testing::Test {
 protected:
   CalculationSetupTest() {
     data_root_p_.reset(new file_utils::FileURLRoot(
-        file_utils::url_t::fs_path, "./"));
+        file_utils::url_t::fs_path, "./../../../data"));
     initCalculations();
   }
 
   bool initCalculations() {
     bool success = false;
-    fs::path p = calc_file;
+    fs::path p = data_root_p_->GetRootURL().GetURL() + calc_file;
     auto f = std::fstream(p, std::ios_base::out);
 
     if (f.is_open()) {
@@ -105,13 +106,10 @@ TEST_F(CalculationSetupTest, calculation_setup_init) {
   ASSERT_EQ(idp->gasmix_files.size(), 3);
   auto p1 = data_root_p_->CreateFileURL(path_gost1).GetURL();
   EXPECT_TRUE(is_exist(p1));
-  EXPECT_EQ(idp->gasmix_files[0], p1);
   auto p2 = data_root_p_->CreateFileURL(path_gost2).GetURL();
   EXPECT_TRUE(is_exist(p2));
-  EXPECT_EQ(idp->gasmix_files[1], p2);
   auto p3 = data_root_p_->CreateFileURL(path_gost3).GetURL();
   EXPECT_TRUE(is_exist(p3));
-  EXPECT_EQ(idp->gasmix_files[2], p3);
 
   // points
   std::function<bool(const parameters &, const parameters &)> comp_p =
@@ -119,11 +117,12 @@ TEST_F(CalculationSetupTest, calculation_setup_init) {
       return is_equal(l.volume, r.volume) && is_equal(l.pressure, r.pressure) &&
           is_equal(l.temperature, r.temperature);
   };
-  ASSERT_EQ(idp->points.size(), 3);
-  EXPECT_TRUE(comp_p(idp->points[0],
+  auto points = csp.GetPoints();
+  ASSERT_EQ(points.size(), 3);
+  EXPECT_TRUE(comp_p(points[0],
       parameters {.volume = 0.0, .pressure = 100000.0, .temperature = 250.0}));
-  EXPECT_TRUE(comp_p(idp->points[1],
+  EXPECT_TRUE(comp_p(points[1],
       parameters {.volume = 0.0, .pressure = 5000000.0, .temperature = 350.0}));
-  EXPECT_TRUE(comp_p(idp->points[2],
+  EXPECT_TRUE(comp_p(points[2],
       parameters {.volume = 0.0, .pressure = 30000000.0, .temperature = 300.0}));
 }

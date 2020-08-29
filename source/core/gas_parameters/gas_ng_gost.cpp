@@ -76,27 +76,28 @@ bool is_valid_limits(const ng_gost_mix &components, bool use_iso20675) {
   if (components.empty())
     return false;
   bool is_valid = true;
-  ng_gost_component butanes(GAS_TYPE_ALL_BUTANES, 0.0);
-  ng_gost_component pentanes(GAS_TYPE_ALL_PENTANES, 0.0);
+  ng_gost_component butanes(CH(ALL_BUTANES), 0.0);
+  ng_gost_component pentanes(CH(ALL_PENTANES), 0.0);
 #ifdef ISO_20765
-  ng_gost_component other_alkanes(GAS_TYPE_ALL_OTHER_ALKANES, 0.0);
+  ng_gost_component other_alkanes(CH(ALL_OTHER_ALKANES), 0.0);
 #endif  // ISO_20765
-  ng_gost_component others(GAS_TYPE_UNDEFINED, 0.0);
+  ng_gost_component others(CH(UNDEFINED), 0.0);
   // todo: replace with macroces
   for (const auto &component : components) {
     const auto limits_it = mix_valid_molar.find(component.first);
     if (limits_it == mix_valid_molar.cend()) {
-      if (component.first == GAS_TYPE_ISO_PENTANE || component.first == GAS_TYPE_N_PENTANE)
+      if (component.first == CH(ISO_PENTANE) || component.first == CH(N_PENTANE)) {
         pentanes.second += component.second;
-      else if (component.first == GAS_TYPE_ISO_BUTANE || component.first == GAS_TYPE_N_BUTANE)
+      } else if (component.first == CH(ISO_BUTANE) || component.first == CH(N_BUTANE)) {
         butanes.second += component.second;
     #ifdef ISO_20765
-      else if (component.first == GAS_TYPE_OCTANE || component.first == GAS_TYPE_NONANE ||
-          component.first == GAS_TYPE_DECANE)
+      } else if (component.first == CH(OCTANE) || component.first == CH(NONANE) ||
+          component.first == CH(DECANE)) {
         other_alkanes.second += component.second;
     #endif  // ISO_20765
-      else
+      } else {
         others.second += component.second;
+      }
       continue;
     }
     if (is_valid_limits(limits_it, component.second) == false)
@@ -106,43 +107,12 @@ bool is_valid_limits(const ng_gost_mix &components, bool use_iso20675) {
   is_valid &= is_valid_limits(pentanes);
 #ifdef ISO_20765
   if (use_iso20675)
-  is_valid &= is_valid_limits(other_alkanes);
+    is_valid &= is_valid_limits(other_alkanes);
 #endif  // ISO_20765
   is_valid &= is_valid_limits(others);
   return is_valid;
 }
 }  // anonymus namespace
-
-GasParametersGost30319Dyn::GasParametersGost30319Dyn(parameters prs,
-    const_parameters cgp, dyn_parameters dgp, ng_gost_mix components,
-    bool use_iso)
-  : GasParameters(prs, cgp, dgp), components_(components),
-    use_iso20765_(use_iso) {
-  if (init_kx())
-    return;
-  set_V();
-  set_Q();
-  set_F();
-  set_G();
-  set_Bn();
-  set_Cn();
-  if (set_molar_mass()) {
-    error_.SetError(ERROR_INIT_T, "udefined component of natural gas");
-  } else {
-    set_p0m();
-    bool is_valid = (set_cp0r() == ERROR_SUCCESS_T);
-    is_valid &= (use_iso20765_) ? (set_fi0r() == ERROR_SUCCESS_T) : true;
-    if (is_valid) {
-      // да, это неправильно и снова отдельная функция должна быть
-      update_dynamic();
-      if (!init_pseudocrit_vpte()) {
-        set_volume();
-      } else {
-        error_.SetError(ERROR_INIT_T, "undefined component of natural gas\n");
-      }
-    }
-  }
-}
 
 GasParametersGost30319Dyn *GasParametersGost30319Dyn::Init(
     gas_params_input gpi, bool useISO) {
@@ -169,6 +139,79 @@ GasParametersGost30319Dyn *GasParametersGost30319Dyn::Init(
   }
   return new GasParametersGost30319Dyn({0.0, gpi.p, gpi.t},
       *cgp, *dgp, *gpi.const_dyn.ng_gost_components, useISO);
+}
+
+GasParametersGost30319Dyn::GasParametersGost30319Dyn(parameters prs,
+    const_parameters cgp, dyn_parameters dgp, ng_gost_mix components,
+    bool use_iso)
+  : GasParameters(prs, cgp, dgp), components_(components),
+    use_iso20765_(use_iso) {
+  if (setFuncCoefficients())
+    setStartCondition();
+}
+
+bool GasParametersGost30319Dyn::setFuncCoefficients() {
+  if (!init_kx()) {
+    set_V();
+    set_Q();
+    set_F();
+    set_G();
+    set_Bn();
+    set_Cn();
+    return true;
+  }
+  return false;
+}
+
+void GasParametersGost30319Dyn::setStartCondition() {
+  if (set_molar_mass()) {
+    error_.SetError(ERROR_INIT_T, "udefined component of natural gas");
+  } else {
+    set_p0m();
+    bool is_valid = (set_cp0r() == ERROR_SUCCESS_T);
+  #if defined(ISO_20765)
+    is_valid &= (use_iso20765_) ? (set_fi0r() == ERROR_SUCCESS_T) : true;
+  #endif  // ISO_20765
+    if (is_valid) {
+      // да, это неправильно и снова отдельная функция должна быть
+      update_dynamic();
+      if (!init_pseudocrit_vpte()) {
+        set_volume();
+      } else {
+        error_.SetError(ERROR_INIT_T, "undefined component of natural gas\n");
+      }
+    }
+  }
+}
+
+// calculating
+merror_t GasParametersGost30319Dyn::init_kx() {
+  coef_kx_ = 0.0;
+  const component_characteristics *xi_ch = nullptr;
+  for (size_t i = 0; i < components_.size(); ++i) {
+    xi_ch = get_characteristics(components_[i].first);
+    if (xi_ch == nullptr)
+      return error_.SetError(ERROR_INIT_T, "undefined component in gost model");
+    coef_kx_ += components_[i].second * pow(xi_ch->K, 2.5);
+  }
+  coef_kx_ *= coef_kx_;
+  double associate_Kx_part = 0.0;
+  const binary_associate_coef *assoc_coefs = nullptr;
+  const component_characteristics *xj_ch = nullptr;
+  for (size_t i = 0; i < components_.size() - 1; ++i) {
+    xi_ch = get_characteristics(components_[i].first);
+    for (size_t j = i + 1; j < components_.size(); ++j) {
+      xj_ch = get_characteristics(components_[j].first);
+      assoc_coefs = get_binary_associate_coefs(
+          components_[i].first, components_[j].first);
+      associate_Kx_part += components_[i].second * components_[j].second *
+          ((pow(assoc_coefs->K, 5.0) - 1.0) * pow(xi_ch->K * xj_ch->K, 2.5));
+    }
+  }
+  associate_Kx_part *= 2.0;
+  coef_kx_ += associate_Kx_part;
+  coef_kx_ = pow(coef_kx_, 0.2);
+  return ERROR_SUCCESS_T;
 }
 
 void GasParametersGost30319Dyn::set_V() {
@@ -307,36 +350,6 @@ void GasParametersGost30319Dyn::set_p0m() {
   coef_p0m_ = 0.001 * pow(coef_kx_, -3.0) * GAS_CONSTANT * Lt;
 }
 
-// calculating
-merror_t GasParametersGost30319Dyn::init_kx() {
-  coef_kx_ = 0.0;
-  const component_characteristics *xi_ch = nullptr;
-  for (size_t i = 0; i < components_.size(); ++i) {
-    xi_ch = get_characteristics(components_[i].first);
-    if (xi_ch == nullptr)
-      return error_.SetError(ERROR_INIT_T, "undefined component in gost model");
-    coef_kx_ += components_[i].second * pow(xi_ch->K, 2.5);
-  }
-  coef_kx_ *= coef_kx_;
-  double associate_Kx_part = 0.0;
-  const binary_associate_coef *assoc_coefs = nullptr;
-  const component_characteristics *xj_ch = nullptr;
-  for (size_t i = 0; i < components_.size() - 1; ++i) {
-    xi_ch = get_characteristics(components_[i].first);
-    for (size_t j = i + 1; j < components_.size(); ++j) {
-      xj_ch = get_characteristics(components_[j].first);
-      assoc_coefs = get_binary_associate_coefs(
-          components_[i].first, components_[j].first);
-      associate_Kx_part += components_[i].second * components_[j].second *
-          ((pow(assoc_coefs->K, 5.0) - 1.0) * pow(xi_ch->K * xj_ch->K, 2.5));
-    }
-  }
-  associate_Kx_part *= 2.0;
-  coef_kx_ += associate_Kx_part;
-  coef_kx_ = pow(coef_kx_, 0.2);
-  return ERROR_SUCCESS_T;
-}
-
 merror_t GasParametersGost30319Dyn::init_pseudocrit_vpte() {
   double vol = 0.0;
   double temp = 0.0;
@@ -383,33 +396,6 @@ merror_t GasParametersGost30319Dyn::init_pseudocrit_vpte() {
   return ERROR_SUCCESS_T;
 }
 
-void GasParametersGost30319Dyn::set_viscosity0() {
-  double mui = 0.0;
-  const A6_coef *coef = nullptr;
-  for (auto x : components_) {
-    coef = get_A6_coefs(x.first);
-    mui = 0.0;
-    for (int k = 0; k < 4; ++k)
-      mui += coef->k0 * pow(vpte_.temperature / 100.0, k);
-  }
-  // todo: доделать
-  // assert(0);
-}
-
-double GasParametersGost30319Dyn::get_Dn(size_t n) const {
-  if (n < 12)
-    return Bn_[n] * pow(coef_kx_, -3.0);
-  else if (n >= 12 && n < 18)
-    return Bn_[n] * pow(coef_kx_, -3.0) - Cn_[n];
-  return 0.0;
-}
-
-double GasParametersGost30319Dyn::get_Un(size_t n) const {
-  if (n < 12)
-    return 0.0;
-  return Cn_[n];
-}
-
 merror_t GasParametersGost30319Dyn::set_cp0r() {
   merror_t error = ERROR_SUCCESS_T;
   double cp0r = 0.0;
@@ -438,6 +424,7 @@ merror_t GasParametersGost30319Dyn::set_cp0r() {
   return error;
 }
 
+#if defined(ISO_20765)
 merror_t GasParametersGost30319Dyn::set_fi0r() {
   merror_t error = ERROR_SUCCESS_T;
   double fi0r = 0.0;
@@ -475,6 +462,7 @@ merror_t GasParametersGost30319Dyn::set_fi0r() {
   }
   return error;
 }
+#endif  // ISO_20765
 
 merror_t GasParametersGost30319Dyn::set_volume() {
   if (check_pt_limits(vpte_.pressure, vpte_.temperature))
@@ -490,6 +478,33 @@ merror_t GasParametersGost30319Dyn::set_volume() {
   update_dynamic();
   // function end
   return ERROR_SUCCESS_T;
+}
+
+void GasParametersGost30319Dyn::set_viscosity0() {
+  double mui = 0.0;
+  const A6_coef *coef = nullptr;
+  for (auto x : components_) {
+    coef = get_A6_coefs(x.first);
+    mui = 0.0;
+    for (int k = 0; k < 4; ++k)
+      mui += coef->k0 * pow(vpte_.temperature / 100.0, k);
+  }
+  // todo: доделать
+  // assert(0);
+}
+
+double GasParametersGost30319Dyn::get_Dn(size_t n) const {
+  if (n < 12)
+    return Bn_[n] * pow(coef_kx_, -3.0);
+  else if (n >= 12 && n < 18)
+    return Bn_[n] * pow(coef_kx_, -3.0) - Cn_[n];
+  return 0.0;
+}
+
+double GasParametersGost30319Dyn::get_Un(size_t n) const {
+  if (n < 12)
+    return 0.0;
+  return Cn_[n];
 }
 
 double GasParametersGost30319Dyn::calculate_sigma(double p, double t) {

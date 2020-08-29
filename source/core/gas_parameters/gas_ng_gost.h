@@ -66,8 +66,19 @@ public:
 private:
   GasParametersGost30319Dyn(parameters prs, const_parameters cgp,
       dyn_parameters dgp, ng_gost_mix components, bool use_iso);
+  /**
+   * \brief Инициализировать коэффициенты расчётных функций
+   * \note Расчитываются только на старте программы
+   * */
+  bool setFuncCoefficients();
+  /**
+   * \brief Рассчить молярную массу смеси, медианные значения
+   *   удельной теплоёмкости и свободной энергии
+   * \note Расчитываются только на старте программы
+   * */
+  void setStartCondition();
   // init methods
-  //   call 1 time in ctor
+  merror_t init_kx();
   void set_V();
   void set_Q();
   void set_F();
@@ -76,26 +87,27 @@ private:
   void set_Cn();
   merror_t set_molar_mass();
   void set_p0m();
-  merror_t init_kx();
   merror_t init_pseudocrit_vpte();
-  ///  calculate default value of viscosity(mU0)
-  void set_viscosity0();
-  // init methods end
-  double get_Dn(size_t n) const;
-  double get_Un(size_t n) const;
   /**
    * \brief Установить нулевое значение удельной теплоёмкости
    * */
   merror_t set_cp0r();
+#if defined(ISO_20765)
   /**
    * \brief Установить нулевое значение энергии Гельмгольца
    * */
   merror_t set_fi0r();
+#endif  // ISO_20765
   /**
    * \brief Пересчитать параметры газовой смеси для новых значений
    *   давления и температуры
    * */
   merror_t set_volume();
+  ///  calculate default value of viscosity(mU0)
+  void set_viscosity0();
+  // init methods end
+  double get_Dn(size_t n) const;
+  double get_Un(size_t n) const;
   /**
    * \brief Пересчитать приведённую плотность
    * \return Приведённая плотность

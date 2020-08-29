@@ -60,11 +60,9 @@ static gas_t valid_gases[] = {
   GAS_TYPE_ARGON,
   GAS_TYPE_HEPTANE,
   GAS_TYPE_OCTANE,
-
-#ifdef GASMIX_TEST
+#if defined(GASMIX_TEST) && defined(ISO_20765)
   GAS_TYPE_TOLUENE,
 #endif  // GASMIX_TEST
-
   GAS_TYPE_UNDEFINED,
   GAS_TYPE_MIX
 };
@@ -294,9 +292,12 @@ bool gas_char::IsHydrocarbon(gas_t gas) {
 
 // Парафины - алканы с формулой C[n]H[2n]
 bool gas_char::IsCycleParafine(gas_t gas) {
-  bool hc = is_in(gas, {CH(CYCLOPENTENE), CH(MCYCLOPENTENE), CH(ECYCLOPENTENE),
+#ifdef ASSIGNMENT_TRACE_COMPONENTS
+  return is_in(gas, {CH(CYCLOPENTENE), CH(MCYCLOPENTENE), CH(ECYCLOPENTENE),
       CH(CYCLOHEXANE), CH(MCYCLOHEXANE), CH(ECYCLOHEXANE)});
-  return hc;
+#else
+  return false;
+#endif
 }
 
 bool gas_char::is_in(gas_t g, const std::vector<gas_t> &v) {

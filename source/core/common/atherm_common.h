@@ -20,7 +20,6 @@
  *   also: дефайн не просто так - если вычисления должны быть
  *   исполнены исключительно по ГОСТ модели, то его вообще лучше
  *   убрать */
-#define ISO_20765
 #if defined(ISO_20765)
 // natural gas may contain components
 //   that can be associated with one of GAS_TYPE...

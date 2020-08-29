@@ -1,6 +1,7 @@
 message(STATUS "\t\tRun gasmix test")
 
 add_definitions(-DGASMIX_TEST)
+add_definitions(-DISO_20765)
 
 
 add_executable(

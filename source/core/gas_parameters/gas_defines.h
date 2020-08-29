@@ -18,14 +18,19 @@
 #include <stdint.h>
 
 
+
 // max count of components of natural gas in xml files
 #define GASMIX_MAX_COUNT           32
 
 typedef uint32_t gas_t;
 #define GAS_TYPE_MIX               0xFF
 
+/**
+ * \brief Макрос на сокращение имён дефайнов
+ * */
+#define CH(x) (GAS_TYPE_ ## x)
+/* Идентификаторы компонентов */
 #define GAS_TYPE_UNDEFINED         0x00
-
 #define GAS_TYPE_METHANE           0x01   // CH4
 #define GAS_TYPE_ETHANE            0x02   // C2H6
 #define GAS_TYPE_PROPANE           0x03   // C3H8
