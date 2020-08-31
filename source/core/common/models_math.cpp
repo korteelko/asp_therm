@@ -22,5 +22,5 @@ bool is_equal(std::complex<double> a, std::complex<double> b, double accur) {
 // check floating variable
 //  > 0
 bool is_above0(double a) {
-  return (a > 0.0 && std::isfinite(a));
+  return (a > 0.0) && std::isfinite(a);
 }

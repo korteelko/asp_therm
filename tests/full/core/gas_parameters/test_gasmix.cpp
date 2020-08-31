@@ -10,8 +10,9 @@
 
 #include "gtest/gtest.h"
 
-#include <iostream>
 #include <filesystem>
+#include <iostream>
+#include <memory>
 #include <numeric>
 
 #include <assert.h>
@@ -31,18 +32,18 @@ static std::filesystem::path cwd;
 }  // namespace valid_data
 
 // Tk setup(в xml файлах теже параметры)
-static const_parameters *methane = const_parameters::Init(
-    GAS_TYPE_METHANE, 0.00617, 4226000, 190.66, 0.0, 16.043, 0.011);
-static const_parameters *ethane = const_parameters::Init(
-    GAS_TYPE_ETHANE, 0.0049, 4871000, 305.33, 0.0, 30.07, 0.105);
-static const_parameters *n_butane = const_parameters::Init(
-    GAS_TYPE_N_BUTANE, 0.0/*0.00438*/, 3800000, 425.66, 0.274, 58.123, 0.193);
+static std::unique_ptr<const_parameters> methane(const_parameters::Init(
+    GAS_TYPE_METHANE, 0.00617, 4226000, 190.66, 0.0, 16.043, 0.011));
+static std::unique_ptr<const_parameters> ethane(const_parameters::Init(
+    GAS_TYPE_ETHANE, 0.0049, 4871000, 305.33, 0.0, 30.07, 0.105));
+static std::unique_ptr<const_parameters> n_butane(const_parameters::Init(
+    GAS_TYPE_N_BUTANE, 0.0/*0.00438*/, 3800000, 425.66, 0.274, 58.123, 0.193));
 
 // Vk setup
-static const_parameters *toluene = const_parameters::Init(
-    GAS_TYPE_TOLUENE, 0.316 / 92.14, 4130000, 593.0, 0.284, 92.14, 0.266);
-static const_parameters *n_hexane = const_parameters::Init(
-    GAS_TYPE_HEXANE, 0.37 / 86.178, 3030000, 507.85, 0.263, 86.178, 0.296);
+static std::unique_ptr<const_parameters> toluene(const_parameters::Init(
+    GAS_TYPE_TOLUENE, 0.316 / 92.14, 4130000, 593.0, 0.284, 92.14, 0.266));
+static std::unique_ptr<const_parameters> n_hexane(const_parameters::Init(
+    GAS_TYPE_HEXANE, 0.37 / 86.178, 3030000, 507.85, 0.263, 86.178, 0.296));
 
 /** \brief Тесты функций пересчёта критических значений смеси
   *   по критическим параметрам её компонентов */
