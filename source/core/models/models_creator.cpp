@@ -49,6 +49,8 @@ model_input ModelsCreator::set_input(model_str ms, binodalpoints *bp,
   rg_model_t mn = ms.model_type.type;
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT);
   AddGostModelMark(&gm);
+  if (ms.model_type.subtype && MODEL_GOST_SUBTYPE_ISO_20765)
+    AddGostISO20765Mark(&gm);
   model_input &&mi = model_input(gm, bp, {p, t,
       const_dyn_union{.ng_gost_components = &mix_components}}, ms);
   return std::move(mi);

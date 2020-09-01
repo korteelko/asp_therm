@@ -33,7 +33,7 @@ struct ng_gost_params {
          /// показатель адиабаты
          k,
          /// Скорорсть звука
-         u,
+         w,
          /// Изобарная теплоёмкость (в идеальном состоянии)
          cp0r,
          /// Динамическая вязкость
@@ -70,6 +70,16 @@ struct ng_gost_params {
          ///   t - приведённая температура;
          ///   fi_d - производная свободной энергии по плотности
          fi_2;
+         /// Внутреняя энергия
+  double u,
+         /// Энтальпия
+         h,
+         /// Энтропия
+         s,
+         /// Удельная изохорная теплоёмкость
+         cv,
+         /// Удельная изобарная теплоёмкость
+         cp;
 #endif  // ISO_20765
 };
 
@@ -78,7 +88,7 @@ class GasParametersGost30319Dyn: public GasParameters {
   ADD_TEST_CLASS(GasParameters_NG_Gost_dynProxy);
 
 public:
-  static GasParametersGost30319Dyn *Init(gas_params_input gpi, bool useISO);
+  static GasParametersGost30319Dyn *Init(gas_params_input gpi, bool use_iso);
   void csetParameters(double v, double p, double t, state_phase) override;
   double cCalculateVolume(double p, double t) override;
 
@@ -114,7 +124,11 @@ private:
   void set_G();
   void set_Bn();
   void set_Cn();
-  merror_t set_molar_mass();
+  /**
+   * \brief Установить значение молярной массы(ng_molar_mass_)
+   *   и газовой постоянной смеси(Rm)
+   * */
+  merror_t set_molar_data();
   void set_p0m();
   merror_t init_pseudocrit_vpte();
   /**
@@ -133,6 +147,11 @@ private:
    *   давления и температуры
    * */
   merror_t set_volume();
+  /**
+   * \brief Установить параметры A0, A1, A2, A3
+   * \param sigma Приведённая плотность
+   * */
+  void set_gost_params(double sigma);
   ///  calculate default value of viscosity(mU0)
   void set_viscosity0();
   // init methods end
@@ -141,21 +160,21 @@ private:
 #if defined(ISO_20765)
   /**
    * \brief Установить данные для пересчёта параметров
-   *   модели ISO20765
+   *   модели по ISO20765
    * */
-  void set_iso_data(double sigma);
+  void set_iso_params(double sigma);
   /**
    * \brief Рассчитать коэффициент B=B(tau)
    * */
-  void set_coefB();
+  void set_coefB(double t);
   /**
    * \brief Рассчитать значение свободной энергии
    * */
-  void set_fi(double sigma);
+  void set_fi(double t, double sigma);
   /**
    * \brief Рассчитать значение производных свободной энергии
    * */
-  void set_fi_der(double sigma);
+  void set_fi_der(double t, double sigma);
 #endif  // ISO_20765
   /**
    * \brief Пересчитать приведённую плотность
@@ -173,11 +192,11 @@ private:
    *   поиска приведённой плотности
    * */
   double sigma_start(double p, double t) const;
-  double calculate_d_sigm(double sigm) const;
-  double calculate_A0(double sigm) const;
-  double calculate_A1(double sigm) const;
-  double calculate_A2(double sigm) const;
-  double calculate_A3(double sigm) const;
+  double calculate_d_sigm(double t, double p, double sigm) const;
+  double calculate_A0(double t, double sigm) const;
+  double calculate_A1(double t, double sigm) const;
+  double calculate_A2(double t, double sigm) const;
+  double calculate_A3(double t, double sigm) const;
   //void update_parametrs();
 
 private:
@@ -188,6 +207,12 @@ private:
    * \brief Молярная масса смеси
    * */
   double ng_molar_mass_;
+  /**
+   * \brief Газовая постоянная смеси (Rm = R / m),
+   *   где R - универсальная газовая постоянная,
+   *       m - молярная масса
+   * */
+  double Rm;
   double coef_kx_;
   double coef_V_,
          coef_Q_,

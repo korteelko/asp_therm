@@ -102,9 +102,21 @@ merror_t dyn_parameters::check_input(dyn_setup setup, double cv, double cp,
   bool correct_input = is_above0(cp, cv, int_eng);
   // pm.volume мы не проверяем, т.к. можно пересчитать
   correct_input &= is_above0(pm.pressure, pm.temperature);
-  if (!correct_input)
-    return ERROR_INIT_T;
-  return ERROR_SUCCESS_T;
+  return (correct_input) ? ERROR_SUCCESS_T : ERROR_INIT_T ;
+}
+
+merror_t dyn_parameters::check_input(parameters pm,
+    const std::map<dyn_setup, double> &params) {
+  bool correct_input = true;
+  for (const auto &x: params) {
+    if (!is_above0(x.second)) {
+      correct_input = false;
+      break;
+    }
+  }
+  if (correct_input)
+    correct_input = is_above0(pm.pressure, pm.temperature);
+  return (correct_input) ? ERROR_SUCCESS_T : ERROR_INIT_T;
 }
 
 dyn_parameters *dyn_parameters::Init(dyn_setup setup, double cv, double cp,
@@ -119,6 +131,7 @@ dyn_parameters::dyn_parameters()
 
 merror_t dyn_parameters::ResetParameters(dyn_setup new_setup, double cv,
     double cp, double int_eng, parameters pm) {
+  status = STATUS_DEFAULT;
   merror_t error = dyn_parameters::check_input(new_setup, cv, cp, int_eng, pm);
   if (!error) {
     status = STATUS_OK;
@@ -128,6 +141,27 @@ merror_t dyn_parameters::ResetParameters(dyn_setup new_setup, double cv,
     internal_energy = int_eng;
     beta_kr = 0.0;
     parm = pm;
+  }
+  return error;
+}
+
+merror_t dyn_parameters::ResetParameters(parameters pm,
+    const std::map<dyn_setup, double> &params) {
+  status = STATUS_DEFAULT;
+  merror_t error = dyn_parameters::check_input(pm, params);
+  if (!error) {
+    status = STATUS_OK;
+    setup = 0x0;
+    for (const auto &x: params) {
+      switch (x.first) {
+        case DYNAMIC_HEAT_CAP_PRES:
+          heat_cap_pres = x.second; setup |= x.first; break;
+        case DYNAMIC_HEAT_CAP_VOL:
+          heat_cap_vol = x.second; setup |= x.first; break;
+        case DYNAMIC_INTERNAL_ENERGY:
+          internal_energy = x.second; setup |= x.first; break;
+      }
+    }
   }
   return error;
 }

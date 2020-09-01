@@ -116,12 +116,12 @@ bool is_valid_limits(const ng_gost_mix &components, bool use_iso20675) {
 }  // anonymus namespace
 
 GasParametersGost30319Dyn *GasParametersGost30319Dyn::Init(
-    gas_params_input gpi, bool useISO) {
+    gas_params_input gpi, bool use_iso) {
   if (gpi.const_dyn.ng_gost_components->empty()) {
     GasParameters::init_error.SetError(ERROR_PAIR_DEFAULT(ERROR_INIT_NULLP_ST));
     return nullptr;
   }
-  if (!is_valid_limits(*gpi.const_dyn.ng_gost_components, useISO)) {
+  if (!is_valid_limits(*gpi.const_dyn.ng_gost_components, use_iso)) {
     GasParametersGost30319Dyn::init_error.SetError(ERROR_INIT_T,
         "natural gas model init error:\n components limits check fail\n");
     return nullptr;
@@ -139,7 +139,7 @@ GasParametersGost30319Dyn *GasParametersGost30319Dyn::Init(
     return nullptr;
   }
   return new GasParametersGost30319Dyn({0.0, gpi.p, gpi.t},
-      *cgp, *dgp, *gpi.const_dyn.ng_gost_components, useISO);
+      *cgp, *dgp, *gpi.const_dyn.ng_gost_components, use_iso);
 }
 
 GasParametersGost30319Dyn::GasParametersGost30319Dyn(parameters prs,
@@ -165,7 +165,7 @@ bool GasParametersGost30319Dyn::setFuncCoefficients() {
 }
 
 void GasParametersGost30319Dyn::setStartCondition() {
-  if (set_molar_mass()) {
+  if (set_molar_data()) {
     error_.SetError(ERROR_INIT_T, "udefined component of natural gas");
   } else {
     set_p0m();
@@ -335,7 +335,7 @@ void GasParametersGost30319Dyn::set_Cn() {
   }
 }
 
-merror_t GasParametersGost30319Dyn::set_molar_mass() {
+merror_t GasParametersGost30319Dyn::set_molar_data() {
   ng_molar_mass_ = 0.0;
   const component_characteristics *xi_ch = nullptr;
   for (size_t i = 0; i < components_.size(); ++i) {
@@ -346,6 +346,7 @@ merror_t GasParametersGost30319Dyn::set_molar_mass() {
       return ERROR_INIT_T;
     }
   }
+  Rm = 1000.0 * GAS_CONSTANT / ng_molar_mass_;
   return ERROR_SUCCESS_T;
 }
 
@@ -467,8 +468,7 @@ merror_t GasParametersGost30319Dyn::set_fi0r() {
     }
     ng_gost_params_.fi0r = fi0r;
     ng_gost_params_.fi0r_t = fi0r_t;
-    ng_gost_params_.fi0r_tt = (1.0 - ng_gost_params_.cp0r * ng_molar_mass_ /
-        (1000.0 * GAS_CONSTANT)) / (tet * tet);
+    ng_gost_params_.fi0r_tt = (1.0 - ng_gost_params_.cp0r / Rm) / (tet * tet);
   } else {
     error = error_.SetError(ERROR_INIT_T, "ГОСТ модель: fi0r, результат расчёта "
         "приведённой плотности некорректен.");
@@ -481,19 +481,27 @@ merror_t GasParametersGost30319Dyn::set_volume() {
   if (check_pt_limits(vpte_.pressure, vpte_.temperature))
     return error_.GetErrorCode();
   double sigma = calculate_sigma(vpte_.pressure, vpte_.temperature);
+  /// ? правильно ли
   vpte_.volume = pow(coef_kx_, 3.0) / (ng_molar_mass_ * sigma);
-  // todo: move to separate function
-  ng_gost_params_.A0 = calculate_A0(sigma);
-  ng_gost_params_.A1 = calculate_A1(sigma);
-  ng_gost_params_.A2 = calculate_A2(sigma);
-  ng_gost_params_.A3 = calculate_A3(sigma);
-  ng_gost_params_.z = 1.0 + ng_gost_params_.A0;
 #if defined(ISO_20765)
-  set_iso_data(sigma);
+  if (use_iso20765_) {
+    set_iso_params(sigma);
+  } else
 #endif  // ISO_20765
+  {
+    set_gost_params(sigma);
+  }
   update_dynamic();
   // function end
   return ERROR_SUCCESS_T;
+}
+
+void GasParametersGost30319Dyn::set_gost_params(double sigma) {
+  ng_gost_params_.A0 = calculate_A0(vpte_.temperature, sigma);
+  ng_gost_params_.A1 = calculate_A1(vpte_.temperature, sigma);
+  ng_gost_params_.A2 = calculate_A2(vpte_.temperature, sigma);
+  ng_gost_params_.A3 = calculate_A3(vpte_.temperature, sigma);
+  ng_gost_params_.z = 1.0 + ng_gost_params_.A0;
 }
 
 void GasParametersGost30319Dyn::set_viscosity0() {
@@ -524,22 +532,25 @@ double GasParametersGost30319Dyn::get_Un(size_t n) const {
 }
 
 #if defined(ISO_20765)
-void GasParametersGost30319Dyn::set_iso_data(double sigma) {
-  set_coefB();
-  set_fi(sigma);
-  set_fi_der(sigma);
+void GasParametersGost30319Dyn::set_iso_params(double sigma) {
+  // calculate functions
+  set_coefB(vpte_.temperature);
+  set_fi(vpte_.temperature, sigma);
+  set_fi_der(vpte_.temperature, sigma);
+
+  // set parameters
+  ng_gost_params_.z = sigma * ng_gost_params_.fi_d;
 }
 
-void GasParametersGost30319Dyn::set_coefB() {
-  double tau = vpte_.temperature;
+void GasParametersGost30319Dyn::set_coefB(double t) {
+  double tau = 1.0 / t;
   ng_gost_params_.B = 0.0;
-  // todo: magic number '18'
   for (size_t n = 0; n < 18; ++n)
     ng_gost_params_.B += Bn_[n] * std::pow(tau, A0_3_coefs[n].u);
 }
 
-void GasParametersGost30319Dyn::set_fi(double sigma) {
-  double tau = 1.0 / vpte_.temperature;
+void GasParametersGost30319Dyn::set_fi(double t, double sigma) {
+  double tau = 1.0 / t;
   ng_gost_params_.fi = ng_gost_params_.fi0r +
       ng_gost_params_.B * sigma / std::pow(coef_kx_, 3.0);
   double c1 = 0.0, c2 = 0.0;
@@ -553,9 +564,9 @@ void GasParametersGost30319Dyn::set_fi(double sigma) {
   ng_gost_params_.fi += -c1 + c2;
 }
 
-/* todo: наверное излишне оптимизировано */
-void GasParametersGost30319Dyn::set_fi_der(double sigma) {
-  double tau = 1.0 / vpte_.temperature;
+/* наверное излишне оптимизировано */
+void GasParametersGost30319Dyn::set_fi_der(double t, double sigma) {
+  double tau = 1.0 / t;
   double s_k = sigma / pow(coef_kx_, 3.0);
   double fi_t = tau * ng_gost_params_.fi0r_t,
          fi_tt = tau * tau * ng_gost_params_.fi0r_tt,
@@ -632,7 +643,7 @@ void GasParametersGost30319Dyn::set_fi_der(double sigma) {
 double GasParametersGost30319Dyn::calculate_sigma(double p, double t) {
   double sigm = sigma_start(p, t),
          tau = t / Lt;
-  double A0 = calculate_A0(sigm);
+  double A0 = calculate_A0(t, sigm);
   // todo: remove magic numbers!!!
   double pi_calc = sigm * tau * (1.0 + A0),
          pi = 0.000001 * p / coef_p0m_;
@@ -640,8 +651,8 @@ double GasParametersGost30319Dyn::calculate_sigma(double p, double t) {
   while (--loop_max > 0) {
     if (abs(pi_calc - pi) / pi < 0.000001)
       break;
-    sigm += calculate_d_sigm(sigm);
-    A0 = calculate_A0(sigm);
+    sigm += calculate_d_sigm(t, p, sigm);
+    A0 = calculate_A0(t, sigm);
     pi_calc = sigm * tau * (1.0 + A0);
   }
 #ifdef _DEBUG
@@ -655,16 +666,35 @@ double GasParametersGost30319Dyn::calculate_sigma(double p, double t) {
 }
 
 void GasParametersGost30319Dyn::update_dynamic() {
-  auto t = 1.0 + ng_gost_params_.A1 + std::pow(1.0 + ng_gost_params_.A2, 2.0) /
-      (ng_gost_params_.cp0r - 1.0 + ng_gost_params_.A3);
-  ng_gost_params_.k = t / ng_gost_params_.z;
-  ng_gost_params_.u = sqrt(1000.0 * t * GAS_CONSTANT *
-      vpte_.temperature / ng_molar_mass_);
-  // тут не ng_gost_params_.cp0r, cp0r - это теплоёмкость идеал.газа
-  // dyn_params_.ResetParameters(DYNAMIC_HEAT_CAP_VOL| DYNAMIC_HEAT_CAP_PRES,
-  //    ng_gost_params_.cp0r * ng_gost_params_.k, ng_gost_params_.cp0r,
-  //    0.0, vpte_);
-  dyn_params_.ResetParameters(0, 0.0, 0.0, 0.0, vpte_);
+#if defined(ISO_20765)
+  if (use_iso20765_) {
+    double tau = Lt / vpte_.temperature;
+    ng_gost_params_.u = ng_gost_params_.fi_t * Rm;
+    ng_gost_params_.h = (ng_gost_params_.u + ng_gost_params_.z) * Rm * vpte_.temperature;
+    ng_gost_params_.s = (tau * ng_gost_params_.fi_t - ng_gost_params_.fi) * Rm;
+    ng_gost_params_.cv = - tau * tau * ng_gost_params_.fi_tt * Rm;
+    ng_gost_params_.cp = ng_gost_params_.cv + ng_gost_params_.fi_2 *
+        ng_gost_params_.fi_2 * Rm / ng_gost_params_.fi_1;
+    ng_gost_params_.k = ng_gost_params_.fi_1 * ng_gost_params_.cp /
+        (ng_gost_params_.z * ng_gost_params_.cv);
+    ng_gost_params_.w = sqrt(ng_gost_params_.fi_1 * ng_gost_params_.cp *
+        vpte_.temperature * Rm / (ng_molar_mass_ * ng_gost_params_.cv));
+    // todo: add another one
+    std::map<dyn_setup, double> params = {
+      {DYNAMIC_HEAT_CAP_PRES, ng_gost_params_.cp},
+      {DYNAMIC_HEAT_CAP_VOL, ng_gost_params_.cv},
+      {DYNAMIC_INTERNAL_ENERGY, ng_gost_params_.u}
+    };
+    dyn_params_.ResetParameters(vpte_, params);
+  } else
+#endif  // ISO_20765
+  {
+    auto t = 1.0 + ng_gost_params_.A1 + std::pow(1.0 + ng_gost_params_.A2, 2.0) /
+        (ng_gost_params_.cp0r - 1.0 + ng_gost_params_.A3);
+    ng_gost_params_.k = t / ng_gost_params_.z;
+    ng_gost_params_.w = sqrt(Rm * t * vpte_.temperature );
+    dyn_params_.ResetParameters(0, 0.0, 0.0, 0.0, vpte_);
+  }
 }
 
 merror_t GasParametersGost30319Dyn::check_pt_limits(double p, double t) {
@@ -680,19 +710,20 @@ double GasParametersGost30319Dyn::sigma_start(double p, double t) const {
 }
 
 /* check 07_11_19 */
-double GasParametersGost30319Dyn::calculate_d_sigm(double sigm) const {
-  double tau = vpte_.temperature / Lt,
-         pi  = 0.000001 * vpte_.pressure / coef_p0m_,
-         d_sigm = (pi / tau - (1.0 + calculate_A0(sigm))*sigm) /
-             (1.0 + calculate_A1(sigm));
+double GasParametersGost30319Dyn::calculate_d_sigm(
+    double t, double p, double sigm) const {
+  double tau = t / Lt,
+         pi  = 0.000001 * p / coef_p0m_,
+         d_sigm = (pi / tau - (1.0 + calculate_A0(t, sigm))*sigm) /
+             (1.0 + calculate_A1(t, sigm));
   return d_sigm;
 }
 
 //   dens is sigma, temp is tau
 /* check 07_11_19 */
-double GasParametersGost30319Dyn::calculate_A0(double sigm) const {
+double GasParametersGost30319Dyn::calculate_A0(double t, double sigm) const {
   double A0 = 0.0;
-  double tau = vpte_.temperature / Lt;
+  double tau = t / Lt;
   for (size_t n = 0; n < A0_3_coefs_count; ++n) {
     const A0_3_coef &A3c = A0_3_coefs[n];
     A0 += A3c.a * pow(sigm, A3c.b) * pow(tau, -A3c.u) *
@@ -703,9 +734,9 @@ double GasParametersGost30319Dyn::calculate_A0(double sigm) const {
 }
 
 /* check 07_11_19 */
-double GasParametersGost30319Dyn::calculate_A1(double sigm) const {
+double GasParametersGost30319Dyn::calculate_A1(double t, double sigm) const {
   double A1 = 0.0;
-  double tau = vpte_.temperature / Lt;
+  double tau = t / Lt;
   for (size_t n = 0; n < A0_3_coefs_count; ++n) {
     const A0_3_coef &A3c = A0_3_coefs[n];
     A1 += A3c.a * pow(sigm, A3c.b) * pow(tau, -A3c.u) *
@@ -719,9 +750,9 @@ double GasParametersGost30319Dyn::calculate_A1(double sigm) const {
 }
 
 /* check 07_11_19 */
-double GasParametersGost30319Dyn::calculate_A2(double sigm) const {
+double GasParametersGost30319Dyn::calculate_A2(double t, double sigm) const {
   double A2 = 0.0;
-  double tau = vpte_.temperature / Lt;
+  double tau = t / Lt;
   for (size_t n = 0; n < A0_3_coefs_count; ++n) {
     const A0_3_coef &A3c = A0_3_coefs[n];
     A2 += A3c.a * pow(sigm, A3c.b) * pow(tau, -A3c.u) * (1.0 - A3c.u) *
@@ -732,9 +763,9 @@ double GasParametersGost30319Dyn::calculate_A2(double sigm) const {
 }
 
 /* check 07_11_19 */
-double GasParametersGost30319Dyn::calculate_A3(double sigm) const {
+double GasParametersGost30319Dyn::calculate_A3(double t, double sigm) const {
   double A3 = 0.0;
-  double tau = vpte_.temperature / Lt;
+  double tau = t / Lt;
   for (size_t n = 0; n < A0_3_coefs_count; ++n) {
     const A0_3_coef &A3c = A0_3_coefs[n];
     A3 += A3c.a * pow(sigm, A3c.b) * pow(tau, -A3c.u) * (1.0 - A3c.u) * A3c.u *

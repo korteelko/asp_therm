@@ -59,17 +59,37 @@ private:
 
   static merror_t check_input(dyn_setup setup, double cv, double cp,
       double int_eng, parameters pm);
+  static merror_t check_input(parameters pm,
+      const std::map<dyn_setup, double> &params);
 
 public:
-  /** \brief Инициализировать структуру, проверив входные параметры */
+  /**
+   * \brief Инициализировать структуру, проверив входные параметры
+   * */
   static dyn_parameters *Init(dyn_setup setup, double cv,
       double cp, double int_eng, parameters pm);
-  /** \brief Инициализировать пустую структуру(заглушка для газовых смесей).
-    *   Инициализировать после можно методом ResetParameters */
+  /**
+   * \brief Инициализировать пустую структуру(заглушка для газовых смесей).
+   *   Инициализировать после можно методом ResetParameters
+   * */
   dyn_parameters();
-  /** \brief Инициализировать структуру, проверив входные параметры */
+  /**
+   * \brief Инициализировать структуру, проверив входные параметры
+   * \todo Удалить
+   * \deprecated Лучше через мапу
+   * */
   merror_t ResetParameters(dyn_setup setup, double cv,
       double cp, double int_eng, parameters pm);
+  /**
+   * \brief Инициализировать структуру по словарю параметров,
+   *   проверив входные параметры
+   * \param pm Макропараметры точки
+   * \param params Словарь параметров, ключи - целочисленный дефайн,
+   *   параметры - значения параметров
+   * \todo Доделать, энтальпию например
+   * */
+  merror_t ResetParameters(parameters pm,
+      const std::map<dyn_setup, double> &params);
   void Update();
 };
 
