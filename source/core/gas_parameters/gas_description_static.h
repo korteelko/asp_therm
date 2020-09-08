@@ -23,11 +23,9 @@
  * По сути это совокупность других структур
  *   с элементами ООП
 */
-/** todo: make abstract */
+/* todo: make abstract
+ * Убрать init_error! */
 class GasParameters {
-public:
-  static ErrorWrap init_error;
-
 protected:
   ErrorWrap error_;
   mstatus_t status_;

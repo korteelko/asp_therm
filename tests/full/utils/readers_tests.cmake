@@ -1,6 +1,6 @@
 message(STATUS "\t\tRun Readers test")
 
-add_definitions(-DREADERS_TEST)
+# add_definitions(-DREADERS_TEST)
 set (COMMON_SRC
   ${THERMCORE_SOURCE_DIR}/common/atherm_common.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp

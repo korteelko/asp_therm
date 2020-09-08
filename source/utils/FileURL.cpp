@@ -36,6 +36,13 @@ void FileURL::LogError() {
   error_.LogIt();
 }
 
+std::string operator+(const FileURL &url, const std::string &dtr) {
+  return url.GetURL() + dtr;
+}
+
+std::string operator+(const std::string &dtr, const FileURL &url) {
+  return dtr + url.GetURL();
+}
 
 /* FileURLCreator */
 FileURLRoot::FileURLRoot(const SetupURL &setup)
@@ -95,5 +102,4 @@ bool FileURLRoot::is_absolute_path(const std::string &path) {
   // todo: raise exception
   return false;
 }
-
 }  // namespace file_urls

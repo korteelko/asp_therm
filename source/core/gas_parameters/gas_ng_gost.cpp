@@ -117,29 +117,24 @@ bool is_valid_limits(const ng_gost_mix &components, bool use_iso20675) {
 
 GasParametersGost30319Dyn *GasParametersGost30319Dyn::Init(
     gas_params_input gpi, bool use_iso) {
-  if (gpi.const_dyn.ng_gost_components->empty()) {
-    GasParameters::init_error.SetError(ERROR_PAIR_DEFAULT(ERROR_INIT_NULLP_ST));
-    return nullptr;
+  GasParametersGost30319Dyn *res = nullptr;
+  if (!gpi.const_dyn.ng_gost_components->empty()) {
+    if (is_valid_limits(*gpi.const_dyn.ng_gost_components, use_iso)) {
+      std::unique_ptr<const_parameters> cgp(const_parameters::Init(
+          GAS_TYPE_MIX, 1.0, 1.0, 1.0, 1.0, 1.0, 0.1));
+      assert(cgp != nullptr && "todo: переписать конструктор GasParameter");
+      res = new GasParametersGost30319Dyn({0.0, gpi.p, gpi.t}, *cgp,
+          dyn_parameters(), *gpi.const_dyn.ng_gost_components, use_iso);
+    } else {
+      Logging::Append(ERROR_INIT_T, "natural gas model init error:\n"
+          "components limits check fail\n");
+    }
+  } else {
+    Logging::Append(ERROR_PAIR_DEFAULT(ERROR_INIT_NULLP_ST));
+    Logging::Append(io_loglvl::debug_logs,
+        "Пустой список компонентов газовой смеси для ГОСТ модели");
   }
-  if (!is_valid_limits(*gpi.const_dyn.ng_gost_components, use_iso)) {
-    GasParametersGost30319Dyn::init_error.SetError(ERROR_INIT_T,
-        "natural gas model init error:\n components limits check fail\n");
-    return nullptr;
-  }
-  // костыли-костылёчки
-  // todo: repair this!!!
-  std::unique_ptr<const_parameters> cgp(const_parameters::Init(
-      GAS_TYPE_MIX, 1.0, 1.0, 1.0, 1.0, 1.0, 0.1));
-  std::unique_ptr<dyn_parameters> dgp(dyn_parameters::Init(
-      DYNAMIC_SETUP_DEFAULT, 1.0, 1.0, 1.0, {1.0, 1.0, 1.0}));
-  if (cgp == nullptr || dgp == nullptr) {
-#ifdef _DEBUG
-    assert(0);
-#endif  // _DEBUG
-    return nullptr;
-  }
-  return new GasParametersGost30319Dyn({0.0, gpi.p, gpi.t},
-      *cgp, *dgp, *gpi.const_dyn.ng_gost_components, use_iso);
+  return res;
 }
 
 GasParametersGost30319Dyn::GasParametersGost30319Dyn(parameters prs,
@@ -174,13 +169,8 @@ void GasParametersGost30319Dyn::setStartCondition() {
     is_valid &= (use_iso20765_) ? (set_fi0r() == ERROR_SUCCESS_T) : true;
   #endif  // ISO_20765
     if (is_valid) {
-      // да, это неправильно и снова отдельная функция должна быть
-      update_dynamic();
-      if (!init_pseudocrit_vpte()) {
-        set_volume();
-      } else {
-        error_.SetError(ERROR_INIT_T, "undefined component of natural gas\n");
-      }
+      init_pseudocrit_vpte();
+      set_volume();
     }
   }
 }
@@ -354,7 +344,7 @@ void GasParametersGost30319Dyn::set_p0m() {
   coef_p0m_ = 0.001 * pow(coef_kx_, -3.0) * GAS_CONSTANT * Lt;
 }
 
-merror_t GasParametersGost30319Dyn::init_pseudocrit_vpte() {
+void GasParametersGost30319Dyn::init_pseudocrit_vpte() {
   double vol = 0.0;
   double temp = 0.0;
   double press_var = 0.0;
@@ -397,7 +387,6 @@ merror_t GasParametersGost30319Dyn::init_pseudocrit_vpte() {
   pseudocrit_vpte_.temperature = 0.125 * temp / vol;
   pseudocrit_vpte_.pressure = 1000 * GAS_CONSTANT *
       pseudocrit_vpte_.temperature * press_var / pseudocrit_vpte_.volume;
-  return ERROR_SUCCESS_T;
 }
 
 merror_t GasParametersGost30319Dyn::set_cp0r() {
@@ -444,10 +433,8 @@ merror_t GasParametersGost30319Dyn::set_fi0r() {
     auto ln_cosh = [tet] (double C, double D) {
       return C * std::log(cosh(D * tet));};
     const A4_coef *cpc = nullptr;
-    const component_characteristics *x_ch = nullptr;
     for (size_t i = 0; i < components_.size(); ++i) {
       cpc = get_A4_coefs(components_[i].first);
-      x_ch = get_characteristics(components_[i].first);
       if (cpc != nullptr) {
         // by Appex B of ISO 20765
         fi0r += components_[i].second * (cpc->A1 + cpc->A2 * tet +
@@ -539,26 +526,28 @@ void GasParametersGost30319Dyn::set_iso_params(double sigma) {
   set_fi_der(vpte_.temperature, sigma);
 
   // set parameters
-  ng_gost_params_.z = sigma * ng_gost_params_.fi_d;
+  ng_gost_params_.z = 1.0 + sigma * ng_gost_params_.fi_d;
 }
 
 void GasParametersGost30319Dyn::set_coefB(double t) {
   double tau = 1.0 / t;
   ng_gost_params_.B = 0.0;
-  for (size_t n = 0; n < 18; ++n)
-    ng_gost_params_.B += Bn_[n] * std::pow(tau, A0_3_coefs[n].u);
+  for (size_t n = 0; n < 18; ++n) {
+    ng_gost_params_.B += A0_3_coefs[n].a * Bn_[n] *
+        std::pow(tau, A0_3_coefs[n].u);
+  }
 }
 
 void GasParametersGost30319Dyn::set_fi(double t, double sigma) {
-  double tau = 1.0 / t;
+  double tau = Lt / t;
   ng_gost_params_.fi = ng_gost_params_.fi0r +
       ng_gost_params_.B * sigma / std::pow(coef_kx_, 3.0);
   double c1 = 0.0, c2 = 0.0;
   for (size_t n = 12; n < 18; ++n)
-    c1 += Cn_[n] * std::pow(tau, A0_3_coefs[n].u);
+    c1 += A0_3_coefs[n].a * Cn_[n] * std::pow(tau, A0_3_coefs[n].u);
   c1 *= sigma;
   for (size_t n = 12; n < 58; ++n)
-    c2 += Cn_[n] * std::pow(tau, A0_3_coefs[n].u) *
+    c2 += A0_3_coefs[n].a * Cn_[n] * std::pow(tau, A0_3_coefs[n].u) *
         std::pow(sigma, A0_3_coefs[n].b) *
         std::exp(-A0_3_coefs[n].c * std::pow(sigma, A0_3_coefs[n].k));
   ng_gost_params_.fi += -c1 + c2;
@@ -579,11 +568,11 @@ void GasParametersGost30319Dyn::set_fi_der(double t, double sigma) {
   // 1 - 18
   for (size_t n = 0; n < 18; ++n) {
     const A0_3_coef &A3c = A0_3_coefs[n];
-    double d1 = A3c.u * Bn_[n] * pow(tau, A3c.u);
+    double d1 = A3c.a * Bn_[n] * pow(tau, A3c.u);
     double d2 = (A3c.u - 1.0) * d1;
-    dfi_t += d1;
-    dfi_tt += d2;
-    dfi_2 += d2 / A3c.u;
+    dfi_t += A3c.u * d1;
+    dfi_tt += A3c.u * d2;
+    dfi_2 -= d2;
   }
   fi_t += s_k * dfi_t;
   fi_tt += s_k * dfi_tt;
@@ -593,14 +582,13 @@ void GasParametersGost30319Dyn::set_fi_der(double t, double sigma) {
   dfi_t = 0.0, dfi_tt = 0.0, dfi_d = 0.0, dfi_1 = 0.0, dfi_2 = 0.0;
   for (size_t n = 12; n < 18; ++n) {
     const A0_3_coef &A3c = A0_3_coefs[n];
-    double d1 = A3c.u * Cn_[n] * pow(tau, A3c.u);
+    double d1 = A3c.a * Cn_[n] * pow(tau, A3c.u);
     double d2 = (A3c.u - 1.0) * d1;
-    double d3 = d1 / A3c.u;
-    dfi_t += d1;
-    dfi_tt += d2;
-    dfi_d += d3;
-    dfi_1 += d3;
-    dfi_2 += d2 / A3c.u;
+    dfi_t += A3c.u * d1;
+    dfi_tt += A3c.u * d2;
+    dfi_d += d1;
+    dfi_1 += d1;
+    dfi_2 -= d2;
   }
   fi_t += -sigma * dfi_t;
   fi_tt += -sigma * dfi_tt;
@@ -612,13 +600,12 @@ void GasParametersGost30319Dyn::set_fi_der(double t, double sigma) {
   dfi_t = 0.0, dfi_tt = 0.0, dfi_d = 0.0, dfi_1 = 0.0, dfi_2 = 0.0;
   for (size_t n = 12; n < 58; ++n) {
     const A0_3_coef &A3c = A0_3_coefs[n];
-    double d1 = A3c.u * Cn_[n] * pow(tau, A3c.u) * pow(sigma, A3c.b) *
+    double d1 = A3c.a * Cn_[n] * pow(tau, A3c.u) * pow(sigma, A3c.b) *
         exp(-A3c.c * pow(sigma, A3c.k));
-    double d2 = (A3c.u - 1.0) * d1;
+    double d2 = A3c.u * (A3c.u - 1.0) * d1;
     double k3 = A3c.b - A3c.c * A3c.k * pow(sigma, A3c.k);
-    double d3 = d1 * k3 / A3c.u;
-    double d4 = d1 * (k3 - A3c.k * A3c.c * A3c.k * pow(sigma, A3c.k) +
-        pow(k3, 2.0)) / A3c.u;
+    double d3 = d1 * k3;
+    double d4 = d1 * (k3 - pow(A3c.k, 2.0) * A3c.c * pow(sigma, A3c.k) + pow(k3, 2.0));
     double d5 = d3 * (1.0 - A3c.u);
     dfi_t += d1;
     dfi_tt += d2;
@@ -640,7 +627,7 @@ void GasParametersGost30319Dyn::set_fi_der(double t, double sigma) {
 }
 #endif  // ISO_20765
 
-double GasParametersGost30319Dyn::calculate_sigma(double p, double t) {
+double GasParametersGost30319Dyn::calculate_sigma(double p, double t) const {
   double sigm = sigma_start(p, t),
          tau = t / Lt;
   double A0 = calculate_A0(t, sigm);
@@ -786,12 +773,12 @@ double GasParametersGost30319Dyn::cCalculateVolume(double p, double t) {
   parameters bpars = vpte_;
   csetParameters(0.0, p, t, state_phase::GAS);
   double v = vpte_.volume;
-  csetParameters(0.0, bpars.pressure, bpars.volume, state_phase::GAS);
+  csetParameters(0.0, bpars.pressure, bpars.temperature, state_phase::GAS);
   return v;
 }
 
 bool GasParametersGost30319Dyn::IsValid() {
-  return (error_.GetErrorCode()) ? false : true;
+  return gost_30319_within(vpte_.pressure, vpte_.temperature);
 }
 
 bool GasParametersGost30319Dyn::IsValid(parameters prs) {

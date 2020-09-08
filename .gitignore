@@ -3,6 +3,7 @@ docs/
 lib/atherm/
 
 data/test_calculation.xml
+data/test_config.xml
 soft/*
 !soft/gas2json.py
 !soft/gcov_report.py

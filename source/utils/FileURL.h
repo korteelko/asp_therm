@@ -123,6 +123,16 @@ private:
 };
 inline std::string FileURL::GetURL() const { return absolute_path_; }
 inline merror_t FileURL::GetError() const { return error_.GetErrorCode(); }
+/**
+ * \brief Добавить к url файла справа строку `dst`
+ * \return Конкатенированную строку - слева url
+ * */
+ std::string operator+(const FileURL &url, const std::string &dtr);
+/**
+ * \brief Добавить к строке `dst` справа url файла
+ * \return Конкатенированную строку - слева dtr
+ * */
+ std::string operator+(const std::string &dtr, const FileURL &url);
 
 
 /**

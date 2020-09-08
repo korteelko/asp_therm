@@ -130,7 +130,7 @@ private:
    * */
   merror_t set_molar_data();
   void set_p0m();
-  merror_t init_pseudocrit_vpte();
+  void init_pseudocrit_vpte();
   /**
    * \brief Установить нулевое значение удельной теплоёмкости
    * */
@@ -180,7 +180,7 @@ private:
    * \brief Пересчитать приведённую плотность
    * \return Приведённая плотность
    * */
-  double calculate_sigma(double p, double t);
+  double calculate_sigma(double p, double t) const;
   /**
    * \brief Обновить динамические параметры смеси
    * */

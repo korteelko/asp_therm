@@ -135,12 +135,9 @@ void modelGeneral::set_gasparameters(const gas_params_input &gpi,
   } else {
     parameters_ = std::unique_ptr<GasParameters>(
         GasParameters_dyn::Init(gpi, mg));
-    // assert(0);
   }
-  if (parameters_ == nullptr) {
-    GasParameters::init_error.LogIt();
+  if (parameters_ == nullptr)
     error_.SetError(ERROR_INIT_T, "error occurred while init gost model");
-  }
 }
 
 model_str modelGeneral::GetModelShortInfo(const rg_model_id model_type) {

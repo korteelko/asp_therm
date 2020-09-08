@@ -26,6 +26,7 @@
 
 #include <list>
 #include <map>
+#include <memory>
 #include <vector>
 
 
@@ -69,77 +70,7 @@ class CalculationSetup {
   ADD_TEST_CLASS(CalculationSetupProxy)
 
 public:
-  /**
-   * \brief Сетап для обсчёта газовой смеси
-   * */
-  struct gasmix_models_map {
-  public:
-    /**
-     * \brief Рассчитать точки
-     * \param points Контейнер расчётных точек
-     * */
-    void CalculatePoints(const std::vector<parameters> &points);
-    /**
-     * \brief Добавить данные в БД
-     * \param source_ptr Указатель на хранилище данных
-     * \return Результат добавления
-     * */
-    mstatus_t AddToDatabase(asp_db::DBConnectionManager *source_ptr);
-
-  private:
-    /**
-     * \brief Инициализировать `*_info` контейнеры
-     * */
-    void initInfoBinding();
-    /**
-     * \brief Рассчитать параметры в точке `p` по наиболее
-     *   приоритетной модели
-     * */
-     void calculatePoint(const parameters &p);
-
-  public:
-    ErrorWrap error;
-    mstatus_t status = STATUS_DEFAULT;
-    /**
-     * \brief Название смеси
-     * */
-    std::string mixname;
-    /**
-     * \brief Сортированный контейнер расчётных моделей
-     * */
-    std::multimap<priority_var, std::shared_ptr<modelGeneral>> models;
-    /**
-     * \brief Ссылка на текущую используемую модель
-     * */
-    modelGeneral *current_model = nullptr;
-    /**
-     * \brief Копия установленных параметров
-     * */
-    parameters params_copy;
-
-    /* Данные расчёта */
-    /**
-     * \brief Информация о моделях
-     * */
-    std::vector<model_info> models_info;
-    /**
-     * \brief Информация о расчёте
-     * */
-    std::vector<calculation_info> calc_info;
-    /**
-     * \brief Результаты расчёта
-     * */
-    std::vector<calculation_state_log> result;
-
-    /* Динамика */
-    /**
-     * \brief Данные расчётов динамики
-     * \note В динамике отслеживается история расчётов,
-     *   и вероятна последовательная алгоритмизация
-     * \todo Доделать, или хотя бы продумать как это могло бы выглядеть
-     * */
-    dynamic_data dyn_data;
-  };
+  struct gasmix_models_map;
 
 public:
   CalculationSetup(std::shared_ptr<file_utils::FileURLRoot> &root,
@@ -162,19 +93,10 @@ public:
      * \param source_ptr Указатель на хранилище данных
    * */
   mstatus_t AddToDatabase(asp_db::DBConnectionManager *source_ptr);
-  /* Данные расчёта */
-  /**
-   * \brief Получить вектор результатов
-   * */
-  std::vector<calculation_state_log> &GetCalculationResult();
-  /**
-   * \brief Получить вектор информации о расчёте
-   * */
-  std::vector<calculation_info> &GetCalculationInfo();
 
 #if !defined(DATABASE_TEST)
 #  ifdef _DEBUG
-  merror_t AddModel(std::shared_ptr<modelGeneral> &mg);
+  // merror_t AddModel(std::shared_ptr<modelGeneral> &mg);
 #  endif  // _DEBUG
   /** \brief Проверить допустимость(валидность) используемой
     *   модели current_model_ */
@@ -217,7 +139,8 @@ protected:
   ErrorWrap error_;
   mstatus_t status_ = STATUS_DEFAULT;
   /**
-   * \brief Мьютекс на изменение данных для обсчёта
+   * \brief Мьютекс на изменение данных для
+   *   обсчёта(контейнера `gasmixes_`)
    * */
   Mutex gasmixes_lock_;
   /**
@@ -243,9 +166,98 @@ protected:
   /* state */
   /**
    * \brief Данные сохраненны в БД
+   * \note Если все флаги в тру, то можно обновлять
    * */
-  bool saved_ = false;
+  // bool calculated_ = false;
+  // bool saved_ = false;
+  //
 };
 using Calculations = std::map<int, CalculationSetup>;
+
+
+/**
+ * \brief Сетап для обсчёта газовой смеси
+ * */
+struct CalculationSetup::gasmix_models_map {
+public:
+  /**
+   * \brief Рассчитать точки
+   * \param points Контейнер расчётных точек
+   * */
+  void CalculatePoints(const std::vector<parameters> &points);
+  /**
+   * \brief Добавить данные в БД
+   * \param source_ptr Указатель на хранилище данных
+   * \return Результат добавления
+   * */
+  mstatus_t AddToDatabase(asp_db::DBConnectionManager *source_ptr);
+  /* Данные расчёта */
+  /**
+   * \brief Получить вектор информации о расчёте
+   * */
+  std::vector<model_info> &GetModelInfo();
+  /**
+   * \brief Получить вектор информации о расчёте
+   * */
+  std::vector<calculation_info> &GetCalculationInfo();
+  /**
+   * \brief Получить вектор результатов
+   * */
+  std::vector<calculation_state_log> &GetCalculationResult();
+
+private:
+  /**
+   * \brief Инициализировать `*_info` контейнеры
+   * */
+  void initInfoBinding();
+  /**
+   * \brief Рассчитать параметры в точке `p` по наиболее
+   *   приоритетной модели
+   * */
+   void calculatePoint(const parameters &p);
+
+public:
+  ErrorWrap error;
+  mstatus_t status = STATUS_DEFAULT;
+  /**
+   * \brief Название смеси
+   * */
+  std::string mixname;
+  /**
+   * \brief Сортированный контейнер расчётных моделей
+   * */
+  std::multimap<priority_var, std::shared_ptr<modelGeneral>> models;
+  /**
+   * \brief Ссылка на текущую используемую модель
+   * */
+  modelGeneral *current_model = nullptr;
+  /**
+   * \brief Копия установленных параметров
+   * */
+  parameters params_copy;
+
+  /* Данные расчёта */
+  /**
+   * \brief Информация о моделях
+   * */
+  std::vector<model_info> models_info;
+  /**
+   * \brief Информация о расчёте
+   * */
+  std::vector<calculation_info> calc_info;
+  /**
+   * \brief Результаты расчёта
+   * */
+  std::vector<calculation_state_log> result;
+
+  /* Динамика */
+  /**
+   * \brief Данные расчётов динамики
+   * \note В динамике отслеживается история расчётов,
+   *   и вероятна последовательная алгоритмизация
+   * \todo Доделать, или хотя бы продумать как это могло бы выглядеть
+   * */
+  dynamic_data dyn_data;
+};
 
 #endif  // !_CORE__SERVICE__CALCULATION_SETUP_H_

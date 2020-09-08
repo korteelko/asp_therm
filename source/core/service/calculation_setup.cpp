@@ -22,8 +22,7 @@
 
 // тестим проблемс с ДБ
 Mutex db_test;
-// тестим проблемс с ДБ
-// Mutex calc_test;
+Mutex calc_test;
 
 calculation_setup::calculation_setup(
     std::shared_ptr<file_utils::FileURLRoot> &root)
@@ -32,8 +31,7 @@ calculation_setup::calculation_setup(
 /* CalculationSetup */
 void CalculationSetup::gasmix_models_map::CalculatePoints(
     const std::vector<parameters> &points) {
-  // todo: udoli
-  // std::lock_guard<Mutex> lock(calc_test);
+  std::lock_guard<Mutex> lock(calc_test);
   initInfoBinding();
   if (is_status_aval(status))
     for (auto &p: points)
@@ -88,7 +86,8 @@ void CalculationSetup::gasmix_models_map::calculatePoint(const parameters &p) {
         mp->second->SetVolume(p.pressure, p.temperature);
         result.push_back(mp->second->GetStateLog().SetCalculationInfo(
             mp->second->GetCalculationInfo()));
-        break;
+        // расскоментить чтобы не пересчитывать по другой модели
+        // break;
       }
     }
   }
@@ -129,7 +128,7 @@ void CalculationSetup::Calculate() {
 }
 
 mstatus_t CalculationSetup::AddToDatabase(DBConnectionManager *source_ptr) {
-  // std::lock_guard lock(gasmixes_lock_);
+  std::lock_guard lock(gasmixes_lock_);
   std::vector<std::future<mstatus_t>> future_points;
   mstatus_t st = STATUS_OK;
   for (auto gmix: gasmixes_)
@@ -141,6 +140,21 @@ mstatus_t CalculationSetup::AddToDatabase(DBConnectionManager *source_ptr) {
     if (!is_status_ok(fp.get()))
       st = STATUS_NOT;
   return st;
+}
+
+std::vector<model_info> &
+CalculationSetup::gasmix_models_map::GetModelInfo() {
+  return models_info;
+}
+
+std::vector<calculation_info> &
+CalculationSetup::gasmix_models_map::GetCalculationInfo() {
+  return calc_info;
+}
+
+std::vector<calculation_state_log> &
+CalculationSetup::gasmix_models_map::GetCalculationResult() {
+  return result;
 }
 
 #if !defined(DATABASE_TEST)

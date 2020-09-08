@@ -11,6 +11,7 @@
 
 #include "atherm_common.h"
 #include "ErrorWrap.h"
+#include "Logging.h"
 #include "model_general.h"
 
 #include <algorithm>
@@ -301,30 +302,31 @@ GasParameters_mix_dyn::GasParameters_mix_dyn(parameters prs,
 GasParameters_mix_dyn *GasParameters_mix_dyn::Init(
     gas_params_input gpi, modelGeneral *mg) {
   GasParameters_mix_dyn *mix = nullptr;
-  merror_t err = ERROR_SUCCESS_T;
-  if (gpi.const_dyn.components->empty() || mg == nullptr)
-    err = init_error.SetError(ERROR_PAIR_DEFAULT(ERROR_INIT_NULLP_ST));
-  std::unique_ptr<const_parameters> tmp_cgp = nullptr;
-  if (!err) {
+  if (!gpi.const_dyn.components->empty() && (mg != nullptr)) {
     // рассчитать средние критические параметры смеси
     //   как арифметическое среднее её компонентов
     // n.b. это скорее неправильный подход, переделать
     std::array<double, 6> avr_vals = ns_avg::get_average_params(
         *gpi.const_dyn.components, mg->GetModelShortInfo());
     // init gasmix const_parameters
-    tmp_cgp = std::unique_ptr<const_parameters>(
+    auto tmp_cgp = std::unique_ptr<const_parameters>(
         const_parameters::Init(GAS_TYPE_MIX, avr_vals[ns_avg::index_vk],
         avr_vals[ns_avg::index_pk], avr_vals[ns_avg::index_tk],
         avr_vals[ns_avg::index_zk], avr_vals[ns_avg::index_mol],
         avr_vals[ns_avg::index_accent]));
+    if (tmp_cgp.get()) {
+      mix = new GasParameters_mix_dyn({0.0, gpi.p, gpi.t},
+          *tmp_cgp, dyn_parameters(), *gpi.const_dyn.components, mg);
     } else {
-      err = init_error.SetError(ERROR_PAIR_DEFAULT(ERROR_CALC_GAS_P_ST));
-  }
-  if (!err) {
-    mix = new GasParameters_mix_dyn({0.0, gpi.p, gpi.t},
-        *tmp_cgp, dyn_parameters(), *gpi.const_dyn.components, mg);
+      Logging::Append(ERROR_PAIR_DEFAULT(ERROR_CALC_GAS_P_ST));
+      Logging::Append(io_loglvl::debug_logs,
+          "Пустой список компонентов газовой смеси ");
+    }
   } else {
-    err = init_error.SetError(ERROR_PAIR_DEFAULT(ERROR_CALC_GAS_P_ST));
+    Logging::Append(ERROR_PAIR_DEFAULT(ERROR_INIT_NULLP_ST));
+    Logging::Append(io_loglvl::debug_logs,
+        "Пустой список компонентов газовой смеси "
+        "или не инициализирована модель");
   }
   return mix;
 }
@@ -360,10 +362,10 @@ std::unique_ptr<const_parameters> GasParameters_mix_dyn::GetAverageParams(
         avr_vals[ns_avg::index_pk], avr_vals[ns_avg::index_tk],
         avr_vals[ns_avg::index_zk], avr_vals[ns_avg::index_mol],
         avr_vals[ns_avg::index_accent]))))
-      init_error.SetError(ERROR_CALC_GAS_P_ST,
+      Logging::Append(ERROR_CALC_GAS_P_ST,
           "Расчёт средних параметров для газовой смеси");
   } else {
-    init_error.SetError(ERROR_INIT_NULLP_ST,
+    Logging::Append(ERROR_INIT_NULLP_ST,
         "Инициализация газовой смеси компонентов нет");
   }
   return tmp_cgp;
