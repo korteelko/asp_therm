@@ -162,6 +162,11 @@ protected:
    * \brief Точки расчёта (p, t)
    * */
   std::vector<parameters> points_;
+  /**
+   * \brief Расчитывать только по самой приоритетной из
+   *   валидных моделей
+   * */
+  bool unique_calculation = true;
 
   /* state */
   /**
@@ -184,7 +189,8 @@ public:
    * \brief Рассчитать точки
    * \param points Контейнер расчётных точек
    * */
-  void CalculatePoints(const std::vector<parameters> &points);
+  void CalculatePoints(const std::vector<parameters> &points,
+      bool unique_calculate);
   /**
    * \brief Добавить данные в БД
    * \param source_ptr Указатель на хранилище данных
@@ -215,6 +221,11 @@ private:
    *   приоритетной модели
    * */
    void calculatePoint(const parameters &p);
+  /**
+   * \brief Добавить к вектору результатов параметры точки `p`,
+   *   расчитанные по модели `m`
+   * */
+   bool appendResult(modelGeneral *m, const parameters &p);
 
 public:
   ErrorWrap error;
@@ -258,6 +269,11 @@ public:
    * \todo Доделать, или хотя бы продумать как это могло бы выглядеть
    * */
   dynamic_data dyn_data;
+  /**
+   * \brief Расчитывать только по самой приоритетной из
+   *   валидных моделей
+   * */
+  bool unique_calculation = true;
 };
 
 #endif  // !_CORE__SERVICE__CALCULATION_SETUP_H_

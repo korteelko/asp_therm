@@ -22,7 +22,7 @@
 
 // тестим проблемс с ДБ
 Mutex db_test;
-Mutex calc_test;
+// Mutex calc_test;
 
 calculation_setup::calculation_setup(
     std::shared_ptr<file_utils::FileURLRoot> &root)
@@ -30,8 +30,10 @@ calculation_setup::calculation_setup(
 
 /* CalculationSetup */
 void CalculationSetup::gasmix_models_map::CalculatePoints(
-    const std::vector<parameters> &points) {
-  std::lock_guard<Mutex> lock(calc_test);
+    const std::vector<parameters> &points, bool unique_calculate) {
+  // мьютекс на отладку
+  // std::lock_guard<Mutex> lock(calc_test);
+  this->unique_calculation = unique_calculate;
   initInfoBinding();
   if (is_status_aval(status))
     for (auto &p: points)
@@ -81,16 +83,26 @@ void CalculationSetup::gasmix_models_map::initInfoBinding() {
 
 void CalculationSetup::gasmix_models_map::calculatePoint(const parameters &p) {
   for (auto mp = models.begin(); mp != models.end(); ++mp) {
-    if (mp->second) {
-      if (mp->second->IsValid(p)) {
-        mp->second->SetVolume(p.pressure, p.temperature);
-        result.push_back(mp->second->GetStateLog().SetCalculationInfo(
-            mp->second->GetCalculationInfo()));
-        // расскоментить чтобы не пересчитывать по другой модели
-        // break;
-      }
+    if (mp->second)
+      if (appendResult(mp->second.get(), p))
+        break;
+  }
+}
+
+bool CalculationSetup::gasmix_models_map::appendResult(
+    modelGeneral *m, const parameters &p) {
+  bool last = false;
+  // проверить допустимость параметров для данной расчётной модели
+  if (m->IsValid(p)) {
+    m->SetVolume(p.pressure, p.temperature);
+    if (m->GetError() == ERROR_SUCCESS_T) {
+      result.push_back(m->GetStateLog().SetCalculationInfo(
+          m->GetCalculationInfo()));
+      if (unique_calculation)
+        last = true;
     }
   }
+  return last;
 }
 
 CalculationSetup::CalculationSetup(std::shared_ptr<file_utils::FileURLRoot> &root,
@@ -116,11 +128,16 @@ CalculationSetup::CalculationSetup(std::shared_ptr<file_utils::FileURLRoot> &roo
 void CalculationSetup::Calculate() {
   // Блокировать изменение данных пока не проведены расчёты
   std::lock_guard lock(gasmixes_lock_);
+#if defined(_DEBUG)
+  // на отладке обсчитываем все элементы
+  unique_calculation = false;
+#endif  // _DEBUG
   std::vector<std::future<void>> future_points;
   for (auto gmix: gasmixes_) {
     if (!gmix.second->models.empty())
-      future_points.push_back(std::async(std::launch::async, &CalculationSetup::
-          gasmix_models_map::CalculatePoints, gmix.second.get(), points_));
+      future_points.push_back(std::async(std::launch::async,
+          &CalculationSetup::gasmix_models_map::CalculatePoints,
+          gmix.second.get(), points_, unique_calculation));
   }
   for (auto &fp: future_points)
     // расчитать точки
