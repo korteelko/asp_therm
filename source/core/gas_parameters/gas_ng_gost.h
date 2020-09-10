@@ -185,8 +185,16 @@ private:
    * \brief Обновить динамические параметры смеси
    * */
   void update_dynamic();
-  /* TODO: add accuracy  */
-  merror_t check_pt_limits(double p, double t);
+  /**
+   * \brief Проверить соответсвие допустимость применения
+   *   модели для параметров p, t
+   *
+   * \param p Давление
+   * \param t Температура
+   *
+   * \note Установит ошибку при несоответствии границ
+   * */
+  merror_t inLimits(double p, double t);
   /**
    * \brief Получить первое приблежение для итерационной процедуры
    *   поиска приведённой плотности

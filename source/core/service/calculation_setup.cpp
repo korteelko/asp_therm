@@ -20,9 +20,11 @@
 #include <future>
 
 
+#if defined(_DEBUG)
 // тестим проблемс с ДБ
 Mutex db_test;
 // Mutex calc_test;
+#endif  // _DEBUG
 
 calculation_setup::calculation_setup(
     std::shared_ptr<file_utils::FileURLRoot> &root)
@@ -31,8 +33,10 @@ calculation_setup::calculation_setup(
 /* CalculationSetup */
 void CalculationSetup::gasmix_models_map::CalculatePoints(
     const std::vector<parameters> &points, bool unique_calculate) {
+#if defined(_DEBUG)
   // мьютекс на отладку
   // std::lock_guard<Mutex> lock(calc_test);
+#endif  // _DEBUG
   this->unique_calculation = unique_calculate;
   initInfoBinding();
   if (is_status_aval(status))
@@ -42,8 +46,10 @@ void CalculationSetup::gasmix_models_map::CalculatePoints(
 
 mstatus_t CalculationSetup::gasmix_models_map::AddToDatabase(
     DBConnectionManager *source_ptr) {
+#if defined(_DEBUG)
   // todo: валит в exception
   std::lock_guard<Mutex> lock(db_test);
+#endif  // _DEBUG
   mstatus_t st = STATUS_NOT;
   if (source_ptr != nullptr) {
     if (is_status_ok(st = source_ptr->CheckConnection())) {
