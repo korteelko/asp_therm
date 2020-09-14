@@ -460,7 +460,6 @@ merror_t GasParametersGost30319Dyn::set_fi0r() {
     }
     ng_gost_params_.fi0r = fi0r + appendix;
     ng_gost_params_.fi0r_t = fi0r_t;
-    // ng_gost_params_.fi0r_tt = (1.0 - ng_gost_params_.cp0r / Rm) / (tau * tau);
     ng_gost_params_.fi0r_tt = fi0r_tt;
   } else {
     error = error_.SetError(ERROR_INIT_T, "ГОСТ модель: fi0r, результат "
@@ -669,6 +668,12 @@ double GasParametersGost30319Dyn::calculate_sigma(double p, double t) const {
 }
 
 void GasParametersGost30319Dyn::update_dynamic() {
+  std::map<dyn_setup, double> params;
+  ng_gost_params_.u = 0.0;
+  ng_gost_params_.h = 0.0;
+  ng_gost_params_.s = 0.0;
+  ng_gost_params_.cv = 0.0;
+  ng_gost_params_.cp = 0.0;
 #if defined(ISO_20765)
   if (use_iso20765_) {
     double tau = Lt / vpte_.temperature;
@@ -682,13 +687,6 @@ void GasParametersGost30319Dyn::update_dynamic() {
         (ng_gost_params_.z * ng_gost_params_.cv);
     ng_gost_params_.w = std::sqrt(ng_gost_params_.z * ng_gost_params_.k *
         vpte_.temperature * Rm);
-    // todo: add another one
-    std::map<dyn_setup, double> params = {
-      {DYNAMIC_HEAT_CAP_PRES, ng_gost_params_.cp},
-      {DYNAMIC_HEAT_CAP_VOL, ng_gost_params_.cv},
-      {DYNAMIC_INTERNAL_ENERGY, ng_gost_params_.u}
-    };
-    dyn_params_.ResetParameters(vpte_, params);
   } else
 #endif  // ISO_20765
   {
@@ -696,8 +694,16 @@ void GasParametersGost30319Dyn::update_dynamic() {
         (ng_gost_params_.cp0r - 1.0 + ng_gost_params_.A3);
     ng_gost_params_.k = t / ng_gost_params_.z;
     ng_gost_params_.w = sqrt(Rm * t * vpte_.temperature );
-    dyn_params_.ResetParameters(0, 0.0, 0.0, 0.0, vpte_);
   }
+  params = {
+    {DYNAMIC_HEAT_CAP_PRES, ng_gost_params_.cp},
+    {DYNAMIC_HEAT_CAP_VOL, ng_gost_params_.cv},
+    {DYNAMIC_INTERNAL_ENERGY, ng_gost_params_.u},
+    {DYNAMIC_ENTALPHY, ng_gost_params_.h},
+    {DYNAMIC_ADIABATIC, ng_gost_params_.k},
+    {DYNAMIC_ENTROPY, ng_gost_params_.s}
+  };
+  dyn_params_.ResetParameters(vpte_, params);
 }
 
 merror_t GasParametersGost30319Dyn::inLimits(double p, double t) {

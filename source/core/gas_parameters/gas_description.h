@@ -37,18 +37,34 @@ inline double compress_by_volume(double p, double t, double mol, double v) {
 struct dyn_parameters {
   mstatus_t status;
   dyn_setup setup;
-  double heat_cap_vol,     // heat capacity for volume = const // Cv
-         heat_cap_pres,    // heat capacity for pressure = const // Cp
-         internal_energy,  //
-         beta_kr;          // beta_kr=beta_kr(adiabatic_index)
-                           //   = [0.0, ... ,1.0]
-                           //   if (pressure_1/pressure_2 < beta_kr):
-                           //     flow velocity = const, (maximum)
-                           //   else : flow velocity ~ p,
-                           //     adiabatic_index and etc
-                           //   P.S. look dynamic_modeling*.*
-
-  parameters parm;         // current parameters
+         /// Удельная изохорная теплоёмкость, cv
+  double heat_cap_vol,
+         /// Удельная изобарная теплоёмкость, cp
+         heat_cap_pres,
+         /// Внутреняя энергия
+         internal_energy,
+         /// Энтальпия
+         enthalpy,
+         /// Показатель адиабаты
+         adiabatic,
+         /**
+          * \brief Коэффициент бета, максимаьлной скорости истечения смеси
+          * \note
+          * beta_kr=beta_kr(adiabatic_index)
+          *   = [0.0, ... ,1.0]
+          *   if (pressure_1/pressure_2 < beta_kr):
+          *     flow velocity = const, (maximum)
+          *   else : flow velocity ~ p,
+          *     adiabatic_index and etc
+          *   P.S. look dynamic_modeling*.*
+          * */
+         beta_kr,
+         /// Энтропия
+         entropy;
+  /**
+   * \brief Соответствующие макропараметры
+   * */
+  parameters parm;
   // in future)
   // struct therm_potentials potentials;
 
@@ -57,10 +73,7 @@ private:
       double int_eng, parameters pm);
   void check_setup();
 
-  static merror_t check_input(dyn_setup setup, double cv, double cp,
-      double int_eng, parameters pm);
-  static merror_t check_input(parameters pm,
-      const std::map<dyn_setup, double> &params);
+  static merror_t check_input(parameters pm);
 
 public:
   /**
@@ -73,13 +86,6 @@ public:
    *   Инициализировать после можно методом ResetParameters
    * */
   dyn_parameters();
-  /**
-   * \brief Инициализировать структуру, проверив входные параметры
-   * \todo Удалить
-   * \deprecated Лучше через мапу
-   * */
-  merror_t ResetParameters(dyn_setup setup, double cv,
-      double cp, double int_eng, parameters pm);
   /**
    * \brief Инициализировать структуру по словарю параметров,
    *   проверив входные параметры
@@ -94,7 +100,7 @@ public:
 };
 
 /* так хочется успеть сделать, но мало времени */
-struct therm_potentials {
+/*struct therm_potentials {
   double  // internalenergy,
          Hermholtz_free,
          enthalpy,
@@ -102,13 +108,11 @@ struct therm_potentials {
          LandauGrand,
          // entropy not potential but calculating in dynamic have sense
          entropy;
-};
+}; */
 
 /// параметры газа, зависящие от его физической природы и
 ///   не изменяющиеся при изменении его состояния
 struct const_parameters {
-  static ErrorWrap init_error;
-
   const gas_t gas_name;
   const double V_K,              // K point parameters (critical point)
                P_K,
@@ -128,6 +132,7 @@ public:
       double tk, double zk, double mol, double af);
   /**
    * \brief Проверить параметры компонента
+   *
    * \param vk Удельный объём в критической точке
    * \param pk Давление в критической точке
    * \param tk Температура в критической точке
@@ -135,6 +140,7 @@ public:
    * \param mol молекулярная масса
    * \param af Фактор ацентричности
    * \return true Для допустимых входных данных
+   *
    * \note Просто проверяем что все данные больше нуля
    *   за исключением:
    *   -- фактора ацентричности - может быть меньше 0.0
@@ -235,6 +241,8 @@ public:
   /**
    * \brief Установить динамические параметры
    * \param dp Ссылка на динамические параметры
+   *
+   * \todo Как насчёт сюда тоже мапу прокидывать
    * */
   calculation_state_log &SetDynPars(const dyn_parameters &dp);
   /**
@@ -248,37 +256,38 @@ public:
     f_empty = 0x00,
     /** \brief Уникальный id информации по расчёту */
     f_calculation_info_id = 0x01,
-    /** \brief Ссылка на данные расчёта */
-    // f_info_id = 0x02,
     /** \brief Объём */
-    f_vol = 0x04,
+    f_vol = 0x02,
     /** \brief Давление */
-    f_pres = 0x08,
+    f_pres = 0x04,
     /** \brief Температура */
-    f_temp = 0x10,
+    f_temp = 0x08,
     /** \brief Изохорная теплоёмкость */
-    f_dcv = 0x20,
+    f_dcv = 0x10,
     /** \brief Изобарная теплоёмкость */
-    f_dcp = 0x40,
+    f_dcp = 0x20,
     /** \brief Внутреняя энергия */
-    f_din = 0x80,
-    /** \brief Параметр Bk */
-    f_dbk = 0x100,
+    f_din = 0x40,
     /** \brief Энтальпия */
-    f_enthalpy = 0x200,
+    f_denthalpy = 0x80,
+    /** \brief Показатель адиабатты */
+    f_dadiabatic = 0x100,
+    /** \brief Параметр Bk */
+    f_dbk = 0x200,
+    /** \brief Энтропия */
+    f_dentropy = 0x400,
     /** \brief Фазовое состояние */
-    f_state_phase = 0x400,
+    f_state_phase = 0x800,
     /** \brief Уникальный id строки расчёта */
-    f_calculation_state_log_id = 0x800,
-    f_full = 0xFFF
+    f_calculation_state_log_id = 0x1000,
+    f_full = 0x1FFF
   };
 
   int32_t id;
   int32_t info_id;
   const calculation_info *calculation = nullptr;
 
-  dyn_parameters dyn_pars;    // p, v, t and cp(p,v,t), cv(p,v,t), u(p,v,t)
-  double enthalpy;
+  dyn_parameters dyn_pars;
   std::string state_phase;
   uint32_t initialized = f_empty;
 };

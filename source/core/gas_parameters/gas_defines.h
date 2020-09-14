@@ -151,16 +151,17 @@ struct parameters {
 /// setup of calculating dynamic parameters
 ///   init in model creation
 typedef uint64_t dyn_setup;
-#define DYNAMIC_SETUP_MASK         0x000000FF
-#define DYNAMIC_SETUP_DEFAULT      0x00000022
+#define DYNAMIC_SETUP_MASK         0x0000FFFF
 
 #define DYNAMIC_HEAT_CAP_VOL       0x00000001
 #define DYNAMIC_HEAT_CAP_PRES      0x00000002
 #define DYNAMIC_INTERNAL_ENERGY    0x00000004
-#define DYNAMIC_BETA_KR            0x00000008
-#define DYNAMIC_HERMHOLTZ          0x00000010
-#define DYNAMIC_ENTALPHY           0x00000020
-#define DYNAMIC_GIBBS              0x00000040
-#define DYNAMIC_LANDAUGRAND        0x00000080
+#define DYNAMIC_ENTALPHY           0x00000008
+#define DYNAMIC_ADIABATIC          0x00000010
+#define DYNAMIC_BETA_KR            0x00000020
+#define DYNAMIC_ENTROPY            0x00000040
+#define DYNAMIC_HERMHOLTZ          0x00000080
+#define DYNAMIC_GIBBS              0x00000100
+#define DYNAMIC_LANDAUGRAND        0x00000200
 
 #endif  // !_CORE__GAS_PARAMETERS__GAS_DEFINES_H_

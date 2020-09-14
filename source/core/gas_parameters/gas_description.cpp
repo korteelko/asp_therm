@@ -9,11 +9,11 @@
  */
 #include "gas_description.h"
 
+#include "Logging.h"
 #include "models_math.h"
 
 #include <map>
 
-ErrorWrap const_parameters::init_error;
 
 /**
  * \brief список газов, для которых прописаны файлы параметров,
@@ -94,34 +94,15 @@ void dyn_parameters::check_setup() {
     setup |= DYNAMIC_BETA_KR;
 }
 
-merror_t dyn_parameters::check_input(dyn_setup setup, double cv, double cp,
-    double int_eng, parameters pm) {
-  cp = (setup & DYNAMIC_HEAT_CAP_PRES) ? cp : 1.0;
-  cv = (setup & DYNAMIC_HEAT_CAP_VOL) ? cv : 1.0;
-  int_eng = (setup & DYNAMIC_INTERNAL_ENERGY) ? int_eng : 1.0;
-  bool correct_input = is_above0(cp, cv, int_eng);
+merror_t dyn_parameters::check_input(parameters pm) {
   // pm.volume мы не проверяем, т.к. можно пересчитать
-  correct_input &= is_above0(pm.pressure, pm.temperature);
+  bool correct_input = is_above0(pm.pressure, pm.temperature);
   return (correct_input) ? ERROR_SUCCESS_T : ERROR_INIT_T ;
-}
-
-merror_t dyn_parameters::check_input(parameters pm,
-    const std::map<dyn_setup, double> &params) {
-  bool correct_input = true;
-  for (const auto &x: params) {
-    if (!is_above0(x.second)) {
-      correct_input = false;
-      break;
-    }
-  }
-  if (correct_input)
-    correct_input = is_above0(pm.pressure, pm.temperature);
-  return (correct_input) ? ERROR_SUCCESS_T : ERROR_INIT_T;
 }
 
 dyn_parameters *dyn_parameters::Init(dyn_setup setup, double cv, double cp,
     double int_eng, parameters pm) {
-  if (dyn_parameters::check_input(setup, cv, cp, int_eng, pm))
+  if (dyn_parameters::check_input(pm))
     return nullptr;
   return new dyn_parameters(setup, cv, cp, int_eng, pm);
 }
@@ -129,26 +110,11 @@ dyn_parameters *dyn_parameters::Init(dyn_setup setup, double cv, double cp,
 dyn_parameters::dyn_parameters()
   : status(STATUS_NOT), setup(0) {}
 
-merror_t dyn_parameters::ResetParameters(dyn_setup new_setup, double cv,
-    double cp, double int_eng, parameters pm) {
-  status = STATUS_DEFAULT;
-  merror_t error = dyn_parameters::check_input(new_setup, cv, cp, int_eng, pm);
-  if (!error) {
-    status = STATUS_OK;
-    setup = new_setup;
-    heat_cap_vol = cv;
-    heat_cap_pres = cp;
-    internal_energy = int_eng;
-    beta_kr = 0.0;
-    parm = pm;
-  }
-  return error;
-}
-
 merror_t dyn_parameters::ResetParameters(parameters pm,
     const std::map<dyn_setup, double> &params) {
   status = STATUS_DEFAULT;
-  merror_t error = dyn_parameters::check_input(pm, params);
+  merror_t error = dyn_parameters::check_input(pm);
+  parm = pm;
   if (!error) {
     status = STATUS_OK;
     setup = 0x0;
@@ -160,6 +126,14 @@ merror_t dyn_parameters::ResetParameters(parameters pm,
           heat_cap_vol = x.second; setup |= x.first; break;
         case DYNAMIC_INTERNAL_ENERGY:
           internal_energy = x.second; setup |= x.first; break;
+        case DYNAMIC_ENTALPHY:
+          enthalpy = x.second; setup |= x.first; break;
+        case DYNAMIC_ADIABATIC:
+          adiabatic = x.second; setup |= x.first; break;
+        case DYNAMIC_BETA_KR:
+          beta_kr = x.second; setup |= x.first; break;
+        case DYNAMIC_ENTROPY:
+          entropy = x.second; setup |= x.first; break;
       }
     }
   }
@@ -168,10 +142,10 @@ merror_t dyn_parameters::ResetParameters(parameters pm,
 
 // update beta critical
 void dyn_parameters::Update() {
-  if (status == STATUS_OK) {
-    if (setup & DYNAMIC_BETA_KR) {
-      double ai = heat_cap_pres / heat_cap_vol;
-      beta_kr = std::pow(2.0 / (ai + 1.0), ai / (ai - 1.0));
+  if (is_status_ok(status)) {
+    if ((setup & DYNAMIC_BETA_KR) && (setup & DYNAMIC_ADIABATIC)) {
+      beta_kr = std::pow(2.0 / (adiabatic + 1.0),
+          adiabatic / (adiabatic - 1.0));
     }
   }
 }
@@ -205,14 +179,10 @@ const_parameters *const_parameters::Init(gas_t gas_name, double vk,
     if (is_valid_gas(gas_name))
       return new const_parameters(gas_name, vk, pk, tk, zk,
           mol, 1000.0 * GAS_CONSTANT / mol, af);
-    const_parameters::init_error.SetError(
-        ERROR_INIT_T, "const_parameters: invalid gas_name");
+    Logging::Append(ERROR_INIT_T, "const_parameters: invalid gas_name");
   } else {
-    const_parameters::init_error.SetError(
-        ERROR_INIT_T, "const_parameters: input pars < 0");
+    Logging::Append(ERROR_INIT_T, "const_parameters: input pars < 0");
   }
-  // залогировать ошивку если она была
-  init_error.LogIt();
   return nullptr;
 }
 
@@ -288,10 +258,14 @@ calculation_state_log &calculation_state_log::SetDynPars(
     initialized |= f_dcp;
   if (dp.setup & DYNAMIC_INTERNAL_ENERGY)
     initialized |= f_din;
+  if (dp.setup & DYNAMIC_ENTALPHY)
+    initialized |= f_denthalpy;
+  if (dp.setup & DYNAMIC_ADIABATIC)
+    initialized |= f_dadiabatic;
   if (dp.setup & DYNAMIC_BETA_KR)
     initialized |= f_dbk;
-  if (dp.setup & DYNAMIC_ENTALPHY)
-    initialized |= f_enthalpy;
+  if (dp.setup & DYNAMIC_ENTROPY)
+    initialized |= f_dentropy;
   return *this;
 }
 

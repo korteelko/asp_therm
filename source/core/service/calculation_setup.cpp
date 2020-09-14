@@ -35,7 +35,7 @@ void CalculationSetup::gasmix_models_map::CalculatePoints(
     const std::vector<parameters> &points, bool unique_calculate) {
 #if defined(_DEBUG)
   // мьютекс на отладку
-  // std::lock_guard<Mutex> lock(calc_test);
+//  std::lock_guard<Mutex> lock(calc_test);
 #endif  // _DEBUG
   this->unique_calculation = unique_calculate;
   initInfoBinding();
@@ -63,7 +63,7 @@ mstatus_t CalculationSetup::gasmix_models_map::AddToDatabase(
       ids.status = STATUS_DEFAULT;
       source_ptr->SaveNotExistsRows(calc_info, &ids);
       if (is_status_aval(ids.status))
-        for (size_t i = 0; i < std::min(calc_info.size(),ids.id_vec.size()) ; ++i)
+        for (size_t i = 0; i < std::min(calc_info.size(), ids.id_vec.size()); ++i)
           calc_info[i].id = ids.id_vec[i];
       source_ptr->SaveVectorOfRows(result);
     } else {
@@ -232,8 +232,10 @@ mstatus_t CalculationSetup::initModel(CalculationSetup::gasmix_models_map *model
   } else {
     st = STATUS_HAVE_ERROR;
     Logging::Append(ERROR_INIT_NULLP_ST,
-        "ошибка создания расчётной модели для файла: " + filemix +
-        "\n\t" + modelGeneral::GetModelShortInfo(ms.model_type).GetString());
+        "\nНачало сообщения ошибки"
+        "\n\tОшибка создания расчётной модели для файла: " + filemix +
+        "\n\t" + modelGeneral::GetModelShortInfo(ms.model_type).GetString() +
+        "\nКонец сообщения\n");
   }
   return st;
 }

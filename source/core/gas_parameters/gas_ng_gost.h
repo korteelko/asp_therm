@@ -83,6 +83,7 @@ struct ng_gost_params {
 #endif  // ISO_20765
 };
 
+
 // const_dyn_parameters init_natural_gas(const gost_ng_components &comps);
 class GasParametersGost30319Dyn: public GasParameters {
   ADD_TEST_CLASS(GasParameters_NG_Gost_dynProxy);
@@ -91,7 +92,6 @@ public:
   static GasParametersGost30319Dyn *Init(gas_params_input gpi, bool use_iso);
   void csetParameters(double v, double p, double t, state_phase) override;
   double cCalculateVolume(double p, double t) override;
-
   /**
    * \brief Проверить текущие параметры смеси
    * */

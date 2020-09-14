@@ -32,7 +32,9 @@ bool calculation_configuration::IsEnableISO20765() const {
 }
 
 /* calculation_info */
-calculation_info::calculation_info() {}
+calculation_info::calculation_info() {
+  SetCurrentTime();
+}
 
 calculation_info::calculation_info(std::time_t dt)
   : datetime(dt) {

@@ -136,8 +136,10 @@ void modelGeneral::set_gasparameters(const gas_params_input &gpi,
     parameters_ = std::unique_ptr<GasParameters>(
         GasParameters_dyn::Init(gpi, mg));
   }
-  if (parameters_ == nullptr)
+  if (parameters_ == nullptr) {
     error_.SetError(ERROR_INIT_T, "error occurred while init gost model");
+    status_ = STATUS_HAVE_ERROR;
+  }
 }
 
 model_str modelGeneral::GetModelShortInfo(const rg_model_id model_type) {
@@ -242,12 +244,10 @@ const_parameters modelGeneral::GetConstParameters() const {
 
 // todo: ??? насчёт энтальпии, вн. энергии и т.д. не совсем прозрачно
 calculation_state_log modelGeneral::GetStateLog() const {
-  dyn_parameters dps = parameters_->cgetDynParameters();
   calculation_state_log s = {.id = -1, .calculation = calculation_,
-      .enthalpy = dps.internal_energy * dps.parm.pressure * dps.parm.volume,
       .state_phase = stateToString[(uint32_t)parameters_->cgetState()]};
   s.initialized |= calculation_state_log::f_state_phase;
-  s.SetDynPars(dps);
+  s.SetDynPars(parameters_->cgetDynParameters());
   return s;
 }
 

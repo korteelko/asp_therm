@@ -101,8 +101,10 @@ TABLE CALCULATION_STATE_LOG (
   heat_capac_vol real,
   heat_capac_pres real,
   internal_energy real,
+  enthalpy real,
+  adiabatic real,
   beta_kr real,
-  enthalpy real
+  entropy real,
   state_phase char(12)
   PRIMARY KEY (calculation_log_id, calculation_info_id),
   FOREIGN KEY (calculation_info_id)
@@ -119,8 +121,10 @@ const db_fields_collection calculation_state_log_fields = {
   db_variable(TABLE_FIELD_PAIR(CSL_HEAT_CV), db_type::type_real, {}),
   db_variable(TABLE_FIELD_PAIR(CSL_HEAT_CP), db_type::type_real, {}),
   db_variable(TABLE_FIELD_PAIR(CSL_INTERNAL_ENERGY), db_type::type_real, {}),
-  db_variable(TABLE_FIELD_PAIR(CSL_BETA_KR), db_type::type_real, {}),
   db_variable(TABLE_FIELD_PAIR(CSL_ENTHALPY), db_type::type_real, {}),
+  db_variable(TABLE_FIELD_PAIR(CSL_ADIABATIC), db_type::type_real, {}),
+  db_variable(TABLE_FIELD_PAIR(CSL_BETA_KR), db_type::type_real, {}),
+  db_variable(TABLE_FIELD_PAIR(CSL_ENTROPY), db_type::type_real, {}),
   db_variable(TABLE_FIELD_PAIR(CSL_STATE_PHASE), db_type::type_char_array, {.is_array = true}, 12)
 };
 static const std::shared_ptr<db_ref_collection> calculation_state_log_references =
@@ -278,6 +282,11 @@ db_table IDBTables::GetTableCode<calculation_state_log>() const {
   return table_calculation_state_log;
 }
 
+#define insert_macro(field_flag, field_id, to_str) \
+  { if (select_data.initialized & field_flag) \
+      if ((i = src->IndexByFieldId(field_id)) != db_query_basesetup::field_index_end) \
+        values.emplace(i, to_str); }
+
 template <>
 void IDBTables::setInsertValues<model_info>(db_query_insert_setup *src,
     const model_info &select_data) const {
@@ -285,26 +294,18 @@ void IDBTables::setInsertValues<model_info>(db_query_insert_setup *src,
     return;
   db_query_basesetup::row_values values;
   db_query_basesetup::field_index i;
-  if (select_data.initialized & model_info::f_model_id)
-    if ((i = src->IndexByFieldId(MI_MODEL_ID)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(select_data.id));
-  if (select_data.initialized & model_info::f_model_type)
-    if ((i = src->IndexByFieldId(MI_MODEL_TYPE)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(
-          (int)select_data.short_info.model_type.type));
-  if (select_data.initialized & model_info::f_model_subtype)
-    if ((i = src->IndexByFieldId(MI_MODEL_SUBTYPE)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(
-          select_data.short_info.model_type.subtype));
-  if (select_data.initialized & model_info::f_vers_major)
-    if ((i = src->IndexByFieldId(MI_VERS_MAJOR)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(select_data.short_info.vers_major));
-  if (select_data.initialized & model_info::f_vers_minor)
-    if ((i = src->IndexByFieldId(MI_VERS_MINOR)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(select_data.short_info.vers_minor));
-  if (select_data.initialized & model_info::f_short_info)
-    if ((i = src->IndexByFieldId(MI_SHORT_INFO)) != db_query_basesetup::field_index_end)
-      values.emplace(i, select_data.short_info.short_info);
+  insert_macro(model_info::f_model_id, MI_MODEL_ID,
+      std::to_string(select_data.id));
+  insert_macro(model_info::f_model_type, MI_MODEL_TYPE,
+      std::to_string((int)select_data.short_info.model_type.type));
+  insert_macro(model_info::f_model_subtype, MI_MODEL_SUBTYPE,
+      std::to_string(select_data.short_info.model_type.subtype));
+  insert_macro(model_info::f_vers_major, MI_VERS_MAJOR,
+      std::to_string(select_data.short_info.vers_major));
+  insert_macro(model_info::f_vers_minor, MI_VERS_MINOR,
+      std::to_string(select_data.short_info.vers_minor));
+  insert_macro(model_info::f_short_info, MI_SHORT_INFO,
+      select_data.short_info.short_info);
   src->values_vec.emplace_back(values);
 }
 
@@ -320,18 +321,12 @@ void IDBTables::setInsertValues<calculation_info>(db_query_insert_setup *src,
         (i = src->IndexByFieldId(CI_MODEL_INFO_ID)) != db_query_basesetup::field_index_end)
       values.emplace(i, std::to_string(select_data.model->id));
 
-  if (select_data.initialized & calculation_info::f_calculation_info_id)
-    if ((i = src->IndexByFieldId(CI_CALCULATION_ID)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(select_data.id));
-  if (select_data.initialized & calculation_info::f_model_id)
-    if ((i = src->IndexByFieldId(CI_MODEL_INFO_ID)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(select_data.model_id));
-  if (select_data.initialized & calculation_info::f_date)
-    if ((i = src->IndexByFieldId(CI_DATE)) != db_query_basesetup::field_index_end)
-      values.emplace(i, select_data.GetDate());
-  if (select_data.initialized & calculation_info::f_time)
-    if ((i = src->IndexByFieldId(CI_TIME)) != db_query_basesetup::field_index_end)
-      values.emplace(i, select_data.GetTime());
+  insert_macro(calculation_info::f_calculation_info_id, CI_CALCULATION_ID,
+      std::to_string(select_data.id));
+  insert_macro(calculation_info::f_model_id, CI_MODEL_INFO_ID,
+      std::to_string(select_data.model_id));
+  insert_macro(calculation_info::f_date, CI_DATE, select_data.GetDate());
+  insert_macro(calculation_info::f_time, CI_TIME, select_data.GetTime());
   src->values_vec.emplace_back(values);
 }
 
@@ -347,39 +342,32 @@ void IDBTables::setInsertValues<calculation_state_log>(db_query_insert_setup *sr
         (i = src->IndexByFieldId(CSL_INFO_ID)) != db_query_basesetup::field_index_end)
       values.emplace(i, std::to_string(select_data.calculation->id));
 
-  if (select_data.initialized & calculation_state_log::f_calculation_state_log_id)
-    if ((i = src->IndexByFieldId(CSL_LOG_ID)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(select_data.id));
-  if (select_data.initialized & calculation_state_log::f_calculation_info_id)
-    if ((i = src->IndexByFieldId(CSL_INFO_ID)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(select_data.info_id));
-  if (select_data.initialized & calculation_state_log::f_vol)
-    if ((i = src->IndexByFieldId(CSL_VOLUME)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(select_data.dyn_pars.parm.volume));
-  if (select_data.initialized & calculation_state_log::f_pres)
-    if ((i = src->IndexByFieldId(CSL_PRESSURE)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(select_data.dyn_pars.parm.pressure));
-  if (select_data.initialized & calculation_state_log::f_temp)
-    if ((i = src->IndexByFieldId(CSL_TEMPERATURE)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(select_data.dyn_pars.parm.temperature));
-  if (select_data.initialized & calculation_state_log::f_dcv)
-    if ((i = src->IndexByFieldId(CSL_HEAT_CV)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(select_data.dyn_pars.heat_cap_vol));
-  if (select_data.initialized & calculation_state_log::f_dcp)
-    if ((i = src->IndexByFieldId(CSL_HEAT_CP)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(select_data.dyn_pars.heat_cap_pres));
-  if (select_data.initialized & calculation_state_log::f_din)
-    if ((i = src->IndexByFieldId(CSL_INTERNAL_ENERGY)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(select_data.dyn_pars.internal_energy));
-  if (select_data.initialized & calculation_state_log::f_dbk)
-    if ((i = src->IndexByFieldId(CSL_BETA_KR)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(select_data.dyn_pars.beta_kr));
-  if (select_data.initialized & calculation_state_log::f_enthalpy)
-    if ((i = src->IndexByFieldId(CSL_ENTHALPY)) != db_query_basesetup::field_index_end)
-      values.emplace(i, std::to_string(select_data.enthalpy));
-  if (select_data.initialized & calculation_state_log::f_state_phase)
-    if ((i = src->IndexByFieldId(CSL_STATE_PHASE)) != db_query_basesetup::field_index_end)
-      values.emplace(i, select_data.state_phase);
+  insert_macro(calculation_state_log::f_calculation_state_log_id, CSL_LOG_ID,
+      std::to_string(select_data.id));
+  insert_macro(calculation_state_log::f_calculation_info_id, CSL_INFO_ID,
+      std::to_string(select_data.info_id));
+  insert_macro(calculation_state_log::f_vol, CSL_VOLUME,
+      std::to_string(select_data.dyn_pars.parm.volume));
+  insert_macro(calculation_state_log::f_pres, CSL_PRESSURE,
+      std::to_string(select_data.dyn_pars.parm.pressure));
+  insert_macro(calculation_state_log::f_temp, CSL_TEMPERATURE,
+      std::to_string(select_data.dyn_pars.parm.temperature));
+  insert_macro(calculation_state_log::f_dcv, CSL_HEAT_CV,
+      std::to_string(select_data.dyn_pars.heat_cap_vol));
+  insert_macro(calculation_state_log::f_dcp, CSL_HEAT_CP,
+      std::to_string(select_data.dyn_pars.heat_cap_pres));
+  insert_macro(calculation_state_log::f_din, CSL_INTERNAL_ENERGY,
+      std::to_string(select_data.dyn_pars.internal_energy));
+  insert_macro(calculation_state_log::f_denthalpy, CSL_ENTHALPY,
+      std::to_string(select_data.dyn_pars.enthalpy));
+  insert_macro(calculation_state_log::f_dadiabatic, CSL_ADIABATIC,
+      std::to_string(select_data.dyn_pars.adiabatic));
+  insert_macro(calculation_state_log::f_dbk, CSL_BETA_KR,
+      std::to_string(select_data.dyn_pars.beta_kr));
+  insert_macro(calculation_state_log::f_dentropy, CSL_ENTROPY,
+      std::to_string(select_data.dyn_pars.entropy));
+  insert_macro(calculation_state_log::f_state_phase, CSL_STATE_PHASE,
+      select_data.state_phase);
   src->values_vec.emplace_back(values);
 }
 
@@ -467,12 +455,18 @@ void IDBTables::SetSelectData<calculation_state_log>(db_query_select_result *src
       } else if (src->isFieldName(TABLE_FIELD_NAME(CSL_INTERNAL_ENERGY), src->fields[col.first])) {
         cl.dyn_pars.internal_energy = std::atof(col.second.c_str());
         cl.initialized |= calculation_state_log::f_din;
+      } else if (src->isFieldName(TABLE_FIELD_NAME(CSL_ENTHALPY), src->fields[col.first])) {
+        cl.dyn_pars.enthalpy = std::atof(col.second.c_str());
+        cl.initialized |= calculation_state_log::f_denthalpy;
+      } else if (src->isFieldName(TABLE_FIELD_NAME(CSL_ADIABATIC), src->fields[col.first])) {
+        cl.dyn_pars.adiabatic = std::atof(col.second.c_str());
+        cl.initialized |= calculation_state_log::f_denthalpy;
       } else if (src->isFieldName(TABLE_FIELD_NAME(CSL_BETA_KR), src->fields[col.first])) {
         cl.dyn_pars.beta_kr = std::atof(col.second.c_str());
         cl.initialized |= calculation_state_log::f_dbk;
-      } else if (src->isFieldName(TABLE_FIELD_NAME(CSL_ENTHALPY), src->fields[col.first])) {
-        cl.enthalpy = std::atof(col.second.c_str());
-        cl.initialized |= calculation_state_log::f_enthalpy;
+      } else if (src->isFieldName(TABLE_FIELD_NAME(CSL_ENTROPY), src->fields[col.first])) {
+        cl.dyn_pars.entropy = std::atof(col.second.c_str());
+        cl.initialized |= calculation_state_log::f_denthalpy;
       } else if (src->isFieldName(TABLE_FIELD_NAME(CSL_STATE_PHASE), src->fields[col.first])) {
         cl.state_phase = col.second;
         cl.initialized |= calculation_state_log::f_state_phase;

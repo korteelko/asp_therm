@@ -62,8 +62,8 @@ public:
   double cgetIntEnergy() const;
   state_phase cgetState() const;
   parameters cgetParameters() const;
-  dyn_parameters cgetDynParameters() const;
-  const_parameters cgetConstparameters() const;
+  const dyn_parameters &cgetDynParameters() const;
+  const const_parameters &cgetConstparameters() const;
 
   double cgetCP() const;
   double cgetBeta() const;

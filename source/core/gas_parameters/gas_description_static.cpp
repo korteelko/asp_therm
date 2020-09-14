@@ -101,11 +101,11 @@ parameters GasParameters::cgetParameters() const {
   return vpte_;
 }
 
-dyn_parameters GasParameters::cgetDynParameters() const {
+const dyn_parameters &GasParameters::cgetDynParameters() const {
   return dyn_params_;
 }
 
-const_parameters GasParameters::cgetConstparameters() const {
+const const_parameters &GasParameters::cgetConstparameters() const {
   return const_params;
 }
 

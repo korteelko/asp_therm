@@ -54,9 +54,11 @@ using namespace asp_db;
 #define CSL_HEAT_CV             (CALCULATIONSTATE_TABLE | 0x0006)
 #define CSL_HEAT_CP             (CALCULATIONSTATE_TABLE | 0x0007)
 #define CSL_INTERNAL_ENERGY     (CALCULATIONSTATE_TABLE | 0x0008)
-#define CSL_BETA_KR             (CALCULATIONSTATE_TABLE | 0x0009)
-#define CSL_ENTHALPY            (CALCULATIONSTATE_TABLE | 0x0010)
-#define CSL_STATE_PHASE         (CALCULATIONSTATE_TABLE | 0x0011)
+#define CSL_ENTHALPY            (CALCULATIONSTATE_TABLE | 0x0009)
+#define CSL_ADIABATIC           (CALCULATIONSTATE_TABLE | 0x0010)
+#define CSL_BETA_KR             (CALCULATIONSTATE_TABLE | 0x0011)
+#define CSL_ENTROPY             (CALCULATIONSTATE_TABLE | 0x0012)
+#define CSL_STATE_PHASE         (CALCULATIONSTATE_TABLE | 0x0013)
 
 /* имена столбцов в БД в формате 'FIELD_CODE_DEFINE ## _NAME' */
 // column names
@@ -80,8 +82,10 @@ using namespace asp_db;
 #define CSL_HEAT_CV_NAME "heat_capacity_vol"
 #define CSL_HEAT_CP_NAME "heat_capacity_pres"
 #define CSL_INTERNAL_ENERGY_NAME "internal_energy"
-#define CSL_BETA_KR_NAME "beta_kr"
 #define CSL_ENTHALPY_NAME "enthalpy"
+#define CSL_ADIABATIC_NAME "adiabatic"
+#define CSL_BETA_KR_NAME "beta_kr"
+#define CSL_ENTROPY_NAME  "entropy"
 #define CSL_STATE_PHASE_NAME "state_phase"
 
 

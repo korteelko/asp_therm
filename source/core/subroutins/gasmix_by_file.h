@@ -219,7 +219,7 @@ private:
     }
 
     merror_t error = ERROR_SUCCESS_T;
-    if (gasmix_file_dir.empty() || !is_exist(gasmix_file_dir)) {
+    if (gasmix_file_dir.empty() || !is_exists(gasmix_file_dir)) {
       std::string error_str = "ошибка инициализации директории файла"
           "описывающего газовую смесь:\n  файл:" + config_doc_->GetFileName() +
           "\n  директория:" + gasmix_file_dir;

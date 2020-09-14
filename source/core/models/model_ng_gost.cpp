@@ -39,13 +39,7 @@ NG_Gost::NG_Gost(const model_input &mi)
     priority_ = (model_config_.model_type.subtype ==
         MODEL_GOST_SUBTYPE_ISO_20765) ? ng_gost_iso_priority : ng_gost_priority;
   }
-  ng_pars = dynamic_cast<GasParametersGost30319Dyn *>(parameters_.get());
-  if (!ng_pars) {
-    error_.SetError(ERROR_INIT_T, "Ошибка инициализации ГОСТ модели");
-    error_.LogIt(io_loglvl::err_logs);
-  } else {
-    SetVolume(mi.gpi.p, mi.gpi.t);
-  }
+  SetVolume(mi.gpi.p, mi.gpi.t);
 }
 
 NG_Gost *NG_Gost::Init(const model_input &mi) {
@@ -94,30 +88,41 @@ void NG_Gost::update_dyn_params(dyn_parameters &prev_state,
 }
 
 bool NG_Gost::IsValid() const {
-  return ng_pars->IsValid();
+  return IsValid(parameters_->cgetParameters());
 }
 
 bool NG_Gost::IsValid(parameters prs) const {
-  return ng_pars->IsValid(prs);
+  auto *p = dynamic_cast<GasParametersGost30319Dyn *>(parameters_.get());
+  if (p) {
+    return p->IsValid(prs);
+  } else {
+    Logging::Append(io_loglvl::debug_logs,
+        "Ошибка приведения типов в ГОСТ модели");
+  }
+  return false;
 }
 
 void NG_Gost::SetVolume(double p, double t) {
-  parameters_->csetParameters(0.0, p, t, state_phase::GAS);
+  if (is_status_aval(status_))
+    parameters_->csetParameters(0.0, p, t, state_phase::GAS);
 }
 
 void NG_Gost::SetPressure(double v, double t) {
   (void)v; (void)t;
-  error_.SetError(ERROR_CALC_MODEL_ST, "invalid operation for this model");
+  Logging::Append(ERROR_CALC_MODEL_ST, "invalid operation for this model");
 }
 
 double NG_Gost::GetVolume(double p, double t) {
-  parameters_->csetParameters(0.0, p, t, state_phase::GAS);
-  return parameters_->cgetVolume();
+  if (is_status_aval(status_)) {
+    parameters_->csetParameters(0.0, p, t, state_phase::GAS);
+    return parameters_->cgetVolume();
+  }
+  return 0.0;
 }
 
 double NG_Gost::GetPressure(double v, double t) {
   (void) v; (void) t;
-  error_.SetError(ERROR_CALC_MODEL_ST, "invalid operation for gost model");
+  Logging::Append(ERROR_CALC_MODEL_ST, "invalid operation for gost model");
   return 0.0;
 }
 
