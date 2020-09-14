@@ -7,3 +7,5 @@
 [submodule "lib/gtest"]
 	path = lib/gtest
 	url = https://github.com/google/googletest
+[submodule "subprojects.asp_db"]
+	url = https://github.com/korteelko/asp_db

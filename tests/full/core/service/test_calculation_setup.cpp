@@ -153,11 +153,11 @@ TEST_F(CalculationSetupTest, calculation_setup_init) {
   // files
   ASSERT_EQ(idp->gasmix_files.size(), 3);
   auto p1 = data_root_p_->CreateFileURL(path_gost1).GetURL();
-  EXPECT_TRUE(is_exist(p1));
+  EXPECT_TRUE(is_exists(p1));
   auto p2 = data_root_p_->CreateFileURL(path_gost2).GetURL();
-  EXPECT_TRUE(is_exist(p2));
+  EXPECT_TRUE(is_exists(p2));
   auto p3 = data_root_p_->CreateFileURL(path_gost3).GetURL();
-  EXPECT_TRUE(is_exist(p3));
+  EXPECT_TRUE(is_exists(p3));
 
   // points
   std::function<bool(const parameters &, const parameters &)> comp_p =
@@ -181,7 +181,7 @@ TEST_F(CalculationSetupTest, DatabaseTest) {
   initConfiguration();
   ProgramState &ps = ProgramState::Instance();
   ps.SetProgramDirs(*data_root_p_, *data_root_p_);
-  ASSERT_TRUE(is_exist(config_file));
+  ASSERT_TRUE(is_exists(config_file));
   ASSERT_EQ(ps.ReloadConfiguration(config_filename), ERROR_SUCCESS_T);
   AthermDBTables adb;
   DBConnectionManager dbm(&adb);

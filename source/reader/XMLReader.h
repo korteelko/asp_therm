@@ -94,7 +94,7 @@ public:
       Logging::Append(err, "имя xml-файла пусто");
     }
     if (err == ERROR_SUCCESS_T) {
-      if (!is_exist(gas_xml_file)) {
+      if (!is_exists(gas_xml_file)) {
         err = ERROR_FILE_IN_ST;
         Logging::Append(err, std::string(
             std::string("cannot open file: ") + gas_xml_file).c_str());

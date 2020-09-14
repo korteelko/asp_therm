@@ -339,7 +339,7 @@ public:
       file_utils::FileURL *source, InitializerFactory *factory = nullptr) {
     Reader *reader = nullptr;
     if (source) {
-      if (is_exist(source->GetURL())) {
+      if (is_exists(source->GetURL())) {
         reader = new Reader(source, factory);
       } else {
         source->SetError(ERROR_FILE_EXISTS_ST, "File '" +

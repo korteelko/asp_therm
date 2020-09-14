@@ -87,7 +87,7 @@ void FileURLRoot::check_fs_root() {
   if (!setup_.root.empty())
     if (!ends_with(setup_.root, "/"))
       setup_.root += "/";
-  status_ = is_exist(setup_.root) ? STATUS_OK : STATUS_NOT;
+  status_ = is_exists(setup_.root) ? STATUS_OK : STATUS_NOT;
 }
 
 FileURL FileURLRoot::set_fs_path(const std::string &relative_path) {

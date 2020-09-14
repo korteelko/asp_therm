@@ -37,7 +37,7 @@ merror_t PSConfiguration::ResetConfigFile(
   is_initialized = false;
   config_by_file = std::unique_ptr<ConfigurationByFile<XMLReader>>(
       ConfigurationByFile<XMLReader>::Init(config_filename));
-  if (is_exist(config_filename)) {
+  if (is_exists(config_filename)) {
     if (config_by_file) {
       if (config_by_file->GetErrorWrap().GetErrorCode()) {
         error.SetError(ERROR_INIT_T,
