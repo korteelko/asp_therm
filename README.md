@@ -1,10 +1,23 @@
 # asp\_therm
 
+## Содержание
+- [Введение](#introduction)
+- [Литература](#literature)
+- [Программное обеспечение](#software)
+  - [Загрузка и сборка](#software_setup)
+  - [Конфигурация](#software_config)
+  - [Подключение PostgreSQL](#postgresql)
+  - [Подмодули](#software_submodules)
+  - [Зависимости](#software_dependencies)
+- [Прочее](#other)
+  - [Тесты](#other_test)
+  - [ToDo](#other_todo)
 
+## <a name="introduction"></a> Введение 
 В проекте реализован матаппарат расчёта теплофизических параметров реальных газов и их смесей. Используемые уравнения состояния реального газа, или, для краткости, *модели*, были выбраны руководствуясь главным образом успехом применения их для описания газовых смесей близких по составу к природному газу.   
 Ссылки на используемую техническую литературу по физике газов прописаны контекстно в коде, и в разделе [Литература](#literature).
 
-### <a name="literature"></a> Литература
+## <a name="literature"></a> Литература
 
 - Рид Р., Праусниц Дж., Шервуд Т. "Свойства газов и жидкостей: Справочное пособие". Л.:Химия, 1982.
 - Павловский В.А. "Введение в термодинамику реальных газов". _Тут данные издания_.
@@ -16,13 +29,25 @@
 - ISO 20765-1. International standard. Natural gas -- Calculation of thermodynamic properties. Part 1: Gas phase properties for transmission and distribution applications. ISO 2005.    
 *Алсо, вторая часть этого стандарта тоже интересна, а за денежку можно купить новый.*
 
-## Программное обеспечение
-### Конфигурация
+## <a name="software"></a> Программное обеспечение
+### <a name="software_setup"></a> Загрузка и сборка
+1. Копировать репозиторий и подмодули:
+`git clone --recursive https://github.com/korteelko/asp_therm`
+2. Установить [зависимости](#software_dependencies)
+3. Создать файл конфигурации, например из файла *configuration_template.xml*
+4. Запустить cmake
+
+Если не использовать ide, стандартный набор команд сетапа проекта с cmake примерно такой:  
+`cd asp_therm`  
+`mkdir build`  
+`cd build`  
+`cmake ..`  
+`make`
+
+### <a name="software_config"></a> Конфигурация
 Опции работы библиотеки, методов расчёта, хранения результатов и т.д. расписаны в файле конфигурации *configuration.xml*. В репозитории отслеживается файл *configuration\_template.xml* - шаблон конфигурационного файла.   
 
-#### Краткое описание опций, формат ввода   
-
-**Общие параметры**
+**Краткое описание опций, формат ввода**   
 
 - `debug_mode` *Bool*    
 Включить вывод дополнительной информации в файл логирования, добавить _элементы в разработке_ к сборке.
@@ -56,20 +81,6 @@ URL СУБД.
 - `port` *Int*   
 Порт СУБД.
 
-### Сборка
-1. Копировать репозиторий и подмодули:
-`git clone --recursive https://github.com/sinkarl/asp_therm`
-2. Установить [зависимости](#dependencies)
-3. Создать файл конфигурации, например из файла *configuration_template.xml*
-4. Запустить cmake
-
-Если не использовать ide, стандартный набор команд сетапа проекта с cmake примерно такой:  
-`cd asp_therm`  
-`mkdir build`  
-`cd build`  
-`cmake ..`  
-`make`
-
 
 ### <a name="postgresql"></a> Подключение [PostgreSQL](https://www.postgresql.org)
 #### Пример   
@@ -94,6 +105,8 @@ URL СУБД.
 <code>\</group></code>  
 Подключение к бд *'africae'* по cli: `$ sudo -u postgres pqsl -d africae`
 
+P.S. Вы заслужили печенюшку если раскусили неслучайный характер выбора имён БД и пользователя.
+
 #### [pgAdmin4](https://www.pgadmin.org)
 
 Для управления базами данными PostgreSQL удобно использовать pgAdmin4. Функционал просмотра записей, изменения таблиц и т.п. требует соответствующих привилегии пользователя на таблицы. Добавить необходимые привелегии можно подключившись к БД по cli. Соответствующие команды для пользователя *user* выглядят примерно так:    
@@ -102,28 +115,27 @@ URL СУБД.
 На привелегии выборки:    
 `GRANT SELECT ON ALL TABLES IN SCHEMA public TO user`
 
-### Подмодули
+### <a name="software_submodules"></a> Подмодули
 
 - [**pugixml**](https://github.com/zeux/pugixml) - парсинг xml-файлов
-- [**asp_db**](https://github.com/sinkarl/asp_db) - вынесенный подмодуль БД
+- [**spdlog**](https://github.com/gabime/spdlog) - библиотека логгирования
+- [**asp_utils**](https://github.com/korteelko/asp_utils) - вынесенный подмодуль утилит
+- [**asp_db**](https://github.com/korteelko/asp_db) - вынесенный подмодуль БД
 
-### <a name="dependencies"></a> Зависимости
+### <a name="software_dependencies"></a> Зависимости
 
 - [libpqxx](http://pqxx.org/development/libpqxx/) - С++ клиент для PostgreSQL
 - *опционально* [googletest](https://github.com/google/googletest) - C++ тест фрэймворк от Google
 
 ------
-### Прочее
-**Тесты**   
+## <a name="other"></a> Прочее
+### <a name="other_test"></a> Тесты
 В директории `tests/full` находится проект гуглотестов. Проект специализирован CMakeLists.txt файлом.   
 На расчёт покрытия есть python скрипт *gcov\_report.py* в папке `soft`. Вызов с опцией -h(--help) выдаст пример использования.
 
 
-**ToDo**
-
-- [ ] дописать модуль iso 20765
-- [ ] распараллелить операции по PostgreSQL(в модуле asp_db)
-- [ ] разбить модели на области(сращивание моделей)
+### <a name="other_todo"></a> ToDo
+- [ ] распараллелить операции по PostgreSQL
+- [ ] разбить модели на области, сращивание моделей
 - [ ] прикрутить модуль динамики(по мере необходимости)
-- [x] gtest модулем добавить
 
