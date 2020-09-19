@@ -1,10 +1,9 @@
 # Тестим всё
-set(PROJECT_NAME state-test)
+set(PROJECT_NAME test_state)
 
 message(STATUS "\t\tRun full test")
 
 include(${ASP_THERM_CMAKE_ROOT}/models_src.cmake)
-include(${ASP_THERM_ROOT}/subprojects/asp_db/db_source.cmake)
 
 add_executable(
   ${PROJECT_NAME}
@@ -13,10 +12,7 @@ add_executable(
   ${ASP_THERM_FULLTEST_DIR}/core/service/test_calculation_setup.cpp
 
   ${MODELS_SRC}
-  ${UTILS_SOURCE}
-  ${DATABASE_SOURCE}
   ${THERMDB_SOURCE_DIR}/atherm_db_tables.cpp
-  ${ASP_THERM_ROOT}/source/utils/FileURL.cpp
 )
 
 # link pugixml library
@@ -31,6 +27,8 @@ set(PQXX_LIBS pqxx pq)
 
 target_link_libraries(${PROJECT_NAME}
 
+  asp_utils
+  asp_db
   ${PUGIXML_LIB}
   ${PQXX_LIBS}
   ${FULLTEST_LIBRARIES}

@@ -6,8 +6,6 @@ set (COMMON_SRC
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
-
-  ${THERMUTILS_SOURCE_DIR}/FileURL.cpp
 )
 list(APPEND COMMON_SRC ${UTILS_SOURCE})
 # test fileurl
@@ -20,6 +18,7 @@ add_executable(
 
 target_link_libraries(test_fileurl
 
+  asp_utils
   ${FULLTEST_LIBRARIES}
 )
 

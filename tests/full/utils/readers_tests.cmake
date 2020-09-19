@@ -6,8 +6,6 @@ set (COMMON_SRC
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
-
-  ${THERMUTILS_SOURCE_DIR}/FileURL.cpp
 )
 list(APPEND COMMON_SRC ${UTILS_SOURCE})
 
@@ -28,6 +26,7 @@ set(PUGIXML_LIB "pugixml")
 
 target_link_libraries(test_xml
 
+  asp_utils
   ${PUGIXML_LIB}
   ${FULLTEST_LIBRARIES}
 )

@@ -14,6 +14,6 @@ add_executable(
 
   ${UTILS_SOURCE}
 )
-target_link_libraries(test_models ${FULLTEST_LIBRARIES})
+target_link_libraries(test_models asp_utils ${FULLTEST_LIBRARIES})
 
 add_test(test_models "core/test_models")

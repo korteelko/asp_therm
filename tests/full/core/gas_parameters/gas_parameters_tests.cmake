@@ -18,10 +18,6 @@ add_executable(
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gasmix_init.cpp
 
   ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
-
-  ${ASP_THERM_ROOT}/source/utils/FileURL.cpp
-
-  ${UTILS_SOURCE}
 )
 
 set(PUGIXML_DIR "${MODULES_DIR}/pugixml")
@@ -32,6 +28,7 @@ set(PUGIXML_LIB "pugixml")
 
 target_link_libraries(test_gasmix
 
+  asp_utils
   ${PUGIXML_LIB}
   ${FULLTEST_LIBRARIES}
 )

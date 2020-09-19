@@ -13,7 +13,7 @@ set(CMAKE_BUILD_TYPE Debug)
 
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(ASP_THERM_CMAKE_ROOT ${ASP_THERM_ROOT}/cmake)
-set(ASP_DB_ROOT ${ASP_THERM_ROOT}/subprojects/asp_db)
+set(SUBPROJECTS_ROOT ${ASP_THERM_ROOT}/subprojects)
 
 # todo: maybe split in separate asp_therm_modules.cmake ???
 # todo: add full clear step(ninja cannot clear
@@ -95,22 +95,15 @@ include_directories(
 # add general sources
 # set variable 'MODELS_SRC' - general source files of project
 include(${ASP_THERM_CMAKE_ROOT}/models_src.cmake)
-# add database sources
-include(${ASP_DB_ROOT}/db_source.cmake)
-#list(TRANSFORM DATABASE_SOURCE PREPEND " ${ASP_DB_ROOT}/source/")
-list(APPEND MODELS_SRC "${DATABASE_SOURCE}")
-# add utils sources
-include(${ASP_DB_ROOT}/utils_source.cmake)
-#list(TRANSFORM UTILS_SOURCE PREPEND ${ASP_DB_ROOT})
-list(APPEND MODELS_SRC "${UTILS_SOURCE}")
-
-# utils
-list(APPEND MODELS_SRC "${ASP_THERM_ROOT}/source/utils/FileURL.cpp")
 
 
 #======================================================
 # LIBRARIES AND MODULES
 #======================================================
+#add_subdirectory(${SUBPROJECTS_ROOT}/asp_utils)
+include_directories(${SUBPROJECTS_ROOT}/asp_utils/source)
+add_subdirectory(${SUBPROJECTS_ROOT}/asp_db)
+include_directories(${SUBPROJECTS_ROOT}/asp_db/source)
 # modules
 #   pugixml
 #   http://pugixml.org
@@ -126,9 +119,6 @@ endif()
 #   http://pqxx.org/development/libpqxx/
 if(WITH_POSTGRESQL)
   set(PQXX_LIBS pqxx pq)
-else()
-  message(WARNING "Exclude all .cpp files matched with regex: '*postgre.cpp'")
-  list(FILTER MODEL_SRC EXCLUDE REGEX "postgre.cpp")
 endif()
 
 #   thread
@@ -141,11 +131,7 @@ find_package(Threads REQUIRED)
 #======================================================
 # build result library
 if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
-  add_library(${RESULT_LIB} STATIC
-    ${MODELS_SRC}
-    ${DATABASE_SOURCE}
-    ${UTILS_SOURCE}
-  )
+  add_library(${RESULT_LIB} STATIC ${MODELS_SRC})
   set_target_properties(${RESULT_LIB} PROPERTIES
       LIBRARY_OUTPUT_DIRECTORY ${LIBS_DIR}
       ARCHIVE_OUTPUT_DIRECTORY ${LIBS_DIR}
@@ -163,9 +149,8 @@ endforeach()
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   # build test executable
   add_executable(${PROJECT_NAME}
+
     ${MODELS_SRC}
-    ${DATABASE_SOURCE}
-    ${UTILS_SOURCE}
     main.cpp
   )
 endif()
@@ -173,7 +158,10 @@ endif()
 target_link_libraries(${PROJECT_NAME}
   # ${RESULT_LIB}
 
-  stdc++fs
+  #asp_utils
+  asp_db
+
+  # stdc++fs
   ${PUGIXML_LIB}
   ${PQXX_LIBS}
   Threads::Threads
