@@ -2,5 +2,5 @@
 	path = lib/pugixml
 	url = https://github.com/zeux/pugixml
 [submodule "subprojects/asp_db"]
-	path = subprojects/asp_db
+	path = lib/asp_db
 	url = https://github.com/korteelko/asp_db
