@@ -292,14 +292,26 @@ public:
   uint32_t initialized = f_empty;
 };
 
-/** \brief стат структура характеристик газа */
+/**
+ * \brief Стат структура характеристик газа
+ * */
 struct gas_char {
-  /** \brief газ является ароматическим соединением */
+  /**
+   * \brief Газ является ароматическим соединением
+   * */
   static bool IsAromatic(gas_t gas);
-  /** \brief газ является углеводородом */
+  /**
+   * \brief Газ является углеводородом
+   * */
   static bool IsHydrocarbon(gas_t gas);
-  /** \brief газ является циклопарафином */
+  /**
+   * \brief Газ является циклопарафином
+   * */
   static bool IsCycleParafine(gas_t gas);
+  /**
+   * \brief Благородный газ
+   * */
+  static bool IsNoble(gas_t gas);
 
   static inline bool IsHydrogenSulfide(gas_t gas) {
     return (gas == GAS_TYPE_HYDROGEN_SULFIDE) ? true : false;
@@ -307,7 +319,7 @@ struct gas_char {
   static inline bool IsCarbonDioxide(gas_t gas) {
     return (gas == GAS_TYPE_CARBON_DIOXIDE) ? true : false;
   }
-  static inline bool IsAcetylen(gas_t gas) {
+  static inline bool IsAcetylene(gas_t gas) {
   #ifdef ASSIGNMENT_TRACE_COMPONENTS
     return (gas == GAS_TYPE_ACETYLENE) ? true : false;
   #else

@@ -35,7 +35,7 @@ void CalculationSetup::gasmix_models_map::CalculatePoints(
     const std::vector<parameters> &points, bool unique_calculate) {
 #if defined(_DEBUG)
   // мьютекс на отладку
-//  std::lock_guard<Mutex> lock(calc_test);
+  // std::lock_guard<Mutex> lock(calc_test);
 #endif  // _DEBUG
   this->unique_calculation = unique_calculate;
   initInfoBinding();

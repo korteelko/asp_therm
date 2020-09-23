@@ -316,6 +316,14 @@ bool gas_char::IsCycleParafine(gas_t gas) {
 #endif
 }
 
+bool gas_char::IsNoble(gas_t gas) {
+  return is_in(gas, {CH(HELIUM), CH(ARGON)
+#ifdef ASSIGNMENT_TRACE_COMPONENTS
+      , CH(NEON), CH(KRYPTONE), CH(XENON)
+#endif  // ASSIGNMENT_TRACE_COMPONENTS
+  });
+}
+
 bool gas_char::is_in(gas_t g, const std::vector<gas_t> &v) {
   for (const auto &x: v)
     if (x == g)

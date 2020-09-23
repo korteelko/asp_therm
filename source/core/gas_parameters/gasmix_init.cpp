@@ -120,7 +120,7 @@ static std::array<double, 5> ch_pr_psy_tk_coefs_lh(gas_t i, gas_t j) {
       if (gas_char::IsCarbonDioxide(i) || gas_char::IsCarbonDioxide(j)) {
         return {-0.0953, 2.185, -33.985, 179.068, -264.522};
       } else {
-        if (gas_char::IsAcetylen(i) || gas_char::IsAcetylen(j)) {
+        if (gas_char::IsAcetylene(i) || gas_char::IsAcetylene(j)) {
           return {-0.0077, -0.095, -0.225, 3.528, 0.0};
         } else {
           if (gas_char::IsCarbonMonoxide(i) || gas_char::IsCarbonMonoxide(j))

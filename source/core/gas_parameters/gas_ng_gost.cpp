@@ -400,7 +400,8 @@ merror_t GasParametersGost30319Dyn::set_cp0r() {
   double cp0r = 0.0;
   const double tet = Lt / vpte_.temperature;
   auto pow_sinh = [tet] (double C, double D) {
-    return C * pow(D * tet / sinh(D * tet), 2.0);};
+    // for carbon monoxide we get nan
+    return (is_equal(D, 0.0)) ? 0.0 : C * pow(D * tet / sinh(D * tet), 2.0);};
   auto pow_cosh = [tet] (double C, double D) {
     return C * pow(D * tet / cosh(D * tet), 2.0);};
   const A4_coef *cp_c = nullptr;
@@ -408,11 +409,23 @@ merror_t GasParametersGost30319Dyn::set_cp0r() {
   for (size_t i = 0; i < components_.size(); ++i) {
     cp_c = get_A4_coefs(components_[i].first);
     x_ch = get_characteristics(components_[i].first);
-    if (cp_c != nullptr) {
+    if (cp_c != nullptr && x_ch != nullptr) {
       // by Appex B of ISO 20765
-      cp0r += components_[i].second * (cp_c->B + pow_sinh(cp_c->C, cp_c->D) +
-          pow_cosh(cp_c->E, cp_c->F) + pow_sinh(cp_c->G, cp_c->H) +
-          pow_cosh(cp_c->I, cp_c->J)) * x_ch->M / (1000.0 * GAS_CONSTANT);
+      if (gas_char::IsNoble(components_[i].first)) {
+        /* for noble gasses available only B,
+         *   see M. Jaeschke, P. Schley
+         *   "Ideal-Gas Thermodynamic Properties for
+         *        Natural-Gas Applications"
+         * also, for oxygen, carbon monoxide available only B, C and D
+         *   coeficients
+         */
+        cp0r += components_[i].second * cp_c->B;
+      } else {
+        cp0r += components_[i].second * (cp_c->B + pow_sinh(cp_c->C, cp_c->D) +
+            pow_cosh(cp_c->E, cp_c->F) + pow_sinh(cp_c->G, cp_c->H) +
+            pow_cosh(cp_c->I, cp_c->J)) * x_ch->M / (1000.0 * GAS_CONSTANT);
+
+      }
     } else {
       error = error_.SetError(ERROR_INIT_T,
           "ГОСТ модель: cp0r, не распознан компонент");
@@ -433,15 +446,21 @@ merror_t GasParametersGost30319Dyn::set_fi0r() {
   const double sigm = calculate_sigma(vpte_.pressure, vpte_.temperature),
                sigmT = calculate_sigma(101325.0, 298.15);
   auto pow_sinh = [tau] (double C, double D) {
-    return C * pow(D / sinh(D * tau), 2.0);};
+    return (is_equal(D, 0.0)) ? 0.0 : C * pow(D / sinh(D * tau), 2.0);};
   auto pow_cosh = [tau] (double C, double D) {
     return C * pow(D / cosh(D * tau), 2.0);};
   if (is_above0(sigm) && is_above0(sigmT)) {
     const double appendix = std::log(tauT / tau) + std::log(sigm / sigmT);
     auto ln_sinh = [tau] (double C, double D) {
-      return C * std::log(sinh(D * tau));};
+      return (is_equal(D, 0.0)) ? 0.0 : C * std::log(sinh(D * tau));};
     auto ln_cosh = [tau] (double C, double D) {
       return C * std::log(cosh(D * tau));};
+    auto sinh_cosh = [tau] (double C, double D) {
+      return C * D * sinh(D * tau) / cosh(D * tau);
+    };
+    auto cosh_sinh = [tau] (double C, double D) {
+      return (is_equal(D, 0.0)) ? 0.0 : C * D * cosh(D * tau) / sinh(D * tau);
+    };
     const A4_coef *cpc = nullptr;
     for (size_t i = 0; i < components_.size(); ++i) {
       cpc = get_A4_coefs(components_[i].first);
@@ -452,10 +471,8 @@ merror_t GasParametersGost30319Dyn::set_fi0r() {
             ln_cosh(cpc->E, cpc->F) + ln_sinh(cpc->G, cpc->H) -
             ln_cosh(cpc->I, cpc->J) + std::log(components_[i].second));
         fi0r_t += components_[i].second * (cpc->A2 + (cpc->B - 1.0) / tau +
-            cpc->C * cpc->D * cosh(cpc->D * tau) / sinh(cpc->D * tau) -
-            cpc->E * cpc->F * sinh(cpc->F * tau) / cosh(cpc->F * tau) +
-            cpc->G * cpc->H * cosh(cpc->H * tau) / sinh(cpc->H * tau) -
-            cpc->I * cpc->J * sinh(cpc->J * tau) / cosh(cpc->J * tau));
+            cosh_sinh(cpc->C, cpc->D) - sinh_cosh(cpc->E, cpc->F) +
+            cosh_sinh(cpc->G, cpc->H) - sinh_cosh(cpc->I, cpc->J));
         fi0r_tt += components_[i].second * ( -(cpc->B - 1.0) / tau / tau -
             pow_sinh(cpc->C, cpc->D) - pow_cosh(cpc->E, cpc->F) -
             pow_sinh(cpc->G, cpc->H) - pow_cosh(cpc->I, cpc->J));
