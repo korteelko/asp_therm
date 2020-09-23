@@ -78,6 +78,10 @@ public:
    * */
   calculation_info &SetModelInfo(const model_info *mi);
   /**
+   * \brief Установить имя файла газовой смеси
+   * */
+  calculation_info &SetGasmixFile(const std::string &gasmix);
+  /**
    * \brief Установить текущие значения времени и даты
    * */
   calculation_info &SetCurrentTime();
@@ -107,8 +111,9 @@ public:
     f_model_id = 0x01,
     f_date = 0x02,
     f_time = 0x04,
-    f_calculation_info_id = 0x08,
-    f_full = 0x0f
+    f_gasmix = 0x08,
+    f_calculation_info_id = 0x10,
+    f_full = 0x1f
   };
   /**
    * \brief Уникальный id строки расчёта из базы данных
@@ -126,6 +131,10 @@ public:
    * \brief Указатель на модель
    * */
   const model_info *model = nullptr;
+  /**
+   * \brief Имя файла смеси
+   * */
+  std::string gasmix_file;
   /**
    * \brief Время и дата
    * */

@@ -52,6 +52,12 @@ calculation_info &calculation_info::SetModelInfo(const model_info *mi) {
   return *this;
 }
 
+calculation_info &calculation_info::SetGasmixFile(const std::string &gasmix) {
+  gasmix_file = gasmix;
+  initialized |= (f_gasmix);
+  return *this;
+}
+
 calculation_info &calculation_info::SetCurrentTime() {
   datetime = time(0);
   initialized |= (f_date | f_time);

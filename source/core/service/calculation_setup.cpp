@@ -82,7 +82,7 @@ void CalculationSetup::gasmix_models_map::initInfoBinding() {
   ci.SetCurrentTime();
   assert(models_info.size() == calc_info.size());
   for (size_t i = 0; i < models_info.size(); ++i) {
-    calc_info[i].SetModelInfo(&models_info[i]);
+    calc_info[i].SetModelInfo(&models_info[i]).SetGasmixFile(mixname);
     models_info[i].model_p->SetCalculationSetup(&calc_info[i]);
   }
 }
@@ -227,7 +227,7 @@ mstatus_t CalculationSetup::initModel(CalculationSetup::gasmix_models_map *model
         model_info::GetDefault().SetModelStr(ms).SetModelPtr(m_ptr.get())));
     // добавить структуру информации о расчёте в calc_info
     models_map->calc_info.emplace(models_map->calc_info.end(),
-        calculation_info().SetDateTime(&datetime));
+        calculation_info().SetDateTime(&datetime).SetGasmixFile(filemix));
     // инициализировать данные структуры расчёта
   } else {
     st = STATUS_HAVE_ERROR;

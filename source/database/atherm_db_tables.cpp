@@ -64,6 +64,7 @@ TABLE CALCULATION_INFO (
   model_info_id int,
   date date,
   time time,
+  text gasmix_file,
   UNIQUE(model_info_d, date, time),
   PRIMARY KEY (calculation_id),
   FOREIGN KEY (model_info_id) REFERENCES model_info(model_id)
@@ -77,11 +78,12 @@ const db_fields_collection calculation_info_fields = {
   db_variable(TABLE_FIELD_PAIR(CI_DATE), db_type::type_date,
       { .can_be_null = false }),
   db_variable(TABLE_FIELD_PAIR(CI_TIME), db_type::type_time,
-      { .can_be_null = false })
+      { .can_be_null = false }),
+  db_variable(TABLE_FIELD_PAIR(CI_GASMIX_FILE), db_type::type_text, { })
 };
 static const db_table_create_setup::uniques_container ci_uniques = {
     { { TABLE_FIELD_NAME(CI_MODEL_INFO_ID), TABLE_FIELD_NAME(CI_DATE),
-    TABLE_FIELD_NAME(CI_TIME) } }
+    TABLE_FIELD_NAME(CI_TIME), TABLE_FIELD_NAME(CI_GASMIX_FILE) } }
 };
 static const std::shared_ptr<db_ref_collection> calculation_info_references(
    new db_ref_collection {
@@ -327,6 +329,8 @@ void IDBTables::setInsertValues<calculation_info>(db_query_insert_setup *src,
       std::to_string(select_data.model_id));
   insert_macro(calculation_info::f_date, CI_DATE, select_data.GetDate());
   insert_macro(calculation_info::f_time, CI_TIME, select_data.GetTime());
+  insert_macro(calculation_info::f_gasmix,
+      CI_GASMIX_FILE, select_data.gasmix_file);
   src->values_vec.emplace_back(values);
 }
 
@@ -418,6 +422,8 @@ void IDBTables::SetSelectData<calculation_info>(db_query_select_result *src,
         ci.SetDate(col.second);
       } else if (src->isFieldName(TABLE_FIELD_NAME(CI_TIME), src->fields[col.first])) {
         ci.SetTime(col.second);
+      } else if (src->isFieldName(TABLE_FIELD_NAME(CI_GASMIX_FILE), src->fields[col.first])) {
+        ci.SetGasmixFile(col.second);
       }
     }
     if (ci.initialized != ci.f_empty)

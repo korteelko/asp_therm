@@ -45,6 +45,8 @@ using namespace asp_db;
 #define CI_MODEL_INFO_ID        (CALCULATIONINFO_TABLE | 0x0002)
 #define CI_DATE                 (CALCULATIONINFO_TABLE | 0x0003)
 #define CI_TIME                 (CALCULATIONINFO_TABLE | 0x0004)
+// todo: добавить другую таблицу, заменить поле на ссылку на таблицу
+#define CI_GASMIX_FILE          (CALCULATIONINFO_TABLE | 0x0005)
 
 #define CSL_LOG_ID              (CALCULATIONSTATE_TABLE | 0x0001)
 #define CSL_INFO_ID             (CALCULATIONSTATE_TABLE | 0x0002)
@@ -73,6 +75,7 @@ using namespace asp_db;
 #define CI_MODEL_INFO_ID_NAME "model_info_id"
 #define CI_DATE_NAME "date"
 #define CI_TIME_NAME "time"
+#define CI_GASMIX_FILE_NAME "gasmixfile"
 
 #define CSL_LOG_ID_NAME "calculation_log_id"
 #define CSL_INFO_ID_NAME "calculation_info_id"
