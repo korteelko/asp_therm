@@ -2,18 +2,18 @@ cmake_minimum_required(VERSION 3.9)
 
 set(PROJECT_NAME asp_therm)
 set(RESULT_LIB atherm)
+set(EXECUTABLE ${PROJECT_NAME}_debug)
 project(${PROJECT_NAME})
 
 add_compile_options(-Wall)
 
 # todo: both options also can be placed in 'BUILD_OPTION' list
+set(CMAKE_BUILD_TYPE Debug)
 add_definitions(-DBYCMAKE_DEBUG)
 add_definitions(-DBYCMAKE_CXX17)
-set(CMAKE_BUILD_TYPE Debug)
 
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(ASP_THERM_CMAKE_ROOT ${ASP_THERM_ROOT}/cmake)
-set(SUBPROJECTS_ROOT ${ASP_THERM_ROOT}/subprojects)
 
 # todo: maybe split in separate asp_therm_modules.cmake ???
 # todo: add full clear step(ninja cannot clear
@@ -58,20 +58,19 @@ add_definitions(-DISO_20765)
 include(${ASP_THERM_CMAKE_ROOT}/atherm_setup.cmake)
 
 # setup utils
-# LIBS_DIR - для библиотеки atherm
-set(LIBS_DIR ${ASP_THERM_ROOT}/lib/${RESULT_LIB})
+# OUT_DIR - для библиотеки atherm
+set(OUT_DIR ${ASP_THERM_ROOT}/out/${RESULT_LIB})
 # MODULES_DIR - для сторонних библиотек.
 set(MODULES_DIR ${ASP_THERM_ROOT}/lib)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(LIBS_DIR "${LIBS_DIR}/debug")
+  set(OUT_DIR "${OUT_DIR}/debug")
 endif()
-link_directories(${LIBS_DIR})
 
 message(STATUS "asp_therm cmake build info:")
 message(STATUS "\t\tSystem info: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "\t\tBUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-message(STATUS "\t\tLIBS_DIR: ${LIBS_DIR}")
+message(STATUS "\t\tOUT_DIR: ${OUT_DIR}")
 
 set(THERMCORE_INCLUDES
   "${THERMCORE_SOURCE_DIR}/common"
@@ -100,10 +99,10 @@ include(${ASP_THERM_CMAKE_ROOT}/models_src.cmake)
 #======================================================
 # LIBRARIES AND MODULES
 #======================================================
-#add_subdirectory(${SUBPROJECTS_ROOT}/asp_utils)
-include_directories(${SUBPROJECTS_ROOT}/asp_utils/source)
-add_subdirectory(${SUBPROJECTS_ROOT}/asp_db)
-include_directories(${SUBPROJECTS_ROOT}/asp_db/source)
+add_subdirectory(${MODULES_DIR}/asp_db)
+include_directories(${MODULES_DIR}/asp_db/source)
+# todo: переделать, не очень красиво
+include_directories(${MODULES_DIR}/asp_db/lib/asp_utils/source)
 # modules
 #   pugixml
 #   http://pugixml.org
@@ -129,43 +128,41 @@ find_package(Threads REQUIRED)
 #======================================================
 # OUTPUT SETUP
 #======================================================
-# build result library
-if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
-  add_library(${RESULT_LIB} STATIC ${MODELS_SRC})
-  set_target_properties(${RESULT_LIB} PROPERTIES
-      LIBRARY_OUTPUT_DIRECTORY ${LIBS_DIR}
-      ARCHIVE_OUTPUT_DIRECTORY ${LIBS_DIR}
-  )
-endif()
-
 foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
   string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
   set_target_properties(${RESULT_LIB}
-    PROPERTIES LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${LIBS_DIR}
-    PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${LIBS_DIR}
+    PROPERTIES LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${OUT_DIR}
+    PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${OUT_DIR}
   )
 endforeach()
+set(LIBRARIES
 
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-  # build test executable
-  add_executable(${PROJECT_NAME}
-
-    ${MODELS_SRC}
-    main.cpp
-  )
-endif()
-
-target_link_libraries(${PROJECT_NAME}
-  # ${RESULT_LIB}
-
-  #asp_utils
   asp_db
-
-  # stdc++fs
   ${PUGIXML_LIB}
   ${PQXX_LIBS}
   Threads::Threads
 )
+if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+  # build result library
+  # todo: check result
+  add_library(${RESULT_LIB} STATIC ${MODELS_SRC})
+  set_target_properties(${RESULT_LIB} PROPERTIES
+      LIBRARY_OUTPUT_DIRECTORY ${OUT_DIR}
+      ARCHIVE_OUTPUT_DIRECTORY ${OUT_DIR}
+  )
+  target_link_libraries(${RESULT_LIB} ${LIBRARIES})
+endif()
+
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+  # build test executable
+  add_executable(${EXECUTABLE}
+
+    ${MODELS_SRC}
+    main.cpp
+  )
+  target_link_libraries(${EXECUTABLE} ${LIBRARIES})
+endif()
+
 
 # run tests
 if(TESTS_ENABLED)
