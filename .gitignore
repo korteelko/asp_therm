@@ -1,6 +1,6 @@
 build/
 docs/
-lib/atherm/
+out/
 
 data/test_calculation.xml
 data/test_config.xml

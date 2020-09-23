@@ -46,11 +46,11 @@ public:
   }
 
   std::shared_ptr<parameters_mix> GetMixParameters() {
-    return (is_status_ok(status_)) ? prs_mix_ : nullptr;
+    return (is_status_ok(status_) && !prs_mix_error_) ? prs_mix_ : nullptr;
   }
 
   std::shared_ptr<ng_gost_mix> GetGostMixParameters() {
-    return gost_mix_;
+    return (is_status_ok(status_) && !gost_mix_error_) ? gost_mix_ : nullptr;
   }
 
 public:
@@ -83,42 +83,54 @@ private:
   GasMixByFiles(const std::vector<gasmix_component_info> &parts)
     : status_(STATUS_DEFAULT) {
     prs_mix_ = std::unique_ptr<parameters_mix>(new parameters_mix());
+    prs_mix_error_ = ERROR_SUCCESS_T;
     gost_mix_ = std::unique_ptr<ng_gost_mix>(new ng_gost_mix());
+    gost_mix_error_ = ERROR_SUCCESS_T;
     for (const auto &x: parts) {
-      auto cdp = init_pars(x.part, x.path);
-      if (cdp.first == nullptr) {
-        error_.LogIt();
-        status_ = STATUS_HAVE_ERROR;
-        break;
-      }
-      prs_mix_->insert({x.part, {*cdp.first, *cdp.second}});
+      auto cdp = init_pars(x.part, x.name, x.path);
+      if (!prs_mix_error_)
+        prs_mix_->insert({x.part, {*cdp.first, *cdp.second}});
     }
-    if (status_ == STATUS_DEFAULT)
+    if ((!prs_mix_error_ || !gost_mix_error_) && is_status_aval(status_)) {
       status_ = STATUS_OK;
+    }
   }
 
   std::pair<std::shared_ptr<const_parameters>, std::shared_ptr<dyn_parameters>>
-  init_pars(double part, const std::string &filename) {
-    std::shared_ptr<ComponentByFile<ConfigReader>>
-        xf(ComponentByFile<ConfigReader>::Init(filename));
+  init_pars(double part, const std::string &name, const std::string &filename) {
     std::pair<std::shared_ptr<const_parameters>,
         std::shared_ptr<dyn_parameters>> ret_val{nullptr, nullptr};
-    gas_t gost_mix_component;
-    if (xf == nullptr) {
-      error_.SetError(ERROR_FILE_IN_ST, "Ошибка инициализации файла "
-          "компонента смеси: " + filename);
-    } else {
-      // unique_ptrs
-      auto cp = xf->GetConstParameters();
-      auto dp = xf->GetDynParameters();
-      if ((cp == nullptr) || (dp == nullptr)) {
-        error_.SetError(ERROR_INIT_T, "Ошибка инициализации const/dyn "
-            "параметров смеси для " + filename);
+    if (!prs_mix_error_) {
+      std::shared_ptr<ComponentByFile<ConfigReader>>
+          xf(ComponentByFile<ConfigReader>::Init(filename));
+      if (xf == nullptr) {
+        /* Если путь к файлу пуст, зарегистрируем ошибку для смеси gasmix  */
+        // это ошибка инициализации обычного микса, для госта можно продолжить
+        prs_mix_error_ |= error_.SetError(ERROR_FILE_IN_ST,
+            "Ошибка инициализации файла компонента смеси: " + filename);
+        Logging::Append(io_loglvl::warn_logs, "Не найден файл конфигурации "
+            "для компонента " + name);
       } else {
-        ret_val = {cp, dp};
-        gost_mix_component = gas_by_name(gasname_by_path(filename));
-        if (gost_mix_component != GAS_TYPE_UNDEFINED)
-          gost_mix_->emplace_back(ng_gost_component{gost_mix_component, part});
+        // unique_ptrs
+        auto cp = xf->GetConstParameters();
+        auto dp = xf->GetDynParameters();
+        if ((cp == nullptr) || (dp == nullptr)) {
+          error_.SetError(ERROR_INIT_T, "Ошибка инициализации const/dyn "
+              "параметров смеси для " + filename);
+        } else {
+          ret_val = {cp, dp};
+        }
+      }
+    }
+    if (!gost_mix_error_) {
+      gas_t gost_mix_component = gas_by_name(name);
+      if (gost_mix_component != GAS_TYPE_UNDEFINED) {
+        gost_mix_->emplace_back(ng_gost_component{gost_mix_component, part});
+      } else {
+        // ошибка инициализации гост-смеси
+        gost_mix_error_ |= ERROR_INIT_T;
+        Logging::Append(io_loglvl::warn_logs,
+            "Неизвестный компонент смеси " + name);
       }
     }
     return ret_val;
@@ -141,7 +153,9 @@ private:
   ErrorWrap error_;
   mstatus_t status_;
   std::shared_ptr<parameters_mix> prs_mix_;
+  merror_t prs_mix_error_;
   std::shared_ptr<ng_gost_mix> gost_mix_;
+  merror_t gost_mix_error_;
 };
 
 template <template<class gas_node> class ConfigReader>

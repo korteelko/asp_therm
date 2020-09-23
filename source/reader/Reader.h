@@ -197,7 +197,7 @@ public:
     *   Ну и пока не ясно что делать с иерархичностью */
   node_sample(lib_node<NodeT> src, InitializerFactory *factory,
       const std::string &name)
-    : node_(src), factory(factory), name_(name) {
+    : node_(src), name_(name), factory(factory) {
     init();
   }
 

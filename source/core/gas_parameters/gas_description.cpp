@@ -39,7 +39,11 @@ static std::map<std::string, gas_t> gas_names =
   {"oxygen", GAS_TYPE_OXYGEN},
   {"argon", GAS_TYPE_ARGON},
   {"heptane", GAS_TYPE_HEPTANE},
-  {"octane", GAS_TYPE_OCTANE}
+  {"octane", GAS_TYPE_OCTANE},
+  {"nonane", GAS_TYPE_NONANE},
+  {"decane", GAS_TYPE_DECANE},
+  {"carbon_monoxide", GAS_TYPE_CARBON_MONOXIDE},
+  {"water", GAS_TYPE_WATER}
 };
 
 static gas_t valid_gases[] = {
@@ -60,6 +64,10 @@ static gas_t valid_gases[] = {
   GAS_TYPE_ARGON,
   GAS_TYPE_HEPTANE,
   GAS_TYPE_OCTANE,
+  GAS_TYPE_NONANE,
+  GAS_TYPE_DECANE,
+  GAS_TYPE_CARBON_MONOXIDE,
+  GAS_TYPE_WATER,
 #if defined(GASMIX_TEST) && defined(ISO_20765)
   GAS_TYPE_TOLUENE,
 #endif  // GASMIX_TEST

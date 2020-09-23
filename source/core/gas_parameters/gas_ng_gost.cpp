@@ -36,7 +36,8 @@ struct max_valid_limits_t {
   double min,
          max;
 };
-/* GOST 30319.3-2015, table2, page 11 */
+/* GOST 30319.3-2015, table2, page 11
+ * todo: separate maps for GOST AND ISO */
 std::map<gas_t, max_valid_limits_t> mix_valid_molar =
     std::map<gas_t, max_valid_limits_t> {
   {CH(METHANE), {0.7, 0.99999}},
@@ -46,6 +47,12 @@ std::map<gas_t, max_valid_limits_t> mix_valid_molar =
   {CH(ALL_PENTANES), {0.0, 0.005}},
 #ifdef ISO_20765
   {CH(ALL_OTHER_ALKANES), {0.0, 0.0005}},
+  {CH(HEPTANE),  {0.0, 0.0005}},
+  {CH(CARBON_MONOXIDE), {0.0, 0.03}},
+  {CH(WATER), {0.0, 0.00015}},
+  {CH(OXYGEN), {0.0, 0.0002}},
+  {CH(HYDROGEN_SULFIDE), {0.0, 0.0002}},
+  {CH(ARGON), {0.0, 0.0002}},
 #endif  // ISO_20765
   {CH(HEXANE),  {0.0, 0.001}},
   {CH(NITROGEN), {0.0, 0.2}},

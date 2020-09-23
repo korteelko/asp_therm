@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<calc_setup name="example">
+  <!-- Setup thermodynamic equations.
+  Available models:
+    'IG'-ideal gas,
+    'RK' - Redlich-Kwong,
+    'SRK' - Soave-Redlich-Kwong,
+    'PR' - Peng-Robinson,
+    'PRb' - Peng-Robinson with binary coefficients,
+    'GOST' - gost 30319,
+    'ISO' - ISO 20765-2005
+    '' - set nothing for use best from available models(search 'priority' in source files)
+  -->
+  <models> GOST, ISO </models>
+  <gasmix_files>
+    <!-- mixtures from gost-30319 root dir is 'data' -->
+    <!--
+    <mixfile name="gostmix1">calculation/gost_test/gostmix1.xml</mixfile>
+    <mixfile name="gostmix2">calculation/gost_test/gostmix2.xml</mixfile>
+    <mixfile name="gostmix3">calculation/gost_test/gostmix3.xml</mixfile>
+    -->
+    <mixfile name="gostmix3">calculation/gost_test/iso4.xml</mixfile>
+  </gasmix_files>
+  <points>
+    <!-- [p] = Pa, [t] = K -->
+    <point p="5000000" t="250.0"/>
+    <point p="5000000" t="260.0"/>
+    <point p="5000000" t="270.0"/>
+    <point p="5000000" t="290.0"/>
+    <point p="5000000" t="310.0"/>
+    <point p="5000000" t="330.0"/>
+    <point p="5000000" t="350.0"/>
+    <point p="10000000" t="250.0"/>
+    <point p="10000000" t="260.0"/>
+    <point p="10000000" t="270.0"/>
+    <point p="10000000" t="290.0"/>
+    <point p="10000000" t="310.0"/>
+    <point p="10000000" t="330.0"/>
+    <point p="10000000" t="350.0"/>
+    <point p="15000000" t="250.0"/>
+    <point p="15000000" t="260.0"/>
+    <point p="15000000" t="270.0"/>
+    <point p="15000000" t="290.0"/>
+    <point p="15000000" t="310.0"/>
+    <point p="15000000" t="330.0"/>
+    <point p="15000000" t="350.0"/>
+    <point p="20000000" t="250.0"/>
+    <point p="20000000" t="260.0"/>
+    <point p="20000000" t="270.0"/>
+    <point p="20000000" t="290.0"/>
+    <point p="20000000" t="310.0"/>
+    <point p="20000000" t="330.0"/>
+    <point p="20000000" t="350.0"/>
+    <point p="30000000" t="250.0"/>
+    <point p="30000000" t="260.0"/>
+    <point p="30000000" t="270.0"/>
+    <point p="30000000" t="290.0"/>
+    <point p="30000000" t="310.0"/>
+    <point p="30000000" t="330.0"/>
+    <point p="30000000" t="350.0"/>
+  </points>
+</calc_setup>
+

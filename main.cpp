@@ -48,7 +48,7 @@ const fs::path xml_ethane  = "ethane.xml";
 const fs::path xml_propane = "propane.xml";
 
 const fs::path xml_gasmix = "../gasmix_inp_example.xml";
-const fs::path xml_calculation = "calculation/calculation_setup.xml";
+const fs::path xml_calculation = "calculation/calculation_setup_iso.xml";
 const fs::path xml_configuration = "../../configuration.xml";
 const fs::path json_test = "../../tests/full/utils/data/test_json.json";
 
