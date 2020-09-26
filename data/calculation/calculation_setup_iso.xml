@@ -11,7 +11,7 @@
     'ISO' - ISO 20765-2005
     '' - set nothing for use best from available models(search 'priority' in source files)
   -->
-  <models> GOST, ISO </models>
+  <models> ISO </models>
   <gasmix_files>
     <!-- mixtures from gost-30319 root dir is 'data' -->
     <!--

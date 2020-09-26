@@ -153,6 +153,7 @@ struct parameters {
 typedef uint64_t dyn_setup;
 #define DYNAMIC_SETUP_MASK         0x0000FFFF
 
+// todo: Добавить скорость звука в среде
 #define DYNAMIC_HEAT_CAP_VOL       0x00000001
 #define DYNAMIC_HEAT_CAP_PRES      0x00000002
 #define DYNAMIC_INTERNAL_ENERGY    0x00000004

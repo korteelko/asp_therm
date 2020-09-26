@@ -15,15 +15,6 @@
 #include <stdint.h>
 
 #define GET_ARRAY_SIZE(M) (sizeof(M) / sizeof(M[0]))
-// just for lulz
-#define SET_GOST_TABLE_INDEX(M, name, ind) \
-  {int m_count = GET_ARRAY_SIZE(M); \
-  for (int i = 0; i < m_count; ++i) { \
-    if (M[i].gas_name == name) { \
-      *ind = i; \
-      break; \
-    } \
-  }}
 
 /* check 07_11_19 */
 // Параметры бинарного взаимодействия
@@ -62,9 +53,6 @@ const component_characteristics gases[] = {
 
 const component_characteristics *get_characteristics(gas_t gas_name) {
   return get_coefs(gases, GET_ARRAY_SIZE(gases), gas_name);
-  /* int ind = -1;
-  SET_GOST_TABLE_INDEX(gases, gas_name, &ind);
-  return (ind != -1) ? &gases[ind] : NULL; */
 }
 
 // const size_t binary_associate_count = 38;
