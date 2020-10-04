@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/korteelko/asp_therm.svg?branch=master)](https://travis-ci.org/github/korteelko/asp_therm) 
+
 # asp\_therm
 
 ## Содержание
