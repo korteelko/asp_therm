@@ -82,9 +82,10 @@ bool is_valid_limits(
   return false;
 }
 
-bool is_valid_limits(const ng_gost_component &component) {
-  const auto limits_it = mix_valid_molar.find(component.first);
-  if (limits_it == mix_valid_molar.cend())
+bool is_valid_limits(const std::map<gas_t, max_valid_limits_t> &map_limits,
+    const ng_gost_component &component) {
+  const auto limits_it = map_limits.find(component.first);
+  if (limits_it == map_limits.cend())
     return false;
   return is_valid_limits(limits_it, component.second);
 }
@@ -134,16 +135,16 @@ bool is_valid_limits(const ng_gost_mix &components, bool use_iso20675) {
       break;
     }
   }
-  is_valid &= is_valid_limits(butanes);
-  is_valid &= is_valid_limits(pentanes);
+  is_valid &= is_valid_limits(mix_valid_molar, butanes);
+  is_valid &= is_valid_limits(mix_valid_molar, pentanes);
 #ifdef ISO_20765
   if (use_iso20675) {
-    is_valid &= is_valid_limits(other_alkanes);
+    is_valid &= is_valid_limits(mix_valid_molar_iso, other_alkanes);
   } else {
     others.second += other_alkanes.second;
   }
 #endif  // ISO_20765
-  is_valid &= is_valid_limits(others);
+  is_valid &= is_valid_limits(mix_valid_molar, others);
   return is_valid;
 }
 }  // anonymus namespace

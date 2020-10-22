@@ -22,7 +22,7 @@
 
 #if defined(_DEBUG)
 // тестим проблемс с ДБ
-Mutex db_test;
+// Mutex db_test;
 // Mutex calc_test;
 #endif  // _DEBUG
 
@@ -48,7 +48,7 @@ mstatus_t CalculationSetup::gasmix_models_map::AddToDatabase(
     DBConnectionManager *source_ptr) {
 #if defined(_DEBUG)
   // todo: валит в exception
-  std::lock_guard<Mutex> lock(db_test);
+  // std::lock_guard<Mutex> lock(db_test);
 #endif  // _DEBUG
   mstatus_t st = STATUS_NOT;
   if (source_ptr != nullptr) {
@@ -179,35 +179,6 @@ std::vector<calculation_state_log> &
 CalculationSetup::gasmix_models_map::GetCalculationResult() {
   return result;
 }
-
-#if !defined(DATABASE_TEST)
-/*
-mstatus_t CalculationSetup::CheckCurrentModel() {
-  if (current_model_ && is_status_ok(status_)) {
-    // todo прописать этот свап
-    // если использование выбранной модели не допустимо
-    //   переключиться на другую
-    if (!current_model_->IsValid()) {
-      params_copy_ = current_model_->GetParametersCopy();
-      swapModel();
-    }
-  }
-  return status_;
-}
-*/
-#endif  // !DATABASE_TEST
-
-/*
-merror_t CalculationSetup::SetModel(int model_key) {
-  merror_t error = ERROR_GENERAL_T;
-  const auto it = models_.find(model_key);
-  if (it != models_.end()) {
-    current_model_ = it->second.get();
-    error = ERROR_SUCCESS_T;
-  }
-  return error;
-}
-*/
 
 merror_t CalculationSetup::GetError() const {
   return error_.GetErrorCode();
