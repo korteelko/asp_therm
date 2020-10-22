@@ -21,12 +21,6 @@
 
 using namespace asp_db;
 
-/** \brief Макро на получение имени поля по его id */
-#define TABLE_FIELD_NAME(x) x ## _NAME
-/** \brief Макро на составление пар полей БД формата
-  *   '(field_id, field_name)' */
-#define TABLE_FIELD_PAIR(x) x, x ## _NAME
-
 /* коды столбцов в БД */
 // table codes
 #define MODELINFO_TABLE         0x00010000

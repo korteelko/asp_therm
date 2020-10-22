@@ -42,15 +42,15 @@ TABLE MODEL_INFO (
   PRIMARY KEY (model_id)
 ); */
 const db_fields_collection model_info_fields = {
-  db_variable(TABLE_FIELD_PAIR(MI_MODEL_ID), db_type::type_autoinc,
-      { .is_primary_key = true, .is_unique = true, .can_be_null = false }),
-  db_variable(TABLE_FIELD_PAIR(MI_MODEL_TYPE), db_type::type_int,
+  db_variable(TABLE_FIELD_PAIR(MI_MODEL_ID), db_variable_type::type_autoinc,
+      { .is_primary_key = true, .can_be_null = false }),
+  db_variable(TABLE_FIELD_PAIR(MI_MODEL_TYPE), db_variable_type::type_int,
       { .can_be_null = false }),
-  db_variable(TABLE_FIELD_PAIR(MI_MODEL_SUBTYPE), db_type::type_int, {}),
-  db_variable(TABLE_FIELD_PAIR(MI_VERS_MAJOR), db_type::type_int,
+  db_variable(TABLE_FIELD_PAIR(MI_MODEL_SUBTYPE), db_variable_type::type_int, {}),
+  db_variable(TABLE_FIELD_PAIR(MI_VERS_MAJOR), db_variable_type::type_int,
       { .can_be_null = false }),
-  db_variable(TABLE_FIELD_PAIR(MI_VERS_MINOR), db_type::type_int, {}),
-  db_variable(TABLE_FIELD_PAIR(MI_SHORT_INFO), db_type::type_text, {})
+  db_variable(TABLE_FIELD_PAIR(MI_VERS_MINOR), db_variable_type::type_int, {}),
+  db_variable(TABLE_FIELD_PAIR(MI_SHORT_INFO), db_variable_type::type_text, {})
 };
 static const db_table_create_setup::uniques_container mi_uniques =
     { { TABLE_FIELD_NAME(MI_MODEL_TYPE), TABLE_FIELD_NAME(MI_MODEL_SUBTYPE),
@@ -70,16 +70,16 @@ TABLE CALCULATION_INFO (
   FOREIGN KEY (model_info_id) REFERENCES model_info(model_id)
 ); */
 const db_fields_collection calculation_info_fields = {
-  db_variable(TABLE_FIELD_PAIR(CI_CALCULATION_ID), db_type::type_autoinc,
-      { .is_primary_key = true, .is_unique = true, .can_be_null = false }),
+  db_variable(TABLE_FIELD_PAIR(CI_CALCULATION_ID), db_variable_type::type_autoinc,
+      { .is_primary_key = true, .can_be_null = false }),
   // reference to model_info(fk)
-  db_variable(TABLE_FIELD_PAIR(CI_MODEL_INFO_ID), db_type::type_int,
+  db_variable(TABLE_FIELD_PAIR(CI_MODEL_INFO_ID), db_variable_type::type_int,
       { .is_reference = true, .can_be_null = false }),
-  db_variable(TABLE_FIELD_PAIR(CI_DATE), db_type::type_date,
+  db_variable(TABLE_FIELD_PAIR(CI_DATE), db_variable_type::type_date,
       { .can_be_null = false }),
-  db_variable(TABLE_FIELD_PAIR(CI_TIME), db_type::type_time,
+  db_variable(TABLE_FIELD_PAIR(CI_TIME), db_variable_type::type_time,
       { .can_be_null = false }),
-  db_variable(TABLE_FIELD_PAIR(CI_GASMIX_FILE), db_type::type_text, { })
+  db_variable(TABLE_FIELD_PAIR(CI_GASMIX_FILE), db_variable_type::type_text, { })
 };
 static const db_table_create_setup::uniques_container ci_uniques = {
     { { TABLE_FIELD_NAME(CI_MODEL_INFO_ID), TABLE_FIELD_NAME(CI_DATE),
@@ -113,21 +113,22 @@ TABLE CALCULATION_STATE_LOG (
       REFERENCES calculation_info(calculation_id) ON DELETE CASCADE
 ); */
 const db_fields_collection calculation_state_log_fields = {
-  db_variable(TABLE_FIELD_PAIR(CSL_LOG_ID), db_type::type_autoinc, {.is_primary_key = true,
-      .is_unique = true, .can_be_null = false}),
-  db_variable(TABLE_FIELD_PAIR(CSL_INFO_ID), db_type::type_int, {.is_primary_key = true,
-      .is_reference = true, .can_be_null = false}),
-  db_variable(TABLE_FIELD_PAIR(CSL_VOLUME), db_type::type_real, {}),
-  db_variable(TABLE_FIELD_PAIR(CSL_PRESSURE), db_type::type_real, {}),
-  db_variable(TABLE_FIELD_PAIR(CSL_TEMPERATURE), db_type::type_real, {}),
-  db_variable(TABLE_FIELD_PAIR(CSL_HEAT_CV), db_type::type_real, {}),
-  db_variable(TABLE_FIELD_PAIR(CSL_HEAT_CP), db_type::type_real, {}),
-  db_variable(TABLE_FIELD_PAIR(CSL_INTERNAL_ENERGY), db_type::type_real, {}),
-  db_variable(TABLE_FIELD_PAIR(CSL_ENTHALPY), db_type::type_real, {}),
-  db_variable(TABLE_FIELD_PAIR(CSL_ADIABATIC), db_type::type_real, {}),
-  db_variable(TABLE_FIELD_PAIR(CSL_BETA_KR), db_type::type_real, {}),
-  db_variable(TABLE_FIELD_PAIR(CSL_ENTROPY), db_type::type_real, {}),
-  db_variable(TABLE_FIELD_PAIR(CSL_STATE_PHASE), db_type::type_char_array, {.is_array = true}, 12)
+  db_variable(TABLE_FIELD_PAIR(CSL_LOG_ID), db_variable_type::type_autoinc,
+      {.is_primary_key = true, .can_be_null = false}),
+  db_variable(TABLE_FIELD_PAIR(CSL_INFO_ID), db_variable_type::type_int,
+      {.is_primary_key = true, .is_reference = true, .can_be_null = false}),
+  db_variable(TABLE_FIELD_PAIR(CSL_VOLUME), db_variable_type::type_real, {}),
+  db_variable(TABLE_FIELD_PAIR(CSL_PRESSURE), db_variable_type::type_real, {}),
+  db_variable(TABLE_FIELD_PAIR(CSL_TEMPERATURE), db_variable_type::type_real, {}),
+  db_variable(TABLE_FIELD_PAIR(CSL_HEAT_CV), db_variable_type::type_real, {}),
+  db_variable(TABLE_FIELD_PAIR(CSL_HEAT_CP), db_variable_type::type_real, {}),
+  db_variable(TABLE_FIELD_PAIR(CSL_INTERNAL_ENERGY), db_variable_type::type_real, {}),
+  db_variable(TABLE_FIELD_PAIR(CSL_ENTHALPY), db_variable_type::type_real, {}),
+  db_variable(TABLE_FIELD_PAIR(CSL_ADIABATIC), db_variable_type::type_real, {}),
+  db_variable(TABLE_FIELD_PAIR(CSL_BETA_KR), db_variable_type::type_real, {}),
+  db_variable(TABLE_FIELD_PAIR(CSL_ENTROPY), db_variable_type::type_real, {}),
+  db_variable(TABLE_FIELD_PAIR(CSL_STATE_PHASE), db_variable_type::type_char_array,
+      {.is_array = true}, 12)
 };
 static const std::shared_ptr<db_ref_collection> calculation_state_log_references =
   std::shared_ptr<db_ref_collection>(
@@ -283,11 +284,6 @@ template <>
 db_table IDBTables::GetTableCode<calculation_state_log>() const {
   return table_calculation_state_log;
 }
-
-#define insert_macro(field_flag, field_id, to_str) \
-  { if (select_data.initialized & field_flag) \
-      if ((i = src->IndexByFieldId(field_id)) != db_query_basesetup::field_index_end) \
-        values.emplace(i, to_str); }
 
 template <>
 void IDBTables::setInsertValues<model_info>(db_query_insert_setup *src,
