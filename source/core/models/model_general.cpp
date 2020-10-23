@@ -10,7 +10,7 @@
 #include "model_general.h"
 
 #include "gas_description_dynamic.h"
-#include "gas_ng_gost.h"
+#include "gas_ng_gost30319.h"
 #include "model_ideal_gas.h"
 #include "model_ng_gost.h"
 #include "model_peng_robinson.h"
@@ -19,37 +19,43 @@
 
 #include <algorithm>
 #ifdef _DEBUG
-#  include <iostream>
+#include <iostream>
 #endif  // _DEBUG
-
 
 DerivateFunctor::~DerivateFunctor() {}
 
-model_input::model_input(gas_marks_t gm, binodalpoints *bp,
-    gas_params_input gpi, model_str ms)
-  : gm(gm), bp(bp), gpi(gpi), ms(ms) {}
+model_input::model_input(gas_marks_t gm,
+                         binodalpoints* bp,
+                         gas_params_input gpi,
+                         model_str ms)
+    : gm(gm), bp(bp), gpi(gpi), ms(ms) {}
 
 /* model_init_exception */
 modelGeneral::model_init_exception::model_init_exception(
-    const model_str *info, const std::string &_msg)
-  : msg(_msg) {
+    const model_str* info,
+    const std::string& _msg)
+    : msg(_msg) {
   if (info)
     msg += "\n\tМодель:" + info->GetString();
 }
 
-const char *modelGeneral::model_init_exception::what() const noexcept {
+const char* modelGeneral::model_init_exception::what() const noexcept {
   return msg.c_str();
 }
 
 /* modelGeneral */
 modelGeneral::modelGeneral(model_str model_config,
-    gas_marks_t gm, binodalpoints *bp)
-  : status_(STATUS_DEFAULT), model_config_(model_config),
-    gm_(gm), parameters_(nullptr), bp_(bp) {}
+                           gas_marks_t gm,
+                           binodalpoints* bp)
+    : status_(STATUS_DEFAULT),
+      model_config_(model_config),
+      gm_(gm),
+      parameters_(nullptr),
+      bp_(bp) {}
 
 modelGeneral::~modelGeneral() {}
 
-void modelGeneral::SetCalculationSetup(calculation_info *calculation) {
+void modelGeneral::SetCalculationSetup(calculation_info* calculation) {
   calculation_ = calculation;
 }
 
@@ -64,12 +70,12 @@ double modelGeneral::vapor_part(int32_t index) {
 }
 
 int32_t modelGeneral::set_state_phasesub(double p) {
-  return (bp_->p.end() - std::find_if(bp_->p.begin() + 1, bp_->p.end(),
-      std::bind2nd(std::less_equal<double>(), p)));
+  return (bp_->p.end() -
+          std::find_if(bp_->p.begin() + 1, bp_->p.end(),
+                       std::bind2nd(std::less_equal<double>(), p)));
 }
 
-state_phase modelGeneral::set_state_phase(
-    double v, double p, double t) {
+state_phase modelGeneral::set_state_phase(double v, double p, double t) {
   /* todo: для газовых смесей наблюдается расслоение газовых фаз,
    *   так что задача не столь тривиальна */
   if (bp_ == nullptr)
@@ -79,22 +85,23 @@ state_phase modelGeneral::set_state_phase(
   // if p on the left of binodal graph  -  liquid
   int32_t iter = set_state_phasesub(p);
   if (!iter) {
-    return ((v <= parameters_->cgetV_K()) ?
-        state_phase::LIQ_STEAM : state_phase::GAS);
+    return ((v <= parameters_->cgetV_K()) ? state_phase::LIQ_STEAM
+                                          : state_phase::GAS);
   }
   iter = bp_->p.size() - iter - 1;
   assert(iter >= 0);
   /* calculate p)path in percents */
-  const double p_path = (p - bp_->p[iter+1]) / (bp_->p[iter] - bp_->p[iter+1]);
+  const double p_path =
+      (p - bp_->p[iter + 1]) / (bp_->p[iter] - bp_->p[iter + 1]);
   // left branch of binodal
-  if (v < parameters_->cgetV_K()) {                 
-    const double vapprox = bp_->vLeft[iter] - (bp_->vLeft[iter+1] -
-        bp_->vLeft[iter]) * p_path;
+  if (v < parameters_->cgetV_K()) {
+    const double vapprox =
+        bp_->vLeft[iter] - (bp_->vLeft[iter + 1] - bp_->vLeft[iter]) * p_path;
     return ((v < vapprox) ? state_phase::LIQUID : state_phase::LIQ_STEAM);
   }
   // rigth branch of binodal
-  const double vapprox = bp_->vRigth[iter] + (bp_->vRigth[iter+1] -
-      bp_->vRigth[iter])*p_path;
+  const double vapprox =
+      bp_->vRigth[iter] + (bp_->vRigth[iter + 1] - bp_->vRigth[iter]) * p_path;
   return ((v > vapprox) ? state_phase::GAS : state_phase::LIQ_STEAM);
 }
 
@@ -106,35 +113,35 @@ void modelGeneral::set_enthalpy() {
   for (size_t i = 0; i < bp_->vLeft.size(); ++i) {
     SetPressure(bp_->vLeft[i], bp_->t[i]);
     bp_->hLeft.push_back(parameters_->cgetIntEnergy() +
-        bp_->p[i] * bp_->vLeft[i]);
+                         bp_->p[i] * bp_->vLeft[i]);
   }
   if (!bp_->hRigth.empty())
     bp_->hRigth.clear();
   for (size_t i = 0; i < bp_->vRigth.size(); ++i) {
     SetPressure(bp_->vRigth[i], bp_->t[i]);
     bp_->hRigth.push_back(parameters_->cgetIntEnergy() +
-        bp_->p[i] * bp_->vRigth[i]);
+                          bp_->p[i] * bp_->vRigth[i]);
   }
 }
 
 /// return NULL or pointer to GasParameters
-const GasParameters *modelGeneral::get_gasparameters() const {
+const GasParameters* modelGeneral::get_gasparameters() const {
   return parameters_.get();
 }
 
-void modelGeneral::set_gasparameters(const gas_params_input &gpi,
-    modelGeneral *mg) {
+void modelGeneral::set_gasparameters(const gas_params_input& gpi,
+                                     modelGeneral* mg) {
   if (HasGostModelMark(gm_)) {
     parameters_ = std::unique_ptr<GasParameters>(
         GasParametersGost30319Dyn::Init(gpi, HasGostISO20765Mark(gm_)));
   } else if (HasGasMixMark(gm_)) {
     // todo: самое интересное здесь, т.к. для различных моделей
     //   реаализуется различный подход
-    parameters_ = std::unique_ptr<GasParameters>(
-        GasParameters_mix_dyn::Init(gpi, mg));
+    parameters_ =
+        std::unique_ptr<GasParameters>(GasParameters_mix_dyn::Init(gpi, mg));
   } else {
-    parameters_ = std::unique_ptr<GasParameters>(
-        GasParameters_dyn::Init(gpi, mg));
+    parameters_ =
+        std::unique_ptr<GasParameters>(GasParameters_dyn::Init(gpi, mg));
   }
   if (parameters_ == nullptr) {
     error_.SetError(ERROR_INIT_T, "error occurred while init gost model");
@@ -156,40 +163,44 @@ model_str modelGeneral::GetModelShortInfo(const rg_model_id model_type) {
     default:
       break;
   }
-  return model_str(rg_model_id(rg_model_t::EMPTY,
-      MODEL_SUBTYPE_DEFAULT), 1, 0, "");
+  return model_str(rg_model_id(rg_model_t::EMPTY, MODEL_SUBTYPE_DEFAULT), 1, 0,
+                   "");
 }
 
-void modelGeneral::check_input(const model_input &mi) {
+void modelGeneral::check_input(const model_input& mi) {
   // Проверка флагов
   if (HasGasMixMark(mi.gm) && HasGostModelMark(mi.gm))
-    throw modelGeneral::model_init_exception(&mi.ms,
-        "options GAS_MIX_MARK and GAS_NG_GOST_MARK not compatible\n");
+    throw modelGeneral::model_init_exception(
+        &mi.ms, "options GAS_MIX_MARK and GAS_NG_GOST_MARK not compatible\n");
   // Проверка установленных доль
   float perc = modelGeneral::calculate_parts_sum(mi);
   if (!is_equal(perc, GASMIX_PERSENT_AVR, GASMIX_PERCENT_EPS))
-    throw modelGeneral::model_init_exception(&mi.ms,
+    throw modelGeneral::model_init_exception(
+        &mi.ms,
         "gasmix sum of parts != 100% -> " + std::to_string(perc) + "\n");
   // Проверка стартовых параметров
   if (!is_above0(mi.gpi.p, mi.gpi.t))
     throw modelGeneral::model_init_exception(&mi.ms, ERROR_INIT_ZERO_ST_MSG);
 }
 
-double modelGeneral::calculate_parts_sum(const model_input &mi) {
+double modelGeneral::calculate_parts_sum(const model_input& mi) {
   double parts_sum = 0.0;
   if (HasGasMixMark(mi.gm)) {
     if (!mi.gpi.const_dyn.components->empty()) {
-      std::for_each(mi.gpi.const_dyn.components->begin(),
+      std::for_each(
+          mi.gpi.const_dyn.components->begin(),
           mi.gpi.const_dyn.components->end(),
-          [&parts_sum] (const std::pair<const double, const_dyn_parameters> &x)
-               { parts_sum += x.first; });
+          [&parts_sum](const std::pair<const double, const_dyn_parameters>& x) {
+            parts_sum += x.first;
+          });
     }
   } else if (HasGostModelMark(mi.gm)) {
     if (!mi.gpi.const_dyn.ng_gost_components->empty()) {
       std::for_each(mi.gpi.const_dyn.ng_gost_components->begin(),
-          mi.gpi.const_dyn.ng_gost_components->end(),
-          [&parts_sum] (const std::pair<gas_t, double> &x)
-              { parts_sum += x.second; });
+                    mi.gpi.const_dyn.ng_gost_components->end(),
+                    [&parts_sum](const std::pair<gas_t, double>& x) {
+                      parts_sum += x.second;
+                    });
     }
   } else {
     // смеси нет - только один компонент
@@ -202,7 +213,7 @@ priority_var modelGeneral::GetPriority() const {
   return priority_.GetPriority();
 }
 
-const model_str *modelGeneral::GetModelConfig() const {
+const model_str* modelGeneral::GetModelConfig() const {
   return &model_config_;
 }
 
@@ -244,7 +255,9 @@ const_parameters modelGeneral::GetConstParameters() const {
 
 // todo: ??? насчёт энтальпии, вн. энергии и т.д. не совсем прозрачно
 calculation_state_log modelGeneral::GetStateLog() const {
-  calculation_state_log s = {.id = -1, .calculation = calculation_,
+  calculation_state_log s = {
+      .id = -1,
+      .calculation = calculation_,
       .state_phase = stateToString[(uint32_t)parameters_->cgetState()]};
   s.initialized |= calculation_state_log::f_state_phase;
   s.SetDynPars(parameters_->cgetDynParameters());
@@ -255,26 +268,28 @@ merror_t modelGeneral::GetError() const {
   return error_.GetErrorCode();
 }
 
-calculation_info *modelGeneral::GetCalculationInfo() const {
+calculation_info* modelGeneral::GetCalculationInfo() const {
   return calculation_;
 }
 
 std::string modelGeneral::ParametersString() const {
   char str[256] = {0};
-  auto prs  = parameters_->cgetParameters();
+  auto prs = parameters_->cgetParameters();
   auto dprs = parameters_->cgetDynParameters();
-  sprintf(str, "%12.1f %8.4f %8.2f %8.2f %8.2f %8.2f %8.2f\n",
-      prs.pressure, prs.volume, 1.0 / prs.volume, prs.temperature,
-      dprs.heat_cap_vol, dprs.heat_cap_pres, dprs.internal_energy);
+  sprintf(str, "%12.1f %8.4f %8.2f %8.2f %8.2f %8.2f %8.2f\n", prs.pressure,
+          prs.volume, 1.0 / prs.volume, prs.temperature, dprs.heat_cap_vol,
+          dprs.heat_cap_pres, dprs.internal_energy);
   return std::string(str);
 }
 
 std::string modelGeneral::ConstParametersString() const {
   char str[256] = {0};
-  const_parameters &cprs = parameters_->const_params;
-  sprintf(str, "  Critical pnt: p=%12.1f; v=%8.4f; t=%8.2f\n"
-      "  Others: mol_m=%6.3f R=%8.3f ac_f=%6.4f\n", cprs.P_K, cprs.V_K,
-      cprs.T_K, cprs.molecularmass, cprs.R, cprs.acentricfactor);
+  const_parameters& cprs = parameters_->const_params;
+  sprintf(str,
+          "  Critical pnt: p=%12.1f; v=%8.4f; t=%8.2f\n"
+          "  Others: mol_m=%6.3f R=%8.3f ac_f=%6.4f\n",
+          cprs.P_K, cprs.V_K, cprs.T_K, cprs.molecularmass, cprs.R,
+          cprs.acentricfactor);
   return std::string(str);
 }
 

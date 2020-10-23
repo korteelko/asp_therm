@@ -7,11 +7,11 @@
  * This library is distributed under the MIT License.
  * See LICENSE file in the project root for full license information.
  */
-#include "gas_ng_gost.h"
+#include "gas_ng_gost30319.h"
 
+#include "Logging.h"
 #include "atherm_common.h"
 #include "gas_ng_gost_defines.h"
-#include "Logging.h"
 
 #include <array>
 #include <functional>
@@ -21,11 +21,10 @@
 #include <assert.h>
 #include <math.h>
 
-
 /* Параметры давления и температуры в пределах допустимости
  *  для ГОСТ 30319-2015 */
 #define gost_30319_within(p, t) \
-    ((p >= 100000 && p <= 30000000) && (t >= 250 && t <= 350))
+  ((p >= 100000 && p <= 30000000) && (t >= 250 && t <= 350))
 
 // ErrorWrap GasParameters_NG_Gost_dyn::init_error;
 
@@ -33,43 +32,40 @@ namespace {
 const double Lt = 1.0;
 // typedef std::pair<double, double> mix_valid_limits_t;
 struct max_valid_limits_t {
-  double min,
-         max;
+  double min, max;
 };
 /* GOST 30319.3-2015, table2, page 11
  * todo: separate maps for GOST AND ISO */
- /**
-  * \brief Контейнер допусков молекулярных масс
-  *   компонентов газовой смеси для ГОСТ модели
-  * */
+/**
+ * \brief Контейнер допусков молекулярных масс
+ *   компонентов газовой смеси для ГОСТ модели
+ * */
 std::map<gas_t, max_valid_limits_t> mix_valid_molar =
-    std::map<gas_t, max_valid_limits_t> {
-  {CH(METHANE), {0.7, 0.99999}},
-  {CH(ETHANE),  {0.0, 0.1}},
-  {CH(PROPANE), {0.0, 0.035}},
-  {CH(ALL_BUTANES), {0.0, 0.015}},
-  {CH(ALL_PENTANES), {0.0, 0.005}},
-  {CH(HEXANE),  {0.0, 0.001}},
-  {CH(NITROGEN), {0.0, 0.2}},
-  {CH(CARBON_DIOXIDE), {0.0, 0.2}},
-  {CH(HELIUM), {0.0, 0.005}},
-  {CH(HYDROGEN), {0.0, 0.1}},
-  // SUM of others
-  {CH(UNDEFINED), {0.0, 0.0015}}
-};
- /**
-  * \brief Дополнительный контейнер допусков молекулярных масс
-  *   компонентов газовой смеси для ISO модели
-  * */
+    std::map<gas_t, max_valid_limits_t>{{CH(METHANE), {0.7, 0.99999}},
+                                        {CH(ETHANE), {0.0, 0.1}},
+                                        {CH(PROPANE), {0.0, 0.035}},
+                                        {CH(ALL_BUTANES), {0.0, 0.015}},
+                                        {CH(ALL_PENTANES), {0.0, 0.005}},
+                                        {CH(HEXANE), {0.0, 0.001}},
+                                        {CH(NITROGEN), {0.0, 0.2}},
+                                        {CH(CARBON_DIOXIDE), {0.0, 0.2}},
+                                        {CH(HELIUM), {0.0, 0.005}},
+                                        {CH(HYDROGEN), {0.0, 0.1}},
+                                        // SUM of others
+                                        {CH(UNDEFINED), {0.0, 0.0015}}};
+/**
+ * \brief Дополнительный контейнер допусков молекулярных масс
+ *   компонентов газовой смеси для ISO модели
+ * */
 std::map<gas_t, max_valid_limits_t> mix_valid_molar_iso = {
 #ifdef ISO_20765
-  {CH(ALL_OTHER_ALKANES), {0.0, 0.0005}},
-  {CH(HEPTANE),  {0.0, 0.0005}},
-  {CH(CARBON_MONOXIDE), {0.0, 0.03}},
-  {CH(WATER), {0.0, 0.00015}},
-  {CH(OXYGEN), {0.0, 0.0002}},
-  {CH(HYDROGEN_SULFIDE), {0.0, 0.0002}},
-  {CH(ARGON), {0.0, 0.0002}},
+    {CH(ALL_OTHER_ALKANES), {0.0, 0.0005}},
+    {CH(HEPTANE), {0.0, 0.0005}},
+    {CH(CARBON_MONOXIDE), {0.0, 0.03}},
+    {CH(WATER), {0.0, 0.00015}},
+    {CH(OXYGEN), {0.0, 0.0002}},
+    {CH(HYDROGEN_SULFIDE), {0.0, 0.0002}},
+    {CH(ARGON), {0.0, 0.0002}},
 #endif  // ISO_20765
 };
 
@@ -82,8 +78,8 @@ bool is_valid_limits(
   return false;
 }
 
-bool is_valid_limits(const std::map<gas_t, max_valid_limits_t> &map_limits,
-    const ng_gost_component &component) {
+bool is_valid_limits(const std::map<gas_t, max_valid_limits_t>& map_limits,
+                     const ng_gost_component& component) {
   const auto limits_it = map_limits.find(component.first);
   if (limits_it == map_limits.cend())
     return false;
@@ -91,7 +87,7 @@ bool is_valid_limits(const std::map<gas_t, max_valid_limits_t> &map_limits,
 }
 
 // init check
-bool is_valid_limits(const ng_gost_mix &components, bool use_iso20675) {
+bool is_valid_limits(const ng_gost_mix& components, bool use_iso20675) {
   if (components.empty())
     return false;
   bool is_valid = true;
@@ -102,7 +98,7 @@ bool is_valid_limits(const ng_gost_mix &components, bool use_iso20675) {
 #endif  // ISO_20765
   ng_gost_component others(CH(UNDEFINED), 0.0);
   // todo: replace with macroces
-  for (const auto &component : components) {
+  for (const auto& component : components) {
     const auto limits_it = mix_valid_molar.find(component.first);
     if (limits_it == mix_valid_molar.cend()) {
       if (use_iso20675) {
@@ -116,15 +112,18 @@ bool is_valid_limits(const ng_gost_mix &components, bool use_iso20675) {
           }
         }
       }
-      if (component.first == CH(ISO_PENTANE) || component.first == CH(N_PENTANE)) {
+      if (component.first == CH(ISO_PENTANE) ||
+          component.first == CH(N_PENTANE)) {
         pentanes.second += component.second;
-      } else if (component.first == CH(ISO_BUTANE) || component.first == CH(N_BUTANE)) {
+      } else if (component.first == CH(ISO_BUTANE) ||
+                 component.first == CH(N_BUTANE)) {
         butanes.second += component.second;
-    #ifdef ISO_20765
-      } else if (component.first == CH(OCTANE) || component.first == CH(NONANE) ||
-          component.first == CH(DECANE)) {
+#ifdef ISO_20765
+      } else if (component.first == CH(OCTANE) ||
+                 component.first == CH(NONANE) ||
+                 component.first == CH(DECANE)) {
         other_alkanes.second += component.second;
-    #endif  // ISO_20765
+#endif  // ISO_20765
       } else {
         others.second += component.second;
       }
@@ -147,43 +146,49 @@ bool is_valid_limits(const ng_gost_mix &components, bool use_iso20675) {
   is_valid &= is_valid_limits(mix_valid_molar, others);
   return is_valid;
 }
-}  // anonymus namespace
+}  // namespace
 
-GasParametersGost30319Dyn *GasParametersGost30319Dyn::Init(
-    gas_params_input gpi, bool use_iso) {
-  GasParametersGost30319Dyn *res = nullptr;
+GasParametersGost30319Dyn* GasParametersGost30319Dyn::Init(gas_params_input gpi,
+                                                           bool use_iso) {
+  GasParametersGost30319Dyn* res = nullptr;
 #ifndef ISO_20765
   /* Перепроверить валидность опции использования алгоритмов ISO.
    *   Лучше конечно ошибку прокинуть, но можно и так */
-  Logging::Append(io_loglvl::warn_logs, "Попытка использовать алгоритмы "
-      "стандарта ISO 20765, вне контекста валидной сборки!\n"
-      "Для их использования пересоберите ПО с опцией ISO_20765");
+  Logging::Append(io_loglvl::warn_logs,
+                  "Попытка использовать алгоритмы "
+                  "стандарта ISO 20765, вне контекста валидной сборки!\n"
+                  "Для их использования пересоберите ПО с опцией ISO_20765");
   use_iso = false;
 #endif  // !ISO_20765
   if (!gpi.const_dyn.ng_gost_components->empty()) {
     if (is_valid_limits(*gpi.const_dyn.ng_gost_components, use_iso)) {
-      std::unique_ptr<const_parameters> cgp(const_parameters::Init(
-          GAS_TYPE_MIX, 1.0, 1.0, 1.0, 1.0, 1.0, 0.1));
+      std::unique_ptr<const_parameters> cgp(
+          const_parameters::Init(GAS_TYPE_MIX, 1.0, 1.0, 1.0, 1.0, 1.0, 0.1));
       assert(cgp != nullptr && "todo: переписать конструктор GasParameter");
-      res = new GasParametersGost30319Dyn({0.0, gpi.p, gpi.t}, *cgp,
-          dyn_parameters(), *gpi.const_dyn.ng_gost_components, use_iso);
+      res = new GasParametersGost30319Dyn(
+          {0.0, gpi.p, gpi.t}, *cgp, dyn_parameters(),
+          *gpi.const_dyn.ng_gost_components, use_iso);
     } else {
-      Logging::Append(ERROR_INIT_T, "natural gas model init error:\n"
-          "components limits check fail\n");
+      Logging::Append(ERROR_INIT_T,
+                      "natural gas model init error:\n"
+                      "components limits check fail\n");
     }
   } else {
     Logging::Append(ERROR_PAIR_DEFAULT(ERROR_INIT_NULLP_ST));
     Logging::Append(io_loglvl::debug_logs,
-        "Пустой список компонентов газовой смеси для ГОСТ модели");
+                    "Пустой список компонентов газовой смеси для ГОСТ модели");
   }
   return res;
 }
 
 GasParametersGost30319Dyn::GasParametersGost30319Dyn(parameters prs,
-    const_parameters cgp, dyn_parameters dgp, ng_gost_mix components,
-    bool use_iso)
-  : GasParameters(prs, cgp, dgp), components_(components),
-    use_iso20765_(use_iso) {
+                                                     const_parameters cgp,
+                                                     dyn_parameters dgp,
+                                                     ng_gost_mix components,
+                                                     bool use_iso)
+    : GasParameters(prs, cgp, dgp),
+      components_(components),
+      use_iso20765_(use_iso) {
   if (setFuncCoefficients())
     setStartCondition();
   if (error_.GetErrorCode()) {
@@ -218,7 +223,7 @@ void GasParametersGost30319Dyn::setStartCondition() {
 // calculating
 merror_t GasParametersGost30319Dyn::init_kx() {
   coef_kx_ = 0.0;
-  const component_characteristics *xi_ch = nullptr;
+  const component_characteristics* xi_ch = nullptr;
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
     if (xi_ch == nullptr)
@@ -227,15 +232,16 @@ merror_t GasParametersGost30319Dyn::init_kx() {
   }
   coef_kx_ *= coef_kx_;
   double associate_Kx_part = 0.0;
-  const binary_associate_coef *assoc_coefs = nullptr;
-  const component_characteristics *xj_ch = nullptr;
+  const binary_associate_coef* assoc_coefs = nullptr;
+  const component_characteristics* xj_ch = nullptr;
   for (size_t i = 0; i < components_.size() - 1; ++i) {
     xi_ch = get_characteristics(components_[i].first);
     for (size_t j = i + 1; j < components_.size(); ++j) {
       xj_ch = get_characteristics(components_[j].first);
-      assoc_coefs = get_binary_associate_coefs(
-          components_[i].first, components_[j].first);
-      associate_Kx_part += components_[i].second * components_[j].second *
+      assoc_coefs = get_binary_associate_coefs(components_[i].first,
+                                               components_[j].first);
+      associate_Kx_part +=
+          components_[i].second * components_[j].second *
           ((pow(assoc_coefs->K, 5.0) - 1.0) * pow(xi_ch->K * xj_ch->K, 2.5));
     }
   }
@@ -247,7 +253,7 @@ merror_t GasParametersGost30319Dyn::init_kx() {
 
 void GasParametersGost30319Dyn::set_V() {
   double V = 0.0;
-  const component_characteristics *xi_ch = nullptr;
+  const component_characteristics* xi_ch = nullptr;
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
     if (xi_ch == nullptr) {
@@ -258,15 +264,16 @@ void GasParametersGost30319Dyn::set_V() {
   }
   V *= V;
   double associate_V_part = 0.0;
-  const binary_associate_coef *assoc_coefs = nullptr;
-  const component_characteristics *xj_ch = nullptr;
+  const binary_associate_coef* assoc_coefs = nullptr;
+  const component_characteristics* xj_ch = nullptr;
   for (size_t i = 0; i < components_.size() - 1; ++i) {
     xi_ch = get_characteristics(components_[i].first);
     for (size_t j = i + 1; j < components_.size(); ++j) {
       xj_ch = get_characteristics(components_[j].first);
-      assoc_coefs = get_binary_associate_coefs(
-          components_[i].first, components_[j].first);
-      associate_V_part += components_[i].second * components_[j].second *
+      assoc_coefs = get_binary_associate_coefs(components_[i].first,
+                                               components_[j].first);
+      associate_V_part +=
+          components_[i].second * components_[j].second *
           ((pow(assoc_coefs->V, 5.0) - 1.0) * pow(xi_ch->E * xj_ch->E, 2.5));
     }
   }
@@ -278,7 +285,7 @@ void GasParametersGost30319Dyn::set_V() {
 
 void GasParametersGost30319Dyn::set_Q() {
   coef_Q_ = 0.0;
-  const component_characteristics *xi_ch = nullptr;
+  const component_characteristics* xi_ch = nullptr;
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
     coef_Q_ += components_[i].second * xi_ch->Q;
@@ -287,7 +294,7 @@ void GasParametersGost30319Dyn::set_Q() {
 
 void GasParametersGost30319Dyn::set_F() {
   coef_F_ = 0.0;
-  const component_characteristics *xi_ch = nullptr;
+  const component_characteristics* xi_ch = nullptr;
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
     coef_F_ += pow(components_[i].second, 2.0) * xi_ch->F;
@@ -296,7 +303,7 @@ void GasParametersGost30319Dyn::set_F() {
 
 void GasParametersGost30319Dyn::set_G() {
   double G = 0.0;
-  const component_characteristics *xi_ch = nullptr;
+  const component_characteristics* xi_ch = nullptr;
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
     if (xi_ch == nullptr) {
@@ -306,16 +313,16 @@ void GasParametersGost30319Dyn::set_G() {
     G += components_[i].second * xi_ch->G;
   }
   double associate_G_part = 0.0;
-  const binary_associate_coef *assoc_coefs = nullptr;
-  const component_characteristics *xj_ch = nullptr;
+  const binary_associate_coef* assoc_coefs = nullptr;
+  const component_characteristics* xj_ch = nullptr;
   for (size_t i = 0; i < components_.size() - 1; ++i) {
     xi_ch = get_characteristics(components_[i].first);
     for (size_t j = i + 1; j < components_.size(); ++j) {
       xj_ch = get_characteristics(components_[j].first);
-      assoc_coefs = get_binary_associate_coefs(
-          components_[i].first, components_[j].first);
+      assoc_coefs = get_binary_associate_coefs(components_[i].first,
+                                               components_[j].first);
       associate_G_part += components_[i].second * components_[j].second *
-          ((assoc_coefs->G - 1.0) * (xi_ch->G + xj_ch->G));
+                          ((assoc_coefs->G - 1.0) * (xi_ch->G + xj_ch->G));
     }
   }
   G += associate_G_part;
@@ -327,27 +334,27 @@ void GasParametersGost30319Dyn::set_Bn() {
   if (!Bn_.empty())
     Bn_.clear();
   Bn_.assign(n_max, 0.0);
-  const component_characteristics *xi_ch = nullptr;
-  const component_characteristics *xj_ch = nullptr;
-  const binary_associate_coef *assoc_coef = nullptr;
+  const component_characteristics* xi_ch = nullptr;
+  const component_characteristics* xj_ch = nullptr;
+  const binary_associate_coef* assoc_coef = nullptr;
   for (size_t n = 0; n < n_max; ++n) {
     // set Bnij
-    const A0_3_coef &A3c = A0_3_coefs[n];
-    for(size_t i = 0; i < components_.size(); ++i) {
+    const A0_3_coef& A3c = A0_3_coefs[n];
+    for (size_t i = 0; i < components_.size(); ++i) {
       xi_ch = get_characteristics(components_[i].first);
       for (size_t j = 0; j < components_.size(); ++j) {
         xj_ch = get_characteristics(components_[j].first);
-        assoc_coef = get_binary_associate_coefs(
-            components_[i].first, components_[j].first);
+        assoc_coef = get_binary_associate_coefs(components_[i].first,
+                                                components_[j].first);
         double Gij = assoc_coef->G * (xi_ch->G + xj_ch->G) / 2.0;
         double Bnij = pow(Gij + 1.0 - A3c.g, A3c.g) *
-            pow(xi_ch->Q*xj_ch->Q + 1.0 - A3c.q, A3c.q) *
-            pow(sqrt(xi_ch->F*xj_ch->F) + 1.0 - A3c.f, A3c.f) *
-            pow(xi_ch->S*xj_ch->S + 1.0 - A3c.s, A3c.s) *
-            pow(xi_ch->W*xj_ch->W + 1.0 - A3c.w, A3c.w);
-        double Eij = assoc_coef->E * sqrt(xi_ch->E*xj_ch->E);
+                      pow(xi_ch->Q * xj_ch->Q + 1.0 - A3c.q, A3c.q) *
+                      pow(sqrt(xi_ch->F * xj_ch->F) + 1.0 - A3c.f, A3c.f) *
+                      pow(xi_ch->S * xj_ch->S + 1.0 - A3c.s, A3c.s) *
+                      pow(xi_ch->W * xj_ch->W + 1.0 - A3c.w, A3c.w);
+        double Eij = assoc_coef->E * sqrt(xi_ch->E * xj_ch->E);
         Bn_[n] += components_[i].second * components_[j].second * Bnij *
-            pow(Eij, A3c.u) * pow(xi_ch->K * xj_ch->K, 1.5);
+                  pow(Eij, A3c.u) * pow(xi_ch->K * xj_ch->K, 1.5);
       }
     }
   }
@@ -359,15 +366,20 @@ void GasParametersGost30319Dyn::set_Cn() {
     Cn_.clear();
   Cn_.assign(n_max, 0.0);
   for (size_t n = 0; n < n_max; ++n) {
-    const A0_3_coef &A3c = A0_3_coefs[n];
-    Cn_[n] = pow(coef_G_ + 1.0 - A3c.g, A3c.g) * pow(coef_Q_ * coef_Q_  + 1.0 -
-        A3c.q, A3c.q) * pow(coef_F_ + 1.0 - A3c.f, A3c.f) * pow(coef_V_, A3c.u);
+    const A0_3_coef& A3c = A0_3_coefs[n];
+    Cn_[n] = pow(coef_G_ + 1.0 - A3c.g, A3c.g) *
+             pow(coef_Q_ * coef_Q_ + 1.0 - A3c.q, A3c.q) *
+             pow(coef_F_ + 1.0 - A3c.f, A3c.f) * pow(coef_V_, A3c.u);
   }
+}
+
+void GasParametersGost30319Dyn::set_p0m() {
+  coef_p0m_ = 0.001 * pow(coef_kx_, -3.0) * GAS_CONSTANT * Lt;
 }
 
 merror_t GasParametersGost30319Dyn::set_molar_data() {
   ng_molar_mass_ = 0.0;
-  const component_characteristics *xi_ch = nullptr;
+  const component_characteristics* xi_ch = nullptr;
   for (size_t i = 0; i < components_.size(); ++i) {
     xi_ch = get_characteristics(components_[i].first);
     if (xi_ch != nullptr) {
@@ -380,26 +392,23 @@ merror_t GasParametersGost30319Dyn::set_molar_data() {
   return ERROR_SUCCESS_T;
 }
 
-void GasParametersGost30319Dyn::set_p0m() {
-  coef_p0m_ = 0.001 * pow(coef_kx_, -3.0) * GAS_CONSTANT * Lt;
-}
-
 void GasParametersGost30319Dyn::init_pseudocrit_vpte() {
   double vol = 0.0;
   double temp = 0.0;
   double press_var = 0.0;
   double tmp_var = 0;
-  double Mi = 0.0,
-         Mj = 0.0;
-  const component_characteristics *x_ch = nullptr;
-  const critical_params *i_cp = nullptr;
-  const critical_params *j_cp = nullptr;
+  double Mi = 0.0, Mj = 0.0;
+  const component_characteristics* x_ch = nullptr;
+  const critical_params* i_cp = nullptr;
+  const critical_params* j_cp = nullptr;
   for (size_t i = 0; i < components_.size(); ++i) {
     if ((x_ch = get_characteristics(components_[i].first))) {
       Mi = x_ch->M;
     } else {
-      Logging::Append("init pseudocritic by gost model\n"
-          "  undefined component: #" + std::to_string(components_[i].first));
+      Logging::Append(
+          "init pseudocritic by gost model\n"
+          "  undefined component: #" +
+          std::to_string(components_[i].first));
       continue;
     }
     if (!(i_cp = get_critical_params(components_[i].first)))
@@ -408,15 +417,18 @@ void GasParametersGost30319Dyn::init_pseudocrit_vpte() {
       if ((x_ch = get_characteristics(components_[j].first))) {
         Mj = x_ch->M;
       } else {
-        Logging::Append("init pseudocritic by gost model\n"
-            "  undefined component: #" + std::to_string(components_[j].first));
+        Logging::Append(
+            "init pseudocritic by gost model\n"
+            "  undefined component: #" +
+            std::to_string(components_[j].first));
         continue;
       }
       if (!(j_cp = get_critical_params(components_[j].first)))
         continue;
       tmp_var = components_[i].second * components_[j].second *
-          pow(pow(Mi / i_cp->density, 0.333333) +
-          pow(Mj / j_cp->density, 0.333333), 3.0);
+                pow(pow(Mi / i_cp->density, 0.333333) +
+                        pow(Mj / j_cp->density, 0.333333),
+                    3.0);
       vol += tmp_var;
       temp += tmp_var * sqrt(i_cp->temperature * j_cp->temperature);
     }
@@ -427,20 +439,23 @@ void GasParametersGost30319Dyn::init_pseudocrit_vpte() {
   pseudocrit_vpte_.volume = 0.125 * vol;
   pseudocrit_vpte_.temperature = 0.125 * temp / vol;
   pseudocrit_vpte_.pressure = 1000 * GAS_CONSTANT *
-      pseudocrit_vpte_.temperature * press_var / pseudocrit_vpte_.volume;
+                              pseudocrit_vpte_.temperature * press_var /
+                              pseudocrit_vpte_.volume;
 }
 
 merror_t GasParametersGost30319Dyn::set_cp0r() {
   merror_t error = ERROR_SUCCESS_T;
   double cp0r = 0.0;
   const double tet = Lt / vpte_.temperature;
-  auto pow_sinh = [tet] (double C, double D) {
+  auto pow_sinh = [tet](double C, double D) {
     // for carbon monoxide we get nan
-    return (is_equal(D, 0.0)) ? 0.0 : C * pow(D * tet / sinh(D * tet), 2.0);};
-  auto pow_cosh = [tet] (double C, double D) {
-    return C * pow(D * tet / cosh(D * tet), 2.0);};
-  const A4_coef *cp_c = nullptr;
-  const component_characteristics *x_ch = nullptr;
+    return (is_equal(D, 0.0)) ? 0.0 : C * pow(D * tet / sinh(D * tet), 2.0);
+  };
+  auto pow_cosh = [tet](double C, double D) {
+    return C * pow(D * tet / cosh(D * tet), 2.0);
+  };
+  const A4_coef* cp_c = nullptr;
+  const component_characteristics* x_ch = nullptr;
   for (size_t i = 0; i < components_.size(); ++i) {
     cp_c = get_A4_coefs(components_[i].first);
     x_ch = get_characteristics(components_[i].first);
@@ -456,14 +471,15 @@ merror_t GasParametersGost30319Dyn::set_cp0r() {
          */
         cp0r += components_[i].second * cp_c->B;
       } else {
-        cp0r += components_[i].second * (cp_c->B + pow_sinh(cp_c->C, cp_c->D) +
-            pow_cosh(cp_c->E, cp_c->F) + pow_sinh(cp_c->G, cp_c->H) +
-            pow_cosh(cp_c->I, cp_c->J)) * x_ch->M / (1000.0 * GAS_CONSTANT);
-
+        cp0r +=
+            components_[i].second *
+            (cp_c->B + pow_sinh(cp_c->C, cp_c->D) + pow_cosh(cp_c->E, cp_c->F) +
+             pow_sinh(cp_c->G, cp_c->H) + pow_cosh(cp_c->I, cp_c->J)) *
+            x_ch->M / (1000.0 * GAS_CONSTANT);
       }
     } else {
       error = error_.SetError(ERROR_INIT_T,
-          "ГОСТ модель: cp0r, не распознан компонент");
+                              "ГОСТ модель: cp0r, не распознан компонент");
     }
   }
   ng_gost_params_.cp0r = cp0r * Rm;
@@ -473,47 +489,52 @@ merror_t GasParametersGost30319Dyn::set_cp0r() {
 #if defined(ISO_20765)
 merror_t GasParametersGost30319Dyn::set_fi0r() {
   merror_t error = ERROR_SUCCESS_T;
-  double fi0r = 0.0,
-         fi0r_t = 0.0;
+  double fi0r = 0.0, fi0r_t = 0.0;
   double fi0r_tt = 0.0;
-  const double tau = Lt / vpte_.temperature,
-               tauT = Lt / 298.15;
+  const double tau = Lt / vpte_.temperature, tauT = Lt / 298.15;
   const double sigm = calculate_sigma(vpte_.pressure, vpte_.temperature),
                sigmT = calculate_sigma(101325.0, 298.15);
-  auto pow_sinh = [tau] (double C, double D) {
-    return (is_equal(D, 0.0)) ? 0.0 : C * pow(D / sinh(D * tau), 2.0);};
-  auto pow_cosh = [tau] (double C, double D) {
-    return C * pow(D / cosh(D * tau), 2.0);};
+  auto pow_sinh = [tau](double C, double D) {
+    return (is_equal(D, 0.0)) ? 0.0 : C * pow(D / sinh(D * tau), 2.0);
+  };
+  auto pow_cosh = [tau](double C, double D) {
+    return C * pow(D / cosh(D * tau), 2.0);
+  };
   if (is_above0(sigm) && is_above0(sigmT)) {
     const double appendix = std::log(tauT / tau) + std::log(sigm / sigmT);
-    auto ln_sinh = [tau] (double C, double D) {
-      return (is_equal(D, 0.0)) ? 0.0 : C * std::log(sinh(D * tau));};
-    auto ln_cosh = [tau] (double C, double D) {
-      return C * std::log(cosh(D * tau));};
-    auto sinh_cosh = [tau] (double C, double D) {
+    auto ln_sinh = [tau](double C, double D) {
+      return (is_equal(D, 0.0)) ? 0.0 : C * std::log(sinh(D * tau));
+    };
+    auto ln_cosh = [tau](double C, double D) {
+      return C * std::log(cosh(D * tau));
+    };
+    auto sinh_cosh = [tau](double C, double D) {
       return C * D * sinh(D * tau) / cosh(D * tau);
     };
-    auto cosh_sinh = [tau] (double C, double D) {
+    auto cosh_sinh = [tau](double C, double D) {
       return (is_equal(D, 0.0)) ? 0.0 : C * D * cosh(D * tau) / sinh(D * tau);
     };
-    const A4_coef *cpc = nullptr;
+    const A4_coef* cpc = nullptr;
     for (size_t i = 0; i < components_.size(); ++i) {
       cpc = get_A4_coefs(components_[i].first);
       if (cpc != nullptr) {
         // by Appex B of ISO 20765
-        fi0r += components_[i].second * (cpc->A1 + cpc->A2 * tau +
-            cpc->B * std::log(tau) + ln_sinh(cpc->C, cpc->D) -
-            ln_cosh(cpc->E, cpc->F) + ln_sinh(cpc->G, cpc->H) -
-            ln_cosh(cpc->I, cpc->J) + std::log(components_[i].second));
-        fi0r_t += components_[i].second * (cpc->A2 + (cpc->B - 1.0) / tau +
-            cosh_sinh(cpc->C, cpc->D) - sinh_cosh(cpc->E, cpc->F) +
-            cosh_sinh(cpc->G, cpc->H) - sinh_cosh(cpc->I, cpc->J));
-        fi0r_tt += components_[i].second * ( -(cpc->B - 1.0) / tau / tau -
-            pow_sinh(cpc->C, cpc->D) - pow_cosh(cpc->E, cpc->F) -
-            pow_sinh(cpc->G, cpc->H) - pow_cosh(cpc->I, cpc->J));
+        fi0r += components_[i].second *
+                (cpc->A1 + cpc->A2 * tau + cpc->B * std::log(tau) +
+                 ln_sinh(cpc->C, cpc->D) - ln_cosh(cpc->E, cpc->F) +
+                 ln_sinh(cpc->G, cpc->H) - ln_cosh(cpc->I, cpc->J) +
+                 std::log(components_[i].second));
+        fi0r_t += components_[i].second *
+                  (cpc->A2 + (cpc->B - 1.0) / tau + cosh_sinh(cpc->C, cpc->D) -
+                   sinh_cosh(cpc->E, cpc->F) + cosh_sinh(cpc->G, cpc->H) -
+                   sinh_cosh(cpc->I, cpc->J));
+        fi0r_tt += components_[i].second *
+                   (-(cpc->B - 1.0) / tau / tau - pow_sinh(cpc->C, cpc->D) -
+                    pow_cosh(cpc->E, cpc->F) - pow_sinh(cpc->G, cpc->H) -
+                    pow_cosh(cpc->I, cpc->J));
       } else {
         error = error_.SetError(ERROR_INIT_T,
-            "ГОСТ модель: fi0r, не распознан компонент");
+                                "ГОСТ модель: fi0r, не распознан компонент");
         break;
       }
     }
@@ -521,8 +542,9 @@ merror_t GasParametersGost30319Dyn::set_fi0r() {
     ng_gost_params_.fi0r_t = fi0r_t;
     ng_gost_params_.fi0r_tt = fi0r_tt;
   } else {
-    error = error_.SetError(ERROR_INIT_T, "ГОСТ модель: fi0r, результат "
-        "расчёта приведённой плотности некорректен.");
+    error = error_.SetError(ERROR_INIT_T,
+                            "ГОСТ модель: fi0r, результат "
+                            "расчёта приведённой плотности некорректен.");
   }
   return error;
 }
@@ -535,13 +557,13 @@ merror_t GasParametersGost30319Dyn::set_volume() {
       double sigma = calculate_sigma(vpte_.pressure, vpte_.temperature);
       vpte_.volume = pow(coef_kx_, 3.0) / (ng_molar_mass_ * sigma);
       bool is_valid = (set_cp0r() == ERROR_SUCCESS_T);
-    #if defined(ISO_20765)
+#if defined(ISO_20765)
       if (use_iso20765_ && is_valid) {
         if ((is_valid = (set_fi0r() == ERROR_SUCCESS_T))) {
           set_iso_params(sigma);
         }
       } else
-    #endif  // ISO_20765
+#endif  // ISO_20765
       {
         if (is_valid)
           set_gost_params(sigma);
@@ -567,7 +589,7 @@ void GasParametersGost30319Dyn::set_gost_params(double sigma) {
 
 void GasParametersGost30319Dyn::set_viscosity0() {
   double mui = 0.0;
-  const A6_coef *coef = nullptr;
+  const A6_coef* coef = nullptr;
   for (auto x : components_) {
     coef = get_A6_coefs(x.first);
     mui = 0.0;
@@ -607,23 +629,23 @@ void GasParametersGost30319Dyn::set_coefB(double t) {
   double tau = 1.0 / t;
   ng_gost_params_.B = 0.0;
   for (size_t n = 0; n < 18; ++n) {
-    ng_gost_params_.B += A0_3_coefs[n].a * Bn_[n] *
-        std::pow(tau, A0_3_coefs[n].u);
+    ng_gost_params_.B +=
+        A0_3_coefs[n].a * Bn_[n] * std::pow(tau, A0_3_coefs[n].u);
   }
 }
 
 void GasParametersGost30319Dyn::set_fi(double t, double sigma) {
   double tau = Lt / t;
   ng_gost_params_.fi = ng_gost_params_.fi0r +
-      ng_gost_params_.B * sigma / std::pow(coef_kx_, 3.0);
+                       ng_gost_params_.B * sigma / std::pow(coef_kx_, 3.0);
   double c1 = 0.0, c2 = 0.0;
   for (size_t n = 12; n < 18; ++n)
     c1 += A0_3_coefs[n].a * Cn_[n] * std::pow(tau, A0_3_coefs[n].u);
   c1 *= sigma;
   for (size_t n = 12; n < 58; ++n)
     c2 += A0_3_coefs[n].a * Cn_[n] * std::pow(tau, A0_3_coefs[n].u) *
-        std::pow(sigma, A0_3_coefs[n].b) *
-        std::exp(-A0_3_coefs[n].c * std::pow(sigma, A0_3_coefs[n].k));
+          std::pow(sigma, A0_3_coefs[n].b) *
+          std::exp(-A0_3_coefs[n].c * std::pow(sigma, A0_3_coefs[n].k));
   ng_gost_params_.fi += -c1 + c2;
 }
 
@@ -634,14 +656,12 @@ void GasParametersGost30319Dyn::set_fi_der(double t, double sigma) {
   double fi_t = tau * ng_gost_params_.fi0r_t,
          fi_tt = tau * tau * ng_gost_params_.fi0r_tt,
          fi_d = 1.0 + ng_gost_params_.B * s_k,
-         fi_1 = 1.0 + 2.0 * ng_gost_params_.B * s_k,
-         fi_2 = 1.0;
-  double dfi_t = 0.0, dfi_tt = 0.0, dfi_d = 0.0,
-         dfi_1 = 0.0, dfi_2 = 0.0;
+         fi_1 = 1.0 + 2.0 * ng_gost_params_.B * s_k, fi_2 = 1.0;
+  double dfi_t = 0.0, dfi_tt = 0.0, dfi_d = 0.0, dfi_1 = 0.0, dfi_2 = 0.0;
 
   // 1 - 18
   for (size_t n = 0; n < 18; ++n) {
-    const A0_3_coef &A3c = A0_3_coefs[n];
+    const A0_3_coef& A3c = A0_3_coefs[n];
     double d1 = A3c.a * Bn_[n] * pow(tau, A3c.u);
     double d2 = (A3c.u - 1.0) * d1;
     dfi_t += A3c.u * d1;
@@ -655,7 +675,7 @@ void GasParametersGost30319Dyn::set_fi_der(double t, double sigma) {
   // 13 - 18
   dfi_t = 0.0, dfi_tt = 0.0, dfi_d = 0.0, dfi_1 = 0.0, dfi_2 = 0.0;
   for (size_t n = 12; n < 18; ++n) {
-    const A0_3_coef &A3c = A0_3_coefs[n];
+    const A0_3_coef& A3c = A0_3_coefs[n];
     double d1 = A3c.a * Cn_[n] * pow(tau, A3c.u);
     double d2 = (A3c.u - 1.0) * d1;
     dfi_t += A3c.u * d1;
@@ -673,13 +693,14 @@ void GasParametersGost30319Dyn::set_fi_der(double t, double sigma) {
   // 13 - 58
   dfi_t = 0.0, dfi_tt = 0.0, dfi_d = 0.0, dfi_1 = 0.0, dfi_2 = 0.0;
   for (size_t n = 12; n < 58; ++n) {
-    const A0_3_coef &A3c = A0_3_coefs[n];
+    const A0_3_coef& A3c = A0_3_coefs[n];
     double d1 = A3c.a * Cn_[n] * pow(tau, A3c.u) * pow(sigma, A3c.b) *
-        exp(-A3c.c * pow(sigma, A3c.k));
+                exp(-A3c.c * pow(sigma, A3c.k));
     double d2 = A3c.u * (A3c.u - 1.0) * d1;
     double k3 = A3c.b - A3c.c * A3c.k * pow(sigma, A3c.k);
     double d3 = d1 * k3;
-    double d4 = d1 * (k3 - pow(A3c.k, 2.0) * A3c.c * pow(sigma, A3c.k) + pow(k3, 2.0));
+    double d4 =
+        d1 * (k3 - pow(A3c.k, 2.0) * A3c.c * pow(sigma, A3c.k) + pow(k3, 2.0));
     double d5 = d3 * (1.0 - A3c.u);
     dfi_t += A3c.u * d1;
     dfi_tt += d2;
@@ -702,12 +723,10 @@ void GasParametersGost30319Dyn::set_fi_der(double t, double sigma) {
 #endif  // ISO_20765
 
 double GasParametersGost30319Dyn::calculate_sigma(double p, double t) const {
-  double sigm = sigma_start(p, t),
-         tau = t / Lt;
+  double sigm = sigma_start(p, t), tau = t / Lt;
   double A0 = calculate_A0(t, sigm);
   // todo: remove magic numbers!!!
-  double pi_calc = sigm * tau * (1.0 + A0),
-         pi = 0.000001 * p / coef_p0m_;
+  double pi_calc = sigm * tau * (1.0 + A0), pi = 0.000001 * p / coef_p0m_;
   int loop_max = 3000;
   while (--loop_max > 0) {
     if (abs(pi_calc - pi) / pi < 0.000001)
@@ -737,22 +756,25 @@ void GasParametersGost30319Dyn::update_dynamic() {
   if (use_iso20765_) {
     double tau = Lt / vpte_.temperature;
     ng_gost_params_.u = ng_gost_params_.fi_t * Rm;
-    ng_gost_params_.h = ng_gost_params_.u + (ng_gost_params_.z) * Rm * vpte_.temperature;
+    ng_gost_params_.h =
+        ng_gost_params_.u + (ng_gost_params_.z) * Rm * vpte_.temperature;
     ng_gost_params_.s = (tau * ng_gost_params_.fi_t - ng_gost_params_.fi) * Rm;
-    ng_gost_params_.cv = - tau * tau * ng_gost_params_.fi_tt * Rm;
+    ng_gost_params_.cv = -tau * tau * ng_gost_params_.fi_tt * Rm;
     ng_gost_params_.cp = ng_gost_params_.cv + ng_gost_params_.fi_2 *
-        ng_gost_params_.fi_2 * Rm / ng_gost_params_.fi_1;
+                                                  ng_gost_params_.fi_2 * Rm /
+                                                  ng_gost_params_.fi_1;
     ng_gost_params_.k = ng_gost_params_.fi_1 * ng_gost_params_.cp /
-        (ng_gost_params_.z * ng_gost_params_.cv);
+                        (ng_gost_params_.z * ng_gost_params_.cv);
     ng_gost_params_.w = std::sqrt(ng_gost_params_.z * ng_gost_params_.k *
-        vpte_.temperature * Rm);
+                                  vpte_.temperature * Rm);
   } else
 #endif  // ISO_20765
   {
-    auto t = 1.0 + ng_gost_params_.A1 + std::pow(1.0 + ng_gost_params_.A2, 2.0) /
-        (ng_gost_params_.cp0r - 1.0 + ng_gost_params_.A3);
+    auto t = 1.0 + ng_gost_params_.A1 +
+             std::pow(1.0 + ng_gost_params_.A2, 2.0) /
+                 (ng_gost_params_.cp0r - 1.0 + ng_gost_params_.A3);
     ng_gost_params_.k = t / ng_gost_params_.z;
-    ng_gost_params_.w = sqrt(Rm * t * vpte_.temperature );
+    ng_gost_params_.w = sqrt(Rm * t * vpte_.temperature);
   }
   params = {
 #if defined(ISO_20765)
@@ -778,12 +800,12 @@ double GasParametersGost30319Dyn::sigma_start(double p, double t) const {
 }
 
 /* check 07_11_19 */
-double GasParametersGost30319Dyn::calculate_d_sigm(
-    double t, double p, double sigm) const {
-  double tau = t / Lt,
-         pi  = 0.000001 * p / coef_p0m_,
-         d_sigm = (pi / tau - (1.0 + calculate_A0(t, sigm))*sigm) /
-             (1.0 + calculate_A1(t, sigm));
+double GasParametersGost30319Dyn::calculate_d_sigm(double t,
+                                                   double p,
+                                                   double sigm) const {
+  double tau = t / Lt, pi = 0.000001 * p / coef_p0m_,
+         d_sigm = (pi / tau - (1.0 + calculate_A0(t, sigm)) * sigm) /
+                  (1.0 + calculate_A1(t, sigm));
   return d_sigm;
 }
 
@@ -793,10 +815,10 @@ double GasParametersGost30319Dyn::calculate_A0(double t, double sigm) const {
   double A0 = 0.0;
   double tau = t / Lt;
   for (size_t n = 0; n < A0_3_coefs_count; ++n) {
-    const A0_3_coef &A3c = A0_3_coefs[n];
+    const A0_3_coef& A3c = A0_3_coefs[n];
     A0 += A3c.a * pow(sigm, A3c.b) * pow(tau, -A3c.u) *
-        (A3c.b*get_Dn(n) + (A3c.b - A3c.c*A3c.k*pow(sigm, A3c.k)) * 
-        get_Un(n) * exp(-A3c.c * pow(sigm, A3c.k)));
+          (A3c.b * get_Dn(n) + (A3c.b - A3c.c * A3c.k * pow(sigm, A3c.k)) *
+                                   get_Un(n) * exp(-A3c.c * pow(sigm, A3c.k)));
   }
   return A0;
 }
@@ -806,13 +828,13 @@ double GasParametersGost30319Dyn::calculate_A1(double t, double sigm) const {
   double A1 = 0.0;
   double tau = t / Lt;
   for (size_t n = 0; n < A0_3_coefs_count; ++n) {
-    const A0_3_coef &A3c = A0_3_coefs[n];
+    const A0_3_coef& A3c = A0_3_coefs[n];
     A1 += A3c.a * pow(sigm, A3c.b) * pow(tau, -A3c.u) *
-        ((A3c.b + 1.0) * A3c.b * get_Dn(n) +
-        ((A3c.b - A3c.c * A3c.k * pow(sigm, A3c.k)) *
-        (A3c.b - A3c.c * A3c.k * pow(sigm, A3c.k) + 1.0) - 
-        A3c.c * A3c.k * A3c.k * pow(sigm, A3c.k)) *
-        get_Un(n) * exp(-A3c.c * pow(sigm, A3c.k)));
+          ((A3c.b + 1.0) * A3c.b * get_Dn(n) +
+           ((A3c.b - A3c.c * A3c.k * pow(sigm, A3c.k)) *
+                (A3c.b - A3c.c * A3c.k * pow(sigm, A3c.k) + 1.0) -
+            A3c.c * A3c.k * A3c.k * pow(sigm, A3c.k)) *
+               get_Un(n) * exp(-A3c.c * pow(sigm, A3c.k)));
   }
   return A1;
 }
@@ -822,10 +844,10 @@ double GasParametersGost30319Dyn::calculate_A2(double t, double sigm) const {
   double A2 = 0.0;
   double tau = t / Lt;
   for (size_t n = 0; n < A0_3_coefs_count; ++n) {
-    const A0_3_coef &A3c = A0_3_coefs[n];
+    const A0_3_coef& A3c = A0_3_coefs[n];
     A2 += A3c.a * pow(sigm, A3c.b) * pow(tau, -A3c.u) * (1.0 - A3c.u) *
-        (A3c.b*get_Dn(n) + (A3c.b - A3c.c*A3c.k*pow(sigm, A3c.k)) * 
-            get_Un(n) * exp(-A3c.c * pow(sigm, A3c.k)));
+          (A3c.b * get_Dn(n) + (A3c.b - A3c.c * A3c.k * pow(sigm, A3c.k)) *
+                                   get_Un(n) * exp(-A3c.c * pow(sigm, A3c.k)));
   }
   return A2;
 }
@@ -835,15 +857,17 @@ double GasParametersGost30319Dyn::calculate_A3(double t, double sigm) const {
   double A3 = 0.0;
   double tau = t / Lt;
   for (size_t n = 0; n < A0_3_coefs_count; ++n) {
-    const A0_3_coef &A3c = A0_3_coefs[n];
+    const A0_3_coef& A3c = A0_3_coefs[n];
     A3 += A3c.a * pow(sigm, A3c.b) * pow(tau, -A3c.u) * (1.0 - A3c.u) * A3c.u *
-        (get_Dn(n) + get_Un(n) * exp(-A3c.c * pow(sigm, A3c.k)));
+          (get_Dn(n) + get_Un(n) * exp(-A3c.c * pow(sigm, A3c.k)));
   }
   return A3;
 }
 
-void GasParametersGost30319Dyn::csetParameters(
-    double v, double p, double t, state_phase) {
+void GasParametersGost30319Dyn::csetParameters(double v,
+                                               double p,
+                                               double t,
+                                               state_phase) {
   (void)v;
   vpte_.pressure = p;
   vpte_.temperature = t;

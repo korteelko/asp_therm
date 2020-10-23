@@ -7,14 +7,13 @@
  * This library is distributed under the MIT License.
  * See LICENSE file in the project root for full license information.
  */
-#ifndef _CORE__GAS_PARAMETERS__GAS_NG_GOST_H_
-#define _CORE__GAS_PARAMETERS__GAS_NG_GOST_H_
+#ifndef _CORE__GAS_PARAMETERS__GAS_NG_GOST30319_H_
+#define _CORE__GAS_PARAMETERS__GAS_NG_GOST30319_H_
 
 #include "ErrorWrap.h"
 #include "gas_description_static.h"
 
 #include <vector>
-
 
 // Размерности, константы, параметры при НФУ см. в первой части ГОСТ 30319,
 //   т.е. в 30319.1-2015. Коэффициенты в третьей части(30319.3-2015)
@@ -22,74 +21,70 @@
  * \brief Структура содержащая параметры состояния
  *   ГОСТ(ISO) модели
  * */
-struct ng_gost_params {
+struct ng_gost30319_params {
   /* Параметры используемые ГОСТ моделью */
-  double A0,
-         A1,
-         A2,
-         A3;
-         /// фактор сжимаемости
+  double A0, A1, A2, A3;
+  /// фактор сжимаемости
   double z,
-         /// показатель адиабаты
-         k,
-         /// Скорорсть звука
-         w,
-         /// Изобарная теплоёмкость (в идеальном состоянии)
-         cp0r,
-         /// Динамическая вязкость
-         mu;
+      /// показатель адиабаты
+      k,
+      /// Скорорсть звука
+      w,
+      /// Изобарная теплоёмкость (в идеальном состоянии)
+      cp0r,
+      /// Динамическая вязкость
+      mu;
 #if defined(ISO_20765)
   /* Параметры используемые в ISO 20765
    * \note Привёдённая температура для ГОСТ и ИСО
    *   перевёрнуты, т.е. "tISO = 1.0 / tGOST" */
-         /// Коэффициент B
+  /// Коэффициент B
   double B;
-         /// Свободная энергия Гельмгольца для абстракции `идеального газа`
+  /// Свободная энергия Гельмгольца для абстракции `идеального газа`
   double fi0r,
-         /// Свободная энергия Гельмгольца для абстракции `идеального газа`
-         fi0r_t,
-         /// Свободная энергия Гельмгольца для абстракции `идеального газа`
-         fi0r_tt;
+      /// Свободная энергия Гельмгольца для абстракции `идеального газа`
+      fi0r_t,
+      /// Свободная энергия Гельмгольца для абстракции `идеального газа`
+      fi0r_tt;
 
-         /// Свободная энергия Гельмгольца
+  /// Свободная энергия Гельмгольца
   double fi,
-         /// Производная свободной энергии по температуре
-         fi_t,
-         /// Вторая производная свободной энергии по температуре
-         fi_tt,
-         /// Производная свободной энергии по плотности
-         fi_d,
-         /// Производная функции f = (d^2 * fi_d(d, t)) по пр. плотности, где:
-         ///   d(сигма) - приведённая плотность;
-         ///   t - приведённая температура;
-         ///   fi_d - производная свободной энергии по приведённой плотности
-         fi_1,
-         /// Производная функции f = (d * fi_d(d, t) / t) по пр. температуре,
-         ///   умноженная на `-t^2`. Здесь:
-         ///   d(сигма) - приведённая плотность;
-         ///   t - приведённая температура;
-         ///   fi_d - производная свободной энергии по плотности
-         fi_2;
-         /// Внутреняя энергия
+      /// Производная свободной энергии по температуре
+      fi_t,
+      /// Вторая производная свободной энергии по температуре
+      fi_tt,
+      /// Производная свободной энергии по плотности
+      fi_d,
+      /// Производная функции f = (d^2 * fi_d(d, t)) по пр. плотности, где:
+      ///   d(сигма) - приведённая плотность;
+      ///   t - приведённая температура;
+      ///   fi_d - производная свободной энергии по приведённой плотности
+      fi_1,
+      /// Производная функции f = (d * fi_d(d, t) / t) по пр. температуре,
+      ///   умноженная на `-t^2`. Здесь:
+      ///   d(сигма) - приведённая плотность;
+      ///   t - приведённая температура;
+      ///   fi_d - производная свободной энергии по плотности
+      fi_2;
+  /// Внутреняя энергия
   double u,
-         /// Энтальпия
-         h,
-         /// Энтропия
-         s,
-         /// Удельная изохорная теплоёмкость
-         cv,
-         /// Удельная изобарная теплоёмкость
-         cp;
+      /// Энтальпия
+      h,
+      /// Энтропия
+      s,
+      /// Удельная изохорная теплоёмкость
+      cv,
+      /// Удельная изобарная теплоёмкость
+      cp;
 #endif  // ISO_20765
 };
 
-
 // const_dyn_parameters init_natural_gas(const gost_ng_components &comps);
-class GasParametersGost30319Dyn: public GasParameters {
+class GasParametersGost30319Dyn : public GasParameters {
   ADD_TEST_CLASS(GasParameters_NG_Gost_dynProxy);
 
-public:
-  static GasParametersGost30319Dyn *Init(gas_params_input gpi, bool use_iso);
+ public:
+  static GasParametersGost30319Dyn* Init(gas_params_input gpi, bool use_iso);
   void csetParameters(double v, double p, double t, state_phase) override;
   double cCalculateVolume(double p, double t) override;
   /**
@@ -102,9 +97,12 @@ public:
    * */
   bool IsValid(parameters prs);
 
-private:
-  GasParametersGost30319Dyn(parameters prs, const_parameters cgp,
-      dyn_parameters dgp, ng_gost_mix components, bool use_iso);
+ private:
+  GasParametersGost30319Dyn(parameters prs,
+                            const_parameters cgp,
+                            dyn_parameters dgp,
+                            ng_gost_mix components,
+                            bool use_iso);
   /**
    * \brief Инициализировать коэффициенты расчётных функций
    * \note Расчитываются только на старте программы
@@ -124,12 +122,13 @@ private:
   void set_G();
   void set_Bn();
   void set_Cn();
+  void set_p0m();
+
   /**
    * \brief Установить значение молярной массы(ng_molar_mass_)
    *   и газовой постоянной смеси(Rm)
    * */
   merror_t set_molar_data();
-  void set_p0m();
   void init_pseudocrit_vpte();
   /**
    * \brief Установить нулевое значение удельной теплоёмкости
@@ -205,12 +204,12 @@ private:
   double calculate_A1(double t, double sigm) const;
   double calculate_A2(double t, double sigm) const;
   double calculate_A3(double t, double sigm) const;
-  //void update_parametrs();
+  // void update_parametrs();
 
-private:
+ private:
   ng_gost_mix components_;
   parameters pseudocrit_vpte_;
-  ng_gost_params ng_gost_params_;
+  ng_gost30319_params ng_gost_params_;
   /**
    * \brief Молярная масса смеси
    * */
@@ -222,11 +221,7 @@ private:
    * */
   double Rm;
   double coef_kx_;
-  double coef_V_,
-         coef_Q_,
-         coef_F_,
-         coef_G_,
-         coef_p0m_;
+  double coef_V_, coef_Q_, coef_F_, coef_G_, coef_p0m_;
   std::vector<double> Bn_;
   std::vector<double> Cn_;
   /**
@@ -234,4 +229,4 @@ private:
    * */
   bool use_iso20765_;
 };
-#endif  // !_CORE__GAS_PARAMETERS__GAS_NG_GOST_H_
+#endif  // !_CORE__GAS_PARAMETERS__GAS_NG_GOST30319_H_
