@@ -273,6 +273,7 @@ calculation_info* modelGeneral::GetCalculationInfo() const {
 }
 
 std::string modelGeneral::ParametersString() const {
+  // todo: remove to class GasParamaters
   char str[256] = {0};
   auto prs = parameters_->cgetParameters();
   auto dprs = parameters_->cgetDynParameters();
@@ -282,15 +283,9 @@ std::string modelGeneral::ParametersString() const {
   return std::string(str);
 }
 
-std::string modelGeneral::ConstParametersString() const {
-  char str[256] = {0};
-  const_parameters& cprs = parameters_->const_params;
-  sprintf(str,
-          "  Critical pnt: p=%12.1f; v=%8.4f; t=%8.2f\n"
-          "  Others: mol_m=%6.3f R=%8.3f ac_f=%6.4f\n",
-          cprs.P_K, cprs.V_K, cprs.T_K, cprs.molecularmass, cprs.R,
-          cprs.acentricfactor);
-  return std::string(str);
+std::string modelGeneral::ConstParametersString(std::string pref) const {
+  // todo: передавать вызов нужно к parameters_, а не parameters_->const_params
+  return parameters_->const_params.GetString(pref);
 }
 
 std::string modelGeneral::sParametersStringHead() {

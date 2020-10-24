@@ -9,6 +9,7 @@
  */
 #include "gas_ng_gost_defines.h"
 
+#include "Logging.h"
 #include "atherm_common.h"
 #include "gas_defines.h"
 
@@ -287,9 +288,9 @@ const A6_coef A6_coefs[] = {
   {GAS_TYPE_ETHANE,        -1.219244900, 4.05145591,  -0.200150993, 0.00662746099},
   {GAS_TYPE_PROPANE,        0.254518256, 2.54779249,  0.0683095277, -0.0114348793},
   {GAS_TYPE_N_BUTANE,      -0.524058048, 2.81260308, -0.0496574363, 0.0},
-  {GAS_TYPE_ISO_BUTANE,       1.042738430, 1.69220741,  0.1940774190, -0.0159867334},
+  {GAS_TYPE_ISO_BUTANE,     1.042738430, 1.69220741,  0.1940774190, -0.0159867334},
   {GAS_TYPE_N_PENTANE,      0.452603096, 1.79775689,  0.1570027760, -0.0158057627},
-  {GAS_TYPE_ISO_PENTANE,      0.550744125, 1.75702204,  0.1733634560, -0.0167839786},
+  {GAS_TYPE_ISO_PENTANE,    0.550744125, 1.75702204,  0.1733634560, -0.0167839786},
   {GAS_TYPE_HEXANE,         0.658064311, 1.50818329,  0.1782800270, -0.0161050134},
   {GAS_TYPE_HELIUM,         2.959298170, 7.17751320, -0.6411919460,  0.0451852767},
   {GAS_TYPE_HYDROGEN,       1.424108950, 3.03739469, -0.2030487370,  0.0106137856}
@@ -324,11 +325,11 @@ const A8_coef A8_coefs[] = {
                              1.25027200, -0.5283498,  0.2458511},
   {GAS_TYPE_N_BUTANE,       -0.066677750, 0.21001740, 0.06330205,
                              0.31826600,  0.1474434, -1.1139350},
-  {GAS_TYPE_ISO_BUTANE,        0.072349270, 0.00943521,-0.03673568,
+  {GAS_TYPE_ISO_BUTANE,      0.072349270, 0.00943521,-0.03673568,
                              0.45167220, -0.3272680, -0.6135352},
   {GAS_TYPE_N_PENTANE,              0.0, 0.16511560,-0.07126922,
                              0.06698673, -0.5283166, -0.7803174},
-  {GAS_TYPE_ISO_PENTANE,       0.02229787, 0.08380246, 0.04639638,
+  {GAS_TYPE_ISO_PENTANE,     0.02229787, 0.08380246, 0.04639638,
                             -0.14505830, 0.03725585, -0.4106772},
   {GAS_TYPE_HEXANE,          0.17535290, -0.08018375,-0.03543316,
                             -0.09677546, -0.2015218, -1.2065620},
@@ -354,3 +355,73 @@ const A9_molar_mass *get_molar_mass(gas_t gas_name) {
   return get_coefs(A9_molar_masses, GET_ARRAY_SIZE(A9_molar_masses), gas_name);
 }
 #endif  // !ISO_20765
+
+molar_parameters calculate_molar_data(ng_gost_mix components) {
+  molar_parameters mp;
+  mp.mass = 0.0;
+  const component_characteristics* xi_ch = nullptr;
+  for (size_t i = 0; i < components.size(); ++i) {
+    xi_ch = get_characteristics(components[i].first);
+    if (xi_ch != nullptr) {
+      mp.mass += components[i].second * xi_ch->M;
+    } else {
+      throw gparameters_exception(ERROR_INIT_T,
+                                  "Ошибка расчёта молярной массы смеси. "
+                                  "Функция set_molar_mass");
+    }
+  }
+  mp.Rm = 1000.0 * GAS_CONSTANT / mp.mass;
+  return mp;
+}
+
+parameters calclulate_pseudocrit_vpte(ng_gost_mix components) {
+  double vol = 0.0;
+  double temp = 0.0;
+  double press_var = 0.0;
+  double tmp_var = 0;
+  double Mi = 0.0, Mj = 0.0;
+  const component_characteristics* x_ch = nullptr;
+  const critical_params* i_cp = nullptr;
+  const critical_params* j_cp = nullptr;
+  for (size_t i = 0; i < components.size(); ++i) {
+    if ((x_ch = get_characteristics(components[i].first))) {
+      Mi = x_ch->M;
+    } else {
+      Logging::Append(
+          "init pseudocritic by gost model\n"
+          "  undefined component: #" +
+          std::to_string(components[i].first));
+      continue;
+    }
+    if (!(i_cp = get_critical_params(components[i].first)))
+      continue;
+    for (size_t j = 0; j < components.size(); ++j) {
+      if ((x_ch = get_characteristics(components[j].first))) {
+        Mj = x_ch->M;
+      } else {
+        Logging::Append(
+            "init pseudocritic by gost model\n"
+            "  undefined component: #" +
+            std::to_string(components[j].first));
+        continue;
+      }
+      if (!(j_cp = get_critical_params(components[j].first)))
+        continue;
+      tmp_var = components[i].second * components[j].second
+                * pow(pow(Mi / i_cp->density, 0.333333)
+                + pow(Mj / j_cp->density, 0.333333), 3.0);
+      vol += tmp_var;
+      temp += tmp_var * sqrt(i_cp->temperature * j_cp->temperature);
+    }
+    press_var += components[i].second * i_cp->acentric;
+  }
+  press_var *= 0.08;
+  press_var = 0.291 - press_var;
+  parameters pseudocrit_vpt;
+  pseudocrit_vpt.volume = 0.125 * vol;
+  pseudocrit_vpt.temperature = 0.125 * temp / vol;
+  pseudocrit_vpt.pressure = 1000 * GAS_CONSTANT
+                            * pseudocrit_vpt.temperature * press_var
+                            / pseudocrit_vpt.volume;
+  return pseudocrit_vpt;
+}

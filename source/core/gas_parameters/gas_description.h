@@ -10,10 +10,12 @@
 #ifndef _CORE__GAS_PARAMETERS__GAS_DESCRIPTION_H_
 #define _CORE__GAS_PARAMETERS__GAS_DESCRIPTION_H_
 
-#include "atherm_common.h"
+#include "Common.h"
 #include "ErrorWrap.h"
+#include "atherm_common.h"
 #include "gas_defines.h"
 
+#include <exception>
 #include <map>
 #include <string>
 #include <utility>
@@ -21,8 +23,8 @@
 
 #include <stdint.h>
 
-
-gas_t gas_by_name(const std::string &name);
+/* todo: remove it */
+gas_t gas_by_name(const std::string& name);
 
 inline double volume_by_compress(double p, double t, double mol, double z) {
   return z * 1000.0 * GAS_CONSTANT * t / (p * mol);
@@ -32,35 +34,59 @@ inline double compress_by_volume(double p, double t, double mol, double v) {
   return v * p * mol / (1000.0 * GAS_CONSTANT * t);
 }
 
-/// Динамические параметры вещества, зависящие от
-///   других его параметров
+/**
+ * \brief Класс исключений инициализации или обработки
+ *   газовых параметров
+ * */
+class gparameters_exception : public std::exception {
+ public:
+  gparameters_exception(const std::string& msg);
+  gparameters_exception(merror_t error, const std::string& msg);
+
+  const char* what() const noexcept;
+
+ private:
+  /**
+   * \brief Код ошибки
+   * */
+  merror_t error_;
+  /**
+   * \brief Сообщение ошибки
+   * */
+  std::string msg_;
+};
+
+/**
+ * \brief Динамические параметры вещества, зависящие от
+ *   других его параметров
+ * */
 struct dyn_parameters {
   mstatus_t status;
   dyn_setup setup;
-         /// Удельная изохорная теплоёмкость, cv
+  /// Удельная изохорная теплоёмкость, cv
   double heat_cap_vol,
-         /// Удельная изобарная теплоёмкость, cp
-         heat_cap_pres,
-         /// Внутреняя энергия
-         internal_energy,
-         /// Энтальпия
-         enthalpy,
-         /// Показатель адиабаты
-         adiabatic,
-         /**
-          * \brief Коэффициент бета, максимаьлной скорости истечения смеси
-          * \note
-          * beta_kr=beta_kr(adiabatic_index)
-          *   = [0.0, ... ,1.0]
-          *   if (pressure_1/pressure_2 < beta_kr):
-          *     flow velocity = const, (maximum)
-          *   else : flow velocity ~ p,
-          *     adiabatic_index and etc
-          *   P.S. look dynamic_modeling*.*
-          * */
-         beta_kr,
-         /// Энтропия
-         entropy;
+      /// Удельная изобарная теплоёмкость, cp
+      heat_cap_pres,
+      /// Внутреняя энергия
+      internal_energy,
+      /// Энтальпия
+      enthalpy,
+      /// Показатель адиабаты
+      adiabatic,
+      /**
+       * \brief Коэффициент бета, максимаьлной скорости истечения смеси
+       * \note
+       * beta_kr=beta_kr(adiabatic_index)
+       *   = [0.0, ... ,1.0]
+       *   if (pressure_1/pressure_2 < beta_kr):
+       *     flow velocity = const, (maximum)
+       *   else : flow velocity ~ p,
+       *     adiabatic_index and etc
+       *   P.S. look dynamic_modeling*.*
+       * */
+      beta_kr,
+      /// Энтропия
+      entropy;
   /**
    * \brief Соответствующие макропараметры
    * */
@@ -68,19 +94,25 @@ struct dyn_parameters {
   // in future)
   // struct therm_potentials potentials;
 
-private:
-  dyn_parameters(dyn_setup setup, double cv, double cp,
-      double int_eng, parameters pm);
+ private:
+  dyn_parameters(dyn_setup setup,
+                 double cv,
+                 double cp,
+                 double int_eng,
+                 parameters pm);
   void check_setup();
 
   static merror_t check_input(parameters pm);
 
-public:
+ public:
   /**
    * \brief Инициализировать структуру, проверив входные параметры
    * */
-  static dyn_parameters *Init(dyn_setup setup, double cv,
-      double cp, double int_eng, parameters pm);
+  static dyn_parameters* Init(dyn_setup setup,
+                              double cv,
+                              double cp,
+                              double int_eng,
+                              parameters pm);
   /**
    * \brief Инициализировать пустую структуру(заглушка для газовых смесей).
    *   Инициализировать после можно методом ResetParameters
@@ -95,7 +127,7 @@ public:
    * \todo Доделать, энтальпию например
    * */
   merror_t ResetParameters(parameters pm,
-      const std::map<dyn_setup, double> &params);
+                           const std::map<dyn_setup, double>& params);
   void Update();
 };
 
@@ -110,26 +142,71 @@ public:
          entropy;
 }; */
 
+/**
+ * \brief Параметры газа(или смеси) зависящие от его молярной массы
+ * */
+struct molar_parameters {
+  /**
+   * \brief Молярная масса смеси
+   * */
+  double mass,
+      /**
+       * \brief Газовая постоянная смеси (Rm = R / m),
+       *   где R - универсальная газовая постоянная,
+       *       m - молярная масса
+       * */
+      Rm;
+};
+
 /// параметры газа, зависящие от его физической природы и
 ///   не изменяющиеся при изменении его состояния
 struct const_parameters {
   const gas_t gas_name;
-  const double V_K,              // K point parameters (critical point)
-               P_K,
-               T_K,
-               Z_K,
-               molecularmass,
-               R,                // gas constant
-               acentricfactor;
+  /**
+   * \brief Общие параметры газа в критической точке
+   * */
+  const parameters critical;
+  /**
+   * \brief Значение коэффициента сжимаемости в критической точке
+   * */
+  const double Z_K,
+      /**
+       * \brief Значение фактора ацентричности
+       * */
+      acentricfactor;
+  /**
+   * \brief Данные привязанные к значению молярной массы
+   * */
+  molar_parameters mp;
 
-private:
-  const_parameters(gas_t gas_name, double vk, double pk, double tk,
-      double zk, double mol, double R, double af);
-  const_parameters &operator=(const const_parameters &) = delete;
+ private:
+  const_parameters(gas_t gas_name,
+                   double vk,
+                   double pk,
+                   double tk,
+                   double zk,
+                   double mol,
+                   double R,
+                   double af);
+  const_parameters& operator=(const const_parameters&) = delete;
 
-public:
-  static const_parameters *Init(gas_t gas_name, double vk, double pk,
-      double tk, double zk, double mol, double af);
+ public:
+  /**
+   * \brief конструктор для газовых смесей
+   *
+   * \param pseudo_critic Пседокритические параметры смеси
+   * \param zk Значение фактора сжимаемости
+   * \param md Молекулярная масса и газовая постоянная смеси
+   * \param ??? af Значение фактора ацентричности
+   *
+   * \throw gparameters_exception
+   *
+   * \todo Не совсем ясно про  фактор ацентричности
+   *   в контексте их использоапния для смесей.
+   *
+   * gas_name = GAS_TYPE_MIX
+   * */
+  const_parameters(parameters pc, double zk, molar_parameters md);
   /**
    * \brief Проверить параметры компонента
    *
@@ -146,11 +223,34 @@ public:
    *   -- фактора ацентричности - может быть меньше 0.0
    *   -- vk и zk - инициализирован должен быть только один из них
    * */
-  static bool check_params(double vk, double pk, double tk,
-      double zk, double mol, double af);
+  static inline bool check_params(double vk,
+                                  double pk,
+                                  double tk,
+                                  double zk,
+                                  double mol,
+                                  double af) {
+    return (std::isfinite(af)) ? check_params(vk, pk, tk, zk, mol) : false;
+  }
+  /**
+   * \brief Проверить параметры компонента
+   *
+   * \note Копия check_params без фактора ацентричности, для смесей
+   * */
+  static bool check_params(double vk,
+                           double pk,
+                           double tk,
+                           double zk,
+                           double mol);
 
-  const_parameters(const const_parameters &cgp);
+  const_parameters(const const_parameters& cgp);
 
+  static const_parameters* Init(gas_t gas_name,
+                                double vk,
+                                double pk,
+                                double tk,
+                                double zk,
+                                double mol,
+                                double af);
   /**
    * \brief Параметры инициализированы для газовой смеси
    * */
@@ -159,10 +259,17 @@ public:
    * \brief Параметры инициализированы для неопределённого газа
    * */
   bool IsAbstractGas() const;
+  /**
+   * \brief Получить строковое представление данных
+   * \param pref Префикс перед новой строкой, для соблюдения отступов
+   *
+   * \return Строковое представление структуры
+   * */
+  std::string GetString(std::string pref = "") const;
 };
 
-bool is_valid_cgp(const const_parameters &cgp);
-bool is_valid_dgp(const dyn_parameters &dgp);
+bool is_valid_cgp(const const_parameters& cgp);
+bool is_valid_dgp(const dyn_parameters& dgp);
 
 /*
  * mixes defines
@@ -172,8 +279,7 @@ bool is_valid_dgp(const dyn_parameters &dgp);
  */
 class modelGeneral;
 struct model_str;
-typedef std::pair<const_parameters, dyn_parameters>
-    const_dyn_parameters;
+typedef std::pair<const_parameters, dyn_parameters> const_dyn_parameters;
 typedef std::multimap<const double, const_dyn_parameters> parameters_mix;
 
 /* mix by gost */
@@ -192,14 +298,16 @@ typedef std::vector<ng_gost_component> ng_gost_mix;
  *   - .compononents - parameters_mix;  -
  *   - .ng_gost_components - ng_gost_mix; -
  *   - .cdp{.cgp, .dgp} - single const and dynamic  )
- * \todo мэйби от union в 2к20 отказаться уже
+ * \todo
+ * 1. От union ибвиться, заменить на variant<...>
+ * 2. Сами данные обернуть в структуру с get операциями
  * */
 union const_dyn_union {
-  const parameters_mix *components;
-  const ng_gost_mix *ng_gost_components;
+  const parameters_mix* components;
+  const ng_gost_mix* ng_gost_components;
   struct {
-    const const_parameters *cgp;
-    const dyn_parameters *dgp;
+    const const_parameters* cgp;
+    const dyn_parameters* dgp;
   } cdp;
   ~const_dyn_union();
 };
@@ -208,7 +316,7 @@ union const_dyn_union {
  * \brief Входные данные инициализации газовой смеси
  * */
 struct gas_params_input {
-public:
+ public:
   /**
    * \brief Первые значение давления и температуры
    * */
@@ -227,7 +335,7 @@ struct gas_pair {
 
   gas_pair() = delete;
   gas_pair(gas_t f, gas_t s);
-  bool operator<(const gas_pair &rhs) const;
+  bool operator<(const gas_pair& rhs) const;
 };
 /** \brief мапа бинарных коэффициентов  */
 typedef std::map<const gas_pair, double> binary_coef_map;
@@ -237,21 +345,21 @@ struct calculation_info;
  * \brief Структура для добавления в базу данных
  * */
 struct calculation_state_log {
-public:
+ public:
   /**
    * \brief Установить динамические параметры
    * \param dp Ссылка на динамические параметры
    *
    * \todo Как насчёт сюда тоже мапу прокидывать
    * */
-  calculation_state_log &SetDynPars(const dyn_parameters &dp);
+  calculation_state_log& SetDynPars(const dyn_parameters& dp);
   /**
    * \brief Установить указатель на структуру расчётов
    * \param ci Указатель на структуру информации о расчёте
    * */
-  calculation_state_log &SetCalculationInfo(calculation_info *ci);
+  calculation_state_log& SetCalculationInfo(calculation_info* ci);
 
-public:
+ public:
   enum state_info_flags {
     f_empty = 0x00,
     /** \brief Уникальный id информации по расчёту */
@@ -285,7 +393,7 @@ public:
 
   int32_t id;
   int32_t info_id;
-  const calculation_info *calculation = nullptr;
+  const calculation_info* calculation = nullptr;
 
   dyn_parameters dyn_pars;
   std::string state_phase;
@@ -320,18 +428,18 @@ struct gas_char {
     return (gas == GAS_TYPE_CARBON_DIOXIDE) ? true : false;
   }
   static inline bool IsAcetylene(gas_t gas) {
-  #ifdef ASSIGNMENT_TRACE_COMPONENTS
+#ifdef ASSIGNMENT_TRACE_COMPONENTS
     return (gas == GAS_TYPE_ACETYLENE) ? true : false;
-  #else
+#else
     return false;
-  #endif  // ASSIGNMENT_TRACE_COMPONENTS
+#endif  // ASSIGNMENT_TRACE_COMPONENTS
   }
   static inline bool IsCarbonMonoxide(gas_t gas) {
     return (gas == GAS_TYPE_CARBON_MONOXIDE) ? true : false;
   }
 
-private:
-  static bool is_in(gas_t g, const std::vector<gas_t> &v);
+ private:
+  static bool is_in(gas_t g, const std::vector<gas_t>& v);
 };
 
 #endif  // !_CORE__GAS_PARAMETERS__GAS_DESCRIPTION_H_

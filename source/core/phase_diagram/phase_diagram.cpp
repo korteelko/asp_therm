@@ -229,10 +229,10 @@ binodalpoints *PhaseDiagram::GetBinodalPoints(const const_parameters &cp,
       if (calculated_.find(um) == calculated_.end())
         calculated_.emplace(um, bdp);
     bp = new binodalpoints(*bdp);
-    f(bp->vLeft, cp.V_K);
-    f(bp->vRigth, cp.V_K);
-    f(bp->p, cp.P_K);
-    f(bp->t, cp.T_K);
+    f(bp->vLeft, cp.critical.volume);
+    f(bp->vRigth, cp.critical.volume);
+    f(bp->p, cp.critical.pressure);
+    f(bp->t, cp.critical.temperature);
     bp->mn = um.mn;
   }
   return bp;

@@ -112,7 +112,7 @@ TEST_F(MixtureCriticalTest, ch_pr_avg_VkTest) {
   set_vk_test_case();
   double  av_mol = std::accumulate(pm.begin(), pm.end(), 0.0,
       [](double a, const std::pair<const double, const_dyn_parameters> &c){
-      return a + c.first * c.second.first.molecularmass;});
+      return a + c.first * c.second.first.mp.mass;});
   double ans = 0.328 / av_mol;
   double dans = ans * 0.015;
   EXPECT_NEAR(ch_pr_avg_Vk(pm), ans, dans);

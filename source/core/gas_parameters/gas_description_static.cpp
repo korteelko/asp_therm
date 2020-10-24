@@ -41,15 +41,15 @@ std::ostream &operator<< (std::ostream &outstream,
 
 // const_gasparametrs fields
 double GasParameters::cgetV_K() const {
-  return const_params.V_K;
+  return const_params.critical.volume;
 }
 
 double GasParameters::cgetP_K() const {
-  return const_params.P_K;
+  return const_params.critical.pressure;
 }
 
 double GasParameters::cgetT_K() const {
-  return const_params.T_K;
+  return const_params.critical.temperature;
 }
 
 double GasParameters::cgetAcentricFactor() const {
@@ -57,11 +57,11 @@ double GasParameters::cgetAcentricFactor() const {
 }
 
 double GasParameters::cgetMolecularMass() const {
-  return const_params.molecularmass;
+  return const_params.mp.mass;
 }
 
 double GasParameters::cgetR() const {
-  return const_params.R;
+  return const_params.mp.Rm;
 }
 
 double GasParameters::cgetCP() const {

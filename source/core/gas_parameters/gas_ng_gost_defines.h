@@ -123,6 +123,8 @@ extern const A7_coef A7_coefs[];
 extern const A8_coef A8_coefs[];
 extern const int A8_sigmas[];
 
+
+
 template <class NG_COEF_T>
 const NG_COEF_T *get_coefs(const NG_COEF_T *coefs_array,
     size_t array_size, gas_t gas_name) {
@@ -132,5 +134,15 @@ const NG_COEF_T *get_coefs(const NG_COEF_T *coefs_array,
   }
   return NULL;
 }
+
+/**
+ * \brief Установить значение молярной массы(ng_molar_mass_)
+ *   и газовой постоянной смеси(Rm)
+ * */
+molar_parameters calculate_molar_data(ng_gost_mix components);
+/**
+ * \brief Инициализировать псевдокритические параметры смеси
+ * */
+parameters calclulate_pseudocrit_vpte(ng_gost_mix components);
 
 #endif  // !_CORE__GAS_PARAMETERS__GAS_NG_GOST_DEFINES_H_

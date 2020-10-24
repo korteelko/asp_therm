@@ -162,12 +162,18 @@ GasParametersGost30319Dyn* GasParametersGost30319Dyn::Init(gas_params_input gpi,
 #endif  // !ISO_20765
   if (!gpi.const_dyn.ng_gost_components->empty()) {
     if (is_valid_limits(*gpi.const_dyn.ng_gost_components, use_iso)) {
-      std::unique_ptr<const_parameters> cgp(
-          const_parameters::Init(GAS_TYPE_MIX, 1.0, 1.0, 1.0, 1.0, 1.0, 0.1));
-      assert(cgp != nullptr && "todo: переписать конструктор GasParameter");
-      res = new GasParametersGost30319Dyn(
-          {0.0, gpi.p, gpi.t}, *cgp, dyn_parameters(),
-          *gpi.const_dyn.ng_gost_components, use_iso);
+      try {
+        auto pc = calclulate_pseudocrit_vpte(*gpi.const_dyn.ng_gost_components);
+        auto mp = calculate_molar_data(*gpi.const_dyn.ng_gost_components);
+        // рассчитать фактор ацентричности в критической точке
+        double zk =
+            compress_by_volume(pc.pressure, pc.temperature, mp.mass, pc.volume);
+        res = new GasParametersGost30319Dyn(
+            {0.0, gpi.p, gpi.t}, const_parameters(pc, zk, mp),
+            *gpi.const_dyn.ng_gost_components, use_iso);
+      } catch (gparameters_exception& e) {
+        Logging::Append(io_loglvl::err_logs, e.what());
+      }
     } else {
       Logging::Append(ERROR_INIT_T,
                       "natural gas model init error:\n"
@@ -183,14 +189,13 @@ GasParametersGost30319Dyn* GasParametersGost30319Dyn::Init(gas_params_input gpi,
 
 GasParametersGost30319Dyn::GasParametersGost30319Dyn(parameters prs,
                                                      const_parameters cgp,
-                                                     dyn_parameters dgp,
                                                      ng_gost_mix components,
                                                      bool use_iso)
-    : GasParameters(prs, cgp, dgp),
+    : GasParameters(prs, cgp, dyn_parameters()),
       components_(components),
       use_iso20765_(use_iso) {
   if (setFuncCoefficients())
-    setStartCondition();
+    set_p0m();
   if (error_.GetErrorCode()) {
     // если была ошибка на стадии инициализации
     status_ = STATUS_HAVE_ERROR;
@@ -209,15 +214,6 @@ bool GasParametersGost30319Dyn::setFuncCoefficients() {
     set_Cn();
   }
   return (error_.GetErrorCode()) ? false : true;
-}
-
-void GasParametersGost30319Dyn::setStartCondition() {
-  if (set_molar_data()) {
-    error_.SetError(ERROR_INIT_T, "udefined component of natural gas");
-  } else {
-    set_p0m();
-    init_pseudocrit_vpte();
-  }
 }
 
 // calculating
@@ -377,72 +373,6 @@ void GasParametersGost30319Dyn::set_p0m() {
   coef_p0m_ = 0.001 * pow(coef_kx_, -3.0) * GAS_CONSTANT * Lt;
 }
 
-merror_t GasParametersGost30319Dyn::set_molar_data() {
-  ng_molar_mass_ = 0.0;
-  const component_characteristics* xi_ch = nullptr;
-  for (size_t i = 0; i < components_.size(); ++i) {
-    xi_ch = get_characteristics(components_[i].first);
-    if (xi_ch != nullptr) {
-      ng_molar_mass_ += components_[i].second * xi_ch->M;
-    } else {
-      return ERROR_INIT_T;
-    }
-  }
-  Rm = 1000.0 * GAS_CONSTANT / ng_molar_mass_;
-  return ERROR_SUCCESS_T;
-}
-
-void GasParametersGost30319Dyn::init_pseudocrit_vpte() {
-  double vol = 0.0;
-  double temp = 0.0;
-  double press_var = 0.0;
-  double tmp_var = 0;
-  double Mi = 0.0, Mj = 0.0;
-  const component_characteristics* x_ch = nullptr;
-  const critical_params* i_cp = nullptr;
-  const critical_params* j_cp = nullptr;
-  for (size_t i = 0; i < components_.size(); ++i) {
-    if ((x_ch = get_characteristics(components_[i].first))) {
-      Mi = x_ch->M;
-    } else {
-      Logging::Append(
-          "init pseudocritic by gost model\n"
-          "  undefined component: #" +
-          std::to_string(components_[i].first));
-      continue;
-    }
-    if (!(i_cp = get_critical_params(components_[i].first)))
-      continue;
-    for (size_t j = 0; j < components_.size(); ++j) {
-      if ((x_ch = get_characteristics(components_[j].first))) {
-        Mj = x_ch->M;
-      } else {
-        Logging::Append(
-            "init pseudocritic by gost model\n"
-            "  undefined component: #" +
-            std::to_string(components_[j].first));
-        continue;
-      }
-      if (!(j_cp = get_critical_params(components_[j].first)))
-        continue;
-      tmp_var = components_[i].second * components_[j].second *
-                pow(pow(Mi / i_cp->density, 0.333333) +
-                        pow(Mj / j_cp->density, 0.333333),
-                    3.0);
-      vol += tmp_var;
-      temp += tmp_var * sqrt(i_cp->temperature * j_cp->temperature);
-    }
-    press_var += components_[i].second * i_cp->acentric;
-  }
-  press_var *= 0.08;
-  press_var = 0.291 - press_var;
-  pseudocrit_vpte_.volume = 0.125 * vol;
-  pseudocrit_vpte_.temperature = 0.125 * temp / vol;
-  pseudocrit_vpte_.pressure = 1000 * GAS_CONSTANT *
-                              pseudocrit_vpte_.temperature * press_var /
-                              pseudocrit_vpte_.volume;
-}
-
 merror_t GasParametersGost30319Dyn::set_cp0r() {
   merror_t error = ERROR_SUCCESS_T;
   double cp0r = 0.0;
@@ -482,7 +412,7 @@ merror_t GasParametersGost30319Dyn::set_cp0r() {
                               "ГОСТ модель: cp0r, не распознан компонент");
     }
   }
-  ng_gost_params_.cp0r = cp0r * Rm;
+  ng_gost_params_.cp0r = cp0r * const_params.mp.Rm;
   return error;
 }
 
@@ -555,7 +485,7 @@ merror_t GasParametersGost30319Dyn::set_volume() {
   if (status_ != STATUS_HAVE_ERROR) {
     if (inLimits(vpte_.pressure, vpte_.temperature)) {
       double sigma = calculate_sigma(vpte_.pressure, vpte_.temperature);
-      vpte_.volume = pow(coef_kx_, 3.0) / (ng_molar_mass_ * sigma);
+      vpte_.volume = pow(coef_kx_, 3.0) / (const_params.mp.mass * sigma);
       bool is_valid = (set_cp0r() == ERROR_SUCCESS_T);
 #if defined(ISO_20765)
       if (use_iso20765_ && is_valid) {
@@ -747,6 +677,7 @@ double GasParametersGost30319Dyn::calculate_sigma(double p, double t) const {
 
 void GasParametersGost30319Dyn::update_dynamic() {
   std::map<dyn_setup, double> params;
+  double Rm = const_params.mp.Rm;
 #if defined(ISO_20765)
   ng_gost_params_.u = 0.0;
   ng_gost_params_.h = 0.0;

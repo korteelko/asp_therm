@@ -30,9 +30,9 @@ void Redlich_Kwong2::set_model_coef() {
 
 void Redlich_Kwong2::set_model_coef(
     const const_parameters &cp) {
-  model_coef_a_ = 0.42748 * std::pow(cp.R, 2.0) *
-      std::pow(cp.T_K, 2.5) / cp.P_K;
-  model_coef_b_ = 0.08664 * cp.R * cp.T_K / cp.P_K;
+  model_coef_a_ = 0.42748 * std::pow(cp.mp.Rm, 2.0) *
+      std::pow(cp.critical.temperature, 2.5) / cp.critical.pressure;
+  model_coef_b_ = 0.08664 * cp.mp.Rm * cp.critical.temperature / cp.critical.pressure;
 }
 
 /* в англ вики и обеих книга Брусиловского */
@@ -149,8 +149,8 @@ double Redlich_Kwong2::get_volume(double p, double t,
   set_model_coef(cp);
   std::vector<double> coef {
       1.0,
-      -cp.R*t/p,
-      model_coef_a_/(p*std::sqrt(t)) - cp.R *
+      -cp.mp.Rm*t/p,
+      model_coef_a_/(p*std::sqrt(t)) - cp.mp.Rm *
           t*model_coef_b_/p - model_coef_b_*model_coef_b_,
       -model_coef_a_*model_coef_b_/(p*std::sqrt(t)),
       0.0, 0.0, 0.0
@@ -173,7 +173,7 @@ double Redlich_Kwong2::get_volume(double p, double t,
 double Redlich_Kwong2::get_pressure(double v, double t,
     const const_parameters &cp) {
   set_model_coef(cp);
-  const double temp = cp.R * t / (v - model_coef_b_) -
+  const double temp = cp.mp.Rm * t / (v - model_coef_b_) -
       model_coef_a_ / (std::sqrt(t)* v *(v + model_coef_b_));
   return temp;
 }

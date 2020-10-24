@@ -100,7 +100,6 @@ class GasParametersGost30319Dyn : public GasParameters {
  private:
   GasParametersGost30319Dyn(parameters prs,
                             const_parameters cgp,
-                            dyn_parameters dgp,
                             ng_gost_mix components,
                             bool use_iso);
   /**
@@ -108,12 +107,6 @@ class GasParametersGost30319Dyn : public GasParameters {
    * \note Расчитываются только на старте программы
    * */
   bool setFuncCoefficients();
-  /**
-   * \brief Рассчить молярную массу смеси, медианные значения
-   *   удельной теплоёмкости и свободной энергии
-   * \note Расчитываются только на старте программы
-   * */
-  void setStartCondition();
   // init methods
   merror_t init_kx();
   void set_V();
@@ -122,14 +115,12 @@ class GasParametersGost30319Dyn : public GasParameters {
   void set_G();
   void set_Bn();
   void set_Cn();
-  void set_p0m();
-
   /**
-   * \brief Установить значение молярной массы(ng_molar_mass_)
-   *   и газовой постоянной смеси(Rm)
+   * \brief Рассчить медианные значения удельной теплоёмкости
+   *   и свободной энергии
+   * \note Расчитываются только на старте программы
    * */
-  merror_t set_molar_data();
-  void init_pseudocrit_vpte();
+  void set_p0m();
   /**
    * \brief Установить нулевое значение удельной теплоёмкости
    * */
@@ -208,18 +199,7 @@ class GasParametersGost30319Dyn : public GasParameters {
 
  private:
   ng_gost_mix components_;
-  parameters pseudocrit_vpte_;
   ng_gost30319_params ng_gost_params_;
-  /**
-   * \brief Молярная масса смеси
-   * */
-  double ng_molar_mass_;
-  /**
-   * \brief Газовая постоянная смеси (Rm = R / m),
-   *   где R - универсальная газовая постоянная,
-   *       m - молярная масса
-   * */
-  double Rm;
   double coef_kx_;
   double coef_V_, coef_Q_, coef_F_, coef_G_, coef_p0m_;
   std::vector<double> Bn_;

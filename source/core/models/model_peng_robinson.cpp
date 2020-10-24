@@ -96,9 +96,9 @@ void Peng_Robinson::set_model_coef() {
 
 void Peng_Robinson::set_model_coef(
     const const_parameters &cp) {
-  model_coef_a_ = 0.45724 * std::pow(cp.R, 2.0) *
-      std::pow(cp.T_K, 2.0) / cp.P_K;
-  model_coef_b_ = 0.0778 * cp.R * cp.T_K / cp.P_K;
+  model_coef_a_ = 0.45724 * std::pow(cp.mp.Rm, 2.0) *
+      std::pow(cp.critical.temperature, 2.0) / cp.critical.pressure;
+  model_coef_b_ = 0.0778 * cp.mp.Rm * cp.critical.temperature / cp.critical.pressure;
   model_coef_k_ = 0.37464 + 1.54226 * cp.acentricfactor -
       0.26992 * std::pow(cp.acentricfactor, 2.0);
 }
@@ -240,13 +240,13 @@ double Peng_Robinson::heat_capac_dif_prs_vol(const parameters new_state,
 
 double Peng_Robinson::get_volume(
     double p, double t, const const_parameters &cp) {
-  double alf = std::pow(1.0 + model_coef_k_*(1.0 - t / cp.T_K), 2.0);
+  double alf = std::pow(1.0 + model_coef_k_*(1.0 - t / cp.critical.temperature), 2.0);
   std::vector<double> coef {
       1.0,
-      model_coef_b_ - cp.R*t/p,
+      model_coef_b_ - cp.mp.Rm*t/p,
       (model_coef_a_*alf - 2.0 * model_coef_b_ *
-          cp.R*t)/p - 3.0*model_coef_b_*model_coef_b_,
-      std::pow(model_coef_b_, 3.0f) + (cp.R *
+          cp.mp.Rm*t)/p - 3.0*model_coef_b_*model_coef_b_,
+      std::pow(model_coef_b_, 3.0f) + (cp.mp.Rm *
           t*model_coef_b_*model_coef_b_ - model_coef_a_ * alf *model_coef_b_)/p,
       0.0, 0.0, 0.0};
   int roots_count;
@@ -264,8 +264,8 @@ double Peng_Robinson::get_volume(
 double Peng_Robinson::get_pressure(double v, double t,
     const const_parameters &cp) {
   const double a = std::pow(1.0 + model_coef_k_ * std::pow(1.0 -
-      std::sqrt(t / cp.T_K), 2.0), 2.0);
-  const double temp = cp.R*t / (v-model_coef_b_) -
+      std::sqrt(t / cp.critical.temperature), 2.0), 2.0);
+  const double temp = cp.mp.Rm*t / (v-model_coef_b_) -
       a * model_coef_a_ /
       (v*v+2.0*model_coef_b_*v -model_coef_b_*model_coef_b_);
   return temp;
@@ -289,10 +289,10 @@ void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
 // функция вызывается из класса GasParameters_dyn
 void Peng_Robinson::update_dyn_params(dyn_parameters &prev_state,
     const parameters new_state, const const_parameters &cp) {
-  double du  = internal_energy_integral(new_state, prev_state.parm, cp.T_K);
-  double dcv = heat_capac_vol_integral(new_state, prev_state.parm, cp.T_K);
+  double du  = internal_energy_integral(new_state, prev_state.parm, cp.critical.temperature);
+  double dcv = heat_capac_vol_integral(new_state, prev_state.parm, cp.critical.temperature);
   double dif_c = heat_capac_dif_prs_vol(new_state,
-      cp.T_K, cp.R);
+      cp.critical.temperature, cp.mp.Rm);
   prev_state.internal_energy += du;
   prev_state.heat_cap_vol    += dcv;
   prev_state.heat_cap_pres   = prev_state.heat_cap_vol + dif_c;

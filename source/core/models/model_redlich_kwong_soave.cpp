@@ -118,12 +118,12 @@ static double calculate_fw(double w) {
 }
 
 static double calculate_ac(const const_parameters &cp) {
-  return 0.42747 * std::pow(cp.R, 2.0) *
-      std::pow(cp.T_K, 2.0) / cp.P_K;
+  return 0.42747 * std::pow(cp.mp.Rm, 2.0) *
+      std::pow(cp.critical.temperature, 2.0) / cp.critical.pressure;
 }
 
 static double calculate_b(const const_parameters &cp) {
-  return 0.08664 * cp.R * cp.T_K / cp.P_K;
+  return 0.08664 * cp.mp.Rm * cp.critical.temperature / cp.critical.pressure;
 }
 
 #ifdef RPS_FUNCTIONS
@@ -166,7 +166,7 @@ void Redlich_Kwong_Soave::update_gasmix_coef_a(double t) {
   auto prs_it = prs.begin();
   model_coef_a_ = 0.0;
   for (const auto &x: const_rks_vals_) {
-    a[i++] = x.calculate_a(t / prs_it->second.first.T_K);
+    a[i++] = x.calculate_a(t / prs_it->second.first.critical.temperature);
     prs_it++;
   }
   i = 0;
@@ -183,9 +183,9 @@ void Redlich_Kwong_Soave::update_gasmix_coef_a(double t) {
 }
 
 void Redlich_Kwong_Soave::set_pure_gas_vals(const const_parameters &cp) {
-  coef_ac_ = 0.42747 * std::pow(cp.R, 2.0) *
-      std::pow(cp.T_K, 2.0) / cp.P_K;
-  model_coef_b_ = 0.08664 * cp.R * cp.T_K / cp.P_K;
+  coef_ac_ = 0.42747 * std::pow(cp.mp.Rm, 2.0) *
+      std::pow(cp.critical.temperature, 2.0) / cp.critical.pressure;
+  model_coef_b_ = 0.08664 * cp.mp.Rm * cp.critical.temperature / cp.critical.pressure;
   const_rks_vals_ = std::vector<const_rks_val>();
   const_rks_vals_.push_back(
       const_rks_val(calculate_ac(cp), calculate_fw(cp.acentricfactor)));
