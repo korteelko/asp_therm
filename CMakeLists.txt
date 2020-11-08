@@ -1,61 +1,39 @@
 cmake_minimum_required(VERSION 3.9)
 
 set(PROJECT_NAME asp_therm)
-set(RESULT_LIB atherm)
-set(EXECUTABLE ${PROJECT_NAME}_debug)
 project(${PROJECT_NAME})
-
-add_compile_options(-Wall)
-
-# todo: both options also can be placed in 'BUILD_OPTION' list
-set(CMAKE_BUILD_TYPE Debug)
-add_definitions(-DBYCMAKE_DEBUG)
-add_definitions(-DBYCMAKE_CXX17)
+# name of result lib(for release build)
+set(RESULT_LIB atherm)
+# executable target for debugging
+set(EXECUTABLE ${PROJECT_NAME}_debug)
 
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(ASP_THERM_CMAKE_ROOT ${ASP_THERM_ROOT}/cmake)
 
-# todo: maybe split in separate asp_therm_modules.cmake ???
-# todo: add full clear step(ninja cannot clear
-#   rapidjson 'doc/html' dir by yourself)
-#======================================================
-# SET BUILD OPTIONS
-#======================================================
-function(set_build_options)
-  message(STATUS "\t${PROJECT_NAME} build configuration:")
-  foreach(mod ${ARGN})
-    message(STATUS "\t\t${mod}")
-    # прокинуть дефайн вида 'BYCMAKE_${OPTION}' компилятору.
-    #   Префикс BYCMAKE для удобства поиска по проекту
-    add_definitions(-DBYCMAKE_${mod})
-    set(${mod} TRUE PARENT_SCOPE)
-  endforeach()
-endfunction()
+option(WITH_PUGIXML "Build with pugixml(always on)" ON)
+option(ISO_20765 "Include iso 20765 to build" ON)
+option(WITH_POSTGRESQL "Build with postres libs: `pq` and `pqxx`" OFF)
+option(TESTS_ENABLED "Run tests" OFF)
 
 
-list(APPEND
-  BUILD_OPTIONS
+# setup cmake directories
+set(THERMCORE_SOURCE_DIR "${ASP_THERM_ROOT}/source/core")
+set(THERMDB_SOURCE_DIR "${ASP_THERM_ROOT}/source/database")
+set(THERMREADER_SOURCE_DIR "${ASP_THERM_ROOT}/source/reader")
 
-  # use pugixml
-  #   now pugi is necessarily, not comment it
-  WITH_PUGIXML
-  # build postgresql module and link pqxx library
-  WITH_POSTGRESQL
-  # enable tests
-  TESTS_ENABLED
-)
+# setup file paths and cmake
+#   error codes
+set(ERRORCODES_FILE "merror_codes.h")
+set(ERRORCODES_PATH "${THERMCORE_SOURCE_DIR}/common/${ERRORCODES_FILE}")
+if(EXISTS ${ERRORCODES_PATH})
+  message(STATUS "Add file with codes of errors: ${ERRORCODES_PATH}")
+  set(INCLUDE_ERRORCODES -DINCLUDE_ERRORCODES)
+endif()
 
-# SETUP BUILD_OPTIONS
-set_build_options("${BUILD_OPTIONS}")
-add_definitions(-DISO_20765)
-
-
-#======================================================
-# PLATFORM
-#======================================================
-# set compiler requirements, source subdirectories
-#   file of error codes
-include(${ASP_THERM_CMAKE_ROOT}/atherm_setup.cmake)
+if(MSVC)
+  message(STATUS "asp_therm add define: -D_CRT_SECURE_NO_WARNINGS")
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
 
 # setup utils
 # OUT_DIR - для библиотеки atherm
@@ -63,14 +41,15 @@ set(OUT_DIR ${ASP_THERM_ROOT}/out/${RESULT_LIB})
 # MODULES_DIR - для сторонних библиотек.
 set(MODULES_DIR ${ASP_THERM_ROOT}/lib)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(OUT_DIR "${OUT_DIR}/debug")
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+  set(OUT_DIR ${OUT_DIR}/debug)
 endif()
 
 message(STATUS "asp_therm cmake build info:")
 message(STATUS "\t\tSystem info: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "\t\tBUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message(STATUS "\t\tOUT_DIR: ${OUT_DIR}")
+
 
 set(THERMCORE_INCLUDES
   "${THERMCORE_SOURCE_DIR}/common"
@@ -80,68 +59,41 @@ set(THERMCORE_INCLUDES
   "${THERMCORE_SOURCE_DIR}/service"
   "${THERMCORE_SOURCE_DIR}/subroutins"
 )
-include_directories(
+
+set(INCLUDE_DIRS
   ${THERMCORE_INCLUDES}
-  ${THERMUTILS_SOURCE_DIR}
   ${THERMDB_SOURCE_DIR}
   ${THERMREADER_SOURCE_DIR}
 )
 
 
-#======================================================
-# SOURCE
-#======================================================
-# add general sources
-# set variable 'MODELS_SRC' - general source files of project
-include(${ASP_THERM_CMAKE_ROOT}/models_src.cmake)
-
-
-#======================================================
-# LIBRARIES AND MODULES
-#======================================================
-add_subdirectory(${MODULES_DIR}/asp_db)
-include_directories(${MODULES_DIR}/asp_db/source)
-# todo: переделать, не очень красиво
-include_directories(${MODULES_DIR}/asp_db/lib/asp_utils/source)
-# modules
-#   pugixml
-#   http://pugixml.org
 if(WITH_PUGIXML)
-  message(STATUS "Add library pugixml")
+  message(STATUS "Add library pugixml."
+    "See http://pugixml.org for more information")
   set(PUGIXML_DIR "${MODULES_DIR}/pugixml")
   add_subdirectory(${PUGIXML_DIR})
-  include_directories(${PUGIXML_DIR}/src)
-  set(PUGIXML_LIB "pugixml")
+  list(APPEND INCLUDE_DIRS ${PUGIXML_DIR}/src)
+  set(PUGIXML_LIB pugixml)
+  add_definitions(-DBYCMAKE_WITH_PUGIXML)
 endif()
-
-#   pqxx
-#   http://pqxx.org/development/libpqxx/
 if(WITH_POSTGRESQL)
-  set(PQXX_LIBS pqxx pq)
+  # set additional information in `asp_db` module
+  add_definitions(-DBYCMAKE_WITH_POSTGRESQL)
+endif()
+if(ISO_20765)
+  add_definitions(-DBYCMAKE_ISO_20765)
 endif()
 
-#   thread
-set(THREADS_PREFER_PTHREAD_FLAG ON)
+add_subdirectory(${MODULES_DIR}/asp_db)
 find_package(Threads REQUIRED)
-
-
-#======================================================
-# OUTPUT SETUP
-#======================================================
-foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
-  string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
-  set_target_properties(${RESULT_LIB}
-    PROPERTIES LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${OUT_DIR}
-    PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${OUT_DIR}
-  )
-endforeach()
 set(LIBRARIES
 
-  asp_db
-  ${PUGIXML_LIB}
-  ${PQXX_LIBS}
   Threads::Threads
+  ${PUGIXML_LIB}
+  asp_db
 )
+
+include(${ASP_THERM_CMAKE_ROOT}/models_src.cmake)
 if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
   # build result library
   # todo: check result
@@ -150,6 +102,8 @@ if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
       LIBRARY_OUTPUT_DIRECTORY ${OUT_DIR}
       ARCHIVE_OUTPUT_DIRECTORY ${OUT_DIR}
   )
+  target_compile_definitions(${RESULT_LIB} PRIVATE ${INCLUDE_ERRORCODES})
+  target_include_directories(${RESULT_LIB} PRIVATE ${INCLUDE_DIRS})
   target_link_libraries(${RESULT_LIB} ${LIBRARIES})
 endif()
 
@@ -160,9 +114,12 @@ if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     ${MODELS_SRC}
     main.cpp
   )
+  target_compile_options(${EXECUTABLE} PRIVATE -Wall)
+  target_compile_definitions(${EXECUTABLE}
+    PRIVATE -DBYCMAKE_DEBUG ${INCLUDE_ERRORCODES})
+  target_include_directories(${EXECUTABLE} PRIVATE ${INCLUDE_DIRS})
   target_link_libraries(${EXECUTABLE} ${LIBRARIES})
 endif()
-
 
 # run tests
 if(TESTS_ENABLED)

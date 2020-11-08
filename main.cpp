@@ -11,10 +11,11 @@
 #include "calculation_by_file.h"
 #include "db_connection_manager.h"
 #include "db_queries_setup.h"
+#include "db_where.h"
 #include "gas_by_file.h"
 #include "gasmix_by_file.h"
-#include "model_redlich_kwong.h"
 #include "model_peng_robinson.h"
+#include "model_redlich_kwong.h"
 #include "models_configurations.h"
 #include "models_creator.h"
 #include "program_state.h"
@@ -23,7 +24,6 @@
 #include <vector>
 
 #include <assert.h>
-
 
 // #define JSON_READER_DEBUG
 // #define MODELS_DEBUG
@@ -34,7 +34,7 @@
 // #define DATABASE_DEBUG
 #define CALCULATION_DEBUG
 
-#define INPUT_P_T  3000000, 350
+#define INPUT_P_T 3000000, 350
 #define NEW_PARAMS 500000, 250
 
 namespace fs = std::filesystem;
@@ -44,23 +44,31 @@ const fs::path xml_data_dir = "../data";
 const fs::path xml_gases_dir = "../data/gases";
 const fs::path xml_calculations_dir = "../data/calculation";
 const fs::path xml_methane = "methane.xml";
-const fs::path xml_ethane  = "ethane.xml";
+const fs::path xml_ethane = "ethane.xml";
 const fs::path xml_propane = "propane.xml";
 
 const fs::path xml_gasmix = "../gasmix_inp_example.xml";
-const fs::path xml_calculation = "calculation/calculation_setup_iso.xml";
+const fs::path xml_calculation = "calculation/calculation_setup.xml";
 const fs::path xml_configuration = "../../configuration.xml";
 const fs::path json_test = "../../tests/full/utils/data/test_json.json";
 
 static model_str rk2_str(rg_model_id(rg_model_t::REDLICH_KWONG,
-    MODEL_SUBTYPE_DEFAULT), 1, 0, "debugi rk2");
+                                     MODEL_SUBTYPE_DEFAULT),
+                         1,
+                         0,
+                         "debugi rk2");
 static model_str rks_str(rg_model_id(rg_model_t::REDLICH_KWONG,
-    MODEL_RK_SUBTYPE_SOAVE), 1, 0, "debugi rks");
+                                     MODEL_RK_SUBTYPE_SOAVE),
+                         1,
+                         0,
+                         "debugi rks");
 static model_str pr_str(rg_model_id(rg_model_t::PENG_ROBINSON,
-    MODEL_SUBTYPE_DEFAULT), 1, 0, "debugi pr");
+                                    MODEL_SUBTYPE_DEFAULT),
+                        1,
+                        0,
+                        "debugi pr");
 
 static fs::path cwd;
-
 
 /**
  * \brief Функция отладки считывания и инициализации
@@ -75,8 +83,9 @@ int test_calculation_setup() {
 
   auto path = root_shp->CreateFileURL(xml_calculation.string());
   std::unique_ptr<ReaderSample<pugi::xml_node, calculation_node<pugi::xml_node>,
-      CalculationSetupBuilder>> rs(ReaderSample<pugi::xml_node,
-      calculation_node<pugi::xml_node>, CalculationSetupBuilder>::Init(&path, &builder));
+                               CalculationSetupBuilder>>
+      rs(ReaderSample<pugi::xml_node, calculation_node<pugi::xml_node>,
+                      CalculationSetupBuilder>::Init(&path, &builder));
   return (rs) ? rs->InitData() : 11;
 }
 
@@ -89,13 +98,12 @@ int test_calculation_init() {
   /* todo: naming??? */
   CalculationSetup CS(root_shp, xml_calculation.string());
   if (!(res = CS.GetError())) {
-    ProgramState &ps = ProgramState::Instance();
+    ProgramState& ps = ProgramState::Instance();
     AthermDBTables adb;
     DBConnectionManager dbm(&adb);
     // модели не дописаны
     CS.Calculate();
-    dbm.ResetConnectionParameters(
-        ps.GetDatabaseConfiguration());
+    dbm.ResetConnectionParameters(ps.GetDatabaseConfiguration());
     if (is_status_ok(dbm.CheckConnection()))
       CS.AddToDatabase(&dbm);
     else
@@ -104,14 +112,14 @@ int test_calculation_init() {
   return res;
 }
 
-
-int test_database_with_models(DBConnectionManager &dbm) {
+int test_database_with_models(DBConnectionManager& dbm) {
+  AthermDBTables adb;
   int res = 0;
   std::string filename = (cwd / xml_gases_dir / xml_gasmix).string();
 #if defined(RK2_DEBUG)
   std::unique_ptr<modelGeneral> mk(
       ModelsCreator::GetCalculatingModel(rk2_str, NULL, filename, INPUT_P_T));
-  model_info mi {.short_info = mk->GetModelShortInfo()};
+  model_info mi{.short_info = mk->GetModelShortInfo()};
   // dbm.SaveModelInfo(mi);
   // todo: это стандартный сетап на добавление так что его можно
   //   сохранить и использовать
@@ -123,20 +131,32 @@ int test_database_with_models(DBConnectionManager &dbm) {
   mi2.short_info.model_type.type = rg_model_t::REDLICH_KWONG;
   mi2.short_info.model_type.subtype = MODEL_SUBTYPE_DEFAULT;
   mi2.initialized = model_info::f_model_type | model_info::f_model_subtype;
+
   std::vector<model_info> r;
-  dbm.SelectRows(mi, &r);
+  WhereTreeConstructor<table_model_info> wtc(&adb);
+  WhereTree wt(wtc);
+  wt.Init(
+      wtc.And(wtc.Eq(MI_SHORT_INFO, mi.short_info.short_info),
+              wtc.Eq(MI_MODEL_TYPE, (int)mi.short_info.model_type.type),
+              wtc.Eq(MI_MODEL_SUBTYPE, (int)mi.short_info.model_type.subtype)));
+  dbm.SelectRows(wt, &r);
   r.clear();
 
-  mk.reset(ModelsCreator::GetCalculatingModel(rks_str, NULL, filename, INPUT_P_T));
-  model_info mis {.short_info = mk->GetModelShortInfo()};
+  mk.reset(
+      ModelsCreator::GetCalculatingModel(rks_str, NULL, filename, INPUT_P_T));
+  model_info mis{.short_info = mk->GetModelShortInfo()};
   // dbm.SaveModelInfo(mi);
   // todo: это стандартный сетап на добавление так что его можно
   //   сохранить и использовать
   mis.initialized = mis.f_full & (~mis.f_model_id);
   dbm.SaveSingleRow(mis, nullptr);
 
-  dbm.SelectRows(mi2, &r);
-  dbm.DeleteRows(mi2);
+  wt.Init(wtc.And(
+      wtc.Eq(MI_SHORT_INFO, mi2.short_info.short_info),
+      wtc.Eq(MI_MODEL_TYPE, (int)mi2.short_info.model_type.type),
+      wtc.Eq(MI_MODEL_SUBTYPE, (int)mi2.short_info.model_type.subtype)));
+  dbm.SelectRows(wt, &r);
+  dbm.DeleteRows(wt);
 
   std::string str = "Тестовая строка";
   model_info mi3 = model_info::GetDefault();
@@ -146,7 +166,11 @@ int test_database_with_models(DBConnectionManager &dbm) {
 
   /* select */
   std::vector<model_info> r1;
-  dbm.SelectRows(mi3, &r1);
+  wt.Init(wtc.And(
+      wtc.Eq(MI_SHORT_INFO, mi3.short_info.short_info),
+      wtc.Eq(MI_MODEL_TYPE, (int)mi3.short_info.model_type.type),
+      wtc.Eq(MI_MODEL_SUBTYPE, (int)mi3.short_info.model_type.subtype)));
+  dbm.SelectRows(wt, &r1);
 
   /* add calculation_info */
   calculation_info ci;
@@ -158,7 +182,12 @@ int test_database_with_models(DBConnectionManager &dbm) {
   }
   /* add state_log */
   std::vector<calculation_info> rc;
-  dbm.SelectRows(ci, &rc);
+  WhereTreeConstructor<table_calculation_info> wtc2(&adb);
+  WhereTree wt2(wtc2);
+  wt2.Init(wtc2.And(wtc2.Eq(CI_MODEL_INFO_ID, ci.model_id),
+                    wtc2.Eq(CI_DATE, ci.datetime),
+                    wtc2.Eq(CI_TIME, ci.datetime)));
+  dbm.SelectRows(wt2, &rc);
   if (rc.size()) {
     calculation_state_log log;
     log.info_id = rc[0].id;
@@ -180,9 +209,10 @@ int test_database_with_models(DBConnectionManager &dbm) {
     log.state_phase = stateToString[(int)state_phase::NOT_SET];
     log.initialized |= log.f_state_phase;
     std::vector<calculation_state_log> logs;
-    std::generate_n(std::back_insert_iterator<std::vector<calculation_state_log>>
-        (logs), 5, [&log](){ return log; });
-    for (auto &x: logs) {
+    std::generate_n(
+        std::back_insert_iterator<std::vector<calculation_state_log>>(logs), 5,
+        [&log]() { return log; });
+    for (auto& x : logs) {
       v += 0.0003;
       p -= 1272;
       x.dyn_pars.parm.volume = v;
@@ -190,50 +220,40 @@ int test_database_with_models(DBConnectionManager &dbm) {
     }
     dbm.SaveVectorOfRows(logs);
   }
-
-  /* delete */
-  if (r1.size()) {
-    model_info mi_del = model_info::GetDefault();
-    mi_del.id = r1[0].id;
-    mi_del.initialized = mi_del.f_model_id;
-    dbm.DeleteRows(mi_del);
-  }
 #endif  // RK2_TEST
   return res;
 }
 
 int test_database() {
   std::string filename = (cwd / xml_gases_dir / xml_configuration).string();
-  ProgramState &ps = ProgramState::Instance();
+  ProgramState& ps = ProgramState::Instance();
   AthermDBTables adb;
   // merror_t err = ps.ResetConfigFile(filename);
   // if (err)
   //   std::cerr << "update config error: " << hex2str(err) << std::endl;
   // db_parameters p = ps.GetDatabaseConfiguration();
   DBConnectionManager dbm(&adb);
-  dbm.ResetConnectionParameters(
-      ps.GetDatabaseConfiguration());
+  dbm.ResetConnectionParameters(ps.GetDatabaseConfiguration());
   auto st = dbm.CheckConnection();
   if (st == STATUS_HAVE_ERROR) {
-    std::cerr << "error during connection check: "
-        << dbm.GetErrorCode() << std::endl;
+    std::cerr << "error during connection check: " << dbm.GetError()
+              << std::endl;
     std::cerr << "  message: " << dbm.GetErrorMessage() << std::endl;
     return 1;
   }
-  std::vector<db_table> tables { table_model_info,
-      table_calculation_info, table_calculation_state_log };
-  for (const auto &x: tables) {
+  std::vector<db_table> tables{table_model_info, table_calculation_info,
+                               table_calculation_state_log};
+  for (const auto& x : tables) {
     if (!dbm.IsTableExists(x)) {
-      if (dbm.GetErrorCode())
+      if (dbm.GetError())
         std::cerr << "\nerror ocurred for tableExist command #" << int(x);
       dbm.CreateTable(x);
-      if (dbm.GetErrorCode())
+      if (dbm.GetError())
         std::cerr << "\nerror ocurred for tableCreate command #" << int(x);
     }
   }
   if (st == STATUS_HAVE_ERROR) {
-    std::cerr << "error during create table: "
-        << dbm.GetErrorCode() << std::endl;
+    std::cerr << "error during create table: " << dbm.GetError() << std::endl;
   }
   if (!ps.GetErrorCode())
     return test_database_with_models(dbm);
@@ -242,7 +262,7 @@ int test_database() {
 
 int test_program_configuration() {
   std::cerr << "test_program_configuration start\n";
-  ProgramState &ps = ProgramState::Instance();
+  ProgramState& ps = ProgramState::Instance();
   ps.ReloadConfiguration((cwd / xml_gases_dir / xml_configuration).string());
   merror_t e = ps.GetErrorCode();
   if (e) {
@@ -268,27 +288,25 @@ int test_models() {
       ModelsCreator::GetCalculatingModel(pr_str, filename, INPUT_P_T)));
 #endif  // PR_TEST
 #if defined(NG_GOST_DEBUG)
-  ng_gost_mix ngg = ng_gost_mix {
-      ng_gost_component{GAS_TYPE_METHANE, 0.965},
-      ng_gost_component{GAS_TYPE_ETHANE, 0.018},
-      ng_gost_component{GAS_TYPE_PROPANE, 0.0045},
-      ng_gost_component{GAS_TYPE_N_BUTANE, 0.001},
-      ng_gost_component{GAS_TYPE_ISO_BUTANE, 0.001},
-      ng_gost_component{GAS_TYPE_N_PENTANE, 0.0003},
-      ng_gost_component{GAS_TYPE_ISO_PENTANE, 0.0005},
-      ng_gost_component{GAS_TYPE_HEXANE, 0.0007},
-      ng_gost_component{GAS_TYPE_NITROGEN, 0.003},
-      ng_gost_component{GAS_TYPE_CARBON_DIOXIDE, 0.006}
-  };
+  ng_gost_mix ngg =
+      ng_gost_mix{ng_gost_component{GAS_TYPE_METHANE, 0.965},
+                  ng_gost_component{GAS_TYPE_ETHANE, 0.018},
+                  ng_gost_component{GAS_TYPE_PROPANE, 0.0045},
+                  ng_gost_component{GAS_TYPE_N_BUTANE, 0.001},
+                  ng_gost_component{GAS_TYPE_ISO_BUTANE, 0.001},
+                  ng_gost_component{GAS_TYPE_N_PENTANE, 0.0003},
+                  ng_gost_component{GAS_TYPE_ISO_PENTANE, 0.0005},
+                  ng_gost_component{GAS_TYPE_HEXANE, 0.0007},
+                  ng_gost_component{GAS_TYPE_NITROGEN, 0.003},
+                  ng_gost_component{GAS_TYPE_CARBON_DIOXIDE, 0.006}};
   test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(
-      rg_model_t::NG_GOST, ngg, INPUT_P_T)));
-  test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(
-      rg_model_t::NG_GOST, filename, INPUT_P_T)));
+      ModelsCreator::GetCalculatingModel(rg_model_t::NG_GOST, ngg, INPUT_P_T)));
+  test_vec.push_back(
+      std::unique_ptr<modelGeneral>(ModelsCreator::GetCalculatingModel(
+          rg_model_t::NG_GOST, filename, INPUT_P_T)));
 #endif  // NG_GOST_TEST
-  for (auto calc_mod = test_vec.rbegin();
-      calc_mod != test_vec.rend(); calc_mod++) {
+  for (auto calc_mod = test_vec.rbegin(); calc_mod != test_vec.rend();
+       calc_mod++) {
     if (*calc_mod == nullptr) {
       std::cerr << "        --------------          " << std::endl;
       continue;
@@ -306,12 +324,15 @@ int test_models() {
 
 int test_models_mix() {
   std::vector<std::unique_ptr<modelGeneral>> test_vec;
-  std::vector<gasmix_component_info> xml_files = std::vector<gasmix_component_info> {
-    gasmix_component_info("metane", (cwd / xml_gases_dir / xml_methane).string(), 0.988),
-    // add more (summ = 1.00)
-    gasmix_component_info("ethane", (cwd / xml_gases_dir / xml_ethane).string(), 0.009),
-    gasmix_component_info("propane", (cwd / xml_gases_dir / xml_propane).string(), 0.003)
-  };
+  std::vector<gasmix_component_info> xml_files =
+      std::vector<gasmix_component_info>{
+          gasmix_component_info(
+              "metane", (cwd / xml_gases_dir / xml_methane).string(), 0.988),
+          // add more (summ = 1.00)
+          gasmix_component_info(
+              "ethane", (cwd / xml_gases_dir / xml_ethane).string(), 0.009),
+          gasmix_component_info(
+              "propane", (cwd / xml_gases_dir / xml_propane).string(), 0.003)};
 #if defined(RK2_DEBUG)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(rk2_str, xml_files, INPUT_P_T)));
@@ -325,12 +346,12 @@ int test_models_mix() {
       ModelsCreator::GetCalculatingModel(pr_str, xml_files, INPUT_P_T)));
 #endif  // PR_TEST
 #if defined(NG_GOST_DEBUG)
-  test_vec.push_back(std::unique_ptr<modelGeneral>(
-      ModelsCreator::GetCalculatingModel(
-      rg_model_t::NG_GOST, xml_files, INPUT_P_T)));
+  test_vec.push_back(
+      std::unique_ptr<modelGeneral>(ModelsCreator::GetCalculatingModel(
+          rg_model_t::NG_GOST, xml_files, INPUT_P_T)));
 #endif  // NG_GOST_TEST
-  for (auto calc_mod = test_vec.rbegin();
-      calc_mod != test_vec.rend(); calc_mod++) {
+  for (auto calc_mod = test_vec.rbegin(); calc_mod != test_vec.rend();
+       calc_mod++) {
     if (*calc_mod == nullptr) {
       std::cerr << "        --------------          " << std::endl;
       continue;
@@ -346,31 +367,38 @@ int test_models_mix() {
   return 0;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   cwd = fs::path(argv[0]).parent_path();
   fs::current_path(cwd);
   ProgramState::Instance().SetProgramDirs(
       file_utils::FileURLRoot(file_utils::url_t::fs_path, cwd.string()),
-      file_utils::FileURLRoot(file_utils::url_t::fs_path, cwd / xml_calculations_dir));
+      file_utils::FileURLRoot(file_utils::url_t::fs_path,
+                              cwd / xml_calculations_dir));
   if (!test_program_configuration()) {
     Logging::Append(io_loglvl::debug_logs, "Запускаю тесты сборки");
     //*
-  #if defined(MODELS_DEBUG)
-    if (test_models()) return 1;
-    if (test_models_mix()) return 2;
-  #endif  // MODELS_TEST
-  #if defined(DATABASE_DEBUG)
-    if (test_database()) return 3;
-  #endif  // DATABASE_TEST
-  #if defined(JSON_READER_DEBUG)
-    if (test_json()) return 4;
-  #endif  // JSON_READER
+#if defined(MODELS_DEBUG)
+    if (test_models())
+      return 1;
+    if (test_models_mix())
+      return 2;
+#endif  // MODELS_TEST
+#if defined(DATABASE_DEBUG)
+    if (test_database())
+      return 3;
+#endif  // DATABASE_TEST
+#if defined(JSON_READER_DEBUG)
+    if (test_json())
+      return 4;
+#endif  // JSON_READER
 
-  #if defined(CALCULATION_DEBUG)
-    if (test_calculation_init()) return 5;;
-  #endif  // CALCULATION_DEBUG
+#if defined(CALCULATION_DEBUG)
+    if (test_calculation_init())
+      return 5;
+    ;
+#endif  // CALCULATION_DEBUG
     Logging::Append(io_loglvl::debug_logs, "Ни одной ошибки не заметил");
-  //*/
+    //*/
   }
 
   return 0;

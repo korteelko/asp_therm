@@ -1,34 +1,21 @@
-message(STATUS "\t\tRun Readers test")
+message(STATUS "\t\tRun Readers tests")
 
-# add_definitions(-DREADERS_TEST)
-set (COMMON_SRC
+set(COMMON_SRC
   ${THERMCORE_SOURCE_DIR}/common/atherm_common.cpp
   ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 
-  ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp
-)
-list(APPEND COMMON_SRC ${UTILS_SOURCE})
+  ${THERMCORE_SOURCE_DIR}/subroutins/file_structs.cpp)
 
-# test xml parser
-add_executable(
-  test_xml
-
+add_executable(test_xml
   ${ASP_THERM_FULLTEST_DIR}/utils/test_xml.cpp
-  ${COMMON_SRC}
-)
+  ${COMMON_SRC})
 
-# link pugixml library
-set(PUGIXML_DIR "${MODULES_DIR}/pugixml")
-include_directories(${PUGIXML_DIR}/src)
-link_directories(${ASP_THERM_ROOT}/build/lib/pugixml)
-set(PUGIXML_LIB "pugixml")
+target_compile_definitions(test_xml
+  PRIVATE -DBYCMAKE_DEBUG -DTESTING_PROJECT ${INCLUDE_ERRORCODES})
+target_compile_options(test_xml PRIVATE -fprofile-arcs -ftest-coverage)
+target_include_directories(test_xml
+  PRIVATE ${TESTS_INCLUDE_DIRS}
+  PRIVATE ${MODULES_DIR}/asp_db/source)
+target_link_libraries(test_xml pugixml asp_utils ${FULLTEST_LIBRARIES})
 
-
-target_link_libraries(test_xml
-
-  asp_utils
-  ${PUGIXML_LIB}
-  ${FULLTEST_LIBRARIES}
-)
-
-add_test(test_xml "utils xml")
+add_test(test_xml "utils/xml")

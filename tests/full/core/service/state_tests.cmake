@@ -1,38 +1,26 @@
-# Тестим всё
-set(PROJECT_NAME test_state)
-
-message(STATUS "\t\tRun full test")
+message(STATUS "\t\tRun full test(state)")
 
 include(${ASP_THERM_CMAKE_ROOT}/models_src.cmake)
-
-add_executable(
-  ${PROJECT_NAME}
+add_executable(test_state
+  ${MODELS_SRC}
 
   ${ASP_THERM_FULLTEST_DIR}/core/service/test_state.cpp
   ${ASP_THERM_FULLTEST_DIR}/core/service/test_calculation_setup.cpp
 
-  ${MODELS_SRC}
-  ${THERMDB_SOURCE_DIR}/atherm_db_tables.cpp
-)
+  ${THERMDB_SOURCE_DIR}/atherm_db_tables.cpp)
 
-# link pugixml library
-set(PUGIXML_DIR "${MODULES_DIR}/pugixml")
-include_directories(${PUGIXML_DIR}/src)
-link_directories(${ASP_THERM_ROOT}/build/lib/pugixml)
-set(PUGIXML_LIB "pugixml")
-
-#   pqxx
-set(PQXX_LIBS pqxx pq)
-
-
-target_link_libraries(${PROJECT_NAME}
-
+target_compile_definitions(test_state
+  PRIVATE -DBYCMAKE_DEBUG -DTESTING_PROJECT -DISO_20765
+  ${INCLUDE_ERRORCODES})
+target_compile_options(test_state PRIVATE -fprofile-arcs -ftest-coverage)
+target_include_directories(test_state
+  PRIVATE ${TESTS_INCLUDE_DIRS}
+  PRIVATE ${MODULES_DIR}/asp_db/source)
+target_link_libraries(test_state
+  pugixml
+  pqxx pq
   asp_utils
   asp_db
-  ${PUGIXML_LIB}
-  ${PQXX_LIBS}
-  ${FULLTEST_LIBRARIES}
-)
+  ${FULLTEST_LIBRARIES})
 
-add_test(${PROJECT_NAME} "core/${PROJECT_NAME}")
-
+add_test(test_state "core/test_state")

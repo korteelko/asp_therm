@@ -1,7 +1,7 @@
-#include "atherm_db_tables.h"
-#include "calculation_setup.h"
 #include "Common.h"
 #include "ErrorWrap.h"
+#include "atherm_db_tables.h"
+#include "calculation_setup.h"
 #include "gas_defines.h"
 #include "merror_codes.h"
 #include "model_peng_robinson.h"
@@ -14,9 +14,8 @@
 #include <functional>
 #include <string>
 
-
 #define par_input(p, t) \
-    parameters {.volume = 0.0, .pressure = p, .temperature = t}
+  parameters { .volume = 0.0, .pressure = p, .temperature = t }
 
 namespace fs = std::filesystem;
 
@@ -31,31 +30,34 @@ static std::string path_gost3 = "calculation/gost_test/gostmix3.xml";
  * \brief Класс для тестинга CalculationSetup
  * */
 class CalculationSetupProxy {
-public:
-  CalculationSetupProxy(std::shared_ptr<file_utils::FileURLRoot> &root,
-      const std::string &filepath)
-    : cs(CalculationSetup(root, filepath)) {}
+ public:
+  CalculationSetupProxy(std::shared_ptr<file_utils::FileURLRoot>& root,
+                        const std::string& filepath)
+      : cs(CalculationSetup(root, filepath)) {}
 
-  CalculationSetup &GetSetup() { return cs; }
-  calculation_setup *GetInitData() { return cs.init_data_.get(); }
-  std::vector<parameters> &GetPoints() { return cs.points_; }
-  std::map<std::string, std::shared_ptr<CalculationSetup::gasmix_models_map>> &
-  GetGamixes() { return cs.gasmixes_; }
+  CalculationSetup& GetSetup() { return cs; }
+  calculation_setup* GetInitData() { return cs.init_data_.get(); }
+  std::vector<parameters>& GetPoints() { return cs.points_; }
+  std::map<std::string, std::shared_ptr<CalculationSetup::gasmix_models_map>>&
+  GetGamixes() {
+    return cs.gasmixes_;
+  }
 
-public:
+ public:
   CalculationSetup cs;
 };
 
 /**
  * \brief Класс тестов сетапа расчётов
  * */
-class CalculationSetupTest: public ::testing::Test {
-protected:
+class CalculationSetupTest : public ::testing::Test {
+ protected:
   CalculationSetupTest() {
-    data_root_p_.reset(new file_utils::FileURLRoot(
-        file_utils::url_t::fs_path, "./../../../data"));
+    data_root_p_.reset(new file_utils::FileURLRoot(file_utils::url_t::fs_path,
+                                                   "./../../../data"));
     if (initCalculations())
-      csp_ptr.reset(new CalculationSetupProxy(data_root_p_, calculation_filename.string()));
+      csp_ptr.reset(new CalculationSetupProxy(data_root_p_,
+                                              calculation_filename.string()));
   }
 
   bool initCalculations() {
@@ -116,7 +118,7 @@ protected:
     return success;
   }
 
-protected:
+ protected:
   /**
    * \brief Корневая директория дополнительных данных программы,
    *  для инициализации смесей, расчётов, т.п.
@@ -136,19 +138,19 @@ protected:
  * */
 TEST_F(CalculationSetupTest, calculation_setup_init) {
   ASSERT_NE(csp_ptr, nullptr);
-  CalculationSetup &setup = csp_ptr->GetSetup();
+  CalculationSetup& setup = csp_ptr->GetSetup();
   EXPECT_TRUE(setup.GetError() == ERROR_SUCCESS_T);
-  calculation_setup *idp = csp_ptr->GetInitData();
+  calculation_setup* idp = csp_ptr->GetInitData();
   ASSERT_NE(idp, nullptr);
 
   // models
   ASSERT_EQ(idp->models.size(), 3);
-  EXPECT_EQ(idp->models[0], rg_model_id(
-      rg_model_t::PENG_ROBINSON, MODEL_PR_SUBTYPE_BINASSOC));
-  EXPECT_EQ(idp->models[1], rg_model_id(
-      rg_model_t::NG_GOST, MODEL_SUBTYPE_DEFAULT));
-  EXPECT_EQ(idp->models[2], rg_model_id(
-      rg_model_t::NG_GOST, MODEL_GOST_SUBTYPE_ISO_20765));
+  EXPECT_EQ(idp->models[0],
+            rg_model_id(rg_model_t::PENG_ROBINSON, MODEL_PR_SUBTYPE_BINASSOC));
+  EXPECT_EQ(idp->models[1],
+            rg_model_id(rg_model_t::NG_GOST, MODEL_SUBTYPE_DEFAULT));
+  EXPECT_EQ(idp->models[2],
+            rg_model_id(rg_model_t::NG_GOST, MODEL_GOST_SUBTYPE_ISO_20765));
 
   // files
   ASSERT_EQ(idp->gasmix_files.size(), 3);
@@ -160,11 +162,11 @@ TEST_F(CalculationSetupTest, calculation_setup_init) {
   EXPECT_TRUE(is_exists(p3));
 
   // points
-  std::function<bool(const parameters &, const parameters &)> comp_p =
-      [] (const parameters &l, const parameters &r) {
-      return is_equal(l.volume, r.volume) && is_equal(l.pressure, r.pressure) &&
-          is_equal(l.temperature, r.temperature);
-  };
+  std::function<bool(const parameters&, const parameters&)> comp_p =
+      [](const parameters& l, const parameters& r) {
+        return is_equal(l.volume, r.volume) && is_equal(l.pressure, r.pressure)
+               && is_equal(l.temperature, r.temperature);
+      };
   auto points = csp_ptr->GetPoints();
   ASSERT_EQ(points.size(), 3);
   EXPECT_TRUE(comp_p(points[0], par_input(100000.0, 250.0)));
@@ -175,37 +177,47 @@ TEST_F(CalculationSetupTest, calculation_setup_init) {
  * \brief Проверка взаимодействия с базой данных
  * */
 TEST_F(CalculationSetupTest, DatabaseTest) {
-  CalculationSetup &setup = csp_ptr->GetSetup();
+  CalculationSetup& setup = csp_ptr->GetSetup();
   setup.Calculate();
   ASSERT_TRUE(setup.GetError() == ERROR_SUCCESS_T);
   initConfiguration();
-  ProgramState &ps = ProgramState::Instance();
+  ProgramState& ps = ProgramState::Instance();
   ps.SetProgramDirs(*data_root_p_, *data_root_p_);
   ASSERT_TRUE(is_exists(config_file));
   ASSERT_EQ(ps.ReloadConfiguration(config_filename), ERROR_SUCCESS_T);
   AthermDBTables adb;
   DBConnectionManager dbm(&adb);
-  dbm.ResetConnectionParameters(
-      ps.GetDatabaseConfiguration());
+  dbm.ResetConnectionParameters(ps.GetDatabaseConfiguration());
   ASSERT_TRUE(is_status_ok(dbm.CheckConnection()));
   setup.AddToDatabase(&dbm);
   ASSERT_TRUE(setup.GetError() == ERROR_SUCCESS_T);
-  auto &gmap = csp_ptr->GetGamixes();
+  auto& gmap = csp_ptr->GetGamixes();
   // проверим просто что в базе данных появились такие строки
   //   их валидность проверяется в модуле БД
-  for (auto &models_map: gmap) {
+  WhereTreeConstructor<table_model_info> wtc_mi(&adb);
+  WhereTreeConstructor<table_calculation_info> wtc_ci(&adb);
+  for (auto& models_map : gmap) {
     ASSERT_NE(models_map.second.get(), nullptr);
     auto vec_mi = models_map.second->GetModelInfo();
-    for (auto &mi: vec_mi) {
+    for (auto& mi : vec_mi) {
       std::vector<model_info> selected;
-      dbm.SelectRows(mi, &selected);
+      WhereTree wt_mi(wtc_mi);
+      wt_mi.Init(wtc_mi.And(
+          wtc_mi.Eq(MI_MODEL_TYPE, (int)mi.short_info.model_type.type),
+          wtc_mi.Eq(MI_MODEL_SUBTYPE, (int)mi.short_info.model_type.subtype),
+          wtc_mi.Eq(MI_VERS_MAJOR, mi.short_info.vers_major),
+          wtc_mi.Eq(MI_VERS_MINOR, mi.short_info.vers_minor)));
+      dbm.SelectRows(wt_mi, &selected);
       // в model_info уникальный комплекс есть
       EXPECT_EQ(selected.size(), 1);
     }
     auto vec_ci = models_map.second->GetCalculationInfo();
-    for (auto &ci: vec_ci) {
+    for (auto& ci : vec_ci) {
       std::vector<calculation_info> selected;
-      dbm.SelectRows(ci, &selected);
+      WhereTree wt_ci(wtc_ci);
+      wt_ci.Init(wtc_ci.And(wtc_ci.Eq(CI_DATE, ci.datetime),
+                            wtc_ci.Eq(CI_TIME, ci.datetime)));
+      dbm.SelectRows(wt_ci, &selected);
       // в calculation_info тоже уникальный комплекс есть
       EXPECT_EQ(selected.size(), 1);
     }
