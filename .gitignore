@@ -8,6 +8,8 @@ soft/*
 !soft/gas2json.py
 !soft/gcov_report.py
 
+.cache/
+.ccls-cache/
 .kdev4/
 .vs/
 .vscode/
@@ -23,5 +25,6 @@ HISTORY.md
 
 configuration.json
 configuration.xml
+compile_commands.json
 CMakeSettings.json
 
