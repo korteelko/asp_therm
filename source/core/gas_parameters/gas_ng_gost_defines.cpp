@@ -13,6 +13,7 @@
 #include "atherm_common.h"
 #include "gas_defines.h"
 
+#include <limits>
 #include <stdint.h>
 
 #define GET_ARRAY_SIZE(M) (sizeof(M) / sizeof(M[0]))
@@ -356,6 +357,122 @@ const A9_molar_mass *get_molar_mass(gas_t gas_name) {
 }
 #endif  // !ISO_20765
 
+const A2_SPG_coef A2_SPG_coefs[] = {
+  {GAS_TYPE_METHANE, GAS_TYPE_ETHANE,      0.9939062, 0.9932865},
+  {GAS_TYPE_METHANE, GAS_TYPE_PROPANE,     1.010338,  0.9964106},
+  {GAS_TYPE_METHANE, GAS_TYPE_ISO_BUTANE,  1.029222,  0.9798303},
+  {GAS_TYPE_METHANE, GAS_TYPE_N_BUTANE,    1.049264,  0.9709773},
+  {GAS_TYPE_METHANE, GAS_TYPE_ISO_PENTANE, 1.339956,  0.8788424},
+  {GAS_TYPE_METHANE, GAS_TYPE_N_PENTANE,   1.174340,  0.9302709},
+  {GAS_TYPE_METHANE, GAS_TYPE_NITROGEN,    1.007886,  0.9417593},
+  {GAS_TYPE_UNDEFINED, GAS_TYPE_UNDEFINED, 1.0, 1.0},
+};
+
+// todo: it is a copy of get_binary_associate_coefs
+const A2_SPG_coef *get_A2_SPG_coefs(gas_t i, gas_t j) {
+  size_t a2spg_coef_count = sizeof(A2_SPG_coefs) / sizeof(A2_SPG_coefs[0]);
+  if ((i != GAS_TYPE_METHANE) && (j != GAS_TYPE_METHANE))
+    return &(A2_SPG_coefs[a2spg_coef_count - 1]);
+  if (i != GAS_TYPE_METHANE)
+    std::swap(i, j);
+  // now i = GAS_TYPE_METHANE
+  size_t z = 0;
+  while (A2_SPG_coefs[z].i == i) {
+    if (A2_SPG_coefs[z].j == j)
+      return &(A2_SPG_coefs[z]);
+    ++z;
+  }
+  return &(A2_SPG_coefs[a2spg_coef_count - 1]);
+}
+
+#define d_inf std::numeric_limits<double>::infinity()
+
+const A3_SPG_coef A3_SPG_coefs[40] = {
+  {0.04367901028, 1, -0.5, 0, 0, d_inf, d_inf, d_inf, d_inf}, // 1
+  {0.67092361990, 1, 0.5, 0, 0, d_inf, d_inf, d_inf, d_inf}, // 2
+  {-1.7655778590, 1, 1.0, 0, 0, d_inf, d_inf, d_inf, d_inf}, // 3
+  {0.85823302410, 2, 0.5, 0, 0, d_inf, d_inf, d_inf, d_inf}, // 4
+  {-1.2065130520, 2, 1.0, 0, 0, d_inf, d_inf, d_inf, d_inf}, // 5
+  {0.51204672200, 2, 1.5, 0, 0, d_inf, d_inf, d_inf, d_inf}, // 6
+  {-4.000010791e-4, 2.0, 4.5, 0, 0, d_inf, d_inf, d_inf, d_inf}, // 7
+  {-0.01247842423, 3, 0.0, 0, 0, d_inf, d_inf, d_inf, d_inf}, // 8
+  {0.03100269701, 4, 1.0, 0, 0, d_inf, d_inf, d_inf, d_inf}, // 9
+  {1.754748522e-3, 4.0, 3.0, 0, 0, d_inf, d_inf, d_inf, d_inf}, // 10
+  {-3.171921605e-6, 8.0, 1.0, 0, 0, d_inf, d_inf, d_inf, d_inf}, // 11
+  {-2.24034684e-6, 9.0, 3.0, 0, 0, d_inf, d_inf, d_inf, d_inf}, // 12
+  {2.947056156e-7, 1.0, 3.0, 0, 0, d_inf, d_inf, d_inf, d_inf}, // 13
+  {0.1830487909, 1, 0.0, -1, 1, d_inf, d_inf, d_inf, d_inf}, // 14
+  {0.1511883679, 1, 1.0, -1, 1, d_inf, d_inf, d_inf, d_inf}, // 15
+  {-0.4289363877, 1, 2.0, -1, 1, d_inf, d_inf, d_inf, d_inf}, // 16
+  {0.06894002446, 2, 0.0, -1, 1, d_inf, d_inf, d_inf, d_inf}, // 17
+  {-0.01408313996, 4, 0.0, -1, 1, d_inf, d_inf, d_inf, d_inf}, // 18
+  {-0.0306305483, 5, 2.0, -1, 1, d_inf, d_inf, d_inf, d_inf}, // 19
+  {-0.02969906708, 6, 2.0, -1, 1, d_inf, d_inf, d_inf, d_inf}, // 20
+  {-0.01932040831, 1, 5.0, -1, 2, d_inf, d_inf, d_inf, d_inf}, // 21
+  {-0.1105739959, 2, 5.0, -1, 2, d_inf, d_inf, d_inf, d_inf}, // 22
+  {0.09952548995, 3, 5.0, -1, 2, d_inf, d_inf, d_inf, d_inf}, // 23
+  {8.548437825e-3, 4, 2.0, -1, 2, d_inf, d_inf, d_inf, d_inf}, // 24
+  {-0.06150555662, 4, 4.0, -1, 2, d_inf, d_inf, d_inf, d_inf}, // 25
+  {-0.04291792423, 3, 12.0, -1, 3, d_inf, d_inf, d_inf, d_inf}, // 26
+  {-0.0181320729, 5, 8.0, -1, 3, d_inf, d_inf, d_inf, d_inf}, // 27
+  {0.0344590476, 5, 10.0, -1, 3, d_inf, d_inf, d_inf, d_inf}, // 28
+  {-2.38591945e-3, 8, 10.0, -1, 3, d_inf, d_inf, d_inf, d_inf}, // 29
+  {-0.01159094939, 2, 10.0, -1, 4, d_inf, d_inf, d_inf, d_inf}, // 30
+  {0.06641693602, 3, 14.0, -1, 4, d_inf, d_inf, d_inf, d_inf}, // 31
+  {-0.0237154959, 4, 12.0, -1, 4, d_inf, d_inf, d_inf, d_inf}, // 32
+  {-0.03961624905, 4, 18.0, -1, 4, d_inf, d_inf, d_inf, d_inf}, // 33
+  {-0.01387292044, 4, 22.0, -1, 4, d_inf, d_inf, d_inf, d_inf}, // 34
+  {0.03389489599, 5, 18.0, -1, 4, d_inf, d_inf, d_inf, d_inf}, // 35
+  {-2.927378753e-3, 6, 14.0, -1, 4, d_inf, d_inf, d_inf, d_inf}, // 36
+  {9.324799946e-5, 2, 2.0, d_inf, d_inf, -20, -200, 1, 1.07}, // 37
+  {-6.287171518, 0, 0.0, d_inf, d_inf, -40, -250, 1, 1.11}, // 38
+  {12.71069467, 0, 1.0, d_inf, d_inf, -40, -250, 1, 1.11}, // 39
+  {-6.423953466, 0, 2.0, d_inf, d_inf, -40, -250, 1, 1.11}, // 40
+};
+
+
+int A4_SPG_coef::delta[A4_SPG_coef::num] = {1, 1, 0, 1, 0, 1};
+
+A4_SPG_coef A4_SPG_coefs[] = {
+  {.gas_name = GAS_TYPE_METHANE, .coefs = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}},
+  {.gas_name = GAS_TYPE_ETHANE, .coefs =
+     {-0.05499404, 0.07132088, 0.03411748, 0.3463844, -0.1756987, 0.01181235}},
+  {.gas_name = GAS_TYPE_PROPANE, .coefs =
+     {-0.1033802, 0.1256433, 0.05515581, 0.3877078, -0.18687, 0.0509911}},
+  {.gas_name = GAS_TYPE_ISO_BUTANE, .coefs =
+     {-0.1446201, 0.1891534, 0.007255968, 0.3843276, -0.1778766, 0.07948337}},
+  {.gas_name = GAS_TYPE_N_BUTANE, .coefs =
+     {-0.1330569, 0.1515016, 0.06703781, 0.3101680, -0.1428283, 0.1022543}},
+  {.gas_name = GAS_TYPE_ISO_PENTANE, .coefs =
+     {-0.1344984, 0.1757778, 0.07751344, 0.4160334, -0.1988925, 0.09967660}},
+  {.gas_name = GAS_TYPE_N_PENTANE, .coefs =
+     {-0.1500247, 0.1765188, 0.08076395, 0.3802554, -0.1789241, 0.1206911}},
+  {.gas_name = GAS_TYPE_NITROGEN, .coefs =
+     {-0.0110658, 0.01395339, 0.01517371, 0.04907672, -0.02492141, 0.007076269}},
+  {.gas_name = GAS_TYPE_CARBON_DIOXIDE, .coefs = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}},
+};
+
+A5_SPG_coef A5_SPG_coefs[] = {
+  {.gas_name = GAS_TYPE_METHANE, .coefs =
+     {3.98591747, 0.0944817883, -0.184059518, 0.121670883, 0.0}},
+  {.gas_name = GAS_TYPE_ETHANE, .coefs =
+     {4.04494534, -2.88738414, 20.4420998, -36.3289167, 24.1231231}},
+  {.gas_name = GAS_TYPE_PROPANE, .coefs =
+     {3.59984779, -4.14713461, 68.4776240, -163.469780, 133.087884}},
+  {.gas_name = GAS_TYPE_ISO_BUTANE, .coefs =
+     {3.27383299, -4.49009735, 114.587546, -290.175169, 249.508274}},
+  {.gas_name = GAS_TYPE_N_BUTANE, .coefs =
+     {1.10821140, 26.764665, 18.9823524, -194.636448, 240.749363}},
+  {.gas_name = GAS_TYPE_ISO_PENTANE, .coefs =
+     {10.1905588, -104.660203, 586.666061, -1150.48022, 817.341735}},
+  {.gas_name = GAS_TYPE_N_PENTANE, .coefs =
+     {1.30150258, 7.42798405, 241.151953, -857.021831, 901.466209}},
+  {.gas_name = GAS_TYPE_NITROGEN, .coefs =
+     {3.50000066, 0.0003858466241, 0.0000744623688, 0.0, 0.0}},
+  {.gas_name = GAS_TYPE_CARBON_DIOXIDE, .coefs =
+     {3.26743307, 3.04166057, -14.4322345, 28.2801767, -17.1064968}},
+};
+
 molar_parameters calculate_molar_data(ng_gost_mix components) {
   molar_parameters mp;
   mp.mass = 0.0;
@@ -365,63 +482,17 @@ molar_parameters calculate_molar_data(ng_gost_mix components) {
     if (xi_ch != nullptr) {
       mp.mass += components[i].second * xi_ch->M;
     } else {
-      throw gparameters_exception(ERROR_INIT_T,
-                                  "Ошибка расчёта молярной массы смеси. "
-                                  "Функция set_molar_mass");
+      // свойства компонента газа неизвестны,
+      Logging::Append(ERROR_INIT_T,
+                      "Ошибка расчёта молярной массы смеси. "
+                      "Данные компонента неизвестны.\n"
+                      "Функция calculate_molar_data, component"
+                      + hex2str(components[i].first));
+      mp.mass = 0.0;
+      break;
     }
   }
-  mp.Rm = 1000.0 * GAS_CONSTANT / mp.mass;
+  if (is_above0(mp.mass))
+    mp.Rm = 1000.0 * GAS_CONSTANT / mp.mass;
   return mp;
-}
-
-parameters calclulate_pseudocrit_vpte(ng_gost_mix components) {
-  double vol = 0.0;
-  double temp = 0.0;
-  double press_var = 0.0;
-  double tmp_var = 0;
-  double Mi = 0.0, Mj = 0.0;
-  const component_characteristics* x_ch = nullptr;
-  const critical_params* i_cp = nullptr;
-  const critical_params* j_cp = nullptr;
-  for (size_t i = 0; i < components.size(); ++i) {
-    if ((x_ch = get_characteristics(components[i].first))) {
-      Mi = x_ch->M;
-    } else {
-      Logging::Append(
-          "init pseudocritic by gost model\n"
-          "  undefined component: #" +
-          std::to_string(components[i].first));
-      continue;
-    }
-    if (!(i_cp = get_critical_params(components[i].first)))
-      continue;
-    for (size_t j = 0; j < components.size(); ++j) {
-      if ((x_ch = get_characteristics(components[j].first))) {
-        Mj = x_ch->M;
-      } else {
-        Logging::Append(
-            "init pseudocritic by gost model\n"
-            "  undefined component: #" +
-            std::to_string(components[j].first));
-        continue;
-      }
-      if (!(j_cp = get_critical_params(components[j].first)))
-        continue;
-      tmp_var = components[i].second * components[j].second
-                * pow(pow(Mi / i_cp->density, 0.333333)
-                + pow(Mj / j_cp->density, 0.333333), 3.0);
-      vol += tmp_var;
-      temp += tmp_var * sqrt(i_cp->temperature * j_cp->temperature);
-    }
-    press_var += components[i].second * i_cp->acentric;
-  }
-  press_var *= 0.08;
-  press_var = 0.291 - press_var;
-  parameters pseudocrit_vpt;
-  pseudocrit_vpt.volume = 0.125 * vol;
-  pseudocrit_vpt.temperature = 0.125 * temp / vol;
-  pseudocrit_vpt.pressure = 1000 * GAS_CONSTANT
-                            * pseudocrit_vpt.temperature * press_var
-                            / pseudocrit_vpt.volume;
-  return pseudocrit_vpt;
 }

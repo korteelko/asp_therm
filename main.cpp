@@ -26,7 +26,7 @@
 #include <assert.h>
 
 // #define JSON_READER_DEBUG
-// #define MODELS_DEBUG
+#define MODELS_DEBUG
 #define RK2_DEBUG
 // #define PR_DEBUG  // доделать для смесей
 #define RKS_DEBUG
@@ -327,7 +327,7 @@ int test_models_mix() {
   std::vector<gasmix_component_info> xml_files =
       std::vector<gasmix_component_info>{
           gasmix_component_info(
-              "metane", (cwd / xml_gases_dir / xml_methane).string(), 0.988),
+              "methane", (cwd / xml_gases_dir / xml_methane).string(), 0.988),
           // add more (summ = 1.00)
           gasmix_component_info(
               "ethane", (cwd / xml_gases_dir / xml_ethane).string(), 0.009),

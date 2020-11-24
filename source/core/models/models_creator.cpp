@@ -21,96 +21,113 @@
 #include <functional>
 #include <map>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include <assert.h>
-
 
 /** \brief Стандартные физические условия */
 static parameters standard_conds = {0, 100000.0, 314.0};
 
 /* todo:
  *   добавить такую же функцию в класс ProgramState */
-model_input ModelsCreator::set_input(model_str ms, binodalpoints *bp,
-    double p, double t, const parameters_mix &mix_components) {
+model_input ModelsCreator::set_input(model_str ms,
+                                     binodalpoints* bp,
+                                     double p,
+                                     double t,
+                                     const parameters_mix& mix_components) {
   gas_marks_t gm = 0x00;
   rg_model_t mn = ms.model_type.type;
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT);
   AddGasMixMark(&gm);
-  model_input &&mi = model_input(gm, bp, {p, t,
-      const_dyn_union{.components = &mix_components}}, ms);
+  model_input&& mi = model_input(
+      gm, bp, {p, t, const_dyn_union{.components = &mix_components}}, ms);
   return std::move(mi);
 }
 
-model_input ModelsCreator::set_input(model_str ms, binodalpoints *bp,
-    double p, double t, const ng_gost_mix &mix_components) {
+model_input ModelsCreator::set_input(model_str ms,
+                                     binodalpoints* bp,
+                                     double p,
+                                     double t,
+                                     const ng_gost_mix& mix_components) {
   gas_marks_t gm = 0x00;
   rg_model_t mn = ms.model_type.type;
   gm = (uint32_t)mn | ((uint32_t)mn << BINODAL_MODEL_SHIFT);
   AddGostModelMark(&gm);
   if (ms.model_type.subtype && MODEL_GOST_SUBTYPE_ISO_20765)
     AddGostISO20765Mark(&gm);
-  model_input &&mi = model_input(gm, bp, {p, t,
-      const_dyn_union{.ng_gost_components = &mix_components}}, ms);
+  model_input&& mi = model_input(
+      gm, bp, {p, t, const_dyn_union{.ng_gost_components = &mix_components}},
+      ms);
   return std::move(mi);
 }
 
-modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
-    std::vector<gasmix_component_info> components, double p, double t) {
-  /* todo: remove implementation! */
-  #ifdef _DEBUG
+modelGeneral* ModelsCreator::GetCalculatingModel(
+    model_str ms,
+    std::vector<gasmix_component_info> components,
+    double p,
+    double t) {
   std::unique_ptr<GasMixByFiles<XMLReader>> gm(
       GasMixByFiles<XMLReader>::Init(components));
-  #endif  // _DEBUG
   return (gm) ? getModel(ms, gm.get(), p, t) : nullptr;
 }
 
-modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
+modelGeneral* ModelsCreator::GetCalculatingModel(
+    model_str ms,
     std::vector<gasmix_component_info> components) {
-  return ModelsCreator::GetCalculatingModel(ms, components,
-      standard_conds.pressure, standard_conds.temperature);
+  return ModelsCreator::GetCalculatingModel(
+      ms, components, standard_conds.pressure, standard_conds.temperature);
 }
 
-modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
-    file_utils::FileURLRoot *root_dir, const std::string &gasmix_xml,
-    double p, double t) {
-  // zdesya
-  // nujno uchitivat root directory
+modelGeneral* ModelsCreator::GetCalculatingModel(
+    model_str ms,
+    file_utils::FileURLRoot* root_dir,
+    const std::string& gasmix_xml,
+    double p,
+    double t) {
+  // todo: zdesya nujno uchitivat root directory
   std::unique_ptr<GasMixComponentsFile<XMLReader>> gm(
-      GasMixComponentsFile<XMLReader>::Init(
-      ms.model_type.type, root_dir, gasmix_xml));
+      GasMixComponentsFile<XMLReader>::Init(ms.model_type.type, root_dir,
+                                            gasmix_xml));
   return (gm) ? getModel(ms, gm.get(), p, t) : nullptr;
 }
 
-modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
-    file_utils::FileURLRoot *root_dir, const std::string &gasmix_xml) {
+modelGeneral* ModelsCreator::GetCalculatingModel(
+    model_str ms,
+    file_utils::FileURLRoot* root_dir,
+    const std::string& gasmix_xml) {
   return ModelsCreator::GetCalculatingModel(ms, root_dir, gasmix_xml,
-      standard_conds.pressure, standard_conds.temperature);
+                                            standard_conds.pressure,
+                                            standard_conds.temperature);
 }
-modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
-    const ng_gost_mix &ngg, double p, double t) {
-  return initModel(ms, nullptr, p,
-      t, const_dyn_union{.ng_gost_components = &ngg});
-}
-
-modelGeneral *ModelsCreator::GetCalculatingModel(model_str ms,
-    const ng_gost_mix &ngg) {
-  return ModelsCreator::GetCalculatingModel(ms, ngg,
-      standard_conds.pressure, standard_conds.temperature);
+modelGeneral* ModelsCreator::GetCalculatingModel(model_str ms,
+                                                 const ng_gost_mix& ngg,
+                                                 double p,
+                                                 double t) {
+  return initModel(ms, nullptr, p, t,
+                   const_dyn_union{.ng_gost_components = &ngg});
 }
 
-modelGeneral *ModelsCreator::initModel(model_str ms, binodalpoints *bp,
-    double p, double t, const_dyn_union cdu) {
-  modelGeneral *mg = nullptr;
+modelGeneral* ModelsCreator::GetCalculatingModel(model_str ms,
+                                                 const ng_gost_mix& ngg) {
+  return ModelsCreator::GetCalculatingModel(ms, ngg, standard_conds.pressure,
+                                            standard_conds.temperature);
+}
+
+modelGeneral* ModelsCreator::initModel(model_str ms,
+                                       binodalpoints* bp,
+                                       double p,
+                                       double t,
+                                       const_dyn_union cdu) {
+  modelGeneral* mg = nullptr;
   switch (ms.model_type.type) {
     case rg_model_t::IDEAL_GAS:
       mg = Ideal_Gas::Init(set_input(ms, bp, p, t, *cdu.components));
       break;
     case rg_model_t::REDLICH_KWONG:
       if (ms.model_type.subtype == MODEL_RK_SUBTYPE_SOAVE)
-        mg = Redlich_Kwong_Soave::Init(
-            set_input(ms, bp, p, t, *cdu.components));
+        mg =
+            Redlich_Kwong_Soave::Init(set_input(ms, bp, p, t, *cdu.components));
       else
         mg = Redlich_Kwong2::Init(set_input(ms, bp, p, t, *cdu.components));
       break;
@@ -187,14 +204,14 @@ GasDynamic::getFlowCalculator(
                  const std::shared_ptr<modelGeneral> &spmg,
                gasparameters &outballoon, double V, double F) {
   if (spmg == nullptr) {
-      std::cout << 
+      std::cout <<
         "Object FlowCalculator wasn't created. Constructor get nullptr\n";
       return nullptr;
     }
   try {
     return new balloonFlowDynamic (spmg, outballoon, V, F);
   } catch (modelExceptions &e) {
-    std::cout << " Object FlowCalculator wasn't created.\n" 
+    std::cout << " Object FlowCalculator wasn't created.\n"
               << e.what() << std::endl;
   }
   return nullptr;
@@ -236,11 +253,11 @@ void GasDynamic::calculation(std::shared_ptr<InputData> &idp) {
   formatted_output SOout(std::cout);
   auto msgf = [] () { std::cout << " Bad inputdata for type of flow";};
   std::string InOutCheck = idp_->getFlowType();
-  (InOutCheck == "IN") ? 
+  (InOutCheck == "IN") ?
     up->calculateFlow<DerivateFunctorInflow>(MODELS_DTIME, MODELS_STEPS, SOout)
-      :((InOutCheck == "OUT") ? 
-         up->calculateFlow<DerivateFunctorOutflow>(MODELS_DTIME, MODELS_STEPS, SOout)
-                          : msgf());
+      :((InOutCheck == "OUT") ?
+         up->calculateFlow<DerivateFunctorOutflow>(MODELS_DTIME, MODELS_STEPS,
+SOout) : msgf());
 }
 
 //================================
@@ -249,15 +266,15 @@ void GasDynamic::calculation(std::shared_ptr<InputData> &idp) {
 
 balloonFlowDynamic *GasDynamic::setCalculator(
                              std::shared_ptr<modelGeneral> &mg,
-                                            std::shared_ptr<gasparameters> &pgp) {
-  std::vector<double> params       = idp_->getBalloonParameters();
+                                            std::shared_ptr<gasparameters> &pgp)
+{ std::vector<double> params       = idp_->getBalloonParameters();
   std::pair<double, double> balloon = idp_->getBalloonVF();
   char func = idp_->getFunction()[0];
   try {
     switch (func) {
       case 'V': {
           mg->setVolume(params[1], params[2]);
-          pgp = std::make_shared<gasparameters> (0.0, params[4], params[5], 
+          pgp = std::make_shared<gasparameters> (0.0, params[4], params[5],
                                                      mg->getConstParameters());
           return getFlowCalculator(mg, *pgp, balloon.first, balloon.second);
         }

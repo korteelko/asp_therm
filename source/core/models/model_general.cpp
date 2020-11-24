@@ -70,9 +70,9 @@ double modelGeneral::vapor_part(int32_t index) {
 }
 
 int32_t modelGeneral::set_state_phasesub(double p) {
-  return (bp_->p.end() -
-          std::find_if(bp_->p.begin() + 1, bp_->p.end(),
-                       std::bind2nd(std::less_equal<double>(), p)));
+  return (bp_->p.end()
+          - std::find_if(bp_->p.begin() + 1, bp_->p.end(),
+                         std::bind2nd(std::less_equal<double>(), p)));
 }
 
 state_phase modelGeneral::set_state_phase(double v, double p, double t) {
@@ -112,15 +112,15 @@ void modelGeneral::set_enthalpy() {
     bp_->hLeft.clear();
   for (size_t i = 0; i < bp_->vLeft.size(); ++i) {
     SetPressure(bp_->vLeft[i], bp_->t[i]);
-    bp_->hLeft.push_back(parameters_->cgetIntEnergy() +
-                         bp_->p[i] * bp_->vLeft[i]);
+    bp_->hLeft.push_back(parameters_->cgetIntEnergy()
+                         + bp_->p[i] * bp_->vLeft[i]);
   }
   if (!bp_->hRigth.empty())
     bp_->hRigth.clear();
   for (size_t i = 0; i < bp_->vRigth.size(); ++i) {
     SetPressure(bp_->vRigth[i], bp_->t[i]);
-    bp_->hRigth.push_back(parameters_->cgetIntEnergy() +
-                          bp_->p[i] * bp_->vRigth[i]);
+    bp_->hRigth.push_back(parameters_->cgetIntEnergy()
+                          + bp_->p[i] * bp_->vRigth[i]);
   }
 }
 
@@ -277,9 +277,9 @@ std::string modelGeneral::ParametersString() const {
   char str[256] = {0};
   auto prs = parameters_->cgetParameters();
   auto dprs = parameters_->cgetDynParameters();
-  sprintf(str, "%12.1f %8.4f %8.2f %8.2f %8.2f %8.2f %8.2f\n", prs.pressure,
-          prs.volume, 1.0 / prs.volume, prs.temperature, dprs.heat_cap_vol,
-          dprs.heat_cap_pres, dprs.internal_energy);
+  snprintf(str, sizeof(str) - 1, "%12.1f %8.4f %8.2f %8.2f %8.2f %8.2f %8.2f\n",
+           prs.pressure, prs.volume, 1.0 / prs.volume, prs.temperature,
+           dprs.heat_cap_vol, dprs.heat_cap_pres, dprs.internal_energy);
   return std::string(str);
 }
 

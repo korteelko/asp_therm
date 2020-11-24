@@ -105,16 +105,18 @@ double lee_avg_Tk(const parameters_mix& components) {
   double psy_dec = std::accumulate(
       components.begin(), components.end(), 0.0,
       [](double a, const std::pair<const double, const_dyn_parameters>& c) {
-        return a + c.first * c.second.first.critical.volume *
-                       c.second.first.mp.mass;
+        return a
+               + c.first * c.second.first.critical.volume
+                     * c.second.first.mp.mass;
       });
   double tk = std::accumulate(
       components.begin(), components.end(), 0.0,
       [psy_dec](double a,
                 const std::pair<const double, const_dyn_parameters>& c) {
-        return a + c.first * c.second.first.critical.volume *
-                       c.second.first.critical.temperature *
-                       c.second.first.mp.mass / psy_dec;
+        return a
+               + c.first * c.second.first.critical.volume
+                     * c.second.first.critical.temperature
+                     * c.second.first.mp.mass / psy_dec;
       });
   return tk;
 }
@@ -150,9 +152,11 @@ double ch_pr_avg_Tk(const parameters_mix& components) {
   double teta_dec = std::accumulate(
       components.begin(), components.end(), 0.0,
       [](double a, const std::pair<const double, const_dyn_parameters>& c) {
-        return a + c.first * std::pow(c.second.first.mp.mass *
-                                          c.second.first.critical.volume,
-                                      0.666667);
+        return a
+               + c.first
+                     * std::pow(c.second.first.mp.mass
+                                    * c.second.first.critical.volume,
+                                0.666667);
       });
   double teta_i, teta_j;
   double d;
@@ -162,28 +166,28 @@ double ch_pr_avg_Tk(const parameters_mix& components) {
   int i = 0, j = 0;
   for (auto const& x : components) {
     const auto& const_px = x.second.first;
-    teta_i = x.first *
-             std::pow(const_px.mp.mass * const_px.critical.volume, 0.666667) /
-             teta_dec;
+    teta_i = x.first
+             * std::pow(const_px.mp.mass * const_px.critical.volume, 0.666667)
+             / teta_dec;
     j = 0;
     dtau = 0.0;
     for (auto const& y : components) {
       const auto& const_py = y.second.first;
       if (j > i) {
-        teta_j = y.first *
-                 std::pow(y.second.first.mp.mass * const_py.critical.volume,
-                          0.666667) /
-                 teta_dec;
-        d = std::abs(const_px.critical.temperature -
-                     const_py.critical.temperature) /
-            (const_px.critical.temperature + const_py.critical.temperature);
+        teta_j = y.first
+                 * std::pow(y.second.first.mp.mass * const_py.critical.volume,
+                            0.666667)
+                 / teta_dec;
+        d = std::abs(const_px.critical.temperature
+                     - const_py.critical.temperature)
+            / (const_px.critical.temperature + const_py.critical.temperature);
         std::array<double, 5> psy_c;
         if (d <= 0.5 + FLOAT_ACCURACY)
           psy_c = ch_pr_psy_tk_coefs_lh(const_px.gas_name, const_py.gas_name);
-        tau = (const_px.critical.temperature + const_py.critical.temperature) *
-              (psy_c[0] + psy_c[1] * d + psy_c[2] * d * d +
-               psy_c[3] * std::pow(d, 3.0) + psy_c[4] * std::pow(d, 4.0)) *
-              0.5;
+        tau = (const_px.critical.temperature + const_py.critical.temperature)
+              * (psy_c[0] + psy_c[1] * d + psy_c[2] * d * d
+                 + psy_c[3] * std::pow(d, 3.0) + psy_c[4] * std::pow(d, 4.0))
+              * 0.5;
         dtau += teta_i * teta_j * tau;
       }
       j++;
@@ -204,12 +208,12 @@ static std::array<double, 5> ch_pr_psy_vk_coefs_lh(gas_t i, gas_t j) {
       return {0.0, 0.0, 0.0, 0.0, 0.0};
     } else {
       // там про парафин нормального строения, а я про обычный углеводород
-      if ((gas_char::IsHydrocarbon(i) && gas_char::IsAromatic(j)) ||
-          (gas_char::IsHydrocarbon(j) && gas_char::IsAromatic(i))) {
+      if ((gas_char::IsHydrocarbon(i) && gas_char::IsAromatic(j))
+          || (gas_char::IsHydrocarbon(j) && gas_char::IsAromatic(i))) {
         return {0.0753, -3.332, 2.220, 0.0, 0.0};
       } else {
-        if (gas_char::IsHydrogenSulfide(i) || gas_char::IsHydrogenSulfide(j) ||
-            gas_char::IsCarbonDioxide(i) || gas_char::IsCarbonDioxide(j)) {
+        if (gas_char::IsHydrogenSulfide(i) || gas_char::IsHydrogenSulfide(j)
+            || gas_char::IsCarbonDioxide(i) || gas_char::IsCarbonDioxide(j)) {
           return {-0.4957, 17.1185, -168.56, 587.05, -698.89};
         }
       }
@@ -222,9 +226,11 @@ double ch_pr_avg_Vk(const parameters_mix& components) {
   double teta_dec = std::accumulate(
       components.begin(), components.end(), 0.0,
       [](double a, const std::pair<const double, const_dyn_parameters>& c) {
-        return a + c.first * std::pow(c.second.first.mp.mass *
-                                          c.second.first.critical.volume,
-                                      0.666667);
+        return a
+               + c.first
+                     * std::pow(c.second.first.mp.mass
+                                    * c.second.first.critical.volume,
+                                0.666667);
       });
   double teta_i, teta_j;
   double d;
@@ -242,16 +248,16 @@ double ch_pr_avg_Vk(const parameters_mix& components) {
       if (j > i) {
         double yvk = y.second.first.mp.mass * y.second.first.critical.volume;
         teta_j = y.first * std::pow(yvk, 0.666667) / teta_dec;
-        d = std::abs(std::pow(xvk, 0.666667) - std::pow(yvk, 0.666667)) /
-            (std::pow(xvk, 0.666667) + std::pow(yvk, 0.666667));
+        d = std::abs(std::pow(xvk, 0.666667) - std::pow(yvk, 0.666667))
+            / (std::pow(xvk, 0.666667) + std::pow(yvk, 0.666667));
         std::array<double, 5> psy_c;
         if (d <= 0.5 + FLOAT_ACCURACY)
           psy_c = ch_pr_psy_vk_coefs_lh(x.second.first.gas_name,
                                         y.second.first.gas_name);
-        nu = (xvk + yvk) *
-             (psy_c[0] + psy_c[1] * d + psy_c[2] * d * d +
-              psy_c[3] * std::pow(d, 3.0) + psy_c[4] * std::pow(d, 4.0)) *
-             0.5;
+        nu = (xvk + yvk)
+             * (psy_c[0] + psy_c[1] * d + psy_c[2] * d * d
+                + psy_c[3] * std::pow(d, 3.0) + psy_c[4] * std::pow(d, 4.0))
+             * 0.5;
         dnu += teta_i * teta_j * nu;
       }
       j++;
@@ -284,8 +290,8 @@ std::array<double, 6> get_average_params(const parameters_mix& components,
   }
   // тут разграничение по моделям, если руки дойдут
   //   классическая двухпараметрическая модель Редлиха-Квонга
-  if (ms.model_type.type == rg_model_t::REDLICH_KWONG &&
-      ms.model_type.subtype == MODEL_SUBTYPE_DEFAULT) {
+  if (ms.model_type.type == rg_model_t::REDLICH_KWONG
+      && ms.model_type.subtype == MODEL_SUBTYPE_DEFAULT) {
     avg_val[index_pk] = rk2_avg_Pk(components);
     avg_val[index_tk] = rk2_avg_Tk(components);
     avg_val[index_zk] = rk2_avg_Zk();
@@ -326,7 +332,9 @@ GasParameters_mix_dyn::GasParameters_mix_dyn(parameters prs,
                                              dyn_parameters dgp,
                                              parameters_mix components,
                                              modelGeneral* mg)
-    : GasParameters_mix(prs, cgp, dgp, components), model_(mg) {}
+    : GasParameters_mix(prs, cgp, dgp, components),
+      prev_vpte_(prs),
+      model_(mg) {}
 
 GasParameters_mix_dyn* GasParameters_mix_dyn::Init(gas_params_input gpi,
                                                    modelGeneral* mg) {

@@ -163,7 +163,8 @@ GasParametersGost30319Dyn* GasParametersGost30319Dyn::Init(gas_params_input gpi,
   if (!gpi.const_dyn.ng_gost_components->empty()) {
     if (is_valid_limits(*gpi.const_dyn.ng_gost_components, use_iso)) {
       try {
-        auto pc = calclulate_pseudocrit_vpte(*gpi.const_dyn.ng_gost_components);
+        auto pc = GasParametersGost30319Dyn::calcPseudocriticVPT(
+              *gpi.const_dyn.ng_gost_components);
         auto mp = calculate_molar_data(*gpi.const_dyn.ng_gost_components);
         // рассчитать фактор ацентричности в критической точке
         double zk =
@@ -202,6 +203,59 @@ GasParametersGost30319Dyn::GasParametersGost30319Dyn(parameters prs,
   } else {
     set_volume();
   }
+}
+
+parameters GasParametersGost30319Dyn::calcPseudocriticVPT(
+    ng_gost_mix components) {
+  double vol = 0.0;
+  double temp = 0.0;
+  double press_var = 0.0;
+  double tmp_var = 0;
+  double Mi = 0.0, Mj = 0.0;
+  const component_characteristics* x_ch = nullptr;
+  const critical_params* i_cp = nullptr;
+  const critical_params* j_cp = nullptr;
+  for (size_t i = 0; i < components.size(); ++i) {
+    if ((x_ch = get_characteristics(components[i].first))) {
+      Mi = x_ch->M;
+    } else {
+      Logging::Append(
+          "init pseudocritic by gost model\n"
+          "  undefined component: #" +
+          std::to_string(components[i].first));
+      continue;
+    }
+    if (!(i_cp = get_critical_params(components[i].first)))
+      continue;
+    for (size_t j = 0; j < components.size(); ++j) {
+      if ((x_ch = get_characteristics(components[j].first))) {
+        Mj = x_ch->M;
+      } else {
+        Logging::Append(
+            "init pseudocritic by gost model\n"
+            "  undefined component: #" +
+            std::to_string(components[j].first));
+        continue;
+      }
+      if (!(j_cp = get_critical_params(components[j].first)))
+        continue;
+      tmp_var = components[i].second * components[j].second
+                * pow(pow(Mi / i_cp->density, 0.333333)
+                + pow(Mj / j_cp->density, 0.333333), 3.0);
+      vol += tmp_var;
+      temp += tmp_var * sqrt(i_cp->temperature * j_cp->temperature);
+    }
+    press_var += components[i].second * i_cp->acentric;
+  }
+  press_var *= 0.08;
+  press_var = 0.291 - press_var;
+  parameters pseudocrit_vpt;
+  pseudocrit_vpt.volume = 0.125 * vol;
+  pseudocrit_vpt.temperature = 0.125 * temp / vol;
+  pseudocrit_vpt.pressure = 1000 * GAS_CONSTANT
+                            * pseudocrit_vpt.temperature * press_var
+                            / pseudocrit_vpt.volume;
+  return pseudocrit_vpt;
 }
 
 bool GasParametersGost30319Dyn::setFuncCoefficients() {

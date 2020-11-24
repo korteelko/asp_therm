@@ -17,8 +17,7 @@
 
 #include <stdint.h>
 
-
-
+// clang-format off
 // max count of components of natural gas in xml files
 #define GASMIX_MAX_COUNT           32
 
@@ -164,5 +163,6 @@ typedef uint64_t dyn_setup;
 #define DYNAMIC_HERMHOLTZ          0x00000080
 #define DYNAMIC_GIBBS              0x00000100
 #define DYNAMIC_LANDAUGRAND        0x00000200
+// clang-format on
 
 #endif  // !_CORE__GAS_PARAMETERS__GAS_DEFINES_H_

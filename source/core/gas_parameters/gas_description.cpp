@@ -112,7 +112,16 @@ dyn_parameters* dyn_parameters::Init(dyn_setup setup,
   return new dyn_parameters(setup, cv, cp, int_eng, pm);
 }
 
-dyn_parameters::dyn_parameters() : status(STATUS_NOT), setup(0) {}
+dyn_parameters::dyn_parameters()
+    : status(STATUS_NOT),
+      setup(0),
+      heat_cap_vol(0.0),
+      heat_cap_pres(0.0),
+      internal_energy(0.0),
+      enthalpy(0.0),
+      adiabatic(0.0),
+      beta_kr(0.0),
+      entropy(0.0) {}
 
 merror_t dyn_parameters::ResetParameters(
     parameters pm,
@@ -230,8 +239,8 @@ const_parameters::const_parameters(parameters pc,
   if (!check_params(pc.volume, pc.pressure, pc.temperature, Z_K, mp.mass))
     throw gparameters_exception(ERROR_INIT_T,
                                 "Ошибка инициализации неизменяемых параметров "
-                                "смеси. Для доп. информации см. лог файл " +
-                                    std::string(Logging::GetLogFile()));
+                                "смеси. Для доп. информации см. лог файл "
+                                    + std::string(Logging::GetLogFile()));
 }
 
 //#define
@@ -284,8 +293,8 @@ bool is_valid_cgp(const const_parameters& cgp) {
             cgp.critical.volume, cgp.critical.pressure,
             cgp.critical.temperature, cgp.Z_K, cgp.mp.mass,
             // TODO: why Rm was checked twice?
-            cgp.mp.Rm) ||
-        !is_above0(cgp.mp.Rm))
+            cgp.mp.Rm)
+        || !is_above0(cgp.mp.Rm))
       return false;
   }
   return is_valid_gas(cgp.gas_name) ? true : false;

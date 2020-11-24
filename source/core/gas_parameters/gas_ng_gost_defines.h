@@ -112,18 +112,69 @@ const A9_molar_mass *get_molar_mass(gas_t gas_name);
 extern const A9_molar_mass A9_molar_masses[];
 #endif  // !ISO_20765
 
+/**
+ * \brief Коэффициенты бинарного взаимодействия для компонентов СПГ(ГОСТ 56851)
+ * */
+struct A2_SPG_coef {
+  const gas_t i,
+              j;
+  const double a,
+               b;
+};
+const A2_SPG_coef *get_A2_SPG_coefs(gas_t i, gas_t j);
+
+/**
+ * \brief Коэффициенты показателей безразмерных комплексов А0-А3
+ *   для ГОСТ 56851
+ * */
+struct A3_SPG_coef {
+  const double b,
+               r,
+               t,
+               g,
+               j,
+               alf,
+               bet,
+               ro,
+               gam;
+};
+// const A3_SPG_coef* get_A3_SPG_coefs(size_t n);
+
+/**
+ * \brief Коэффициенты расчёта пси для модели СПГ
+ * */
+struct A4_SPG_coef {
+  static constexpr int num = 6;
+  static int delta[num];
+
+  gas_t gas_name;
+  double coefs[num];
+};
+
+/**
+ * \brief Коэффициенты расчёта изобарных теплоёмкостей для модели СПГ
+ * */
+struct A5_SPG_coef {
+  static constexpr int num = 5;
+
+  gas_t gas_name;
+  double coefs[num];
+};
+
 // data
+// todo: удалить, организовать доступ только через функции
+/*
 extern const component_characteristics gases[];
 extern const binary_associate_coef gases_coef[];
-extern const A0_3_coef A0_3_coefs[];
 extern const A4_coef A4_coefs[];
 extern const critical_params A5_critical_params[];
 extern const A6_coef A6_coefs[];
 extern const A7_coef A7_coefs[];
 extern const A8_coef A8_coefs[];
 extern const int A8_sigmas[];
-
-
+*/
+extern const A0_3_coef A0_3_coefs[];
+extern const A3_SPG_coef A3_SPG_coefs[];
 
 template <class NG_COEF_T>
 const NG_COEF_T *get_coefs(const NG_COEF_T *coefs_array,
@@ -135,14 +186,15 @@ const NG_COEF_T *get_coefs(const NG_COEF_T *coefs_array,
   return NULL;
 }
 
+// functions
 /**
  * \brief Установить значение молярной массы(ng_molar_mass_)
  *   и газовой постоянной смеси(Rm)
+ *
+ * \return Молярную массу газовой смеси и соответственную молярную газовую
+ *   постоянную,
+ *   ИЛИ NullObject
  * */
 molar_parameters calculate_molar_data(ng_gost_mix components);
-/**
- * \brief Инициализировать псевдокритические параметры смеси
- * */
-parameters calclulate_pseudocrit_vpte(ng_gost_mix components);
 
 #endif  // !_CORE__GAS_PARAMETERS__GAS_NG_GOST_DEFINES_H_

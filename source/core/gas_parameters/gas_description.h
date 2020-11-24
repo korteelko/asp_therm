@@ -31,6 +31,8 @@ inline double volume_by_compress(double p, double t, double mol, double z) {
 }
 
 inline double compress_by_volume(double p, double t, double mol, double v) {
+  // расчитываются по разному,
+  // например для СПГ(ГОСТ 56851), через фактор Пинцера
   return v * p * mol / (1000.0 * GAS_CONSTANT * t);
 }
 
@@ -203,6 +205,8 @@ struct const_parameters {
    *
    * \todo Не совсем ясно про  фактор ацентричности
    *   в контексте их использоапния для смесей.
+   *   UPD: в ГОСТ на СПГ(56851) предлагаю фактор Пинцера для смеси
+   *   считать как среднее арифмитическое.
    *
    * gas_name = GAS_TYPE_MIX
    * */

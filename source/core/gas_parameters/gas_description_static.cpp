@@ -15,26 +15,34 @@
 
 #include <assert.h>
 
-
 // protected constructors
-GasParameters::GasParameters(double v, double p, double t,
-    const const_parameters cgp, dyn_parameters dgp)
-  : status_(STATUS_DEFAULT), sph_(state_phase::GAS), vpte_(parameters{v, p, t}),
-    dyn_params_(dgp), const_params(cgp) {}
+GasParameters::GasParameters(double v,
+                             double p,
+                             double t,
+                             const const_parameters cgp,
+                             dyn_parameters dgp)
+    : status_(STATUS_DEFAULT),
+      sph_(state_phase::GAS),
+      vpte_(parameters{v, p, t}),
+      dyn_params_(dgp),
+      const_params(cgp) {}
 
 GasParameters::GasParameters(parameters prs,
-    const_parameters cgp, dyn_parameters dgp)
-  : status_(STATUS_DEFAULT), sph_(state_phase::GAS), vpte_(prs),
-    dyn_params_(dgp), const_params(cgp) {}
+                             const_parameters cgp,
+                             dyn_parameters dgp)
+    : status_(STATUS_DEFAULT),
+      sph_(state_phase::GAS),
+      vpte_(prs),
+      dyn_params_(dgp),
+      const_params(cgp) {}
 
 GasParameters::~GasParameters() {}
 
-std::ostream &operator<< (std::ostream &outstream,
-    const GasParameters &gp) {
+std::ostream& operator<<(std::ostream& outstream, const GasParameters& gp) {
   char msg[256] = {0};
   parameters prs = gp.cgetParameters();
-  sprintf(msg, "v: %8.2f  p: %8.2f t:%6.2f\n", prs.volume, prs.pressure,
-      prs.temperature);
+  snprintf(msg, sizeof(msg) - 1, "v: %8.2f  p: %8.2f t:%6.2f\n", prs.volume,
+           prs.pressure, prs.temperature);
   outstream << msg;
   return outstream;
 }
@@ -101,18 +109,20 @@ parameters GasParameters::cgetParameters() const {
   return vpte_;
 }
 
-const dyn_parameters &GasParameters::cgetDynParameters() const {
+const dyn_parameters& GasParameters::cgetDynParameters() const {
   return dyn_params_;
 }
 
-const const_parameters &GasParameters::cgetConstparameters() const {
+const const_parameters& GasParameters::cgetConstparameters() const {
   return const_params;
 }
 
-void GasParameters::csetParameters(double v, double p, double t,
-    state_phase sp) {
-  vpte_ = {v,p,t};
-  sph_  = sp;
+void GasParameters::csetParameters(double v,
+                                   double p,
+                                   double t,
+                                   state_phase sp) {
+  vpte_ = {v, p, t};
+  sph_ = sp;
 }
 
 double GasParameters::cCalculateVolume(double p, double t) {

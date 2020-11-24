@@ -1,6 +1,14 @@
 /**
  * asp_therm - implementation of real gas equations of state
- *
+ * ===================================================================
+ * * gas_ng_gost30319 *
+ *   Модуль имплементирующий модель компрессированного природного
+ * газа по методологии приведённой в ГОСТ 30319.
+ * Реализован международный аналог этого ГОСТ - ISO 20765. Чтобы
+ * исключить возможность использования ISO можно из CMakeLists.txt
+ * убрать дефайн на `ISO_20765`, или, в лайт версии, создавать
+ * объекты `GasParametersGost30319Dyn` с опцией `use_iso = false`.
+ * ===================================================================
  *
  * Copyright (c) 2020 Mishutinski Yurii
  *
@@ -80,6 +88,14 @@ struct ng_gost30319_params {
 };
 
 // const_dyn_parameters init_natural_gas(const gost_ng_components &comps);
+/**
+ * \brief Класс имплементирующий расчёты компрессированных газовых смесей
+ *   по ГОСТ 30319
+ * \todo Название класса сего столь безобразно, что использование его в
+ *   реальной программе - акт преступления против коллег программистов
+ *   и программирования в целом, как инженерной сферы деятельности и
+ *   замкнутой системы законов, правил, ценностей.
+ * */
 class GasParametersGost30319Dyn : public GasParameters {
   ADD_TEST_CLASS(GasParameters_NG_Gost_dynProxy);
 
@@ -102,6 +118,12 @@ class GasParametersGost30319Dyn : public GasParameters {
                             const_parameters cgp,
                             ng_gost_mix components,
                             bool use_iso);
+
+  /**
+   * \brief Инициализировать псевдокритические параметры смеси
+   * */
+  static parameters calcPseudocriticVPT(ng_gost_mix components);
+
   /**
    * \brief Инициализировать коэффициенты расчётных функций
    * \note Расчитываются только на старте программы
@@ -198,6 +220,9 @@ class GasParametersGost30319Dyn : public GasParameters {
   // void update_parametrs();
 
  private:
+  /**
+   * \brief Контейнер компонентов смеси
+   * */
   ng_gost_mix components_;
   ng_gost30319_params ng_gost_params_;
   double coef_kx_;
