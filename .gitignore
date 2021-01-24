@@ -11,6 +11,7 @@ soft/*
 .cache/
 .ccls-cache/
 .kdev4/
+.idea/
 .vs/
 .vscode/
 
