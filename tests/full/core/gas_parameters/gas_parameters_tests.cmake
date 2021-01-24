@@ -7,7 +7,6 @@ add_executable(test_gasparameters
   ${ASP_THERM_FULLTEST_DIR}/core/gas_parameters/test_gost_ng.cpp
 
   ${THERMCORE_SOURCE_DIR}/common/atherm_common.cpp
-  ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
 
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description.cpp
   ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_dynamic.cpp

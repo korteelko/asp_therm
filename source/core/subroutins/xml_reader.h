@@ -1,6 +1,11 @@
 /**
  * asp_therm - implementation of real gas equations of state
  *
+ * В файле прописан класс реализующий функционал чтения для xml файлов,
+ * проекта asp_therm
+ *
+ * \deprecated Решение оказалось не очень удачным и здесь осталось только
+ * чтобы не переделывать. Новый ридер прописан в наборе утилит asp_utils
  *
  * Copyright (c) 2020-2021 Mishutinski Yurii
  *

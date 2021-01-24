@@ -19,7 +19,7 @@
 #include "gasmix_init.h"
 #include "models_math.h"
 #if defined(WITH_PUGIXML)
-#include "XMLReader.h"
+#include "xml_reader.h"
 #endif  // WITH_PUGIXML
 
 #include <memory>

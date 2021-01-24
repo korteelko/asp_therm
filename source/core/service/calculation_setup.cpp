@@ -251,11 +251,11 @@ merror_t CalculationSetup::initSetup(file_utils::FileURL* filepath_p) {
       }
     } else {
       rs->LogError();
-      error = error_.SetError(ERROR_READER_PARSE_ST,
+      error = error_.SetError(ERROR_PARSER_PARSE_ST,
                               "ошибка парсинга файла конфигурации расчёта");
     }
   } else {
-    error = error_.SetError(ERROR_READER_T,
+    error = error_.SetError(ERROR_PARSER_T,
                             "ошибка чтения файла конфигурации расчёта");
   }
   return error;

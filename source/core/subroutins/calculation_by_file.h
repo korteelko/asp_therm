@@ -16,8 +16,8 @@
 
 #include "Common.h"
 #include "ErrorWrap.h"
-#include "INode.h"
-#include "Reader.h"
+#include "Readers/INode.h"
+#include "Readers/Reader.h"
 #include "calculation_setup.h"
 #include "configuration_strtpl.h"
 
@@ -53,11 +53,22 @@ class calculation_node : public INodeInitializer {
  public:
   calculation_node() : builder(nullptr) {}
   calculation_node(CalculationSetupBuilder* builder) : builder(builder) {}
+
+  bool IsLeafNode() const override { return !have_subnodes_; }
+
+  std::string GetParameter(const std::string& name) override {
+    std::string val = "";
+    auto p = source->child(name.c_str());
+    if (!p.empty())
+      val = p.first_child().value();
+    return val;
+  }
+
   void SetSubnodesNames(inodes_vec* subnodes) override {
     subnodes->clear();
     subnodes->insert(subnodes->end(), subnodes_.cbegin(), subnodes_.cend());
   }
-  bool IsLeafNode() const override { return !have_subnodes_; }
+
   merror_t InitData(pugi::xml_node* src, const std::string& nodename) {
     if (!src)
       return ERROR_INIT_NULLP_ST;
@@ -75,14 +86,6 @@ class calculation_node : public INodeInitializer {
   }
 
  protected:
-  std::string getParameter(const std::string& name) override {
-    std::string val = "";
-    auto p = source->child(name.c_str());
-    if (!p.empty())
-      val = p.first_child().value();
-    return val;
-  }
-
   /* data initialization */
   void set_subnodes() {
     subnodes_.clear();
@@ -118,7 +121,7 @@ class calculation_node : public INodeInitializer {
         p.temperature = std::stod(x.attribute(STRTPL_CALCUL_T).value());
         builder->setup_p->points.push_back(p);
       } catch (std::exception& e) {
-        builder->error.SetError(ERROR_PAIR_DEFAULT(ERROR_READER_PARSE_ST));
+        builder->error.SetError(ERROR_PAIR_DEFAULT(ERROR_PARSER_PARSE_ST));
       }
     }
   }

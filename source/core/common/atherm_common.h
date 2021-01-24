@@ -13,6 +13,7 @@
 #include <sstream>
 
 #include "Common.h"
+#include "merror_codes.h"
 
 // original of CSI gost 30319-2015
 /* todo: remove to config file

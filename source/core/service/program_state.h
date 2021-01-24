@@ -14,27 +14,26 @@
 #ifndef _CORE__SERVICE__PROGRAM_STATE_H_
 #define _CORE__SERVICE__PROGRAM_STATE_H_
 
-#include "calculation_setup.h"
 #include "Common.h"
-#include "configuration_by_file.h"
-#include "db_connection_manager.h"
 #include "ErrorWrap.h"
 #include "FileURL.h"
-#include "models_configurations.h"
 #include "ThreadWrap.h"
-#include "XMLReader.h"
+#include "calculation_setup.h"
+#include "configuration_by_file.h"
+#include "db_connection_manager.h"
+#include "models_configurations.h"
+#include "xml_reader.h"
 
 #include <atomic>
 #include <memory>
 
-
 /** \brief Макро на определение режима отладки */
 #if defined(DATABASE_TEST)
-#  undef IS_DEBUG_MODE
-#  define IS_DEBUG_MODE true
+#undef IS_DEBUG_MODE
+#define IS_DEBUG_MODE true
 #else
-#  undef IS_DEBUG_MODE
-#  define IS_DEBUG_MODE (ProgramState::Instance().IsDebugMode())
+#undef IS_DEBUG_MODE
+#define IS_DEBUG_MODE (ProgramState::Instance().IsDebugMode())
 #endif
 /**
  * \brief Класс состояния программы:
@@ -42,29 +41,29 @@
  *   конфигурации расчётов(области, используемые модели etc)
  */
 class ProgramState {
-public:
+ public:
   /** \brief Внутренний(nested) класс конфигурации
-    *   в классе состояния программы */
+   *   в классе состояния программы */
   class ProgramConfiguration {
-  public:
+   public:
     ProgramConfiguration();
-    ProgramConfiguration(const std::string &config_filename);
+    ProgramConfiguration(const std::string& config_filename);
 
-    merror_t ResetConfigFile(const std::string &new_config_filename);
+    merror_t ResetConfigFile(const std::string& new_config_filename);
 
-  private:
+   private:
     /** \brief Установить значения по умолчанию
-      *   для возможных параметров */
+     *   для возможных параметров */
     void setDefault();
     /** \brief Считать и инициализировать конфигурацию программы */
     void initProgramConfig();
     /** \brief Считать и инициализировать конфигурацию
-      *   коннекта к базе данных */
+     *   коннекта к базе данных */
     void initDatabaseConfig();
     /** \brief Считать и инициализировать конфигурацию модели */
     // model_str initModelStr();
 
-  public:
+   public:
     ErrorWrap error;
     mstatus_t status = STATUS_DEFAULT;
     /**
@@ -93,20 +92,20 @@ public:
     bool is_initialized;
   };
 
-public:
+ public:
   /** \brief Синглетончик инст */
-  static ProgramState &Instance();
+  static ProgramState& Instance();
 
   /* Инициализация */
   /**
    * \brief Инициализировать рабочую директорию приложения
    */
-  void SetProgramDirs(const file_utils::FileURLRoot &work_dir,
-      const file_utils::FileURLRoot &calc_dir);
+  void SetProgramDirs(const file_utils::FileURLRoot& work_dir,
+                      const file_utils::FileURLRoot& calc_dir);
   /**
    * \brief Загрузить или перезагрузить конфигурацию программы
    * */
-  merror_t ReloadConfiguration(const std::string &config_file);
+  merror_t ReloadConfiguration(const std::string& config_file);
   /**
    * \brief Конфигурация из файла была загружена
    * \return true да, false нет
@@ -124,9 +123,9 @@ public:
    * \return true да, false нет
    */
   bool IsDryRunDBConn() const;
-  const program_configuration &GetConfiguration() const;
-  const calculation_configuration &GetCalcConfiguration() const;
-  const asp_db::db_parameters &GetDatabaseConfiguration() const;
+  const program_configuration& GetConfiguration() const;
+  const calculation_configuration& GetCalcConfiguration() const;
+  const asp_db::db_parameters& GetDatabaseConfiguration() const;
 
   /* Расчёт */
   /**
@@ -134,7 +133,7 @@ public:
    * \param filepath Путь к сетапу расчёта относительно calc_dir_
    * \return id расчётных параметров или -1 в случае ошибки
    * */
-  int AddCalculationSetup(const std::string &filepath);
+  int AddCalculationSetup(const std::string& filepath);
   /**
    * \brief Запустить расчёт
    * \param num Номер сетапа расчёта
@@ -164,10 +163,10 @@ public:
    * */
   void LogError();
 
-private:
+ private:
   ProgramState();
 
-private:
+ private:
   ErrorWrap error_;
   mstatus_t status_ = STATUS_DEFAULT;
   Mutex state_mutex;

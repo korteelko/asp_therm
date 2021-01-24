@@ -1,7 +1,6 @@
 set(MODELS_SRC
     # common sources
     ${THERMCORE_SOURCE_DIR}/common/atherm_common.cpp
-    ${THERMCORE_SOURCE_DIR}/common/models_math.cpp
     # gas_parameters sources
     ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description.cpp
     ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_dynamic.cpp

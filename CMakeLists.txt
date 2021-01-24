@@ -10,15 +10,14 @@ set(EXECUTABLE ${PROJECT_NAME}_debug)
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(ASP_THERM_CMAKE_ROOT ${ASP_THERM_ROOT}/cmake)
 
-option(WITH_PUGIXML "Build with pugixml(always on)" ON)
 option(ISO_20765 "Include iso 20765 to build" ON)
 option(WITH_POSTGRESQL "Build with postres libs: `pq` and `pqxx`" ON)
-option(TESTS_ENABLED "Run tests" ON)
+option(BUILD_TESTS "Run tests" ON)
+option(BUILD_EXECUTABLE "Run tests" ON)
 
 # setup cmake directories
 set(THERMCORE_SOURCE_DIR "${ASP_THERM_ROOT}/source/core")
 set(THERMDB_SOURCE_DIR "${ASP_THERM_ROOT}/source/database")
-set(THERMREADER_SOURCE_DIR "${ASP_THERM_ROOT}/source/reader")
 
 # setup file paths and cmake error codes
 set(ERRORCODES_FILE "merror_codes.h")
@@ -53,15 +52,7 @@ set(THERMCORE_INCLUDES
     "${THERMCORE_SOURCE_DIR}/models" "${THERMCORE_SOURCE_DIR}/phase_diagram"
     "${THERMCORE_SOURCE_DIR}/service" "${THERMCORE_SOURCE_DIR}/subroutins")
 
-set(INCLUDE_DIRS ${THERMCORE_INCLUDES} ${THERMDB_SOURCE_DIR}
-                 ${THERMREADER_SOURCE_DIR})
-
-# add pugi xml
-add_definitions(-DBYCMAKE_WITH_PUGIXML)
-message(STATUS "Add library pugixml."
-               "See http://pugixml.org for more information")
-add_subdirectory(${MODULES_DIR}/pugixml)
-list(APPEND INCLUDE_DIRS ${MODULES_DIR}/pugixml/src)
+set(INCLUDE_DIRS ${THERMCORE_INCLUDES} ${THERMDB_SOURCE_DIR})
 
 # add pq, pqxx
 if(WITH_POSTGRESQL)
@@ -74,7 +65,7 @@ endif()
 
 add_subdirectory(${MODULES_DIR}/asp_db)
 find_package(Threads REQUIRED)
-set(LIBRARIES Threads::Threads pugixml asp_db)
+set(LIBRARIES Threads::Threads asp_db)
 
 include(${ASP_THERM_CMAKE_ROOT}/models_src.cmake)
 if(${CMAKE_BUILD_TYPE} MATCHES Release)
@@ -89,9 +80,9 @@ if(${CMAKE_BUILD_TYPE} MATCHES Release)
   target_link_libraries(${RESULT_LIB} ${LIBRARIES})
 endif()
 
-if(${CMAKE_BUILD_TYPE} MATCHES Debug)
+if(BUILD_EXECUTABLE)
   # build test executable
-  add_executable(${EXECUTABLE} ${MODELS_SRC} main.cpp)
+  add_executable(${EXECUTABLE} ${MODELS_SRC} examples/default/main.cpp)
 
   target_compile_options(${EXECUTABLE} PRIVATE -Wall -fno-stack-protector)
   target_compile_definitions(
@@ -105,7 +96,7 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Скопировать compile_commands в корень проекта
 add_custom_target(
-  copy-compile-commands ALL
+  copy-compile-commands-asp_therm ALL
   ${CMAKE_COMMAND} -E copy_if_different
   ${CMAKE_BINARY_DIR}/compile_commands.json ${CMAKE_CURRENT_SOURCE_DIR})
 

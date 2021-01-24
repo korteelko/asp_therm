@@ -1,5 +1,5 @@
 #include "Common.h"
-#include "XMLReader.h"
+#include "xml_reader.h"
 
 #include "gtest/gtest.h"
 
@@ -9,50 +9,28 @@
 #include <string>
 #include <vector>
 
-
 namespace fs = std::filesystem;
 
-static fs::path cwd;
-static fs::path testdir = "../../../tests/full/utils/data/";
-static fs::path tf = "test_xml.xml";
-
-/* в тестовом файле прописано:
-<?xml version="1.0" encoding="UTF-8"?>
-<test_root name="test">
-  <group name="first">
-    <parameter name="f"> sda </parameter>
-    <parameter name="s"> sdsa </parameter>
-    <parameter name="t"> 116.2 </parameter>
-    <parameter name="ff">  </parameter>
-  </group>
-  <group name="second">
-    <parameter name="f"> asd </parameter>
-    <parameter name="s"> 32 </parameter>
-    <parameter name="t"> 12 </parameter>
-  </group>
-</test_root>
-*/
 static const std::array<std::string, 3> node_t_list =
-   std::array<std::string, 3> {"test_root", "group", "parameter"};
+    std::array<std::string, 3>{"test_root", "group", "parameter"};
 
-/** \brief тестовая структура-параметр шаблона XMLReader */
+/**
+ * \brief тестовая структура-параметр шаблона XMLReader
+ * */
 struct test_node {
   // static const std::array<std::string, 3> node_t_list;
 
-public:
+ public:
   node_type config_node_type;
-  std::string name,
-              value;
+  std::string name, value;
 
-public:
+ public:
   test_node(node_type itype, std::string name)
-    : config_node_type(itype), name(name), value("") {}
+      : config_node_type(itype), name(name), value("") {}
   test_node(node_type itype, std::string name, std::string value)
-    : config_node_type(itype), name(name), value(value) {}
+      : config_node_type(itype), name(name), value(value) {}
 
-  static std::string get_root_name() {
-    return node_t_list[NODE_T_ROOT];
-  }
+  static std::string get_root_name() { return node_t_list[NODE_T_ROOT]; }
   static node_type get_node_type(std::string type) {
     for (uint32_t i = 0; i < node_t_list.size(); ++i)
       if (node_t_list[i] == type)
@@ -61,11 +39,12 @@ public:
   }
 };
 
-
 /** \brief класс тестов парсера xml файла - XMLReader'a */
-class XMLReaderTest: public ::testing::Test {
-protected:
+class XMLReaderTest : public ::testing::Test {
+ protected:
   XMLReaderTest() {
+    cwd = fs::current_path();
+    setup_example_data();
     XMLReader_ = std::unique_ptr<XMLReader<test_node>>(
         XMLReader<test_node>::Init((cwd / testdir / tf).string()));
     EXPECT_TRUE(XMLReader_ != nullptr);
@@ -73,8 +52,38 @@ protected:
 
   ~XMLReaderTest() override {}
 
-protected:
+ protected:
+  /**
+   * \brief Создать папку для данных и сгенерировать файлы
+   * */
+  void setup_example_data() {
+    fs::path d = cwd / testdir;
+    fs::path xf = d / tf;
+    if (not is_exists(d.string()))
+      fs::create_directory(d);
+    std::ofstream fx(xf);
+    fx << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+          "<test_root name=\"test\">\n"
+          "  <group name=\"first\">\n"
+          "    <parameter name=\"f\"> sda </parameter>\n"
+          "    <parameter name=\"s\"> sdsa </parameter>\n"
+          "    <parameter name=\"t\"> 116.2 </parameter>\n"
+          "    <parameter name=\"ff\">  </parameter>\n"
+          "  </group>\n"
+          "  <group name=\"second\">\n"
+          "    <parameter name=\"f\"> asd </parameter>\n"
+          "    <parameter name=\"s\"> 32 </parameter>\n"
+          "    <parameter name=\"t\"> 12 </parameter>\n"
+          "  </group>\n"
+          "</test_root>\n";
+    fx.close();
+  }
+
+ protected:
   std::unique_ptr<XMLReader<test_node>> XMLReader_;
+  fs::path cwd;
+  fs::path testdir = "xmldir";
+  fs::path tf = "test_xml.xml";
 };
 
 TEST_F(XMLReaderTest, ReadFileClassic) {
@@ -106,9 +115,7 @@ TEST_F(XMLReaderTest, DISABLED_ReadFileNew) {
   ASSERT_TRUE(false);
 }
 
-int main(int argc, char **argv) {
-  cwd = fs::path(argv[0]).parent_path();
-  fs::current_path(cwd);
+int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
