@@ -12,8 +12,12 @@
 
 #include <sstream>
 
-#include "Common.h"
+#include "asp_utils/Common.h"
+#include "asp_utils/ErrorWrap.h"
+#include "asp_utils/Logging.h"
 #include "merror_codes.h"
+
+using namespace asp_utils;
 
 // original of CSI gost 30319-2015
 /* todo: remove to config file

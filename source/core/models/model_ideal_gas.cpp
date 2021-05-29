@@ -9,9 +9,9 @@
  */
 #include "model_ideal_gas.h"
 
+#include "asp_utils/Logging.h"
 #include "gas_description_dynamic.h"
 #include "gasmix_init.h"
-#include "Logging.h"
 #include "models_math.h"
 
 #include <cmath>
@@ -19,12 +19,15 @@
 
 /** \brief строка model_info для идеального газа */
 static model_str ideal_gas_mi(rg_model_id(rg_model_t::IDEAL_GAS,
-    MODEL_SUBTYPE_DEFAULT), 1, 0, "Идеальный газ");
+                                          MODEL_SUBTYPE_DEFAULT),
+                              1,
+                              0,
+                              "Идеальный газ");
 
 static model_priority ideal_gas_priority(DEF_PRIOR_IDEAL_GAS);
 
-Ideal_Gas::Ideal_Gas(const model_input &mi)
-  : modelGeneral(mi.ms, mi.gm, mi.bp) {
+Ideal_Gas::Ideal_Gas(const model_input& mi)
+    : modelGeneral(mi.ms, mi.gm, mi.bp) {
   set_gasparameters(mi.gpi, this);
   if (!error_.GetErrorCode())
     set_enthalpy();
@@ -35,14 +38,14 @@ Ideal_Gas::Ideal_Gas(const model_input &mi)
   }
 }
 
-Ideal_Gas *Ideal_Gas::Init(const model_input &mi) {
+Ideal_Gas* Ideal_Gas::Init(const model_input& mi) {
   try {
     check_input(mi);
-  } catch (const model_init_exception &e) {
+  } catch (const model_init_exception& e) {
     Logging::Append(e.what());
     return nullptr;
   }
-  Ideal_Gas *ig = new Ideal_Gas(mi);
+  Ideal_Gas* ig = new Ideal_Gas(mi);
   if (ig)
     if (ig->parameters_ == nullptr) {
       delete ig;
@@ -51,7 +54,7 @@ Ideal_Gas *Ideal_Gas::Init(const model_input &mi) {
   return ig;
 }
 
-model_str Ideal_Gas::GetModelShortInfo(const rg_model_id &) {
+model_str Ideal_Gas::GetModelShortInfo(const rg_model_id&) {
   return ideal_gas_mi;
 }
 
@@ -59,17 +62,18 @@ model_str Ideal_Gas::GetModelShortInfo() const {
   return ideal_gas_mi;
 }
 
-void Ideal_Gas::update_dyn_params(dyn_parameters &prev_state,
-    const parameters new_state) {
+void Ideal_Gas::update_dyn_params(dyn_parameters& prev_state,
+                                  const parameters new_state) {
   prev_state.parm = new_state;
 }
 
-void Ideal_Gas::update_dyn_params(dyn_parameters &prev_state,
-    const parameters new_state, const const_parameters &cp) {
+void Ideal_Gas::update_dyn_params(dyn_parameters& prev_state,
+                                  const parameters new_state,
+                                  const const_parameters& cp) {
   assert(0 && "Ideal_Gas update_dyn_params");
 }
 
-void Ideal_Gas::DynamicflowAccept(DerivateFunctor &df) {
+void Ideal_Gas::DynamicflowAccept(DerivateFunctor& df) {
   df.getFunctor(*this);
 }
 
@@ -96,7 +100,7 @@ double Ideal_Gas::GetVolume(double p, double t) {
     error_.SetError(ERROR_PAIR_DEFAULT(ERROR_CALC_MODEL_ST));
     return 0.0;
   }
-  return  t * parameters_->cgetR() / p;
+  return t * parameters_->cgetR() / p;
 }
 
 double Ideal_Gas::GetPressure(double v, double t) {

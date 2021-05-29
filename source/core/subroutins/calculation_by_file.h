@@ -14,10 +14,10 @@
 #ifndef _CORE__SUBROUTINS__CALCULATION_BY_FILE_H_
 #define _CORE__SUBROUTINS__CALCULATION_BY_FILE_H_
 
-#include "Common.h"
-#include "ErrorWrap.h"
-#include "Readers/INode.h"
-#include "Readers/Reader.h"
+#include "asp_utils/Common.h"
+#include "asp_utils/ErrorWrap.h"
+#include "asp_utils/Readers/INode.h"
+#include "asp_utils/Readers/Reader.h"
 #include "calculation_setup.h"
 #include "configuration_strtpl.h"
 

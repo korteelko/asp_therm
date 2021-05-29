@@ -7,11 +7,11 @@
  * This library is distributed under the MIT License.
  * See LICENSE file in the project root for full license information.
  */
+#include "asp_db/db_connection_manager.h"
+#include "asp_db/db_queries_setup.h"
+#include "asp_db/db_where.h"
 #include "atherm_db_tables.h"
 #include "calculation_by_file.h"
-#include "db_connection_manager.h"
-#include "db_queries_setup.h"
-#include "db_where.h"
 #include "gas_by_file.h"
 #include "gasmix_by_file.h"
 #include "model_peng_robinson.h"
@@ -39,10 +39,9 @@
 
 namespace fs = std::filesystem;
 
-// maybe set to:
-const fs::path xml_data_dir = "../data";
-const fs::path xml_gases_dir = "../data/gases";
-const fs::path xml_calculations_dir = "../data/calculation";
+const fs::path xml_data_dir = "data";
+const fs::path xml_gases_dir = xml_data_dir / "gases";
+const fs::path xml_calculations_dir = xml_data_dir / "calculation";
 const fs::path xml_methane = "methane.xml";
 const fs::path xml_ethane = "ethane.xml";
 const fs::path xml_propane = "propane.xml";
@@ -68,14 +67,14 @@ static model_str pr_str(rg_model_id(rg_model_t::PENG_ROBINSON,
                         0,
                         "debugi pr");
 
-static fs::path cwd;
+static fs::path project_root;
 
 /**
  * \brief Функция отладки считывания и инициализации
  *   входных данных для расчётов
  * */
 int test_calculation_setup() {
-  std::string data_dir = (cwd / xml_data_dir).string();
+  const auto data_dir = (project_root / xml_data_dir).string();
   std::shared_ptr<file_utils::FileURLRoot> root_shp(
       new file_utils::FileURLRoot(file_utils::url_t::fs_path, data_dir));
   calculation_setup cs(root_shp);
@@ -83,15 +82,16 @@ int test_calculation_setup() {
 
   auto path = root_shp->CreateFileURL(xml_calculation.string());
   std::unique_ptr<ReaderSample<pugi::xml_node, calculation_node<pugi::xml_node>,
-                               CalculationSetupBuilder>>
+                               CalculationSetupBuilder, std::string>>
       rs(ReaderSample<pugi::xml_node, calculation_node<pugi::xml_node>,
-                      CalculationSetupBuilder>::Init(&path, &builder));
+                      CalculationSetupBuilder, std::string>::Init(&path,
+                                                                  &builder));
   return (rs) ? rs->InitData() : 11;
 }
 
 int test_calculation_init() {
   int res = 0;
-  std::string data_dir = (cwd / xml_data_dir).string();
+  std::string data_dir = (project_root / xml_data_dir).string();
   std::shared_ptr<file_utils::FileURLRoot> root_shp(
       new file_utils::FileURLRoot(file_utils::url_t::fs_path, data_dir));
 
@@ -115,7 +115,7 @@ int test_calculation_init() {
 int test_database_with_models(DBConnectionManager& dbm) {
   AthermDBTables adb;
   int res = 0;
-  std::string filename = (cwd / xml_gases_dir / xml_gasmix).string();
+  std::string filename = (project_root / xml_gases_dir / xml_gasmix).string();
 #if defined(RK2_DEBUG)
   std::unique_ptr<modelGeneral> mk(
       ModelsCreator::GetCalculatingModel(rk2_str, NULL, filename, INPUT_P_T));
@@ -225,7 +225,8 @@ int test_database_with_models(DBConnectionManager& dbm) {
 }
 
 int test_database() {
-  std::string filename = (cwd / xml_gases_dir / xml_configuration).string();
+  std::string filename =
+      (project_root / xml_gases_dir / xml_configuration).string();
   ProgramState& ps = ProgramState::Instance();
   AthermDBTables adb;
   // merror_t err = ps.ResetConfigFile(filename);
@@ -263,18 +264,19 @@ int test_database() {
 int test_program_configuration() {
   std::cerr << "test_program_configuration start\n";
   ProgramState& ps = ProgramState::Instance();
-  ps.ReloadConfiguration((cwd / xml_gases_dir / xml_configuration).string());
+  ps.ReloadConfiguration(
+      (project_root / xml_gases_dir / xml_configuration).string());
   merror_t e = ps.GetErrorCode();
   if (e) {
-    std::cerr << "program state bida " << e << std::endl;
-    std::cerr << "Current dir is " << cwd << std::endl;
+    std::cerr << "program state bida " << hex2str(e) << std::endl;
+    std::cerr << "Current dir is " << project_root << std::endl;
   }
   return e;
 }
 
 int test_models() {
   std::vector<std::unique_ptr<modelGeneral>> test_vec;
-  std::string filename = (cwd / xml_gases_dir / xml_gasmix).string();
+  std::string filename = (project_root / xml_gases_dir / xml_gasmix).string();
 #if defined(RK2_DEBUG)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(rk2_str, NULL, filename, INPUT_P_T)));
@@ -327,12 +329,15 @@ int test_models_mix() {
   std::vector<gasmix_component_info> xml_files =
       std::vector<gasmix_component_info>{
           gasmix_component_info(
-              "methane", (cwd / xml_gases_dir / xml_methane).string(), 0.988),
+              "methane", (project_root / xml_gases_dir / xml_methane).string(),
+              0.988),
           // add more (summ = 1.00)
           gasmix_component_info(
-              "ethane", (cwd / xml_gases_dir / xml_ethane).string(), 0.009),
+              "ethane", (project_root / xml_gases_dir / xml_ethane).string(),
+              0.009),
           gasmix_component_info(
-              "propane", (cwd / xml_gases_dir / xml_propane).string(), 0.003)};
+              "propane", (project_root / xml_gases_dir / xml_propane).string(),
+              0.003)};
 #if defined(RK2_DEBUG)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(rk2_str, xml_files, INPUT_P_T)));
@@ -368,12 +373,19 @@ int test_models_mix() {
 }
 
 int main(int argc, char* argv[]) {
-  cwd = fs::path(argv[0]).parent_path();
+  const auto cwd = fs::path(argv[0]).parent_path();
   fs::current_path(cwd);
+#if defined(OS_WINDOWS)
+  project_root = cwd / "../../..";
+#elif defined(OS_UNIX)
+  project_root = cwd.parent_path();
+#endif  // OS
+
   ProgramState::Instance().SetProgramDirs(
-      file_utils::FileURLRoot(file_utils::url_t::fs_path, cwd.string()),
       file_utils::FileURLRoot(file_utils::url_t::fs_path,
-                              cwd / xml_calculations_dir));
+                              project_root.string()),
+      file_utils::FileURLRoot(file_utils::url_t::fs_path,
+                              (project_root / xml_calculations_dir).string()));
   if (!test_program_configuration()) {
     Logging::Append(io_loglvl::debug_logs, "Запускаю тесты сборки");
     //*

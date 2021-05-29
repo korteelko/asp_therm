@@ -16,48 +16,47 @@
 #ifndef _CORE__SERVICE__CALCULATION_INFO_H_
 #define _CORE__SERVICE__CALCULATION_INFO_H_
 
+#include "asp_utils/ErrorWrap.h"
+#include "asp_utils/FileURL.h"
 #include "atherm_common.h"
-#include "ErrorWrap.h"
-#include "FileURL.h"
 #include "gas_description.h"
-
 
 struct model_info;
 
 /** \brief Конфигурация запуска программы */
 struct calculation_configuration {
   /** \brief Флаг вывода отладочной информации
-    * \default true */
+   * \default true */
   bool is_debug_mode = true;
   /** \brief Флаг использования классической модели Редлиха-Квонга
-    * \default false */
+   * \default false */
   bool rk_enable_origin_mod = false;
   /** \brief Флаг использования модификации Соаве
-    *   для уравнения состояния Редлиха-Квонга
-    * \default true */
+   *   для уравнения состояния Редлиха-Квонга
+   * \default true */
   bool rk_enable_soave_mod = true;
   /** \brief Флаг инициализации модели Пенга-Робинсона через
-    *   коэфициенты бинарного взаимодействия
-    * \default true */
+   *   коэфициенты бинарного взаимодействия
+   * \default true */
   bool pr_enable_by_binary_coefs = true;
   /** \brief Флаг использования 'ISO 20665' поверх 'ГОСТ 30319-3'
-    *    для ng_gost модели
-    * \default true */
+   *    для ng_gost модели
+   * \default true */
   bool enable_iso_20765 = true;
 
-public:
+ public:
   /** \brief Вывод отладочной информации */
   bool IsDebug() const;
   /** \brief Использование классической модели Редлиха-Квонга */
   bool RK_IsEnableOriginMod() const;
   /** \brief Использование модификации Соаве
-    *   для уравнения состояния Редлиха-Квонга */
+   *   для уравнения состояния Редлиха-Квонга */
   bool RK_IsEnableSoaveMod() const;
   /** \brief Использование модели Пенга-Робинсона с расширением через
-    *   коэфициенты бинарного взаимодействия */
+   *   коэфициенты бинарного взаимодействия */
   bool PR_IsEnableByBinaryCoefs() const;
   /** \brief Использование 'ISO 20665' поверх 'ГОСТ 30319-3'
-    *    для ng_gost модели */
+   *    для ng_gost модели */
   bool IsEnableISO20765() const;
 };
 
@@ -65,36 +64,36 @@ public:
  * \brief Структура для добавления в базу данных
  * */
 struct calculation_info {
-public:
+ public:
   calculation_info();
   calculation_info(std::time_t dt);
 
   /**
    * \brief Установить время/дату
    * */
-  calculation_info &SetDateTime(std::time_t *dt);
+  calculation_info& SetDateTime(std::time_t* dt);
   /**
    * \brief Установить ссылку на используемую модель
    * */
-  calculation_info &SetModelInfo(const model_info *mi);
+  calculation_info& SetModelInfo(const model_info* mi);
   /**
    * \brief Установить имя файла газовой смеси
    * */
-  calculation_info &SetGasmixFile(const std::string &gasmix);
+  calculation_info& SetGasmixFile(const std::string& gasmix);
   /**
    * \brief Установить текущие значения времени и даты
    * */
-  calculation_info &SetCurrentTime();
+  calculation_info& SetCurrentTime();
   /**
    * \brief Установить дату
    * \param date дата в формате 'yyyy/mm/dd'
    * */
-  mstatus_t SetDate(const std::string &date);
+  mstatus_t SetDate(const std::string& date);
   /**
    * \brief Установить время
    * \param time время в формате 'hh:mm'
    * */
-  mstatus_t SetTime(const std::string &time);
+  mstatus_t SetTime(const std::string& time);
 
   /**
    * \brief Получить строку даты в формате 'yyyy/mm/dd'
@@ -105,7 +104,7 @@ public:
    * */
   std::string GetTime() const;
 
-public:
+ public:
   enum calculation_info_flags {
     f_empty = 0x00,
     f_model_id = 0x01,
@@ -130,7 +129,7 @@ public:
   /**
    * \brief Указатель на модель
    * */
-  const model_info *model = nullptr;
+  const model_info* model = nullptr;
   /**
    * \brief Имя файла смеси
    * */
@@ -144,7 +143,6 @@ public:
    * */
   uint32_t initialized = f_empty;
 };
-
 
 /** \brief информация о предыдущих расчётах */
 /* todo: сейчас это заглушка */

@@ -9,7 +9,7 @@
  */
 #include "gas_ng_gost56851.h"
 
-#include "Logging.h"
+#include "asp_utils/Logging.h"
 #include "gas_ng_gost_defines.h"
 
 #include <assert.h>
@@ -42,12 +42,11 @@ std::map<gas_t, max_valid_limits_t> mix_valid_molar =
 GasParametersGost56851Dyn::GasParametersGost56851Dyn(parameters prs,
                                                      const_parameters cgp,
                                                      ng_gost_mix components)
-    : GasParameters(prs, cgp, dyn_parameters()),
-      components_(components) {}
+    : GasParameters(prs, cgp, dyn_parameters()), components_(components) {}
 
 // todo: merge this method with GasParametersGost30319Dyn::calcPseudocriticVPT
 GasParametersGost56851Dyn::pseudocritic_parameters
-    GasParametersGost56851Dyn::calcPseudocriticVPT(ng_gost_mix components) {
+GasParametersGost56851Dyn::calcPseudocriticVPT(ng_gost_mix components) {
   double vol = 0.0;
   double temp = 0.0;
   double press_var = 0.0;
@@ -63,8 +62,8 @@ GasParametersGost56851Dyn::pseudocritic_parameters
     } else {
       Logging::Append(
           "init pseudocritic by gost 56851 model\n"
-          "  undefined component: #" +
-          std::to_string(components[i].first));
+          "  undefined component: #"
+          + std::to_string(components[i].first));
       continue;
     }
     if (!(i_cp = get_critical_params(components[i].first)))
@@ -75,8 +74,8 @@ GasParametersGost56851Dyn::pseudocritic_parameters
       } else {
         Logging::Append(
             "init pseudocritic by gost 56851 model\n"
-            "  undefined component: #" +
-            std::to_string(components[j].first));
+            "  undefined component: #"
+            + std::to_string(components[j].first));
         continue;
       }
       bin_coefs = get_A2_SPG_coefs(components[i].first, components[j].first);
@@ -84,10 +83,12 @@ GasParametersGost56851Dyn::pseudocritic_parameters
         continue;
       tmp_var = components[i].second * components[j].second
                 * pow(pow(Mi / i_cp->density, 0.333333)
-                + pow(Mj / j_cp->density, 0.333333), 3.0) * bin_coefs->a;
+                          + pow(Mj / j_cp->density, 0.333333),
+                      3.0)
+                * bin_coefs->a;
       vol += tmp_var;
-      temp += tmp_var * sqrt(i_cp->temperature * j_cp->temperature)
-              * bin_coefs->b;
+      temp +=
+          tmp_var * sqrt(i_cp->temperature * j_cp->temperature) * bin_coefs->b;
     }
     press_var += components[i].second * i_cp->acentric;
   }
@@ -97,14 +98,17 @@ GasParametersGost56851Dyn::pseudocritic_parameters
   pseudocrit_vpt.vpt.volume = 0.125 * vol;
   pseudocrit_vpt.vpt.temperature = 0.125 * temp / vol;
   pseudocrit_vpt.vpt.pressure = 1000 * GAS_CONSTANT
-                            * pseudocrit_vpt.vpt.temperature * press_var
-                            / pseudocrit_vpt.vpt.volume;
+                                * pseudocrit_vpt.vpt.temperature * press_var
+                                / pseudocrit_vpt.vpt.volume;
   pseudocrit_vpt.z = press_var;
   return pseudocrit_vpt;
 }
 
-GasParametersGost56851Dyn* GasParametersGost56851Dyn::Init(gas_params_input gpi) {
-  GasParametersGost56851Dyn*  res = nullptr;
+GasParametersGost56851Dyn* GasParametersGost56851Dyn::Init(
+    gas_params_input gpi) {
+  GasParametersGost56851Dyn* res = nullptr;
+  assert(0);
+  return res;
 }
 
 void GasParametersGost56851Dyn::csetParameters(double v,
@@ -116,4 +120,5 @@ void GasParametersGost56851Dyn::csetParameters(double v,
 
 double GasParametersGost56851Dyn::cCalculateVolume(double p, double t) {
   assert(0);
+  return 0.0;
 }

@@ -13,7 +13,7 @@
 #ifndef _DATABASE__ATHERM_DB_TABLES_H_
 #define _DATABASE__ATHERM_DB_TABLES_H_
 
-#include "db_tables.h"
+#include "asp_db/db_tables.h"
 #include "models_configurations.h"
 
 #include <string>

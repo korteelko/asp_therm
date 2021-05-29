@@ -12,6 +12,7 @@ set(ASP_THERM_CMAKE_ROOT ${ASP_THERM_ROOT}/cmake)
 
 option(ISO_20765 "Include iso 20765 to build" ON)
 option(WITH_POSTGRESQL "Build with postres libs: `pq` and `pqxx`" ON)
+option(WITH_FIREBIRD "Build with firebird lib: `fbclient`" OFF)
 option(BUILD_TESTS "Run tests" ON)
 option(BUILD_EXECUTABLE "Run tests" ON)
 
@@ -29,8 +30,18 @@ endif()
 
 # TODO: move it to env setup .cmake file
 if(MSVC)
-  message(STATUS "asp_therm add define: -D_CRT_SECURE_NO_WARNINGS")
+  message(STATUS "asp_therm add define: CRT_SECURE_NO_WARNINGS")
   list(APPEND DEFINES_LIST "-D_CRT_SECURE_NO_WARNINGS")
+endif()
+
+if(WIN32)
+  message(STATUS "asp_therm add define: OS_WINDOWS")
+  list(APPEND DEFINES_LIST "-DOS_WINDOWS")
+elseif(UNIX)
+  message(STATUS "asp_therm add define: OS_UNIX")
+  list(APPEND DEFINES_LIST "-DOS_UNIX")
+else()
+  message(SEND_ERROR "Undefined system, please check CMakeList.txt")
 endif()
 
 # setup utils OUT_DIR - для библиотеки atherm
@@ -56,8 +67,10 @@ set(INCLUDE_DIRS ${THERMCORE_INCLUDES} ${THERMDB_SOURCE_DIR})
 
 # add pq, pqxx
 if(WITH_POSTGRESQL)
-  # set additional information in `asp_db` module
   list(APPEND DEFINES_LIST "-DBYCMAKE_WITH_POSTGRESQL")
+endif()
+if(WITH_FIREBIRD)
+  list(APPEND DEFINES_LIST "-DBYCMAKE_WITH_FIREBIRD")
 endif()
 if(ISO_20765)
   list(APPEND DEFINES_LIST "-DBYCMAKE_ISO_20765")
@@ -84,21 +97,24 @@ if(BUILD_EXECUTABLE)
   # build test executable
   add_executable(${EXECUTABLE} ${MODELS_SRC} examples/default/main.cpp)
 
-  target_compile_options(${EXECUTABLE} PRIVATE -Wall -fno-stack-protector)
+  target_compile_options(${EXECUTABLE} PRIVATE -Wall)
   target_compile_definitions(
     ${EXECUTABLE} PRIVATE -DBYCMAKE_DEBUG ${INCLUDE_ERRORCODES} ${DEFINES_LIST})
   target_include_directories(${EXECUTABLE} PRIVATE ${INCLUDE_DIRS})
   target_link_libraries(${EXECUTABLE} ${LIBRARIES})
 endif()
 
-# Генерировать compile_commands.json файл компилируемых объектов по которым ccls
-# будет правильно инклуды/дефайны расставлять
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-# Скопировать compile_commands в корень проекта
-add_custom_target(
-  copy-compile-commands-asp_therm ALL
-  ${CMAKE_COMMAND} -E copy_if_different
-  ${CMAKE_BINARY_DIR}/compile_commands.json ${CMAKE_CURRENT_SOURCE_DIR})
+if(UNIX)
+  message(STATUS "\t\tGenerate compile_commands.json for asp_therm")
+  # Генерировать compile_commands.json файл компилируемых объектов по которым ccls
+  # будет правильно инклуды/дефайны расставлять
+  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+  # Скопировать compile_commands в корень проекта
+  add_custom_target(
+    copy-compile-commands-asp_therm ALL
+    ${CMAKE_COMMAND} -E copy_if_different
+    ${CMAKE_BINARY_DIR}/compile_commands.json ${CMAKE_CURRENT_SOURCE_DIR})
+endif(UNIX)
 
 # run tests
 if(TESTS_ENABLED)

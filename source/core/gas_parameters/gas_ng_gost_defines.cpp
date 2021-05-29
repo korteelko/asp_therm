@@ -9,15 +9,16 @@
  */
 #include "gas_ng_gost_defines.h"
 
-#include "Logging.h"
+#include "asp_utils/Logging.h"
 #include "atherm_common.h"
 #include "gas_defines.h"
 
-#include <limits>
 #include <stdint.h>
+#include <limits>
 
 #define GET_ARRAY_SIZE(M) (sizeof(M) / sizeof(M[0]))
 
+// clang-format off
 /* check 07_11_19 */
 // Параметры бинарного взаимодействия
 // const size_t gases_count = 13;
@@ -472,6 +473,7 @@ A5_SPG_coef A5_SPG_coefs[] = {
   {.gas_name = GAS_TYPE_CARBON_DIOXIDE, .coefs =
      {3.26743307, 3.04166057, -14.4322345, 28.2801767, -17.1064968}},
 };
+// clang-format on
 
 molar_parameters calculate_molar_data(ng_gost_mix components) {
   molar_parameters mp;
@@ -487,7 +489,7 @@ molar_parameters calculate_molar_data(ng_gost_mix components) {
                       "Ошибка расчёта молярной массы смеси. "
                       "Данные компонента неизвестны.\n"
                       "Функция calculate_molar_data, component"
-                      + hex2str(components[i].first));
+                          + hex2str(components[i].first));
       mp.mass = 0.0;
       break;
     }

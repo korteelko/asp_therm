@@ -10,8 +10,8 @@
 #ifndef _CORE__GAS_PARAMETERS__GAS_DESCRIPTION_H_
 #define _CORE__GAS_PARAMETERS__GAS_DESCRIPTION_H_
 
-#include "Common.h"
-#include "ErrorWrap.h"
+#include "asp_utils/Common.h"
+#include "asp_utils/ErrorWrap.h"
 #include "atherm_common.h"
 #include "gas_defines.h"
 

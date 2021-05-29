@@ -9,8 +9,7 @@
  */
 #include "gas_description.h"
 
-#include "Common.h"
-#include "Logging.h"
+#include "asp_utils/Logging.h"
 #include "models_math.h"
 
 #include <limits>

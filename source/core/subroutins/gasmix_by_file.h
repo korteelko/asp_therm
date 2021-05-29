@@ -10,8 +10,8 @@
 #ifndef _CORE__SUBROUTINS__GASMIX_BY_FILE_H_
 #define _CORE__SUBROUTINS__GASMIX_BY_FILE_H_
 
-#include "ErrorWrap.h"
-#include "FileURL.h"
+#include "asp_utils/ErrorWrap.h"
+#include "asp_utils/FileURL.h"
 #include "atherm_common.h"
 #include "file_structs.h"
 #include "gas_by_file.h"

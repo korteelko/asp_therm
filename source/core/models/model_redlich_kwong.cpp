@@ -9,40 +9,44 @@
  */
 #include "model_redlich_kwong.h"
 
+#include "asp_utils/Logging.h"
 #include "gas_description_dynamic.h"
-#include "Logging.h"
 #include "model_redlich_kwong_soave.h"
 #include "models_math.h"
 
 #include <assert.h>
 
 static model_str redlich_kwong_mi(rg_model_id(rg_model_t::REDLICH_KWONG,
-    MODEL_SUBTYPE_DEFAULT), 1, 0, "Модель Редлиха-Квонга");
+                                              MODEL_SUBTYPE_DEFAULT),
+                                  1,
+                                  0,
+                                  "Модель Редлиха-Квонга");
 
 static model_priority rk_priority(DEF_PRIOR_RK);
 
 void Redlich_Kwong2::set_model_coef() {
-  model_coef_a_ = 0.42748 * std::pow(parameters_->cgetR(), 2.0) *
-      std::pow(parameters_->cgetT_K(), 2.5) / parameters_->cgetP_K();
-  model_coef_b_ = 0.08664*parameters_->cgetR()*parameters_->cgetT_K() /
-      parameters_->cgetP_K();
+  model_coef_a_ = 0.42748 * std::pow(parameters_->cgetR(), 2.0)
+                  * std::pow(parameters_->cgetT_K(), 2.5)
+                  / parameters_->cgetP_K();
+  model_coef_b_ = 0.08664 * parameters_->cgetR() * parameters_->cgetT_K()
+                  / parameters_->cgetP_K();
 }
 
-void Redlich_Kwong2::set_model_coef(
-    const const_parameters &cp) {
-  model_coef_a_ = 0.42748 * std::pow(cp.mp.Rm, 2.0) *
-      std::pow(cp.critical.temperature, 2.5) / cp.critical.pressure;
-  model_coef_b_ = 0.08664 * cp.mp.Rm * cp.critical.temperature / cp.critical.pressure;
+void Redlich_Kwong2::set_model_coef(const const_parameters& cp) {
+  model_coef_a_ = 0.42748 * std::pow(cp.mp.Rm, 2.0)
+                  * std::pow(cp.critical.temperature, 2.5)
+                  / cp.critical.pressure;
+  model_coef_b_ =
+      0.08664 * cp.mp.Rm * cp.critical.temperature / cp.critical.pressure;
 }
 
 /* в англ вики и обеих книга Брусиловского */
-void Redlich_Kwong2::gasmix_model_coefs(const model_input &mi) {
+void Redlich_Kwong2::gasmix_model_coefs(const model_input& mi) {
   if (mi.gpi.const_dyn.components->size() == 1)
     return;
-  const parameters_mix *pm_p = mi.gpi.const_dyn.components;
-  double result_a_coef = 0.0,
-         result_b_coef = 0.0;
-  for (const auto &x : *pm_p) {
+  const parameters_mix* pm_p = mi.gpi.const_dyn.components;
+  double result_a_coef = 0.0, result_b_coef = 0.0;
+  for (const auto& x : *pm_p) {
     /* расчитать коэфициенты a и b для данного компонента смеси */
     set_model_coef(x.second.first);
     result_a_coef += x.first * sqrt(model_coef_a_);
@@ -52,8 +56,8 @@ void Redlich_Kwong2::gasmix_model_coefs(const model_input &mi) {
   model_coef_b_ = result_b_coef;
 }
 
-Redlich_Kwong2::Redlich_Kwong2(const model_input &mi)
-  : modelGeneral(mi.ms, mi.gm, mi.bp) {
+Redlich_Kwong2::Redlich_Kwong2(const model_input& mi)
+    : modelGeneral(mi.ms, mi.gm, mi.bp) {
   if (HasGasMixMark(gm_)) {
     /* газовая смесь: */
     /* установить коэфициенты модели для смеси */
@@ -81,14 +85,14 @@ Redlich_Kwong2::Redlich_Kwong2(const model_input &mi)
   }
 }
 
-Redlich_Kwong2 *Redlich_Kwong2::Init(const model_input &mi) {
+Redlich_Kwong2* Redlich_Kwong2::Init(const model_input& mi) {
   try {
     check_input(mi);
-  } catch (const model_init_exception &e) {
+  } catch (const model_init_exception& e) {
     Logging::Append(e.what());
     return nullptr;
   }
-  Redlich_Kwong2 *rk = new Redlich_Kwong2(mi);
+  Redlich_Kwong2* rk = new Redlich_Kwong2(mi);
   if (rk)
     if (rk->parameters_ == nullptr) {
       delete rk;
@@ -97,7 +101,7 @@ Redlich_Kwong2 *Redlich_Kwong2::Init(const model_input &mi) {
   return rk;
 }
 
-model_str Redlich_Kwong2::GetModelShortInfo(const rg_model_id &model_type) {
+model_str Redlich_Kwong2::GetModelShortInfo(const rg_model_id& model_type) {
   if (model_type.subtype == MODEL_RK_SUBTYPE_SOAVE)
     return Redlich_Kwong_Soave::GetModelShortInfo(model_type);
   return redlich_kwong_mi;
@@ -108,53 +112,54 @@ model_str Redlich_Kwong2::GetModelShortInfo() const {
 }
 
 //  расчёт смотри в ежедневнике
-double Redlich_Kwong2::internal_energy_integral(
-    const parameters new_state, const parameters old_state) {
+double Redlich_Kwong2::internal_energy_integral(const parameters new_state,
+                                                const parameters old_state) {
   assert(0);
-  double ans = 3.0 * model_coef_a_ *
-      log(new_state.volume * (old_state.volume + model_coef_b_) /
-          (old_state.volume * (new_state.volume + model_coef_b_))) /
-      (2.0 * sqrt(new_state.temperature) * model_coef_b_);
+  double ans = 3.0 * model_coef_a_
+               * log(new_state.volume * (old_state.volume + model_coef_b_)
+                     / (old_state.volume * (new_state.volume + model_coef_b_)))
+               / (2.0 * sqrt(new_state.temperature) * model_coef_b_);
   return ans;
 }
 
 //   return cv - cv0
-double Redlich_Kwong2::heat_capac_vol_integral(
-    const parameters new_state, const parameters old_state) {
+double Redlich_Kwong2::heat_capac_vol_integral(const parameters new_state,
+                                               const parameters old_state) {
   assert(0);
-  double ans = - 3.0 * model_coef_a_ *
-      log((new_state.volume * (old_state.volume + model_coef_b_)) /
-          (old_state.volume * (new_state.volume + model_coef_b_))) /
-      (4.0 * pow(new_state.temperature, 1.5) * model_coef_b_);
+  double ans = -3.0 * model_coef_a_
+               * log((new_state.volume * (old_state.volume + model_coef_b_))
+                     / (old_state.volume * (new_state.volume + model_coef_b_)))
+               / (4.0 * pow(new_state.temperature, 1.5) * model_coef_b_);
   return ans;
 }
 
 // return cp - cv
 //   исправлено 22_09_2018
-double Redlich_Kwong2::heat_capac_dif_prs_vol(
-    const parameters new_state, double R) {
+double Redlich_Kwong2::heat_capac_dif_prs_vol(const parameters new_state,
+                                              double R) {
   assert(0);
-  double T = new_state.temperature,
-         V = new_state.volume,
-         a = model_coef_a_,
+  double T = new_state.temperature, V = new_state.volume, a = model_coef_a_,
          b = model_coef_b_;
-  double num = -T * pow(R/(V-b) + a/(2.0*pow(T, 1.5)*(b+V)*V), 2.0);
-  double dec = - R*T/pow(V-b, 2.0) + a/(sqrt(T)*V*pow(b+V, 2.0)) + 
-      a/(sqrt(T)*V*V*(V+b));
+  double num =
+      -T * pow(R / (V - b) + a / (2.0 * pow(T, 1.5) * (b + V) * V), 2.0);
+  double dec = -R * T / pow(V - b, 2.0) + a / (sqrt(T) * V * pow(b + V, 2.0))
+               + a / (sqrt(T) * V * V * (V + b));
   return num / dec;
 }
 
-double Redlich_Kwong2::get_volume(double p, double t,
-    const const_parameters &cp) {
+double Redlich_Kwong2::get_volume(double p,
+                                  double t,
+                                  const const_parameters& cp) {
   set_model_coef(cp);
-  std::vector<double> coef {
-      1.0,
-      -cp.mp.Rm*t/p,
-      model_coef_a_/(p*std::sqrt(t)) - cp.mp.Rm *
-          t*model_coef_b_/p - model_coef_b_*model_coef_b_,
-      -model_coef_a_*model_coef_b_/(p*std::sqrt(t)),
-      0.0, 0.0, 0.0
-  };
+  std::vector<double> coef{1.0,
+                           -cp.mp.Rm * t / p,
+                           model_coef_a_ / (p * std::sqrt(t))
+                               - cp.mp.Rm * t * model_coef_b_ / p
+                               - model_coef_b_ * model_coef_b_,
+                           -model_coef_a_ * model_coef_b_ / (p * std::sqrt(t)),
+                           0.0,
+                           0.0,
+                           0.0};
   // Следующая функция заведомо получает валидные
   //   данные,  соответственно должна что-то вернуть
   //   Не будем перегружать код лишними проверками
@@ -170,24 +175,26 @@ double Redlich_Kwong2::get_volume(double p, double t,
   return coef[4];
 }
 
-double Redlich_Kwong2::get_pressure(double v, double t,
-    const const_parameters &cp) {
+double Redlich_Kwong2::get_pressure(double v,
+                                    double t,
+                                    const const_parameters& cp) {
   set_model_coef(cp);
-  const double temp = cp.mp.Rm * t / (v - model_coef_b_) -
-      model_coef_a_ / (std::sqrt(t)* v *(v + model_coef_b_));
+  const double temp =
+      cp.mp.Rm * t / (v - model_coef_b_)
+      - model_coef_a_ / (std::sqrt(t) * v * (v + model_coef_b_));
   return temp;
 }
 
-void Redlich_Kwong2::update_dyn_params(dyn_parameters &prev_state,
-    const parameters new_state) {
+void Redlich_Kwong2::update_dyn_params(dyn_parameters& prev_state,
+                                       const parameters new_state) {
   /*
   // parameters prev_parm = prev_state.parm;
-  // internal_energy addition 
+  // internal_energy addition
   double du  = internal_energy_integral(new_state, prev_state.parm);
   // heat_capacity_volume addition
   double dcv = heat_capac_vol_integral(new_state, prev_state.parm);
   // cp - cv
-  double dif_c = heat_capac_dif_prs_vol(new_state, 
+  double dif_c = heat_capac_dif_prs_vol(new_state,
       parameters_->const_params.R);
   prev_state.internal_energy += du;
   prev_state.heat_cap_vol    += dcv;
@@ -198,8 +205,9 @@ void Redlich_Kwong2::update_dyn_params(dyn_parameters &prev_state,
 }
 
 // функция вызывается из класса GasParameters_dyn
-void Redlich_Kwong2::update_dyn_params(dyn_parameters &prev_state,
-    const parameters new_state, const const_parameters &cp) {
+void Redlich_Kwong2::update_dyn_params(dyn_parameters& prev_state,
+                                       const parameters new_state,
+                                       const const_parameters& cp) {
   /*
   set_model_coef(cp);
   double du  = internal_energy_integral(new_state, prev_state.parm);
@@ -216,20 +224,20 @@ void Redlich_Kwong2::update_dyn_params(dyn_parameters &prev_state,
 }
 
 // visitor
-void Redlich_Kwong2::DynamicflowAccept(DerivateFunctor &df) {
+void Redlich_Kwong2::DynamicflowAccept(DerivateFunctor& df) {
   df.getFunctor(*this);
 }
 
 bool Redlich_Kwong2::IsValid() const {
-  return (parameters_->cgetPressure()/parameters_->cgetP_K() <
-      0.5*parameters_->cgetTemperature()/parameters_->cgetT_K());
+  return (parameters_->cgetPressure() / parameters_->cgetP_K()
+          < 0.5 * parameters_->cgetTemperature() / parameters_->cgetT_K());
 }
 
 /* todo: а что насчёт смесей? для них критические параметры
  *   не особо показательны */
 bool Redlich_Kwong2::IsValid(parameters prs) const {
-  return (prs.pressure/parameters_->cgetP_K() <
-      0.5*prs.pressure/parameters_->cgetT_K());
+  return (prs.pressure / parameters_->cgetP_K()
+          < 0.5 * prs.pressure / parameters_->cgetT_K());
 }
 
 void Redlich_Kwong2::SetVolume(double p, double t) {
@@ -245,14 +253,15 @@ double Redlich_Kwong2::GetVolume(double p, double t) {
     error_.SetError(ERROR_PAIR_DEFAULT(ERROR_CALC_MODEL_ST));
     return 0.0;
   }
-  std::vector<double> coef {
-      1.0,
-      -parameters_->cgetR()*t/p,
-      model_coef_a_/(p*std::sqrt(t)) - parameters_->cgetR()*
-          t*model_coef_b_/p - model_coef_b_*model_coef_b_,
-      -model_coef_a_*model_coef_b_/(p*std::sqrt(t)),
-      0.0, 0.0, 0.0
-  };
+  std::vector<double> coef{1.0,
+                           -parameters_->cgetR() * t / p,
+                           model_coef_a_ / (p * std::sqrt(t))
+                               - parameters_->cgetR() * t * model_coef_b_ / p
+                               - model_coef_b_ * model_coef_b_,
+                           -model_coef_a_ * model_coef_b_ / (p * std::sqrt(t)),
+                           0.0,
+                           0.0,
+                           0.0};
   // Следующая функция заведомо получает валидные
   //   данные,  соответственно должна что-то вернуть
   //   Не будем перегружать код лишними проверками
@@ -273,8 +282,9 @@ double Redlich_Kwong2::GetPressure(double v, double t) {
     error_.SetError(ERROR_PAIR_DEFAULT(ERROR_CALC_MODEL_ST));
     return 0.0;
   }
-  const double temp = parameters_->cgetR() * t / (v - model_coef_b_) -
-      model_coef_a_ / (std::sqrt(t)* v *(v + model_coef_b_));
+  const double temp =
+      parameters_->cgetR() * t / (v - model_coef_b_)
+      - model_coef_a_ / (std::sqrt(t) * v * (v + model_coef_b_));
   return temp;
 }
 

@@ -9,9 +9,9 @@
  */
 #include "calculation_setup.h"
 
+#include "asp_db/db_connection_manager.h"
 #include "atherm_db_tables.h"
 #include "calculation_by_file.h"
-#include "db_connection_manager.h"
 #include "models_configurations.h"
 #include "models_creator.h"
 #include "program_state.h"
@@ -236,13 +236,14 @@ merror_t CalculationSetup::initSetup(file_utils::FileURL* filepath_p) {
   CalculationSetupBuilder builder(init_data_.get());
   // Инициализируем ридер по адресу пути к файлу и классу строителю выше
   std::unique_ptr<ReaderSample<pugi::xml_node, calculation_node<pugi::xml_node>,
-                               CalculationSetupBuilder>>
+                               CalculationSetupBuilder, std::string>>
       rs(ReaderSample<pugi::xml_node, calculation_node<pugi::xml_node>,
-                      CalculationSetupBuilder>::Init(filepath_p, &builder));
+                      CalculationSetupBuilder, std::string>::Init(filepath_p,
+                                                                  &builder));
   merror_t error = ERROR_SUCCESS_T;
   if (rs) {
     rs->InitData();
-    if (!rs->GetErrorCode()) {
+    if (!rs->GetError()) {
       // инициализировать расчётные модели
       if (initData()) {
         // возможны не критические ошибки

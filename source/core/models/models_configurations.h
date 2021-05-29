@@ -10,15 +10,14 @@
 #ifndef _CORE__MODELS__MODELS_CONFIGURATIONS_H_
 #define _CORE__MODELS__MODELS_CONFIGURATIONS_H_
 
+#include "asp_utils/ErrorWrap.h"
 #include "atherm_common.h"
 #include "calculation_info.h"
-#include "ErrorWrap.h"
 
 #include <ctime>
 #include <memory>
 #include <string>
 #include <vector>
-
 
 /* CONFIGURATION PARAMETERS (XML or JSON)
  * // MODELS_STR - структура описывающая модель
@@ -48,29 +47,29 @@
  * - LOG_FILE : STRING
  * - DATABASE : DATABASE_CONFIGURATION
  * // - MODELS : MODELS_STR[] - move to calculation.json
-*/
+ */
 
 /** \brief Приоритет использования модели(относительно
-  *   других моделей
-  * \note Для организации нескольких моделей в мапе */
+ *   других моделей
+ * \note Для организации нескольких моделей в мапе */
 struct model_priority {
-private:
+ private:
   /** \brief Численное значение приоритета [-1, 127]
-    *   127 - максимальный;
-    *   0 - идеальный газ;
-    *   -1 - использование модели недопустимо - неверные
-    *     константные данные, например мольный состав. */
+   *   127 - максимальный;
+   *   0 - идеальный газ;
+   *   -1 - использование модели недопустимо - неверные
+   *     константные данные, например мольный состав. */
   priority_var priority;
   /** \brief Приоритет не специализирован и будет задан
-    *   посредством конфигурации модели(установлен приоритет
-    *   по умлчанию) */
+   *   посредством конфигурации модели(установлен приоритет
+   *   по умлчанию) */
   bool is_specified;
   /** \brief Проводить расчёты игнорируя ограничения модели
-    * \note необходимо, скорее из "онтологических" соображений,
-    *   поэтому по умолчанию false :) */
+   * \note необходимо, скорее из "онтологических" соображений,
+   *   поэтому по умолчанию false :) */
   bool is_forced = false;
 
-public:
+ public:
   model_priority();
   explicit model_priority(priority_var priority);
   /** \brief Получить числовое значение приоритета */
@@ -80,16 +79,22 @@ public:
   /** \brief Установлен флаг игнорирования границ применения модели */
   bool IsForced() const;
   /* \brief Использование модели допустимо(пока не определился как
-    *   правильно использовать эту функцию) */
+   *   правильно использовать эту функцию) */
   // bool IsAvailableModel() const;
 
-  bool operator<(const model_priority &s);
+  bool operator<(const model_priority& s);
 };
-inline priority_var model_priority::GetPriority() const { return priority; }
-inline bool model_priority::IsSpecified() const { return is_specified; }
-inline bool model_priority::IsForced() const { return is_forced; }
-// inline bool model_priority::IsAvailableModel() const { return priority != -1; }
-
+inline priority_var model_priority::GetPriority() const {
+  return priority;
+}
+inline bool model_priority::IsSpecified() const {
+  return is_specified;
+}
+inline bool model_priority::IsForced() const {
+  return is_forced;
+}
+// inline bool model_priority::IsAvailableModel() const { return priority != -1;
+// }
 
 /**
  * \brief Структура идентификации модели(уравнения реального газа)
@@ -106,9 +111,11 @@ struct model_str {
   /** \brief Короткая информация о модели */
   std::string short_info;
 
-public:
-  model_str(rg_model_id ml, int32_t vmaj, int32_t vmin,
-      const std::string &info);
+ public:
+  model_str(rg_model_id ml,
+            int32_t vmaj,
+            int32_t vmin,
+            const std::string& info);
 
   /**
    * \brief Собрать информационную строку по данным
@@ -117,9 +124,9 @@ public:
 };
 
 /** \brief конфигурация прораммы,
-  *   общая для запущенной конфигурации */
+ *   общая для запущенной конфигурации */
 struct program_configuration {
-public:
+ public:
   /** \brief информация доступных моделей */
   calculation_configuration calc_cfg;
   /** \brief уровень логирования */
@@ -127,21 +134,21 @@ public:
   /** \brief файл логирования */
   std::string log_file;
 
-public:
+ public:
   program_configuration();
   /** \brief изменить параметр(поле), соответствующий 'param_str',
-    *   значение параметра соответствует переданному в строке 'param_value'
-    * \param param_strtpl текстовый шаблон поля
-    * \param param_value значение параметра */
-  merror_t SetConfigurationParameter(const std::string &param_strtpl,
-      const std::string &param_value);
+   *   значение параметра соответствует переданному в строке 'param_value'
+   * \param param_strtpl текстовый шаблон поля
+   * \param param_value значение параметра */
+  merror_t SetConfigurationParameter(const std::string& param_strtpl,
+                                     const std::string& param_value);
 };
 
 /**
  * \brief Строка для добавления в БД
  * */
 struct model_info {
-public:
+ public:
   /**
    * \brief Получить стандартную структуру model_info , с пустыми полями
    **/
@@ -150,13 +157,13 @@ public:
   /**
    * \brief Добавить данный model_str и соответствующие флаги
    **/
-  model_info &SetModelStr(const model_str &ms);
+  model_info& SetModelStr(const model_str& ms);
   /**
    * \brief Добавить данный model_str и соответствующие флаги
    **/
-  model_info &SetModelPtr(modelGeneral *mp);
+  model_info& SetModelPtr(modelGeneral* mp);
 
-public:
+ public:
   enum model_info_flags {
     f_empty = 0x00,
     f_model_type = 0x01,
@@ -182,7 +189,7 @@ public:
    * \note Слабый указатель на модель для инициализации связанных
    *   объектов и таблиц
    * */
-  modelGeneral *model_p = nullptr;
+  modelGeneral* model_p = nullptr;
   // dyn_setup dynamic_vars;
   /**
    * \brief Инициализированные поля, для операций SELECT, UPDATE, INSERT

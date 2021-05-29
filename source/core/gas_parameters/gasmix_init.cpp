@@ -9,8 +9,8 @@
  */
 #include "gasmix_init.h"
 
-#include "ErrorWrap.h"
-#include "Logging.h"
+#include "asp_utils/ErrorWrap.h"
+#include "asp_utils/Logging.h"
 #include "atherm_common.h"
 #include "model_general.h"
 

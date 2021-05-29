@@ -9,7 +9,7 @@
  */
 #include "atherm_db_tables.h"
 
-#include "db_connection_manager.h"
+#include "asp_db/db_connection_manager.h"
 #include "models_configurations.h"
 
 #include <map>
@@ -41,25 +41,29 @@ TABLE MODEL_INFO (
   UNIQUE(model_type, model_subtype, vers_major, vers_minor),
   PRIMARY KEY (model_id)
 ); */
+//
+// db_variable::db_variable_flags(
+//    {{"is_primary_key", true}, {"can_be_null", false}})),
 const db_fields_collection model_info_fields = {
     db_variable(TABLE_FIELD_PAIR(MI_MODEL_ID),
                 db_variable_type::type_autoinc,
-                {.is_primary_key = true, .can_be_null = false}),
+                db_variable::db_variable_flags(
+                    {{"is_primary_key", true}, {"can_be_null", false}})),
     db_variable(TABLE_FIELD_PAIR(MI_MODEL_TYPE),
                 db_variable_type::type_int,
-                {.can_be_null = false}),
+                db_variable::db_variable_flags({{"can_be_null", false}})),
     db_variable(TABLE_FIELD_PAIR(MI_MODEL_SUBTYPE),
                 db_variable_type::type_int,
-                {}),
+                db_variable::db_variable_flags{}),
     db_variable(TABLE_FIELD_PAIR(MI_VERS_MAJOR),
                 db_variable_type::type_int,
-                {.can_be_null = false}),
+                db_variable::db_variable_flags({{"can_be_null", false}})),
     db_variable(TABLE_FIELD_PAIR(MI_VERS_MINOR),
                 db_variable_type::type_int,
-                {}),
+                db_variable::db_variable_flags{}),
     db_variable(TABLE_FIELD_PAIR(MI_SHORT_INFO),
                 db_variable_type::type_text,
-                {})};
+                db_variable::db_variable_flags{})};
 static const db_table_create_setup::uniques_container mi_uniques = {
     {TABLE_FIELD_NAME(MI_MODEL_TYPE), TABLE_FIELD_NAME(MI_MODEL_SUBTYPE),
      TABLE_FIELD_NAME(MI_VERS_MAJOR), TABLE_FIELD_NAME(MI_VERS_MINOR)}};
@@ -82,20 +86,22 @@ TABLE CALCULATION_INFO (
 const db_fields_collection calculation_info_fields = {
     db_variable(TABLE_FIELD_PAIR(CI_CALCULATION_ID),
                 db_variable_type::type_autoinc,
-                {.is_primary_key = true, .can_be_null = false}),
+                db_variable::db_variable_flags(
+                    {{"is_primary_key", true}, {"can_be_null", false}})),
     // reference to model_info(fk)
     db_variable(TABLE_FIELD_PAIR(CI_MODEL_INFO_ID),
                 db_variable_type::type_int,
-                {.is_reference = true, .can_be_null = false}),
+                db_variable::db_variable_flags(
+                    {{"is_reference", true}, {"can_be_null", false}})),
     db_variable(TABLE_FIELD_PAIR(CI_DATE),
                 db_variable_type::type_date,
-                {.can_be_null = false}),
+                db_variable::db_variable_flags({{"can_be_null", false}})),
     db_variable(TABLE_FIELD_PAIR(CI_TIME),
                 db_variable_type::type_time,
-                {.can_be_null = false}),
+                db_variable::db_variable_flags({{"can_be_null", false}})),
     db_variable(TABLE_FIELD_PAIR(CI_GASMIX_FILE),
                 db_variable_type::type_text,
-                {})};
+                db_variable::db_variable_flags({}))};
 static const db_table_create_setup::uniques_container ci_uniques = {
     {{TABLE_FIELD_NAME(CI_MODEL_INFO_ID), TABLE_FIELD_NAME(CI_DATE),
       TABLE_FIELD_NAME(CI_TIME), TABLE_FIELD_NAME(CI_GASMIX_FILE)}}};
@@ -132,18 +138,20 @@ TABLE CALCULATION_STATE_LOG (
 const db_fields_collection calculation_state_log_fields = {
     db_variable(TABLE_FIELD_PAIR(CSL_LOG_ID),
                 db_variable_type::type_autoinc,
-                {.is_primary_key = true, .can_be_null = false}),
-    db_variable(
-        TABLE_FIELD_PAIR(CSL_INFO_ID),
-        db_variable_type::type_int,
-        {.is_primary_key = true, .is_reference = true, .can_be_null = false}),
+                db_variable::db_variable_flags(
+                    {{"is_primary_key", true}, {"can_be_null", false}})),
+    db_variable(TABLE_FIELD_PAIR(CSL_INFO_ID),
+                db_variable_type::type_int,
+                db_variable::db_variable_flags({{"is_primary_key", true},
+                                                {"is_reference", true},
+                                                {"can_be_null", false}})),
     db_variable(TABLE_FIELD_PAIR(CSL_VOLUME), db_variable_type::type_real, {}),
     db_variable(TABLE_FIELD_PAIR(CSL_PRESSURE),
                 db_variable_type::type_real,
-                {}),
+                db_variable::db_variable_flags({})),
     db_variable(TABLE_FIELD_PAIR(CSL_TEMPERATURE),
                 db_variable_type::type_real,
-                {}),
+                db_variable::db_variable_flags({})),
     db_variable(TABLE_FIELD_PAIR(CSL_HEAT_CV), db_variable_type::type_real, {}),
     db_variable(TABLE_FIELD_PAIR(CSL_HEAT_CP), db_variable_type::type_real, {}),
     db_variable(TABLE_FIELD_PAIR(CSL_INTERNAL_ENERGY),
@@ -159,7 +167,7 @@ const db_fields_collection calculation_state_log_fields = {
     db_variable(TABLE_FIELD_PAIR(CSL_ENTROPY), db_variable_type::type_real, {}),
     db_variable(TABLE_FIELD_PAIR(CSL_STATE_PHASE),
                 db_variable_type::type_char_array,
-                {.is_array = true},
+                db_variable::db_variable_flags({{"is_array", true}}),
                 12)};
 static const std::shared_ptr<db_ref_collection>
     calculation_state_log_references = std::shared_ptr<db_ref_collection>(
@@ -353,9 +361,9 @@ void IDBTables::setInsertValues<calculation_info>(
   db_query_basesetup::row_values values;
   db_query_basesetup::field_index i;
   if (select_data.model != nullptr)
-    if (select_data.model->id >= 0 &&
-        (i = src->IndexByFieldId(CI_MODEL_INFO_ID)) !=
-            db_query_basesetup::field_index_end)
+    if (select_data.model->id >= 0
+        && (i = src->IndexByFieldId(CI_MODEL_INFO_ID))
+               != db_query_basesetup::field_index_end)
       values.emplace(i, std::to_string(select_data.model->id));
 
   insert_macro(calculation_info::f_calculation_info_id, CI_CALCULATION_ID,
@@ -378,9 +386,9 @@ void IDBTables::setInsertValues<calculation_state_log>(
   db_query_basesetup::row_values values;
   db_query_basesetup::field_index i;
   if (select_data.calculation != nullptr)
-    if (select_data.calculation->id >= 0 &&
-        (i = src->IndexByFieldId(CSL_INFO_ID)) !=
-            db_query_basesetup::field_index_end)
+    if (select_data.calculation->id >= 0
+        && (i = src->IndexByFieldId(CSL_INFO_ID))
+               != db_query_basesetup::field_index_end)
       values.emplace(i, std::to_string(select_data.calculation->id));
 
   insert_macro(calculation_state_log::f_calculation_state_log_id, CSL_LOG_ID,

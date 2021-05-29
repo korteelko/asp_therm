@@ -9,7 +9,7 @@
  */
 #include "gas_ng_gost30319.h"
 
-#include "Logging.h"
+#include "asp_utils/Logging.h"
 #include "atherm_common.h"
 #include "gas_ng_gost_defines.h"
 

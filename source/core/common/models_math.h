@@ -10,8 +10,8 @@
 #ifndef _CORE__COMMON__MODELS_MATH_H_
 #define _CORE__COMMON__MODELS_MATH_H_
 
-#include "Common.h"
-#include "ErrorWrap.h"
+#include "asp_utils/Common.h"
+#include "asp_utils/ErrorWrap.h"
 
 #include <cmath>
 #include <complex>
@@ -19,6 +19,8 @@
 #include <vector>
 
 #include <assert.h>
+
+using merror_t = asp_utils::merror_t;
 
 inline bool is_above0(double a) {
   return (a > DOUBLE_ACCURACY) && std::isfinite(a);
@@ -119,7 +121,7 @@ merror_t CardanoMethod_roots_count(const T* coef,
                                    T* results,
                                    int* roots_count) {
   std::vector<std::complex<T>> vec(3);
-  merror_t error = CardanoMethod(coef, &vec[0]);
+  auto error = CardanoMethod(coef, &vec[0]);
   if (!error) {
     results[0] = std::real(vec[0]);
     if (std::abs(std::imag(vec[1])) < FLOAT_ACCURACY) {

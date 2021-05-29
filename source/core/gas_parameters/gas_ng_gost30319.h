@@ -18,7 +18,7 @@
 #ifndef _CORE__GAS_PARAMETERS__GAS_NG_GOST30319_H_
 #define _CORE__GAS_PARAMETERS__GAS_NG_GOST30319_H_
 
-#include "ErrorWrap.h"
+#include "asp_utils/ErrorWrap.h"
 #include "gas_description_static.h"
 
 #include <vector>

@@ -10,10 +10,10 @@
 #ifndef _CORE__SUBROUTINS__FILE_STRUCTS_H_
 #define _CORE__SUBROUTINS__FILE_STRUCTS_H_
 
-#include "ErrorWrap.h"
+#include "asp_db/db_connection.h"
+#include "asp_db/db_defines.h"
+#include "asp_utils/ErrorWrap.h"
 #include "atherm_common.h"
-#include "db_connection.h"
-#include "db_defines.h"
 
 #include <array>
 #include <map>

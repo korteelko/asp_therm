@@ -14,7 +14,7 @@
 #ifndef _CORE__GAS_PARAMETERS__GAS_NG_GOST56851_H_
 #define _CORE__GAS_PARAMETERS__GAS_NG_GOST56851_H_
 
-#include "ErrorWrap.h"
+#include "asp_utils/ErrorWrap.h"
 #include "gas_description_static.h"
 
 /**
@@ -65,10 +65,5 @@ class GasParametersGost56851Dyn : public GasParameters {
    * */
   ng_gost_mix components_;
 };
-
-
-
-
-
 
 #endif  // !_CORE__GAS_PARAMETERS__GAS_NG_GOST56851_H_

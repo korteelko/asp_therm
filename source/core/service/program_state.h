@@ -14,13 +14,13 @@
 #ifndef _CORE__SERVICE__PROGRAM_STATE_H_
 #define _CORE__SERVICE__PROGRAM_STATE_H_
 
-#include "Common.h"
-#include "ErrorWrap.h"
-#include "FileURL.h"
-#include "ThreadWrap.h"
+#include "asp_db/db_connection_manager.h"
+#include "asp_utils/Common.h"
+#include "asp_utils/ErrorWrap.h"
+#include "asp_utils/FileURL.h"
+#include "asp_utils/ThreadWrap.h"
 #include "calculation_setup.h"
 #include "configuration_by_file.h"
-#include "db_connection_manager.h"
 #include "models_configurations.h"
 #include "xml_reader.h"
 

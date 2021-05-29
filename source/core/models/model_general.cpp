@@ -72,7 +72,7 @@ double modelGeneral::vapor_part(int32_t index) {
 int32_t modelGeneral::set_state_phasesub(double p) {
   return (bp_->p.end()
           - std::find_if(bp_->p.begin() + 1, bp_->p.end(),
-                         std::bind2nd(std::less_equal<double>(), p)));
+                         [p](const auto v) { return v < p; }));
 }
 
 state_phase modelGeneral::set_state_phase(double v, double p, double t) {
