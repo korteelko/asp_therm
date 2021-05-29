@@ -107,12 +107,18 @@ int test_calculation_init() {
     AthermDBTables adb;
     DBConnectionManager dbm(&adb);
     // модели не дописаны
+    // TODO: здесь валится из-за модели Пенга-Робинсона с коэффициентами
+    //   бинарного взаимодействия
     CS.Calculate();
-    dbm.ResetConnectionParameters(ps.GetDatabaseConfiguration());
-    if (is_status_ok(dbm.CheckConnection()))
-      CS.AddToDatabase(&dbm);
-    else
-      res = 12;
+    if (auto&& dbc = ps.GetDatabaseConfiguration()) {
+      dbm.ResetConnectionParameters(dbc.value());
+      if (is_status_ok(dbm.CheckConnection()))
+        CS.AddToDatabase(&dbm);
+      else
+        res = 12;
+    } else {
+      res = 13;
+    }
   }
   return res;
 }
@@ -239,17 +245,22 @@ int test_database() {
   //   std::cerr << "update config error: " << hex2str(err) << std::endl;
   // db_parameters p = ps.GetDatabaseConfiguration();
   DBConnectionManager dbm(&adb);
-  dbm.ResetConnectionParameters(ps.GetDatabaseConfiguration());
-  auto st = dbm.CheckConnection();
-  if (st == STATUS_HAVE_ERROR) {
-    std::cerr << "error during connection check: " << dbm.GetError()
+  if (auto&& dbc = ps.GetDatabaseConfiguration()) {
+    dbm.ResetConnectionParameters(dbc.value());
+    auto st = dbm.CheckConnection();
+    if (st == STATUS_HAVE_ERROR) {
+      std::cerr << "error during connection check: " << dbm.GetError()
+                << std::endl;
+      std::cerr << "  message: " << dbm.GetErrorMessage() << std::endl;
+      return 1;
+    }
+  } else {
+    std::cerr << "database config isn't loaded" << dbm.GetError()
               << std::endl;
-    std::cerr << "  message: " << dbm.GetErrorMessage() << std::endl;
     return 1;
   }
-  std::vector<db_table> tables{table_model_info, table_calculation_info,
-                               table_calculation_state_log};
-  for (const auto& x : tables) {
+  for (const auto& x : {table_model_info, table_calculation_info,
+                               table_calculation_state_log}) {
     if (!dbm.IsTableExists(x)) {
       if (dbm.GetError())
         std::cerr << "\nerror ocurred for tableExist command #" << int(x);
@@ -258,12 +269,9 @@ int test_database() {
         std::cerr << "\nerror ocurred for tableCreate command #" << int(x);
     }
   }
-  if (st == STATUS_HAVE_ERROR) {
-    std::cerr << "error during create table: " << dbm.GetError() << std::endl;
-  }
-  if (!ps.GetErrorCode())
+  if (!ps.GetError())
     return test_database_with_models(dbm);
-  return ps.GetErrorCode();
+  return ps.GetError();
 }
 
 int test_program_configuration() {
@@ -271,7 +279,7 @@ int test_program_configuration() {
   ProgramState& ps = ProgramState::Instance();
   ps.ReloadConfiguration(
       (project_root / xml_gases_dir / xml_configuration).string());
-  merror_t e = ps.GetErrorCode();
+  merror_t e = ps.GetError();
   if (e) {
     std::cerr << "program state bida " << hex2str(e) << std::endl;
     std::cerr << "Current dir is " << project_root << std::endl;
@@ -385,7 +393,7 @@ int main(int argc, char* argv[]) {
   const auto cwd = fs::path(argv[0]).parent_path();
   fs::current_path(cwd);
 #if defined(OS_WINDOWS)
-  project_root = cwd / "../../..";
+  project_root = cwd / "../../../";
 #elif defined(OS_UNIX)
   project_root = cwd.parent_path();
 #endif  // OS
@@ -397,7 +405,7 @@ int main(int argc, char* argv[]) {
                               (project_root / xml_calculations_dir).string()));
   if (!test_program_configuration()) {
     Logging::Append(io_loglvl::debug_logs, "Запускаю тесты сборки");
-    //*
+    ProgramState::Instance().UpdateDatabaseStructure();
 #if defined(MODELS_DEBUG)
     if (test_models())
       return 1;

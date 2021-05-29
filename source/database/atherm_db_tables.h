@@ -107,7 +107,17 @@ extern const db_fields_collection calculation_info_fields;
 extern const db_fields_collection calculation_state_log_fields;
 }  // namespace table_fields_setup
 
-/** \brief */
+namespace asp_db {
+  class DBConnectionManager;
+}
+
+/**
+ * \brief Создать таблицы базы данных atherm, если они не существуют
+ * \todo Добавить функции в пространство имён asp_db, вынести их за отдельный
+ *   интерфейс
+ * */
+void createAthermTables(asp_db::DBConnectionManager &db_manager);
+
 class AthermDBTables final : public IDBTables {
  public:
   std::string GetTableName(db_table t) const override;

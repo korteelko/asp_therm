@@ -21,24 +21,17 @@
 #include "models_configurations.h"
 
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 
 /** \brief Класс загрузки файла конфигурации программы */
 template <template <class config_node> class ConfigReader>
-class ConfigurationByFile {
+class ConfigurationByFile : public BaseObject {
+ public:
   ConfigurationByFile(const ConfigurationByFile&) = delete;
   ConfigurationByFile& operator=(const ConfigurationByFile&) = delete;
 
- private:
-  /** \brief строковые идентификаторы параметров
-   *   конфигурации программы */
-  static std::set<std::string> config_params;
-  /** \brief строковые идентификаторы параметров
-   *   конфигурации подключения к БД */
-  static std::set<std::string> config_database;
-
- public:
   static ConfigurationByFile* Init(const std::string& filename) {
     ConfigReader<config_node>* cr = ConfigReader<config_node>::Init(filename);
     if (cr == nullptr)
@@ -46,15 +39,16 @@ class ConfigurationByFile {
     return new ConfigurationByFile(cr);
   }
 
-  program_configuration GetConfiguration() const { return configuration_; }
+  bool HasConfiguration() const { return configuration_.has_value(); }
+  auto GetConfiguration() const { return configuration_; }
 
-  asp_db::db_parameters GetDBConfiguration() const { return db_parameters_; }
+  auto GetDBConfiguration() const { return db_parameters_; }
 
   const ErrorWrap& GetErrorWrap() const { return error_; }
 
  private:
-  ConfigurationByFile(ConfigReader<config_node>* config_doc)
-      : config_doc_(config_doc) {
+  explicit ConfigurationByFile(ConfigReader<config_node>* config_doc)
+      : BaseObject(STATUS_DEFAULT), config_doc_(config_doc) {
     if (config_doc) {
       init_parameters();
     } else {
@@ -68,22 +62,23 @@ class ConfigurationByFile {
   merror_t init_parameters() {
     merror_t error = ERROR_SUCCESS_T;
     std::vector<std::string> param_path(1);
-    std::string tmp_str = "";
+    std::string tmp_str;
+    configuration_ = program_configuration{};
     for (const auto& param : config_params) {
       param_path[0] = param;
       if (param == STRTPL_CONFIG_DATABASE) {
-        error = init_dbparameters();
+        if ((error = init_dbparameters()))
+          break;
       } else {
         config_doc_->GetValueByPath(param_path, &tmp_str);
-        error = configuration_.SetConfigurationParameter(param, tmp_str);
+        error = configuration_.value().SetConfigurationParameter(param, tmp_str);
       }
-      if (error)
+      if (error) {
+        error_.SetError(error,
+                        "Error during configfile reading: " + param_path[0]);
+        error_.LogIt();
         break;
-    }
-    if (error) {
-      error_.SetError(error,
-                      "Error during configfile reading: " + param_path[0]);
-      error_.LogIt();
+      }
     }
     return error;
   }
@@ -94,27 +89,35 @@ class ConfigurationByFile {
     std::vector<std::string> param_path =
         std::vector<std::string>{STRTPL_CONFIG_DATABASE, ""};
     std::string tmp_str = "";
+    db_parameters_ = asp_db::db_parameters{};
     for (const auto& param : config_database) {
       param_path[1] = param;
       config_doc_->GetValueByPath(param_path, &tmp_str);
-      error = set_db_parameter(&db_parameters_, param, tmp_str);
-      if (error)
+      error = set_db_parameter(&db_parameters_.value(), param, tmp_str);
+      if (error) {
+        error_.SetError(
+            error,
+            "Ошибка обработки параметра файла конфигурации БД: " + param_path[1]);
+        error_.LogIt();
+        db_parameters_ = std::nullopt;
         break;
-    }
-    if (error) {
-      error_.SetError(
-          error,
-          "Ошибка обработки параметра файла конфигурации БД: " + param_path[1]);
-      error_.LogIt();
+      }
     }
     return error;
   }
 
  private:
-  ErrorWrap error_;
   std::unique_ptr<ConfigReader<config_node>> config_doc_;
-  program_configuration configuration_;
-  asp_db::db_parameters db_parameters_;
+  std::optional<program_configuration> configuration_{std::nullopt};
+  std::optional<asp_db::db_parameters> db_parameters_{std::nullopt};
+
+ private:
+  /** \brief строковые идентификаторы параметров
+   *   конфигурации программы */
+  static std::set<std::string> config_params;
+  /** \brief строковые идентификаторы параметров
+   *   конфигурации подключения к БД */
+  static std::set<std::string> config_database;
 };
 
 /* todo: убрать это и переделать инициализацию по xml */

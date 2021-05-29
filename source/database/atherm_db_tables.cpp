@@ -12,13 +12,30 @@
 #include "asp_db/db_connection_manager.h"
 #include "models_configurations.h"
 
+#include <cassert>
 #include <map>
 #include <memory>
 
-#include <assert.h>
-
 #define tables_pair(x, y) \
   { x, y }
+
+void createAthermTables(asp_db::DBConnectionManager &db_manager) {
+  const auto tables = db_manager.GetTablesInterface();
+  if (!tables)
+    return;
+  for (const auto& x : {table_model_info, table_calculation_info,
+                               table_calculation_state_log}) {
+    if (!db_manager.IsTableExists(x)) {
+      if (db_manager.GetError())
+        Logging::Append( "\nerror occurred for tableExist command #" +
+                        tables->GetTableName(x));
+      db_manager.CreateTable(x);
+      if (db_manager.GetError())
+        Logging::Append("\nerror occurred for tableCreate command #" +
+                        tables->GetTableName(x)) ;
+    }
+  }
+}
 
 namespace table_fields_setup {
 static std::map<db_table, std::string> str_tables =
@@ -101,7 +118,7 @@ const db_fields_collection calculation_info_fields = {
                 db_variable::db_variable_flags({{"can_be_null", false}})),
     db_variable(TABLE_FIELD_PAIR(CI_GASMIX_FILE),
                 db_variable_type::type_text,
-                db_variable::db_variable_flags({}))};
+                db_variable::db_variable_flags())};
 static const db_table_create_setup::uniques_container ci_uniques = {
     {{TABLE_FIELD_NAME(CI_MODEL_INFO_ID), TABLE_FIELD_NAME(CI_DATE),
       TABLE_FIELD_NAME(CI_TIME), TABLE_FIELD_NAME(CI_GASMIX_FILE)}}};
@@ -148,10 +165,10 @@ const db_fields_collection calculation_state_log_fields = {
     db_variable(TABLE_FIELD_PAIR(CSL_VOLUME), db_variable_type::type_real, {}),
     db_variable(TABLE_FIELD_PAIR(CSL_PRESSURE),
                 db_variable_type::type_real,
-                db_variable::db_variable_flags({})),
+                db_variable::db_variable_flags()),
     db_variable(TABLE_FIELD_PAIR(CSL_TEMPERATURE),
                 db_variable_type::type_real,
-                db_variable::db_variable_flags({})),
+                db_variable::db_variable_flags()),
     db_variable(TABLE_FIELD_PAIR(CSL_HEAT_CV), db_variable_type::type_real, {}),
     db_variable(TABLE_FIELD_PAIR(CSL_HEAT_CP), db_variable_type::type_real, {}),
     db_variable(TABLE_FIELD_PAIR(CSL_INTERNAL_ENERGY),
@@ -248,7 +265,7 @@ db_table AthermDBTables::StrToTableCode(const std::string& tname) const {
 }
 
 std::string AthermDBTables::GetIdColumnName(db_table dt) const {
-  std::string name = "";
+  std::string name;
   switch (dt) {
     case table_model_info:
       name = TABLE_FIELD_NAME(MI_MODEL_ID);
@@ -260,6 +277,7 @@ std::string AthermDBTables::GetIdColumnName(db_table dt) const {
       name = TABLE_FIELD_NAME(CSL_LOG_ID);
       break;
     case table_undefiend:
+    default:
       break;
   }
   return name;

@@ -15,23 +15,21 @@
 static AthermDBTables db;
 
 /* ProgramState::ProgramConfiguration */
-using PSConfiguration = ProgramState::ProgramConfiguration;
-
-PSConfiguration::ProgramConfiguration()
-  : status(STATUS_DEFAULT), config_filename(""), is_initialized(false) {
+ProgramConfiguration::ProgramConfiguration()
+  : BaseObject(STATUS_DEFAULT), config_filename(""), is_initialized(false) {
   setDefault();
 }
 
-PSConfiguration::ProgramConfiguration(
+ProgramConfiguration::ProgramConfiguration(
     const std::string &config_file)
-  : status(STATUS_DEFAULT), config_filename(config_file),
+  : BaseObject(STATUS_DEFAULT), config_filename(config_file),
     is_initialized(false) {
   if (ResetConfigFile(config_file)) {
-    status = STATUS_HAVE_ERROR;
+    status_ = STATUS_HAVE_ERROR;
   }
 }
 
-merror_t PSConfiguration::ResetConfigFile(
+merror_t ProgramConfiguration::ResetConfigFile(
     const std::string &new_config_filename) {
   config_filename = new_config_filename;
   is_initialized = false;
@@ -40,7 +38,7 @@ merror_t PSConfiguration::ResetConfigFile(
   if (is_exists(config_filename)) {
     if (config_by_file) {
       if (config_by_file->GetErrorWrap().GetErrorCode()) {
-        error.SetError(ERROR_INIT_T,
+        error_.SetError(ERROR_INIT_T,
             "Ошибка инициализации конфигурации программы");
       } else {
         initProgramConfig();
@@ -48,35 +46,33 @@ merror_t PSConfiguration::ResetConfigFile(
         is_initialized = true;
       }
     } else {
-      error.SetError(ERROR_FILE_IN_ST, "Ошибка чтения файла конфигурации "
+      error_.SetError(ERROR_FILE_IN_ST, "Ошибка чтения файла конфигурации "
           "программы для файла" + config_filename);
     }
   } else {
-    error.SetError(ERROR_FILE_EXISTS_ST,
+    error_.SetError(ERROR_FILE_EXISTS_ST,
         "Файл не существует: " + config_filename);
   }
-  return error.GetErrorCode();
+  return error_.GetErrorCode();
 }
 
-void PSConfiguration::setDefault() {
+void ProgramConfiguration::setDefault() {
   /* конфигурация программы */
   configuration = program_configuration();
-  /* конфигурация базы данных */
-  db_parameters_conf = db_parameters();
 }
 
-void PSConfiguration::initProgramConfig() {
-  configuration = config_by_file->GetConfiguration();
-  Logging::ResetInstance(
-      logging_cfg("", configuration.log_level, configuration.log_file,
-      configuration.calc_cfg.is_debug_mode));
+void ProgramConfiguration::initProgramConfig() {
+  if (config_by_file->HasConfiguration()) {
+    configuration = config_by_file->GetConfiguration().value();
+    Logging::ResetInstance(
+        logging_cfg("", configuration.log_level, configuration.log_file,
+        configuration.calc_cfg.is_debug_mode));
+  }
 }
 
-void PSConfiguration::initDatabaseConfig() {
+void ProgramConfiguration::initDatabaseConfig() {
   db_parameters_conf = config_by_file->GetDBConfiguration();
 }
-
-// model_str PSConfiguration::initModelStr() {}
 
 /* ProgramState */
 ProgramState &ProgramState::Instance() {
@@ -85,7 +81,7 @@ ProgramState &ProgramState::Instance() {
 }
 
 ProgramState::ProgramState()
-  : status_(STATUS_DEFAULT), db_manager_(&db) {}
+  : BaseObject(STATUS_DEFAULT), db_manager_(&db) {}
 
 void ProgramState::SetProgramDirs(const file_utils::FileURLRoot &work_dir,
     const file_utils::FileURLRoot &calc_dir) {
@@ -107,16 +103,24 @@ merror_t ProgramState::ReloadConfiguration(
   if (work_dir_) {
     auto path = work_dir_->CreateFileURL(config_file);
     program_config_.ResetConfigFile(path.GetURL());
-    if (program_config_.error.GetErrorCode()) {
-      error_.SetError(program_config_.error.GetErrorCode(),
+    if (program_config_.GetError()) {
+      error_.SetError(program_config_.GetError(),
           "Ошибка инициализации конфига программы\n"
-          "Сообщение: " + program_config_.error.GetMessage());
+          "Сообщение: " + program_config_.GetErrorMessage());
     }
   } else {
     error_.SetError(ERROR_INIT_NULLP_ST,
         "Не инициализирована рабочая директория программы");
   }
   return error_.GetErrorCode();
+}
+
+void ProgramState::UpdateDatabaseStructure() {
+  if (program_config_.db_parameters_conf) {
+    db_manager_.ResetConnectionParameters(
+        program_config_.db_parameters_conf.value());
+    createAthermTables(db_manager_);
+  }
 }
 
 bool ProgramState::IsInitialized() const {
@@ -131,7 +135,9 @@ bool ProgramState::IsDebugMode() const {
 }
 
 bool ProgramState::IsDryRunDBConn() const {
-  return program_config_.db_parameters_conf.is_dry_run;
+  if (program_config_.db_parameters_conf)
+    return program_config_.db_parameters_conf.value().is_dry_run;
+  return true;
 }
 
 const program_configuration &ProgramState::GetConfiguration() const {
@@ -142,7 +148,7 @@ const calculation_configuration &ProgramState::GetCalcConfiguration() const {
   return program_config_.configuration.calc_cfg;
 }
 
-const asp_db::db_parameters &ProgramState::GetDatabaseConfiguration() const {
+const std::optional<asp_db::db_parameters> &ProgramState::GetDatabaseConfiguration() const {
   return program_config_.db_parameters_conf;
 }
 
@@ -178,18 +184,4 @@ void ProgramState::RemoveCalculationSetup(int num) {
     calc_setups_.erase(cs);
 }
 
-mstatus_t ProgramState::GetStatus() const {
-  return status_;
-}
-
-merror_t ProgramState::GetErrorCode() const {
-  return error_.GetErrorCode();
-}
-
-std::string ProgramState::GetErrorMessage() const {
-  return error_.GetMessage();
-}
-
-void ProgramState::LogError() {
-  error_.LogIt();
-}
+// model_str PSConfiguration::initModelStr() {}
