@@ -247,8 +247,8 @@ binodalpoints* PhaseDiagram::GetBinodalPoints(parameters_mix& components,
   // Здесь нужно прописать как считать линию перехода для газовых смесей
   // UPD: 17.03.2020
   // todo: здесь неправильно - переделать(V_k для смеси - не пойми что)
-  auto max_el = components.upper_bound(0.95);
-  if (max_el->first < 0.95)
+  const auto max_el = components.upper_bound(0.95);
+  if (max_el == components.end() || max_el->first < 0.95)
     // todo: перевести условие в более удобоваримую форму
     return nullptr;
   return PhaseDiagram::GetBinodalPoints(max_el->second.first, id);

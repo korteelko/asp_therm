@@ -25,6 +25,11 @@
 
 #include <assert.h>
 
+#if defined(OS_WINDOWS)
+#include <windows.h>
+#pragma execution_character_set("utf-8")
+#endif  // OS_WINDOWS
+
 // #define JSON_READER_DEBUG
 #define MODELS_DEBUG
 #define RK2_DEBUG
@@ -276,7 +281,8 @@ int test_program_configuration() {
 
 int test_models() {
   std::vector<std::unique_ptr<modelGeneral>> test_vec;
-  std::string filename = (project_root / xml_gases_dir / xml_gasmix).string();
+  std::string filename =
+      (project_root / xml_gases_dir / xml_gasmix).make_preferred().string();
 #if defined(RK2_DEBUG)
   test_vec.push_back(std::unique_ptr<modelGeneral>(
       ModelsCreator::GetCalculatingModel(rk2_str, NULL, filename, INPUT_P_T)));
@@ -373,6 +379,9 @@ int test_models_mix() {
 }
 
 int main(int argc, char* argv[]) {
+#if defined(OS_WINDOWS)
+  SetConsoleOutputCP(65001);
+#endif  // OS_WINDOWS
   const auto cwd = fs::path(argv[0]).parent_path();
   fs::current_path(cwd);
 #if defined(OS_WINDOWS)
