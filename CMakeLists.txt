@@ -10,6 +10,9 @@ set(EXECUTABLE ${PROJECT_NAME}_debug)
 set(ASP_THERM_ROOT ${CMAKE_CURRENT_SOURCE_DIR})
 set(ASP_THERM_CMAKE_ROOT ${ASP_THERM_ROOT}/cmake)
 
+include(${ASP_THERM_CMAKE_ROOT}/env_setup.cmake)
+include(${ASP_THERM_CMAKE_ROOT}/models_src.cmake)
+
 option(ISO_20765 "Include iso 20765 to build" ON)
 option(WITH_POSTGRESQL "Build with postres libs: `pq` and `pqxx`" ON)
 option(WITH_FIREBIRD "Build with firebird lib: `fbclient`" OFF)
@@ -28,22 +31,6 @@ if(EXISTS ${ERRORCODES_PATH})
   set(INCLUDE_ERRORCODES -DINCLUDE_ERRORCODES)
 endif()
 
-# TODO: move it to env setup .cmake file
-if(MSVC)
-  message(STATUS "asp_therm add define: CRT_SECURE_NO_WARNINGS")
-  list(APPEND DEFINES_LIST "-D_CRT_SECURE_NO_WARNINGS")
-endif()
-
-if(WIN32)
-  message(STATUS "asp_therm add define: OS_WINDOWS")
-  list(APPEND DEFINES_LIST "-DOS_WINDOWS")
-elseif(UNIX)
-  message(STATUS "asp_therm add define: OS_UNIX")
-  list(APPEND DEFINES_LIST "-DOS_UNIX")
-else()
-  message(SEND_ERROR "Undefined system, please check CMakeList.txt")
-endif()
-
 # setup utils OUT_DIR - для библиотеки atherm
 set(OUT_DIR ${ASP_THERM_ROOT}/out/${RESULT_LIB})
 # MODULES_DIR - для сторонних библиотек.
@@ -51,6 +38,7 @@ set(MODULES_DIR ${ASP_THERM_ROOT}/lib)
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   set(OUT_DIR ${OUT_DIR}/debug)
+  set(CMAKE_MESSAGE_LOG_LEVEL TRACE)
 endif()
 
 message(STATUS "asp_therm cmake build info:")
@@ -58,29 +46,14 @@ message(STATUS "\t\tSystem info: ${CMAKE_SYSTEM_NAME}")
 message(STATUS "\t\tBUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message(STATUS "\t\tOUT_DIR: ${OUT_DIR}")
 
-set(THERMCORE_INCLUDES
-    "${THERMCORE_SOURCE_DIR}/common" "${THERMCORE_SOURCE_DIR}/gas_parameters"
-    "${THERMCORE_SOURCE_DIR}/models" "${THERMCORE_SOURCE_DIR}/phase_diagram"
-    "${THERMCORE_SOURCE_DIR}/service" "${THERMCORE_SOURCE_DIR}/subroutins")
-
-set(INCLUDE_DIRS ${THERMCORE_INCLUDES} ${THERMDB_SOURCE_DIR})
-
-# add pq, pqxx
-if(WITH_POSTGRESQL)
-  list(APPEND DEFINES_LIST "-DBYCMAKE_WITH_POSTGRESQL")
-endif()
-if(WITH_FIREBIRD)
-  list(APPEND DEFINES_LIST "-DBYCMAKE_WITH_FIREBIRD")
-endif()
-if(ISO_20765)
-  list(APPEND DEFINES_LIST "-DBYCMAKE_ISO_20765")
-endif()
+set_include_dirs(INCLUDE_DIRS)
+append_list_defines(DEFINES_LIST)
+set_models_src(MODELS_SRC)
 
 add_subdirectory(${MODULES_DIR}/asp_db)
 find_package(Threads REQUIRED)
 set(LIBRARIES Threads::Threads asp_db)
 
-include(${ASP_THERM_CMAKE_ROOT}/models_src.cmake)
 if(${CMAKE_BUILD_TYPE} MATCHES Release)
   # build result library todo: check result
   add_library(${RESULT_LIB} STATIC ${MODELS_SRC})
@@ -104,17 +77,7 @@ if(BUILD_EXECUTABLE)
   target_link_libraries(${EXECUTABLE} ${LIBRARIES})
 endif()
 
-if(UNIX)
-  message(STATUS "\t\tGenerate compile_commands.json for asp_therm")
-  # Генерировать compile_commands.json файл компилируемых объектов по которым ccls
-  # будет правильно инклуды/дефайны расставлять
-  set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-  # Скопировать compile_commands в корень проекта
-  add_custom_target(
-    copy-compile-commands-asp_therm ALL
-    ${CMAKE_COMMAND} -E copy_if_different
-    ${CMAKE_BINARY_DIR}/compile_commands.json ${CMAKE_CURRENT_SOURCE_DIR})
-endif(UNIX)
+post_build()
 
 # run tests
 if(TESTS_ENABLED)

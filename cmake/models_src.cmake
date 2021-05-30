@@ -1,4 +1,5 @@
-set(MODELS_SRC
+function(set_models_src src_list)
+  set(${src_list}
     # common sources
     ${THERMCORE_SOURCE_DIR}/common/atherm_common.cpp
     # gas_parameters sources
@@ -28,4 +29,5 @@ set(MODELS_SRC
     ${THERMCORE_SOURCE_DIR}/models/models_configurations.cpp
     ${THERMCORE_SOURCE_DIR}/models/models_creator.cpp
     # database sources
-    ${THERMDB_SOURCE_DIR}/atherm_db_tables.cpp)
+    ${THERMDB_SOURCE_DIR}/atherm_db_tables.cpp PARENT_SCOPE)
+endfunction()
