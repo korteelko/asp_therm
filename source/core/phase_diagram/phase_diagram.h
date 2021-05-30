@@ -12,7 +12,7 @@
 
 #include "asp_utils/ErrorWrap.h"
 #include "atherm_common.h"
-#include "gasmix_init.h"
+#include "gas_description_mix.h"
 #include "phase_diagram_models.h"
 
 #include <cassert>

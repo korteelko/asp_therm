@@ -11,8 +11,8 @@
 #define _CORE__MODELS__MODEL_NG_GOST_H_
 
 #include "atherm_common.h"
+#include "gas_description_mix.h"
 #include "gas_ng_gost30319.h"
-#include "gasmix_init.h"
 #include "model_general.h"
 
 #include <memory>

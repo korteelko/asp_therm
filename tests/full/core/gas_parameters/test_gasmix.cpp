@@ -1,4 +1,4 @@
-#include "gasmix_init.h"
+#include "gas_description_mix.h"
 
 #include "atherm_common.h"
 #include "gas_by_file.h"

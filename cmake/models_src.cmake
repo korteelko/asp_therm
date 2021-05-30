@@ -8,7 +8,7 @@ set(MODELS_SRC
     ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_ng_gost30319.cpp
     ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_ng_gost56851.cpp
     ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_ng_gost_defines.cpp
-    ${THERMCORE_SOURCE_DIR}/gas_parameters/gasmix_init.cpp
+    ${THERMCORE_SOURCE_DIR}/gas_parameters/gas_description_mix.cpp
     # phase_diagram sources
     ${THERMCORE_SOURCE_DIR}/phase_diagram/phase_diagram.cpp
     ${THERMCORE_SOURCE_DIR}/phase_diagram/phase_diagram_models.cpp

@@ -16,7 +16,7 @@
 #include "file_structs.h"
 #include "gas_by_file.h"
 #include "gas_description.h"
-#include "gasmix_init.h"
+#include "gas_description_mix.h"
 #include "models_math.h"
 #if defined(WITH_PUGIXML)
 #include "xml_reader.h"

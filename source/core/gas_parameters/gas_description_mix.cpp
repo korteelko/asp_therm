@@ -7,7 +7,7 @@
  * This library is distributed under the MIT License.
  * See LICENSE file in the project root for full license information.
  */
-#include "gasmix_init.h"
+#include "gas_description_mix.h"
 
 #include "asp_utils/ErrorWrap.h"
 #include "asp_utils/Logging.h"

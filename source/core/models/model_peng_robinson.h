@@ -11,7 +11,7 @@
 #define _CORE__MODELS__MODEL_PENG_ROBINSON_H_
 
 #include "atherm_common.h"
-#include "gasmix_init.h"
+#include "gas_description_mix.h"
 #include "model_general.h"
 
 #include <memory>

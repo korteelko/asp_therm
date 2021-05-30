@@ -13,8 +13,8 @@
 #include "asp_utils/ErrorWrap.h"
 #include "atherm_common.h"
 #include "gas_description.h"
+#include "gas_description_mix.h"
 #include "gas_description_static.h"
-#include "gasmix_init.h"
 #include "models_configurations.h"
 #include "phase_diagram.h"
 

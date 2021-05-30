@@ -19,7 +19,7 @@
 // И не забудем ошибку вычисления, или округления,
 //   отведём ей 1%
 // Итого проверяем тождество :
-//   |0.99 - ${summ_of_components}| < 0.02
+//   |0.99 - ${summ_of_components}| < 0.03
 #define GASMIX_PERSENT_AVR  0.99
 #define GASMIX_PERCENT_EPS  0.03
 
@@ -34,7 +34,7 @@ struct gasmix_component_info {
 
 public:
   gasmix_component_info(const std::string &name,
-      const std::string &path, const double part);
+      const std::string &path, double part);
 };
 bool operator<(const gasmix_component_info &lg, const gasmix_component_info &rg);
 

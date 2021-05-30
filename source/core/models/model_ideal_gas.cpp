@@ -11,7 +11,7 @@
 
 #include "asp_utils/Logging.h"
 #include "gas_description_dynamic.h"
-#include "gasmix_init.h"
+#include "gas_description_mix.h"
 #include "models_math.h"
 
 #include <cmath>

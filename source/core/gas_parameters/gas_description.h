@@ -31,7 +31,7 @@ inline double volume_by_compress(double p, double t, double mol, double z) {
 }
 
 inline double compress_by_volume(double p, double t, double mol, double v) {
-  // расчитываются по разному,
+  // рассчитываются по разному,
   // например для СПГ(ГОСТ 56851), через фактор Пинцера
   return v * p * mol / (1000.0 * GAS_CONSTANT * t);
 }
@@ -190,9 +190,9 @@ struct const_parameters {
                    double mol,
                    double R,
                    double af);
-  const_parameters& operator=(const const_parameters&) = delete;
 
  public:
+  const_parameters& operator=(const const_parameters&) = delete;
   /**
    * \brief конструктор для газовых смесей
    *

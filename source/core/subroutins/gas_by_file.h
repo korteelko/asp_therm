@@ -13,7 +13,7 @@
 #include "atherm_common.h"
 #include "file_structs.h"
 #include "gas_description.h"
-#include "gasmix_init.h"
+#include "gas_description_mix.h"
 #include "models_math.h"
 
 #include <exception>
