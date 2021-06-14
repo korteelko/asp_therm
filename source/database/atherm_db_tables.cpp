@@ -249,7 +249,7 @@ const db_fields_collection* AthermDBTables::GetFieldsCollection(
     case table_calculation_state_log:
       result = &ns_tfs::calculation_state_log_fields;
       break;
-    case table_undefiend:
+    case table_undefined:
     default:
       throw DBException(ERROR_DB_TABLE_EXISTS, "Неизвестный код таблицы");
       break;
@@ -261,7 +261,7 @@ db_table AthermDBTables::StrToTableCode(const std::string& tname) const {
   for (const auto& x : ns_tfs::str_tables)
     if (x.second == tname)
       return x.first;
-  return table_undefiend;
+  return table_undefined;
 }
 
 std::string AthermDBTables::GetIdColumnName(db_table dt) const {
@@ -276,7 +276,7 @@ std::string AthermDBTables::GetIdColumnName(db_table dt) const {
     case table_calculation_state_log:
       name = TABLE_FIELD_NAME(CSL_LOG_ID);
       break;
-    case table_undefiend:
+    case table_undefined:
     default:
       break;
   }
@@ -292,7 +292,7 @@ const db_table_create_setup& AthermDBTables::CreateSetupByCode(
       return table_create_calculation_info();
     case table_calculation_state_log:
       return table_create_calculation_state_log();
-    case table_undefiend:
+    case table_undefined:
     default:
       throw DBException(ERROR_DB_TABLE_EXISTS, "Неизвестный код таблицы");
   }
@@ -310,7 +310,7 @@ db_ref_collection AthermDBTables::RefCollectionByCode(db_table table) {
     case table_calculation_state_log:
       return ns_tfs::calculation_state_log_references;
       break;
-    case table_undefiend:
+    case table_undefined:
     default:
       throw db_exception(ERROR_DB_TABLE_EXISTS, "Неизвестный код таблицы");
       break;

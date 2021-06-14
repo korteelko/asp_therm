@@ -92,7 +92,7 @@ struct calculation_state_log;
 
 enum atherm_db_tables {
   /** \brief Заглушка */
-  table_undefiend = UNDEFINED_TABLE,
+  table_undefined = UNDEFINED_TABLE,
   /** \brief Информация о ревизии уравнения состояния */
   table_model_info = MODELINFO_TABLE >> 16,
   /** \brief Информация о расчёте */
@@ -120,6 +120,7 @@ void createAthermTables(asp_db::DBConnectionManager &db_manager);
 
 class AthermDBTables final : public IDBTables {
  public:
+  std::string GetTablesNamespace() const override {return "AthermTables"; }
   std::string GetTableName(db_table t) const override;
   const db_fields_collection* GetFieldsCollection(db_table t) const override;
   db_table StrToTableCode(const std::string& tname) const override;
